@@ -1,9 +1,7 @@
-all: test
+SUBDIRS := src/
 
-test: test.c
-	gcc -O2 -g -Wall -o test test.c
+all: $(SUBDIRS)
+$(SUBDIRS):
+	$(MAKE) -C $@
 
-.PHONY: clean
-
-clean:
-	rm -f test
+.PHONY: all $(SUBDIRS)
