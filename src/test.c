@@ -142,6 +142,25 @@ void test_vla_visitor(void)
 	}
 }
 
+static int64_t array_fixint[] = { -444, 555, 123, 2897432587 };
+
+static side_define_event(my_provider_event_array_fixint, "myprovider", "myarrayfixint", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_array("arrfixint", side_elem(SIDE_TYPE_S64), SIDE_ARRAY_SIZE(array_fixint)),
+		side_field(SIDE_TYPE_S64, "v"),
+	)
+);
+
+static
+void test_array_fixint(void)
+{
+	my_provider_event_array_fixint.enabled = 1;
+	side_event_cond(&my_provider_event_array_fixint) {
+		side_event_call(&my_provider_event_array_fixint,
+			side_arg_list(side_arg_array_s64(array_fixint), side_arg_s64(42)));
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -149,5 +168,6 @@ int main()
 	test_array();
 	test_vla();
 	test_vla_visitor();
+	test_array_fixint();
 	return 0;
 }

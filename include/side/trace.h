@@ -27,14 +27,25 @@ enum side_type {
 	SIDE_TYPE_S16,
 	SIDE_TYPE_S32,
 	SIDE_TYPE_S64,
+
 	SIDE_TYPE_STRING,
 	SIDE_TYPE_DYNAMIC,
 	SIDE_TYPE_STRUCT,
 	SIDE_TYPE_ARRAY,
 	SIDE_TYPE_VLA,
 	SIDE_TYPE_VLA_VISITOR,
+
+	SIDE_TYPE_ARRAY_U8,
+	SIDE_TYPE_ARRAY_U16,
+	SIDE_TYPE_ARRAY_U32,
+	SIDE_TYPE_ARRAY_U64,
+	SIDE_TYPE_ARRAY_S8,
+	SIDE_TYPE_ARRAY_S16,
+	SIDE_TYPE_ARRAY_S32,
+	SIDE_TYPE_ARRAY_S64,
+
 	//TODO:
-	//specialized array and vla for fixed-size integers (optimization)
+	//specialized vla for fixed-size integers (optimization)
 	//variants (discriminated unions)
 };
 
@@ -108,11 +119,14 @@ struct side_arg_vec {
 		int16_t side_s16;
 		int32_t side_s32;
 		int64_t side_s64;
+
 		const char *string;
 		const struct side_arg_vec_description *side_struct;
 		const struct side_arg_vec_description *side_array;
 		const struct side_arg_vec_description *side_vla;
 		void *side_vla_visitor_ctx;
+
+		void *side_array_fixint;
 	} u;
 };
 
@@ -208,6 +222,15 @@ struct side_arg_vec_description {
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_array = (_side_type) } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_vla = (_side_type) } }
 #define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_vla_visitor_ctx = (_ctx) } }
+
+#define side_arg_array_u8(ptr)	{ .type = SIDE_TYPE_ARRAY_U8, .u = { .side_array_fixint = (ptr) } }
+#define side_arg_array_u16(ptr)	{ .type = SIDE_TYPE_ARRAY_U16, .u = { .side_array_fixint = (ptr) } }
+#define side_arg_array_u32(ptr)	{ .type = SIDE_TYPE_ARRAY_U32, .u = { .side_array_fixint = (ptr) } }
+#define side_arg_array_u64(ptr)	{ .type = SIDE_TYPE_ARRAY_U64, .u = { .side_array_fixint = (ptr) } }
+#define side_arg_array_s8(ptr)	{ .type = SIDE_TYPE_ARRAY_S8, .u = { .side_array_fixint = (ptr) } }
+#define side_arg_array_s16(ptr)	{ .type = SIDE_TYPE_ARRAY_S16, .u = { .side_array_fixint  = (ptr) } }
+#define side_arg_array_s32(ptr)	{ .type = SIDE_TYPE_ARRAY_S32, .u = { .side_array_fixint = (ptr) } }
+#define side_arg_array_s64(ptr)	{ .type = SIDE_TYPE_ARRAY_S64, .u = { .side_array_fixint = (ptr) } }
 
 #define side_arg_define_vec(_identifier, _sav) \
 	const struct side_arg_vec _identifier##_vec[] = { _sav }; \
