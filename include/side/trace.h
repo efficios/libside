@@ -44,8 +44,16 @@ enum side_type {
 	SIDE_TYPE_ARRAY_S32,
 	SIDE_TYPE_ARRAY_S64,
 
+	SIDE_TYPE_VLA_U8,
+	SIDE_TYPE_VLA_U16,
+	SIDE_TYPE_VLA_U32,
+	SIDE_TYPE_VLA_U64,
+	SIDE_TYPE_VLA_S8,
+	SIDE_TYPE_VLA_S16,
+	SIDE_TYPE_VLA_S32,
+	SIDE_TYPE_VLA_S64,
+
 	//TODO:
-	//specialized vla for fixed-size integers (optimization)
 	//variants (discriminated unions)
 };
 
@@ -127,6 +135,10 @@ struct side_arg_vec {
 		void *side_vla_visitor_ctx;
 
 		void *side_array_fixint;
+		struct {
+			void *p;
+			uint32_t length;
+		} side_vla_fixint;
 	} u;
 };
 
@@ -223,14 +235,23 @@ struct side_arg_vec_description {
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_vla = (_side_type) } }
 #define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_vla_visitor_ctx = (_ctx) } }
 
-#define side_arg_array_u8(ptr)	{ .type = SIDE_TYPE_ARRAY_U8, .u = { .side_array_fixint = (ptr) } }
-#define side_arg_array_u16(ptr)	{ .type = SIDE_TYPE_ARRAY_U16, .u = { .side_array_fixint = (ptr) } }
-#define side_arg_array_u32(ptr)	{ .type = SIDE_TYPE_ARRAY_U32, .u = { .side_array_fixint = (ptr) } }
-#define side_arg_array_u64(ptr)	{ .type = SIDE_TYPE_ARRAY_U64, .u = { .side_array_fixint = (ptr) } }
-#define side_arg_array_s8(ptr)	{ .type = SIDE_TYPE_ARRAY_S8, .u = { .side_array_fixint = (ptr) } }
-#define side_arg_array_s16(ptr)	{ .type = SIDE_TYPE_ARRAY_S16, .u = { .side_array_fixint  = (ptr) } }
-#define side_arg_array_s32(ptr)	{ .type = SIDE_TYPE_ARRAY_S32, .u = { .side_array_fixint = (ptr) } }
-#define side_arg_array_s64(ptr)	{ .type = SIDE_TYPE_ARRAY_S64, .u = { .side_array_fixint = (ptr) } }
+#define side_arg_array_u8(_ptr)		{ .type = SIDE_TYPE_ARRAY_U8, .u = { .side_array_fixint = (_ptr) } }
+#define side_arg_array_u16(_ptr)	{ .type = SIDE_TYPE_ARRAY_U16, .u = { .side_array_fixint = (_ptr) } }
+#define side_arg_array_u32(_ptr)	{ .type = SIDE_TYPE_ARRAY_U32, .u = { .side_array_fixint = (_ptr) } }
+#define side_arg_array_u64(_ptr)	{ .type = SIDE_TYPE_ARRAY_U64, .u = { .side_array_fixint = (_ptr) } }
+#define side_arg_array_s8(_ptr)		{ .type = SIDE_TYPE_ARRAY_S8, .u = { .side_array_fixint = (_ptr) } }
+#define side_arg_array_s16(_ptr)	{ .type = SIDE_TYPE_ARRAY_S16, .u = { .side_array_fixint  = (_ptr) } }
+#define side_arg_array_s32(_ptr)	{ .type = SIDE_TYPE_ARRAY_S32, .u = { .side_array_fixint = (_ptr) } }
+#define side_arg_array_s64(_ptr)	{ .type = SIDE_TYPE_ARRAY_S64, .u = { .side_array_fixint = (_ptr) } }
+
+#define side_arg_vla_u8(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U8, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } }
+#define side_arg_vla_u16(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U16, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
+#define side_arg_vla_u32(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U32, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
+#define side_arg_vla_u64(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U64, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
+#define side_arg_vla_s8(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S8, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
+#define side_arg_vla_s16(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S16, .u = { .side_vla_fixint  = { .p = (_ptr), .length = (_length) } } }
+#define side_arg_vla_s32(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S32, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
+#define side_arg_vla_s64(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S64, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
 
 #define side_arg_define_vec(_identifier, _sav) \
 	const struct side_arg_vec _identifier##_vec[] = { _sav }; \

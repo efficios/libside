@@ -12,4 +12,4 @@ test: tracer.o test.o
 .PHONY: clean
 
 clean:
-	rm -f test
+	rm -f test *.o

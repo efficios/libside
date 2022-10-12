@@ -20,6 +20,8 @@ static
 void tracer_print_vla_visitor(const struct side_type_description *type_desc, void *ctx);
 static
 void tracer_print_array_fixint(const struct side_type_description *type_desc, const struct side_arg_vec *item);
+static
+void tracer_print_vla_fixint(const struct side_type_description *type_desc, const struct side_arg_vec *item);
 
 static
 void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item)
@@ -38,6 +40,20 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 			abort();
 		}
 		break;
+	case SIDE_TYPE_VLA_U8:
+	case SIDE_TYPE_VLA_U16:
+	case SIDE_TYPE_VLA_U32:
+	case SIDE_TYPE_VLA_U64:
+	case SIDE_TYPE_VLA_S8:
+	case SIDE_TYPE_VLA_S16:
+	case SIDE_TYPE_VLA_S32:
+	case SIDE_TYPE_VLA_S64:
+		if (type_desc->type != SIDE_TYPE_VLA) {
+			printf("ERROR: type mismatch between description and arguments\n");
+			abort();
+		}
+		break;
+
 	default:
 		if (type_desc->type != SIDE_TYPE_DYNAMIC && type_desc->type != item->type) {
 			printf("ERROR: type mismatch between description and arguments\n");
@@ -94,6 +110,16 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_ARRAY_S32:
 	case SIDE_TYPE_ARRAY_S64:
 		tracer_print_array_fixint(type_desc, item);
+		break;
+	case SIDE_TYPE_VLA_U8:
+	case SIDE_TYPE_VLA_U16:
+	case SIDE_TYPE_VLA_U32:
+	case SIDE_TYPE_VLA_U64:
+	case SIDE_TYPE_VLA_S8:
+	case SIDE_TYPE_VLA_S16:
+	case SIDE_TYPE_VLA_S32:
+	case SIDE_TYPE_VLA_S64:
+		tracer_print_vla_fixint(type_desc, item);
 		break;
 	default:
 		printf("<UNKNOWN TYPE>");
@@ -272,6 +298,131 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 		case SIDE_TYPE_ARRAY_S64:
 			side_type = SIDE_TYPE_S64;
 			break;
+		}
+	}
+
+	printf("[ ");
+	for (i = 0; i < side_sav_len; i++) {
+		struct side_arg_vec sav_elem = {
+			.type = side_type,
+		};
+
+		switch (side_type) {
+		case SIDE_TYPE_U8:
+			sav_elem.u.side_u8 = ((const uint8_t *) p)[i];
+			break;
+		case SIDE_TYPE_S8:
+			sav_elem.u.side_s8 = ((const int8_t *) p)[i];
+			break;
+		case SIDE_TYPE_U16:
+			sav_elem.u.side_u16 = ((const uint16_t *) p)[i];
+			break;
+		case SIDE_TYPE_S16:
+			sav_elem.u.side_s16 = ((const int16_t *) p)[i];
+			break;
+		case SIDE_TYPE_U32:
+			sav_elem.u.side_u32 = ((const uint32_t *) p)[i];
+			break;
+		case SIDE_TYPE_S32:
+			sav_elem.u.side_s32 = ((const int32_t *) p)[i];
+			break;
+		case SIDE_TYPE_U64:
+			sav_elem.u.side_u64 = ((const uint64_t *) p)[i];
+			break;
+		case SIDE_TYPE_S64:
+			sav_elem.u.side_s64 = ((const int64_t *) p)[i];
+			break;
+
+		default:
+			printf("ERROR: Unexpected type\n");
+			abort();
+		}
+
+		printf("%s", i ? ", " : "");
+		tracer_print_type(elem_type, &sav_elem);
+	}
+	printf(" ]");
+	return;
+
+type_error:
+	printf("ERROR: type mismatch\n");
+	abort();
+}
+
+void tracer_print_vla_fixint(const struct side_type_description *type_desc, const struct side_arg_vec *item)
+{
+	const struct side_type_description *elem_type = type_desc->u.side_vla.elem_type;
+	uint32_t side_sav_len = item->u.side_vla_fixint.length;
+	void *p = item->u.side_vla_fixint.p;
+	enum side_type side_type;
+	int i;
+
+	if (elem_type->type != SIDE_TYPE_DYNAMIC) {
+		switch (item->type) {
+		case SIDE_TYPE_VLA_U8:
+			if (elem_type->type != SIDE_TYPE_U8)
+				goto type_error;
+			break;
+		case SIDE_TYPE_VLA_U16:
+			if (elem_type->type != SIDE_TYPE_U16)
+				goto type_error;
+			break;
+		case SIDE_TYPE_VLA_U32:
+			if (elem_type->type != SIDE_TYPE_U32)
+				goto type_error;
+			break;
+		case SIDE_TYPE_VLA_U64:
+			if (elem_type->type != SIDE_TYPE_U64)
+				goto type_error;
+			break;
+		case SIDE_TYPE_VLA_S8:
+			if (elem_type->type != SIDE_TYPE_S8)
+				goto type_error;
+			break;
+		case SIDE_TYPE_VLA_S16:
+			if (elem_type->type != SIDE_TYPE_S16)
+				goto type_error;
+			break;
+		case SIDE_TYPE_VLA_S32:
+			if (elem_type->type != SIDE_TYPE_S32)
+				goto type_error;
+			break;
+		case SIDE_TYPE_VLA_S64:
+			if (elem_type->type != SIDE_TYPE_S64)
+				goto type_error;
+			break;
+		default:
+			goto type_error;
+		}
+		side_type = elem_type->type;
+	} else {
+		switch (item->type) {
+		case SIDE_TYPE_VLA_U8:
+			side_type = SIDE_TYPE_U8;
+			break;
+		case SIDE_TYPE_VLA_U16:
+			side_type = SIDE_TYPE_U16;
+			break;
+		case SIDE_TYPE_VLA_U32:
+			side_type = SIDE_TYPE_U32;
+			break;
+		case SIDE_TYPE_VLA_U64:
+			side_type = SIDE_TYPE_U64;
+			break;
+		case SIDE_TYPE_VLA_S8:
+			side_type = SIDE_TYPE_S8;
+			break;
+		case SIDE_TYPE_VLA_S16:
+			side_type = SIDE_TYPE_S16;
+			break;
+		case SIDE_TYPE_VLA_S32:
+			side_type = SIDE_TYPE_S32;
+			break;
+		case SIDE_TYPE_VLA_S64:
+			side_type = SIDE_TYPE_S64;
+			break;
+		default:
+			goto type_error;
 		}
 	}
 
