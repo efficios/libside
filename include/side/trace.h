@@ -80,6 +80,7 @@ typedef enum side_visitor_status (*side_visitor_get_next)(void *ctx, struct side
 
 struct side_type_description {
 	enum side_type type;
+	//TODO: we should add something like a list of user attributes (namespaced strings)
 	union {
 		struct {
 			uint32_t nr_fields;
