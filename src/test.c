@@ -55,7 +55,7 @@ void test_struct(void)
 
 static side_define_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_array("arr", side_array_elem(SIDE_TYPE_U32), 3),
+		side_field_array("arr", side_elem(SIDE_TYPE_U32), 3),
 		side_field(SIDE_TYPE_S64, "v"),
 	)
 );
@@ -72,7 +72,7 @@ void test_array(void)
 
 static side_define_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vla", side_vla_elem(SIDE_TYPE_U32)),
+		side_field_vla("vla", side_elem(SIDE_TYPE_U32)),
 		side_field(SIDE_TYPE_S64, "v"),
 	)
 );
@@ -121,7 +121,7 @@ static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
 static side_define_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla_visitor("vlavisit", side_vla_visitor_elem(SIDE_TYPE_U32),
+		side_field_vla_visitor("vlavisit", side_elem(SIDE_TYPE_U32),
 			test_visitor_begin, test_visitor_end, test_visitor_get_next),
 		side_field(SIDE_TYPE_S64, "v"),
 	)

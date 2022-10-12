@@ -189,13 +189,7 @@ struct side_arg_vec_description {
 		.side_type = side_type_vla_visitor_decl(_elem_type, _begin, _end, _get_next), \
 	}
 
-#define side_vla_elem(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_type_description, side_type_decl(__VA_ARGS__))
-
-#define side_vla_visitor_elem(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_type_description, side_type_decl(__VA_ARGS__))
-
-#define side_array_elem(...) \
+#define side_elem(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type_description, side_type_decl(__VA_ARGS__))
 
 #define side_field_list(...) \
