@@ -17,6 +17,7 @@
 struct side_arg_vec;
 struct side_type_description;
 struct side_event_field;
+struct side_tracer_visitor_ctx;
 
 enum side_type {
 	SIDE_TYPE_U8,
@@ -74,9 +75,8 @@ enum side_visitor_status {
 	SIDE_VISITOR_STATUS_END = 1,
 };
 
-typedef enum side_visitor_status (*side_visitor_begin)(void *ctx);
-typedef enum side_visitor_status (*side_visitor_end)(void *ctx);
-typedef enum side_visitor_status (*side_visitor_get_next)(void *ctx, struct side_arg_vec *sav_elem);
+typedef enum side_visitor_status (*side_visitor)(const struct side_tracer_visitor_ctx *tracer_ctx,
+						void *app_ctx);
 
 struct side_type_description {
 	enum side_type type;
@@ -95,9 +95,7 @@ struct side_type_description {
 		} side_vla;
 		struct {
 			const struct side_type_description *elem_type;
-			side_visitor_begin begin;
-			side_visitor_end end;
-			side_visitor_get_next get_next;
+			side_visitor visitor;
 		} side_vla_visitor;
 	} u;
 };
@@ -133,7 +131,7 @@ struct side_arg_vec {
 		const struct side_arg_vec_description *side_struct;
 		const struct side_arg_vec_description *side_array;
 		const struct side_arg_vec_description *side_vla;
-		void *side_vla_visitor_ctx;
+		void *side_vla_app_visitor_ctx;
 
 		void *side_array_fixint;
 		struct {
@@ -146,6 +144,13 @@ struct side_arg_vec {
 struct side_arg_vec_description {
 	const struct side_arg_vec *sav;
 	uint32_t len;
+};
+
+/* The visitor pattern is a double-dispatch visitor. */
+struct side_tracer_visitor_ctx {
+	enum side_visitor_status (*write_elem)(const struct side_tracer_visitor_ctx *tracer_ctx,
+					const struct side_arg_vec *elem);
+	void *priv;		/* Private tracer context. */
 };
 
 #define side_type_decl(_type)			{ .type = _type }
@@ -198,22 +203,20 @@ struct side_arg_vec_description {
 		.side_type = side_type_vla_decl(_elem_type), \
 	}
 
-#define side_type_vla_visitor_decl(_elem_type, _begin, _end, _get_next) \
+#define side_type_vla_visitor_decl(_elem_type, _visitor) \
 	{ \
 		.type = SIDE_TYPE_VLA_VISITOR, \
 		.u = { \
 			.side_vla_visitor = { \
 				.elem_type = _elem_type, \
-				.begin = _begin, \
-				.end = _end, \
-				.get_next = _get_next, \
+				.visitor = _visitor, \
 			}, \
 		}, \
 	}
-#define side_field_vla_visitor(_name, _elem_type, _begin, _end, _get_next) \
+#define side_field_vla_visitor(_name, _elem_type, _visitor) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_vla_visitor_decl(_elem_type, _begin, _end, _get_next), \
+		.side_type = side_type_vla_visitor_decl(_elem_type, _visitor), \
 	}
 
 #define side_elem(...) \
@@ -234,7 +237,7 @@ struct side_arg_vec_description {
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_struct = (_side_type) } }
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_array = (_side_type) } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_vla = (_side_type) } }
-#define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_vla_visitor_ctx = (_ctx) } }
+#define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_vla_app_visitor_ctx = (_ctx) } }
 
 #define side_arg_array_u8(_ptr)		{ .type = SIDE_TYPE_ARRAY_U8, .u = { .side_array_fixint = (_ptr) } }
 #define side_arg_array_u16(_ptr)	{ .type = SIDE_TYPE_ARRAY_U16, .u = { .side_array_fixint = (_ptr) } }

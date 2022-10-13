@@ -17,7 +17,7 @@ void tracer_print_array(const struct side_type_description *type_desc, const str
 static
 void tracer_print_vla(const struct side_type_description *type_desc, const struct side_arg_vec_description *sav_desc);
 static
-void tracer_print_vla_visitor(const struct side_type_description *type_desc, void *ctx);
+void tracer_print_vla_visitor(const struct side_type_description *type_desc, void *app_ctx);
 static
 void tracer_print_array_fixint(const struct side_type_description *type_desc, const struct side_arg_vec *item);
 static
@@ -99,7 +99,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		tracer_print_vla(type_desc, item->u.side_vla);
 		break;
 	case SIDE_TYPE_VLA_VISITOR:
-		tracer_print_vla_visitor(type_desc, item->u.side_vla_visitor_ctx);
+		tracer_print_vla_visitor(type_desc, item->u.side_vla_app_visitor_ctx);
 		break;
 	case SIDE_TYPE_ARRAY_U8:
 	case SIDE_TYPE_ARRAY_U16:
@@ -188,44 +188,47 @@ void tracer_print_vla(const struct side_type_description *type_desc, const struc
 	printf(" ]");
 }
 
+struct tracer_visitor_priv {
+	const struct side_type_description *elem_type;
+	int i;
+};
+
 static
-void tracer_print_vla_visitor(const struct side_type_description *type_desc, void *ctx)
+enum side_visitor_status tracer_write_elem_cb(const struct side_tracer_visitor_ctx *tracer_ctx,
+			const struct side_arg_vec *elem)
+{
+	struct tracer_visitor_priv *tracer_priv = tracer_ctx->priv;
+
+	printf("%s", tracer_priv->i++ ? ", " : "");
+	tracer_print_type(tracer_priv->elem_type, elem);
+	return SIDE_VISITOR_STATUS_OK;
+}
+
+static
+void tracer_print_vla_visitor(const struct side_type_description *type_desc, void *app_ctx)
 {
 	enum side_visitor_status status;
-	int i;
-
-	status = type_desc->u.side_vla_visitor.begin(ctx);
-	if (status != SIDE_VISITOR_STATUS_OK) {
-		printf("ERROR: Visitor error\n");
-		abort();
-	}
+	struct tracer_visitor_priv tracer_priv = {
+		.elem_type = type_desc->u.side_vla_visitor.elem_type,
+		.i = 0,
+	};
+	const struct side_tracer_visitor_ctx tracer_ctx = {
+		.write_elem = tracer_write_elem_cb,
+		.priv = &tracer_priv,
+	};
 
 	printf("[ ");
-	status = SIDE_VISITOR_STATUS_OK;
-	for (i = 0; status == SIDE_VISITOR_STATUS_OK; i++) {
-		struct side_arg_vec sav_elem;
-
-		status = type_desc->u.side_vla_visitor.get_next(ctx, &sav_elem);
-		switch (status) {
-		case SIDE_VISITOR_STATUS_OK:
-			break;
-		case SIDE_VISITOR_STATUS_ERROR:
-			printf("ERROR: Visitor error\n");
-			abort();
-		case SIDE_VISITOR_STATUS_END:
-			continue;
-		}
-		printf("%s", i ? ", " : "");
-		tracer_print_type(type_desc->u.side_vla_visitor.elem_type, &sav_elem);
+	status = type_desc->u.side_vla_visitor.visitor(&tracer_ctx, app_ctx);
+	switch (status) {
+	case SIDE_VISITOR_STATUS_OK:
+		break;
+	case SIDE_VISITOR_STATUS_ERROR:
+		printf("ERROR: Visitor error\n");
+		abort();
+	case SIDE_VISITOR_STATUS_END:
+		break;
 	}
 	printf(" ]");
-	if (type_desc->u.side_vla_visitor.end) {
-		status = type_desc->u.side_vla_visitor.end(ctx);
-		if (status != SIDE_VISITOR_STATUS_OK) {
-			printf("ERROR: Visitor error\n");
-			abort();
-		}
-	}
 }
 
 void tracer_print_array_fixint(const struct side_type_description *type_desc, const struct side_arg_vec *item)

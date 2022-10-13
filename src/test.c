@@ -89,31 +89,24 @@ void test_vla(void)
 
 struct app_visitor_ctx {
 	const uint32_t *ptr;
-	int init_pos;
-	int current_pos;
-	int end_pos;
+	uint32_t length;
 };
 
-enum side_visitor_status test_visitor_begin(void *_ctx)
+static
+enum side_visitor_status test_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
 {
 	struct app_visitor_ctx *ctx = (struct app_visitor_ctx *) _ctx;
-	ctx->current_pos = ctx->init_pos;
-	return SIDE_VISITOR_STATUS_OK;
-}
+	uint32_t length = ctx->length, i;
 
-enum side_visitor_status test_visitor_end(void *_ctx)
-{
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-enum side_visitor_status test_visitor_get_next(void *_ctx, struct side_arg_vec *sav_elem)
-{
-	struct app_visitor_ctx *ctx = (struct app_visitor_ctx *) _ctx;
-
-	if (ctx->current_pos >= ctx->end_pos)
-		return SIDE_VISITOR_STATUS_END;
-	sav_elem->type = SIDE_TYPE_U32;
-	sav_elem->u.side_u32 = ctx->ptr[ctx->current_pos++];
+	for (i = 0; i < length; i++) {
+		const struct side_arg_vec elem = {
+			.type = SIDE_TYPE_U32,
+			.u = {
+				.side_u32 = ctx->ptr[i],
+			},
+		};
+		tracer_ctx->write_elem(tracer_ctx, &elem);
+	}
 	return SIDE_VISITOR_STATUS_OK;
 }
 
@@ -121,8 +114,7 @@ static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
 static side_define_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla_visitor("vlavisit", side_elem(SIDE_TYPE_U32),
-			test_visitor_begin, test_visitor_end, test_visitor_get_next),
+		side_field_vla_visitor("vlavisit", side_elem(SIDE_TYPE_U32), test_visitor),
 		side_field(SIDE_TYPE_S64, "v"),
 	)
 );
@@ -134,9 +126,7 @@ void test_vla_visitor(void)
 	side_event_cond(&my_provider_event_vla_visitor) {
 		struct app_visitor_ctx ctx = {
 			.ptr = testarray,
-			.init_pos = 0,
-			.current_pos = 0,
-			.end_pos = SIDE_ARRAY_SIZE(testarray),
+			.length = SIDE_ARRAY_SIZE(testarray),
 		};
 		side_event_call(&my_provider_event_vla_visitor, side_arg_list(side_arg_vla_visitor(&ctx), side_arg_s64(42)));
 	}
