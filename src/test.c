@@ -55,7 +55,7 @@ void test_struct(void)
 
 static side_define_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_array("arr", side_elem(SIDE_TYPE_U32), 3),
+		side_field_array("arr", side_elem_type(SIDE_TYPE_U32), 3),
 		side_field(SIDE_TYPE_S64, "v"),
 	)
 );
@@ -72,7 +72,7 @@ void test_array(void)
 
 static side_define_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vla", side_elem(SIDE_TYPE_U32)),
+		side_field_vla("vla", side_elem_type(SIDE_TYPE_U32)),
 		side_field(SIDE_TYPE_S64, "v"),
 	)
 );
@@ -86,6 +86,8 @@ void test_vla(void)
 		side_event_call(&my_provider_event_vla, side_arg_list(side_arg_vla(&myvla), side_arg_s64(42)));
 	}
 }
+
+/* 1D array visitor */
 
 struct app_visitor_ctx {
 	const uint32_t *ptr;
@@ -114,7 +116,7 @@ static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
 static side_define_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla_visitor("vlavisit", side_elem(SIDE_TYPE_U32), test_visitor),
+		side_field_vla_visitor("vlavisit", side_elem_type(SIDE_TYPE_U32), test_visitor),
 		side_field(SIDE_TYPE_S64, "v"),
 	)
 );
@@ -132,11 +134,85 @@ void test_vla_visitor(void)
 	}
 }
 
+/* 2D array visitor */
+
+struct app_visitor_2d_inner_ctx {
+	const uint32_t *ptr;
+	uint32_t length;
+};
+
+static
+enum side_visitor_status test_inner_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+{
+	struct app_visitor_2d_inner_ctx *ctx = (struct app_visitor_2d_inner_ctx *) _ctx;
+	uint32_t length = ctx->length, i;
+
+	for (i = 0; i < length; i++) {
+		const struct side_arg_vec elem = {
+			.type = SIDE_TYPE_U32,
+			.u = {
+				.side_u32 = ctx->ptr[i],
+			},
+		};
+		tracer_ctx->write_elem(tracer_ctx, &elem);
+	}
+	return SIDE_VISITOR_STATUS_OK;
+}
+
+struct app_visitor_2d_outer_ctx {
+	const uint32_t (*ptr)[2];
+	uint32_t length;
+};
+
+static
+enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+{
+	struct app_visitor_2d_outer_ctx *ctx = (struct app_visitor_2d_outer_ctx *) _ctx;
+	uint32_t length = ctx->length, i;
+
+	for (i = 0; i < length; i++) {
+		struct app_visitor_2d_inner_ctx inner_ctx = {
+			.ptr = ctx->ptr[i],
+			.length = 2,
+		};
+		const struct side_arg_vec elem = side_arg_vla_visitor(&inner_ctx);
+		tracer_ctx->write_elem(tracer_ctx, &elem);
+	}
+	return SIDE_VISITOR_STATUS_OK;
+}
+
+static uint32_t testarray2d[][2] = {
+	{ 1, 2 },
+	{ 33, 44 },
+	{ 55, 66 },
+};
+
+static side_define_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_vla_visitor("vlavisit2d",
+			side_elem(side_type_vla_visitor_decl(side_elem_type(SIDE_TYPE_U32), test_inner_visitor)), test_outer_visitor),
+		side_field(SIDE_TYPE_S64, "v"),
+	)
+);
+
+static
+void test_vla_visitor_2d(void)
+{
+	my_provider_event_vla_visitor2d.enabled = 1;
+	side_event_cond(&my_provider_event_vla_visitor2d) {
+		struct app_visitor_2d_outer_ctx ctx = {
+			.ptr = testarray2d,
+			.length = SIDE_ARRAY_SIZE(testarray2d),
+		};
+		side_event_call(&my_provider_event_vla_visitor2d, side_arg_list(side_arg_vla_visitor(&ctx), side_arg_s64(42)));
+	}
+}
+
 static int64_t array_fixint[] = { -444, 555, 123, 2897432587 };
 
 static side_define_event(my_provider_event_array_fixint, "myprovider", "myarrayfixint", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_array("arrfixint", side_elem(SIDE_TYPE_S64), SIDE_ARRAY_SIZE(array_fixint)),
+		side_field_array("arrfixint", side_elem_type(SIDE_TYPE_S64), SIDE_ARRAY_SIZE(array_fixint)),
 		side_field(SIDE_TYPE_S64, "v"),
 	)
 );
@@ -153,7 +229,7 @@ static int64_t vla_fixint[] = { -444, 555, 123, 2897432587 };
 
 static side_define_event(my_provider_event_vla_fixint, "myprovider", "myvlafixint", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vlafixint", side_elem(SIDE_TYPE_S64)),
+		side_field_vla("vlafixint", side_elem_type(SIDE_TYPE_S64)),
 		side_field(SIDE_TYPE_S64, "v"),
 	)
 );
@@ -173,6 +249,7 @@ int main()
 	test_array();
 	test_vla();
 	test_vla_visitor();
+	test_vla_visitor_2d();
 	test_array_fixint();
 	test_vla_fixint();
 	return 0;

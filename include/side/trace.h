@@ -208,7 +208,7 @@ struct side_tracer_visitor_ctx {
 		.type = SIDE_TYPE_VLA_VISITOR, \
 		.u = { \
 			.side_vla_visitor = { \
-				.elem_type = _elem_type, \
+				.elem_type = SIDE_PARAM(_elem_type), \
 				.visitor = _visitor, \
 			}, \
 		}, \
@@ -216,11 +216,14 @@ struct side_tracer_visitor_ctx {
 #define side_field_vla_visitor(_name, _elem_type, _visitor) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_vla_visitor_decl(_elem_type, _visitor), \
+		.side_type = side_type_vla_visitor_decl(SIDE_PARAM(_elem_type), _visitor), \
 	}
 
 #define side_elem(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_type_description, side_type_decl(__VA_ARGS__))
+	SIDE_COMPOUND_LITERAL(const struct side_type_description, __VA_ARGS__)
+
+#define side_elem_type(...) \
+	side_elem(side_type_decl(__VA_ARGS__))
 
 #define side_field_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)
