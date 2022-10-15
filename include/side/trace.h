@@ -16,8 +16,11 @@
 
 struct side_arg_vec;
 struct side_type_description;
+struct side_dynamic_type_description;
 struct side_event_field;
 struct side_tracer_visitor_ctx;
+struct side_tracer_dynamic_map_visitor_ctx;
+struct side_tracer_dynamic_vla_visitor_ctx;
 
 enum side_type {
 	SIDE_TYPE_U8,
@@ -30,7 +33,7 @@ enum side_type {
 	SIDE_TYPE_S64,
 
 	SIDE_TYPE_STRING,
-	SIDE_TYPE_DYNAMIC,
+
 	SIDE_TYPE_STRUCT,
 	SIDE_TYPE_ARRAY,
 	SIDE_TYPE_VLA,
@@ -54,8 +57,25 @@ enum side_type {
 	SIDE_TYPE_VLA_S32,
 	SIDE_TYPE_VLA_S64,
 
-	//TODO:
-	//variants (discriminated unions)
+	SIDE_TYPE_DYNAMIC,
+};
+
+enum side_dynamic_type {
+	SIDE_DYNAMIC_TYPE_NULL,
+
+	SIDE_DYNAMIC_TYPE_U8,
+	SIDE_DYNAMIC_TYPE_U16,
+	SIDE_DYNAMIC_TYPE_U32,
+	SIDE_DYNAMIC_TYPE_U64,
+	SIDE_DYNAMIC_TYPE_S8,
+	SIDE_DYNAMIC_TYPE_S16,
+	SIDE_DYNAMIC_TYPE_S32,
+	SIDE_DYNAMIC_TYPE_S64,
+
+	SIDE_DYNAMIC_TYPE_STRING,
+
+	SIDE_DYNAMIC_TYPE_MAP_VISITOR,
+	SIDE_DYNAMIC_TYPE_VLA_VISITOR,
 };
 
 enum side_loglevel {
@@ -76,6 +96,10 @@ enum side_visitor_status {
 };
 
 typedef enum side_visitor_status (*side_visitor)(const struct side_tracer_visitor_ctx *tracer_ctx,
+						void *app_ctx);
+typedef enum side_visitor_status (*side_dynamic_map_visitor)(const struct side_tracer_dynamic_map_visitor_ctx *tracer_ctx,
+						void *app_ctx);
+typedef enum side_visitor_status (*side_dynamic_vla_visitor)(const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
 						void *app_ctx);
 
 struct side_type_description {
@@ -115,6 +139,31 @@ struct side_event_description {
 	const struct side_event_field *fields;
 };
 
+struct side_arg_dynamic_vec {
+	uint32_t type;	/* enum side_dynamic_type */
+	union {
+		uint8_t side_u8;
+		uint16_t side_u16;
+		uint32_t side_u32;
+		uint64_t side_u64;
+		int8_t side_s8;
+		int16_t side_s16;
+		int32_t side_s32;
+		int64_t side_s64;
+
+		const char *string;
+
+		struct {
+			void *app_dynamic_visitor_ctx;
+			side_dynamic_map_visitor visitor;
+		} side_dynamic_map_visitor;
+		struct {
+			void *app_dynamic_visitor_ctx;
+			side_dynamic_vla_visitor visitor;
+		} side_dynamic_vla_visitor;
+	} u;
+};
+
 struct side_arg_vec {
 	uint32_t type;	/* enum side_type */
 	union {
@@ -138,6 +187,8 @@ struct side_arg_vec {
 			void *p;
 			uint32_t length;
 		} side_vla_fixint;
+
+		struct side_arg_dynamic_vec dynamic;
 	} u;
 };
 
@@ -146,10 +197,28 @@ struct side_arg_vec_description {
 	uint32_t len;
 };
 
+struct side_dynamic_event_field {
+	const char *field_name;
+	const struct side_arg_dynamic_vec *elem;
+	//TODO: we should add something like a list of user attributes (namespaced strings)
+};
+
 /* The visitor pattern is a double-dispatch visitor. */
 struct side_tracer_visitor_ctx {
 	enum side_visitor_status (*write_elem)(const struct side_tracer_visitor_ctx *tracer_ctx,
 					const struct side_arg_vec *elem);
+	void *priv;		/* Private tracer context. */
+};
+
+struct side_tracer_dynamic_map_visitor_ctx {
+	enum side_visitor_status (*write_field)(const struct side_tracer_dynamic_map_visitor_ctx *tracer_ctx,
+					const struct side_dynamic_event_field *field);
+	void *priv;		/* Private tracer context. */
+};
+
+struct side_tracer_dynamic_vla_visitor_ctx {
+	enum side_visitor_status (*write_elem)(const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
+					const struct side_arg_dynamic_vec *elem);
 	void *priv;		/* Private tracer context. */
 };
 
@@ -259,6 +328,44 @@ struct side_tracer_visitor_ctx {
 #define side_arg_vla_s16(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S16, .u = { .side_vla_fixint  = { .p = (_ptr), .length = (_length) } } }
 #define side_arg_vla_s32(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S32, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
 #define side_arg_vla_s64(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S64, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
+
+#define side_arg_dynamic(dynamic_arg_type) \
+	{ \
+		.type = SIDE_TYPE_DYNAMIC, \
+		.u = { \
+			.dynamic = dynamic_arg_type, \
+		}, \
+	}
+
+#define side_arg_dynamic_null(val)	{ .type = SIDE_DYNAMIC_TYPE_NULL }
+
+#define side_arg_dynamic_u8(val)	{ .type = SIDE_DYNAMIC_TYPE_U8, .u = { .side_u8 = (val) } }
+#define side_arg_dynamic_u16(val)	{ .type = SIDE_DYNAMIC_TYPE_U16, .u = { .side_u16 = (val) } }
+#define side_arg_dynamic_u32(val)	{ .type = SIDE_DYNAMIC_TYPE_U32, .u = { .side_u32 = (val) } }
+#define side_arg_dynamic_u64(val)	{ .type = SIDE_DYNAMIC_TYPE_U64, .u = { .side_u64 = (val) } }
+#define side_arg_dynamic_s8(val)	{ .type = SIDE_DYNAMIC_TYPE_S8, .u = { .side_s8 = (val) } }
+#define side_arg_dynamic_s16(val)	{ .type = SIDE_DYNAMIC_TYPE_S16, .u = { .side_s16 = (val) } }
+#define side_arg_dynamic_s32(val)	{ .type = SIDE_DYNAMIC_TYPE_S32, .u = { .side_s32 = (val) } }
+#define side_arg_dynamic_s64(val)	{ .type = SIDE_DYNAMIC_TYPE_S64, .u = { .side_s64 = (val) } }
+#define side_arg_dynamic_string(val)	{ .type = SIDE_DYNAMIC_TYPE_STRING, .u = { .string = (val) } }
+
+#define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx) \
+	{ \
+		.type = SIDE_DYNAMIC_TYPE_VLA_VISITOR, \
+		.app_dynamic_visitor_ctx = _ctx, \
+		.u = { \
+			.vla_visitor = _dynamic_vla_visitor, \
+		}, \
+	}
+
+#define side_arg_dynamic_map_visitor(_dynamic_map_visitor, _ctx) \
+	{ \
+		.type = SIDE_DYNAMIC_TYPE_MAP_VISITOR, \
+		.app_dynamic_visitor_ctx = _ctx, \
+		.u = { \
+			.map_visitor = _dynamic_map_visitor, \
+		}, \
+	}
 
 #define side_arg_define_vec(_identifier, _sav) \
 	const struct side_arg_vec _identifier##_vec[] = { _sav }; \
