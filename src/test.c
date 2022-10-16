@@ -28,7 +28,8 @@ void test_fields(void)
 	int64_t sdw = -500;
 
 	my_provider_event.enabled = 1;
-	side_event(&my_provider_event, side_arg_list(side_arg_u32(uw), side_arg_s64(sdw), side_arg_string("zzz")));
+	side_event(&my_provider_event, side_arg_list(side_arg_u32(uw), side_arg_s64(sdw),
+		side_arg_dynamic(side_arg_dynamic_string("zzz"))));
 }
 
 static side_define_event(my_provider_event2, "myprovider", "myevent2", SIDE_LOGLEVEL_DEBUG,
@@ -242,6 +243,38 @@ void test_vla_fixint(void)
 		side_arg_list(side_arg_vla_s64(vla_fixint, SIDE_ARRAY_SIZE(vla_fixint)), side_arg_s64(42)));
 }
 
+static side_define_event(my_provider_event_dynamic_basic,
+	"myprovider", "mydynamicbasic", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
+	)
+);
+
+static
+void test_dynamic_basic_type(void)
+{
+	my_provider_event_dynamic_basic.enabled = 1;
+	side_event(&my_provider_event_dynamic_basic,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_s16(-33))));
+}
+
+static side_define_event(my_provider_event_dynamic_vla,
+	"myprovider", "mydynamicvla", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
+	)
+);
+
+static
+void test_dynamic_vla(void)
+{
+	side_arg_dynamic_define_vec(myvla, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
+
+	my_provider_event_dynamic_vla.enabled = 1;
+	side_event(&my_provider_event_dynamic_vla,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
+}
+
 int main()
 {
 	test_fields();
@@ -252,5 +285,7 @@ int main()
 	test_vla_visitor_2d();
 	test_array_fixint();
 	test_vla_fixint();
+	test_dynamic_basic_type();
+	test_dynamic_vla();
 	return 0;
 }

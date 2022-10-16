@@ -22,6 +22,8 @@ static
 void tracer_print_array_fixint(const struct side_type_description *type_desc, const struct side_arg_vec *item);
 static
 void tracer_print_vla_fixint(const struct side_type_description *type_desc, const struct side_arg_vec *item);
+static
+void tracer_print_dynamic(const struct side_arg_dynamic_vec *dynamic_item);
 
 static
 void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item)
@@ -55,7 +57,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 
 	default:
-		if (type_desc->type != SIDE_TYPE_DYNAMIC && type_desc->type != item->type) {
+		if (type_desc->type != item->type) {
 			printf("ERROR: type mismatch between description and arguments\n");
 			abort();
 		}
@@ -87,7 +89,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		printf("%" PRId64, item->u.side_s64);
 		break;
 	case SIDE_TYPE_STRING:
-		printf("%s", item->u.string);
+		printf("\"%s\"", item->u.string);
 		break;
 	case SIDE_TYPE_STRUCT:
 		tracer_print_struct(type_desc, item->u.side_struct);
@@ -121,6 +123,9 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_VLA_S64:
 		tracer_print_vla_fixint(type_desc, item);
 		break;
+	case SIDE_TYPE_DYNAMIC:
+		tracer_print_dynamic(&item->u.dynamic);
+		break;
 	default:
 		printf("<UNKNOWN TYPE>");
 		abort();
@@ -130,7 +135,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 static
 void tracer_print_field(const struct side_event_field *item_desc, const struct side_arg_vec *item)
 {
-	printf("(\"%s\", ", item_desc->field_name);
+	printf("(%s: ", item_desc->field_name);
 	tracer_print_type(&item_desc->side_type, item);
 	printf(")");
 }
@@ -360,74 +365,43 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 	enum side_type side_type;
 	int i;
 
-	if (elem_type->type != SIDE_TYPE_DYNAMIC) {
-		switch (item->type) {
-		case SIDE_TYPE_VLA_U8:
-			if (elem_type->type != SIDE_TYPE_U8)
-				goto type_error;
-			break;
-		case SIDE_TYPE_VLA_U16:
-			if (elem_type->type != SIDE_TYPE_U16)
-				goto type_error;
-			break;
-		case SIDE_TYPE_VLA_U32:
-			if (elem_type->type != SIDE_TYPE_U32)
-				goto type_error;
-			break;
-		case SIDE_TYPE_VLA_U64:
-			if (elem_type->type != SIDE_TYPE_U64)
-				goto type_error;
-			break;
-		case SIDE_TYPE_VLA_S8:
-			if (elem_type->type != SIDE_TYPE_S8)
-				goto type_error;
-			break;
-		case SIDE_TYPE_VLA_S16:
-			if (elem_type->type != SIDE_TYPE_S16)
-				goto type_error;
-			break;
-		case SIDE_TYPE_VLA_S32:
-			if (elem_type->type != SIDE_TYPE_S32)
-				goto type_error;
-			break;
-		case SIDE_TYPE_VLA_S64:
-			if (elem_type->type != SIDE_TYPE_S64)
-				goto type_error;
-			break;
-		default:
+	switch (item->type) {
+	case SIDE_TYPE_VLA_U8:
+		if (elem_type->type != SIDE_TYPE_U8)
 			goto type_error;
-		}
-		side_type = elem_type->type;
-	} else {
-		switch (item->type) {
-		case SIDE_TYPE_VLA_U8:
-			side_type = SIDE_TYPE_U8;
-			break;
-		case SIDE_TYPE_VLA_U16:
-			side_type = SIDE_TYPE_U16;
-			break;
-		case SIDE_TYPE_VLA_U32:
-			side_type = SIDE_TYPE_U32;
-			break;
-		case SIDE_TYPE_VLA_U64:
-			side_type = SIDE_TYPE_U64;
-			break;
-		case SIDE_TYPE_VLA_S8:
-			side_type = SIDE_TYPE_S8;
-			break;
-		case SIDE_TYPE_VLA_S16:
-			side_type = SIDE_TYPE_S16;
-			break;
-		case SIDE_TYPE_VLA_S32:
-			side_type = SIDE_TYPE_S32;
-			break;
-		case SIDE_TYPE_VLA_S64:
-			side_type = SIDE_TYPE_S64;
-			break;
-		default:
+		break;
+	case SIDE_TYPE_VLA_U16:
+		if (elem_type->type != SIDE_TYPE_U16)
 			goto type_error;
-		}
+		break;
+	case SIDE_TYPE_VLA_U32:
+		if (elem_type->type != SIDE_TYPE_U32)
+			goto type_error;
+		break;
+	case SIDE_TYPE_VLA_U64:
+		if (elem_type->type != SIDE_TYPE_U64)
+			goto type_error;
+		break;
+	case SIDE_TYPE_VLA_S8:
+		if (elem_type->type != SIDE_TYPE_S8)
+			goto type_error;
+		break;
+	case SIDE_TYPE_VLA_S16:
+		if (elem_type->type != SIDE_TYPE_S16)
+			goto type_error;
+		break;
+	case SIDE_TYPE_VLA_S32:
+		if (elem_type->type != SIDE_TYPE_S32)
+			goto type_error;
+		break;
+	case SIDE_TYPE_VLA_S64:
+		if (elem_type->type != SIDE_TYPE_S64)
+			goto type_error;
+		break;
+	default:
+		goto type_error;
 	}
+	side_type = elem_type->type;
 
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
@@ -475,6 +449,91 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 type_error:
 	printf("ERROR: type mismatch\n");
 	abort();
+}
+
+static
+void tracer_print_dynamic_map(const struct side_dynamic_event_map *map)
+{
+	//TODO
+}
+
+static
+void tracer_print_dynamic_map_visitor(const struct side_arg_dynamic_vec *item)
+{
+	//TODO
+}
+
+static
+void tracer_print_dynamic_vla(const struct side_arg_dynamic_vec_vla *vla)
+{
+	const struct side_arg_dynamic_vec *sav = vla->sav;
+	uint32_t side_sav_len = vla->len;
+	int i;
+
+	printf("[ ");
+	for (i = 0; i < side_sav_len; i++) {
+		printf("%s", i ? ", " : "");
+		tracer_print_dynamic(&sav[i]);
+	}
+	printf(" ]");
+}
+
+static
+void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
+{
+	//TODO
+}
+
+static
+void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
+{
+	switch (item->type) {
+	case SIDE_DYNAMIC_TYPE_NULL:
+		printf("<NULL TYPE>");
+		break;
+	case SIDE_DYNAMIC_TYPE_U8:
+		printf("%" PRIu8, item->u.side_u8);
+		break;
+	case SIDE_DYNAMIC_TYPE_U16:
+		printf("%" PRIu16, item->u.side_u16);
+		break;
+	case SIDE_DYNAMIC_TYPE_U32:
+		printf("%" PRIu32, item->u.side_u32);
+		break;
+	case SIDE_DYNAMIC_TYPE_U64:
+		printf("%" PRIu64, item->u.side_u64);
+		break;
+	case SIDE_DYNAMIC_TYPE_S8:
+		printf("%" PRId8, item->u.side_s8);
+		break;
+	case SIDE_DYNAMIC_TYPE_S16:
+		printf("%" PRId16, item->u.side_s16);
+		break;
+	case SIDE_DYNAMIC_TYPE_S32:
+		printf("%" PRId32, item->u.side_s32);
+		break;
+	case SIDE_DYNAMIC_TYPE_S64:
+		printf("%" PRId64, item->u.side_s64);
+		break;
+	case SIDE_DYNAMIC_TYPE_STRING:
+		printf("\"%s\"", item->u.string);
+		break;
+	case SIDE_DYNAMIC_TYPE_MAP:
+		tracer_print_dynamic_map(item->u.side_dynamic_map);
+		break;
+	case SIDE_DYNAMIC_TYPE_MAP_VISITOR:
+		tracer_print_dynamic_map_visitor(item);
+		break;
+	case SIDE_DYNAMIC_TYPE_VLA:
+		tracer_print_dynamic_vla(item->u.side_dynamic_vla);
+		break;
+	case SIDE_DYNAMIC_TYPE_VLA_VISITOR:
+		tracer_print_dynamic_vla_visitor(item);
+		break;
+	default:
+		printf("<UNKNOWN TYPE>");
+		abort();
+	}
 }
 
 void tracer_call(const struct side_event_description *desc, const struct side_arg_vec_description *sav_desc)

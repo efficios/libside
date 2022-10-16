@@ -15,8 +15,10 @@
 /* SIDE stands for "Static Instrumentation Dynamically Enabled" */
 
 struct side_arg_vec;
+struct side_arg_vec_description;
+struct side_arg_dynamic_vec;
+struct side_arg_dynamic_vec_vla;
 struct side_type_description;
-struct side_dynamic_type_description;
 struct side_event_field;
 struct side_tracer_visitor_ctx;
 struct side_tracer_dynamic_map_visitor_ctx;
@@ -74,7 +76,10 @@ enum side_dynamic_type {
 
 	SIDE_DYNAMIC_TYPE_STRING,
 
+	SIDE_DYNAMIC_TYPE_MAP,
 	SIDE_DYNAMIC_TYPE_MAP_VISITOR,
+
+	SIDE_DYNAMIC_TYPE_VLA,
 	SIDE_DYNAMIC_TYPE_VLA_VISITOR,
 };
 
@@ -139,6 +144,22 @@ struct side_event_description {
 	const struct side_event_field *fields;
 };
 
+struct side_arg_dynamic_vec_vla {
+	const struct side_arg_dynamic_vec *sav;
+	uint32_t len;
+};
+
+struct side_dynamic_event_field {
+	const char *field_name;
+	const struct side_arg_dynamic_vec *elem;
+	//TODO: we should add something like a list of user attributes (namespaced strings)
+};
+
+struct side_dynamic_event_map {
+	const struct side_dynamic_event_field *fields;
+	uint32_t len;
+};
+
 struct side_arg_dynamic_vec {
 	uint32_t type;	/* enum side_dynamic_type */
 	union {
@@ -153,10 +174,13 @@ struct side_arg_dynamic_vec {
 
 		const char *string;
 
+		const struct side_dynamic_event_map *side_dynamic_map;
 		struct {
 			void *app_dynamic_visitor_ctx;
 			side_dynamic_map_visitor visitor;
 		} side_dynamic_map_visitor;
+
+		const struct side_arg_dynamic_vec_vla *side_dynamic_vla;
 		struct {
 			void *app_dynamic_visitor_ctx;
 			side_dynamic_vla_visitor visitor;
@@ -195,12 +219,6 @@ struct side_arg_vec {
 struct side_arg_vec_description {
 	const struct side_arg_vec *sav;
 	uint32_t len;
-};
-
-struct side_dynamic_event_field {
-	const char *field_name;
-	const struct side_arg_dynamic_vec *elem;
-	//TODO: we should add something like a list of user attributes (namespaced strings)
 };
 
 /* The visitor pattern is a double-dispatch visitor. */
@@ -349,6 +367,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_dynamic_s64(val)	{ .type = SIDE_DYNAMIC_TYPE_S64, .u = { .side_s64 = (val) } }
 #define side_arg_dynamic_string(val)	{ .type = SIDE_DYNAMIC_TYPE_STRING, .u = { .string = (val) } }
 
+#define side_arg_dynamic_vla(_vla)	{ .type = SIDE_DYNAMIC_TYPE_VLA, .u = { .side_dynamic_vla = (_vla) } }
 #define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx) \
 	{ \
 		.type = SIDE_DYNAMIC_TYPE_VLA_VISITOR, \
@@ -367,13 +386,20 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 
+#define side_arg_dynamic_define_vec(_identifier, _sav) \
+	const struct side_arg_dynamic_vec _identifier##_vec[] = { _sav }; \
+	const struct side_arg_dynamic_vec_vla _identifier = { \
+		.sav = _identifier##_vec, \
+		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
+	}
+
 #define side_arg_define_vec(_identifier, _sav) \
 	const struct side_arg_vec _identifier##_vec[] = { _sav }; \
 	const struct side_arg_vec_description _identifier = { \
 		.sav = _identifier##_vec, \
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
 	}
-	
+
 #define side_arg_list(...)	__VA_ARGS__
 
 #define side_event_cond(desc) if (side_unlikely((desc)->enabled))
