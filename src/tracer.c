@@ -452,9 +452,19 @@ type_error:
 }
 
 static
-void tracer_print_dynamic_map(const struct side_dynamic_event_map *map)
+void tracer_print_dynamic_map(const struct side_arg_dynamic_event_map *map)
 {
-	//TODO
+	const struct side_arg_dynamic_event_field *fields = map->fields;
+	uint32_t len = map->len;
+	int i;
+
+	printf("[ ");
+	for (i = 0; i < len; i++) {
+		printf("%s", i ? ", " : "");
+		printf("%s:: ", fields[i].field_name);
+		tracer_print_dynamic(&fields[i].elem);
+	}
+	printf(" ]");
 }
 
 static

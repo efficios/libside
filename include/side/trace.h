@@ -149,17 +149,6 @@ struct side_arg_dynamic_vec_vla {
 	uint32_t len;
 };
 
-struct side_dynamic_event_field {
-	const char *field_name;
-	const struct side_arg_dynamic_vec *elem;
-	//TODO: we should add something like a list of user attributes (namespaced strings)
-};
-
-struct side_dynamic_event_map {
-	const struct side_dynamic_event_field *fields;
-	uint32_t len;
-};
-
 struct side_arg_dynamic_vec {
 	uint32_t type;	/* enum side_dynamic_type */
 	union {
@@ -174,7 +163,7 @@ struct side_arg_dynamic_vec {
 
 		const char *string;
 
-		const struct side_dynamic_event_map *side_dynamic_map;
+		const struct side_arg_dynamic_event_map *side_dynamic_map;
 		struct {
 			void *app_dynamic_visitor_ctx;
 			side_dynamic_map_visitor visitor;
@@ -186,6 +175,17 @@ struct side_arg_dynamic_vec {
 			side_dynamic_vla_visitor visitor;
 		} side_dynamic_vla_visitor;
 	} u;
+};
+
+struct side_arg_dynamic_event_field {
+	const char *field_name;
+	const struct side_arg_dynamic_vec elem;
+	//TODO: we should add something like a list of user attributes (namespaced strings)
+};
+
+struct side_arg_dynamic_event_map {
+	const struct side_arg_dynamic_event_field *fields;
+	uint32_t len;
 };
 
 struct side_arg_vec {
@@ -230,7 +230,7 @@ struct side_tracer_visitor_ctx {
 
 struct side_tracer_dynamic_map_visitor_ctx {
 	enum side_visitor_status (*write_field)(const struct side_tracer_dynamic_map_visitor_ctx *tracer_ctx,
-					const struct side_dynamic_event_field *field);
+					const struct side_arg_dynamic_event_field *field);
 	void *priv;		/* Private tracer context. */
 };
 
@@ -377,6 +377,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 
+#define side_arg_dynamic_map(_map)	{ .type = SIDE_DYNAMIC_TYPE_MAP, .u = { .side_dynamic_map = (_map) } }
 #define side_arg_dynamic_map_visitor(_dynamic_map_visitor, _ctx) \
 	{ \
 		.type = SIDE_DYNAMIC_TYPE_MAP_VISITOR, \
@@ -393,11 +394,24 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
 	}
 
+#define side_arg_dynamic_define_map(_identifier, _map_fields) \
+	const struct side_arg_dynamic_event_field _identifier##_fields[] = { _map_fields }; \
+	const struct side_arg_dynamic_event_map _identifier = { \
+		.fields = _identifier##_fields, \
+		.len = SIDE_ARRAY_SIZE(_identifier##_fields), \
+	}
+
 #define side_arg_define_vec(_identifier, _sav) \
 	const struct side_arg_vec _identifier##_vec[] = { _sav }; \
 	const struct side_arg_vec_description _identifier = { \
 		.sav = _identifier##_vec, \
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
+	}
+
+#define side_arg_dynamic_field(_name, _elem) \
+	{ \
+		.field_name = _name, \
+		.elem = _elem, \
 	}
 
 #define side_arg_list(...)	__VA_ARGS__

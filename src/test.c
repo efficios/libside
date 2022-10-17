@@ -275,6 +275,44 @@ void test_dynamic_vla(void)
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
 
+static side_define_event(my_provider_event_dynamic_null,
+	"myprovider", "mydynamicnull", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
+	)
+);
+
+static
+void test_dynamic_null(void)
+{
+	my_provider_event_dynamic_null.enabled = 1;
+	side_event(&my_provider_event_dynamic_null,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_null())));
+}
+
+static side_define_event(my_provider_event_dynamic_map,
+	"myprovider", "mydynamicmap", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
+	)
+);
+
+static
+void test_dynamic_map(void)
+{
+	side_arg_dynamic_define_map(mymap,
+		side_arg_list(
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
+			side_arg_dynamic_field("b", side_arg_dynamic_string("zzz")),
+			side_arg_dynamic_field("c", side_arg_dynamic_null())
+		)
+	);
+
+	my_provider_event_dynamic_map.enabled = 1;
+	side_event(&my_provider_event_dynamic_map,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_map(&mymap))));
+}
+
 int main()
 {
 	test_fields();
@@ -287,5 +325,7 @@ int main()
 	test_vla_fixint();
 	test_dynamic_basic_type();
 	test_dynamic_vla();
+	test_dynamic_null();
+	test_dynamic_map();
 	return 0;
 }
