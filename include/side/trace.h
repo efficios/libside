@@ -110,7 +110,7 @@ typedef enum side_visitor_status (*side_dynamic_vla_visitor)(
 		void *app_ctx);
 
 struct side_type_description {
-	enum side_type type;
+	uint32_t type;	/* enum side_type */
 	//TODO: we should add something like a list of user attributes (namespaced strings)
 	union {
 		struct {
@@ -152,7 +152,7 @@ struct side_arg_dynamic_vec_vla {
 };
 
 struct side_arg_dynamic_vec {
-	enum side_dynamic_type dynamic_type;
+	uint32_t dynamic_type;	/* enum side_dynamic_type */
 	union {
 		uint8_t side_u8;
 		uint16_t side_u16;
