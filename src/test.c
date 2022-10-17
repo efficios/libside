@@ -268,8 +268,10 @@ static side_define_event(my_provider_event_dynamic_vla,
 static
 void test_dynamic_vla(void)
 {
-	side_arg_dynamic_define_vec(myvla, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
-
+	side_arg_dynamic_define_vec(myvla,
+		side_arg_list(
+			side_arg_dynamic_u32(1), side_arg_dynamic_u32(2), side_arg_dynamic_u32(3))
+		);
 	my_provider_event_dynamic_vla.enabled = 1;
 	side_event(&my_provider_event_dynamic_vla,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
@@ -386,9 +388,13 @@ static
 void test_dynamic_map_vla(void)
 {
 	side_arg_dynamic_define_vec(myvla,
-		side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
+		side_arg_list(
+			side_arg_dynamic_u32(1), side_arg_dynamic_u32(2), side_arg_dynamic_u32(3))
+		);
 	side_arg_dynamic_define_vec(myvla2,
-		side_arg_list(side_arg_u32(4), side_arg_u64(5), side_arg_u32(6)));
+		side_arg_list(
+			side_arg_dynamic_u32(4), side_arg_dynamic_u64(5), side_arg_dynamic_u32(6))
+		);
 	side_arg_dynamic_define_map(mymap,
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
@@ -398,6 +404,37 @@ void test_dynamic_map_vla(void)
 	my_provider_event_dynamic_map_vla.enabled = 1;
 	side_event(&my_provider_event_dynamic_map_vla,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_map(&mymap))));
+}
+
+static side_define_event(my_provider_event_dynamic_nested_vla,
+	"myprovider", "mydynamicnestedvla", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
+	)
+);
+
+static
+void test_dynamic_nested_vla(void)
+{
+	side_arg_dynamic_define_vec(nestedvla,
+		side_arg_list(
+			side_arg_dynamic_u32(1), side_arg_dynamic_u16(2), side_arg_dynamic_u32(3),
+		)
+	);
+	side_arg_dynamic_define_vec(nestedvla2,
+		side_arg_list(
+			side_arg_dynamic_u8(4), side_arg_dynamic_u32(5), side_arg_dynamic_u32(6),
+		)
+	);
+	side_arg_dynamic_define_vec(myvla,
+		side_arg_list(
+			side_arg_dynamic_vla(&nestedvla),
+			side_arg_dynamic_vla(&nestedvla2),
+		)
+	);
+	my_provider_event_dynamic_nested_vla.enabled = 1;
+	side_event(&my_provider_event_dynamic_nested_vla,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
 
 int main()
@@ -417,5 +454,6 @@ int main()
 	test_dynamic_nested_map();
 	test_dynamic_vla_map();
 	test_dynamic_map_vla();
+	test_dynamic_nested_vla();
 	return 0;
 }
