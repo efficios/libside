@@ -439,7 +439,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 #define side_event(desc, sav) \
 	side_event_cond(desc) \
-		side_event_call(desc, SIDE_PARAM(sav)); \
+		side_event_call(desc, SIDE_PARAM(sav))
 
 #define side_define_event(_identifier, _provider, _event, _loglevel, _fields) \
 	struct side_event_description _identifier = { \
