@@ -99,12 +99,15 @@ enum side_visitor_status {
 	SIDE_VISITOR_STATUS_ERROR = -1,
 };
 
-typedef enum side_visitor_status (*side_visitor)(const struct side_tracer_visitor_ctx *tracer_ctx,
-						void *app_ctx);
-typedef enum side_visitor_status (*side_dynamic_struct_visitor)(const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-						void *app_ctx);
-typedef enum side_visitor_status (*side_dynamic_vla_visitor)(const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
-						void *app_ctx);
+typedef enum side_visitor_status (*side_visitor)(
+		const struct side_tracer_visitor_ctx *tracer_ctx,
+		void *app_ctx);
+typedef enum side_visitor_status (*side_dynamic_struct_visitor)(
+		const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
+		void *app_ctx);
+typedef enum side_visitor_status (*side_dynamic_vla_visitor)(
+		const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
+		void *app_ctx);
 
 struct side_type_description {
 	enum side_type type;
@@ -222,25 +225,33 @@ struct side_arg_vec_description {
 
 /* The visitor pattern is a double-dispatch visitor. */
 struct side_tracer_visitor_ctx {
-	enum side_visitor_status (*write_elem)(const struct side_tracer_visitor_ctx *tracer_ctx,
-					const struct side_arg_vec *elem);
+	enum side_visitor_status (*write_elem)(
+			const struct side_tracer_visitor_ctx *tracer_ctx,
+			const struct side_arg_vec *elem);
 	void *priv;		/* Private tracer context. */
 };
 
 struct side_tracer_dynamic_struct_visitor_ctx {
-	enum side_visitor_status (*write_field)(const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-					const struct side_arg_dynamic_event_field *field);
+	enum side_visitor_status (*write_field)(
+			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
+			const struct side_arg_dynamic_event_field *field);
 	void *priv;		/* Private tracer context. */
 };
 
 struct side_tracer_dynamic_vla_visitor_ctx {
-	enum side_visitor_status (*write_elem)(const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
-					const struct side_arg_dynamic_vec *elem);
+	enum side_visitor_status (*write_elem)(
+			const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
+			const struct side_arg_dynamic_vec *elem);
 	void *priv;		/* Private tracer context. */
 };
 
-#define side_type_decl(_type)			{ .type = _type }
-#define side_field(_name, _type)		{ .field_name = _name, .side_type = side_type_decl(_type) }
+#define side_type_decl(_type)		{ .type = _type }
+
+#define side_field(_name, _type) \
+	{ \
+		.field_name = _name, \
+		.side_type = side_type_decl(_type), \
+	}
 
 #define side_type_struct_decl(_fields) \
 	{ \
@@ -314,15 +325,15 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)
 
-#define side_arg_u8(val)	{ .type = SIDE_TYPE_U8, .u = { .side_u8 = (val) } }
-#define side_arg_u16(val)	{ .type = SIDE_TYPE_U16, .u = { .side_u16 = (val) } }
-#define side_arg_u32(val)	{ .type = SIDE_TYPE_U32, .u = { .side_u32 = (val) } }
-#define side_arg_u64(val)	{ .type = SIDE_TYPE_U64, .u = { .side_u64 = (val) } }
-#define side_arg_s8(val)	{ .type = SIDE_TYPE_S8, .u = { .side_s8 = (val) } }
-#define side_arg_s16(val)	{ .type = SIDE_TYPE_S16, .u = { .side_s16 = (val) } }
-#define side_arg_s32(val)	{ .type = SIDE_TYPE_S32, .u = { .side_s32 = (val) } }
-#define side_arg_s64(val)	{ .type = SIDE_TYPE_S64, .u = { .side_s64 = (val) } }
-#define side_arg_string(val)	{ .type = SIDE_TYPE_STRING, .u = { .string = (val) } }
+#define side_arg_u8(val)		{ .type = SIDE_TYPE_U8, .u = { .side_u8 = (val) } }
+#define side_arg_u16(val)		{ .type = SIDE_TYPE_U16, .u = { .side_u16 = (val) } }
+#define side_arg_u32(val)		{ .type = SIDE_TYPE_U32, .u = { .side_u32 = (val) } }
+#define side_arg_u64(val)		{ .type = SIDE_TYPE_U64, .u = { .side_u64 = (val) } }
+#define side_arg_s8(val)		{ .type = SIDE_TYPE_S8, .u = { .side_s8 = (val) } }
+#define side_arg_s16(val)		{ .type = SIDE_TYPE_S16, .u = { .side_s16 = (val) } }
+#define side_arg_s32(val)		{ .type = SIDE_TYPE_S32, .u = { .side_s32 = (val) } }
+#define side_arg_s64(val)		{ .type = SIDE_TYPE_S64, .u = { .side_s64 = (val) } }
+#define side_arg_string(val)		{ .type = SIDE_TYPE_STRING, .u = { .string = (val) } }
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_struct = (_side_type) } }
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_array = (_side_type) } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_vla = (_side_type) } }
