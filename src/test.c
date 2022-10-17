@@ -461,6 +461,30 @@ void test_variadic(void)
 	);
 }
 
+static side_define_event(my_provider_event_static_variadic,
+	"myprovider", "mystaticvariadicevent", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field("abc", SIDE_TYPE_U32),
+		side_field("def", SIDE_TYPE_U16),
+	)
+);
+
+static
+void test_static_variadic(void)
+{
+	my_provider_event_static_variadic.enabled = 1;
+	side_event_variadic(&my_provider_event_static_variadic,
+		side_arg_list(
+			side_arg_u32(1),
+			side_arg_u16(2),
+		),
+		side_arg_list(
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(55)),
+			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4)),
+		)
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -480,5 +504,6 @@ int main()
 	test_dynamic_struct_vla();
 	test_dynamic_nested_vla();
 	test_variadic();
+	test_static_variadic();
 	return 0;
 }
