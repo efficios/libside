@@ -241,70 +241,43 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 	enum side_type side_type;
 	int i;
 
-	if (elem_type->type != SIDE_TYPE_DYNAMIC) {
-		switch (item->type) {
-		case SIDE_TYPE_ARRAY_U8:
-			if (elem_type->type != SIDE_TYPE_U8)
-				goto type_error;
-			break;
-		case SIDE_TYPE_ARRAY_U16:
-			if (elem_type->type != SIDE_TYPE_U16)
-				goto type_error;
-			break;
-		case SIDE_TYPE_ARRAY_U32:
-			if (elem_type->type != SIDE_TYPE_U32)
-				goto type_error;
-			break;
-		case SIDE_TYPE_ARRAY_U64:
-			if (elem_type->type != SIDE_TYPE_U64)
-				goto type_error;
-			break;
-		case SIDE_TYPE_ARRAY_S8:
-			if (elem_type->type != SIDE_TYPE_S8)
-				goto type_error;
-			break;
-		case SIDE_TYPE_ARRAY_S16:
-			if (elem_type->type != SIDE_TYPE_S16)
-				goto type_error;
-			break;
-		case SIDE_TYPE_ARRAY_S32:
-			if (elem_type->type != SIDE_TYPE_S32)
-				goto type_error;
-			break;
-		case SIDE_TYPE_ARRAY_S64:
-			if (elem_type->type != SIDE_TYPE_S64)
-				goto type_error;
-			break;
-		}
-		side_type = elem_type->type;
-	} else {
-		switch (item->type) {
-		case SIDE_TYPE_ARRAY_U8:
-			side_type = SIDE_TYPE_U8;
-			break;
-		case SIDE_TYPE_ARRAY_U16:
-			side_type = SIDE_TYPE_U16;
-			break;
-		case SIDE_TYPE_ARRAY_U32:
-			side_type = SIDE_TYPE_U32;
-			break;
-		case SIDE_TYPE_ARRAY_U64:
-			side_type = SIDE_TYPE_U64;
-			break;
-		case SIDE_TYPE_ARRAY_S8:
-			side_type = SIDE_TYPE_S8;
-			break;
-		case SIDE_TYPE_ARRAY_S16:
-			side_type = SIDE_TYPE_S16;
-			break;
-		case SIDE_TYPE_ARRAY_S32:
-			side_type = SIDE_TYPE_S32;
-			break;
-		case SIDE_TYPE_ARRAY_S64:
-			side_type = SIDE_TYPE_S64;
-			break;
-		}
+	switch (item->type) {
+	case SIDE_TYPE_ARRAY_U8:
+		if (elem_type->type != SIDE_TYPE_U8)
+			goto type_error;
+		break;
+	case SIDE_TYPE_ARRAY_U16:
+		if (elem_type->type != SIDE_TYPE_U16)
+			goto type_error;
+		break;
+	case SIDE_TYPE_ARRAY_U32:
+		if (elem_type->type != SIDE_TYPE_U32)
+			goto type_error;
+		break;
+	case SIDE_TYPE_ARRAY_U64:
+		if (elem_type->type != SIDE_TYPE_U64)
+			goto type_error;
+		break;
+	case SIDE_TYPE_ARRAY_S8:
+		if (elem_type->type != SIDE_TYPE_S8)
+			goto type_error;
+		break;
+	case SIDE_TYPE_ARRAY_S16:
+		if (elem_type->type != SIDE_TYPE_S16)
+			goto type_error;
+		break;
+	case SIDE_TYPE_ARRAY_S32:
+		if (elem_type->type != SIDE_TYPE_S32)
+			goto type_error;
+		break;
+	case SIDE_TYPE_ARRAY_S64:
+		if (elem_type->type != SIDE_TYPE_S64)
+			goto type_error;
+		break;
+	default:
+		goto type_error;
 	}
+	side_type = elem_type->type;
 
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
@@ -494,7 +467,7 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
 static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 {
-	switch (item->type) {
+	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
 		printf("<NULL TYPE>");
 		break;
