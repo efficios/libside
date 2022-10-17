@@ -149,7 +149,7 @@ struct side_arg_dynamic_vec_vla {
 };
 
 struct side_arg_dynamic_vec {
-	uint32_t type;	/* enum side_dynamic_type */
+	enum side_dynamic_type type;
 	union {
 		uint8_t side_u8;
 		uint16_t side_u16;
