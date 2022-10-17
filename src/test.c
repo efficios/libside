@@ -273,8 +273,9 @@ void test_dynamic_vla(void)
 {
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
-			side_arg_dynamic_u32(1), side_arg_dynamic_u32(2), side_arg_dynamic_u32(3))
-		);
+			side_arg_dynamic_u32(1), side_arg_dynamic_u32(2), side_arg_dynamic_u32(3),
+		)
+	);
 	my_provider_event_dynamic_vla.enabled = 1;
 	side_event(&my_provider_event_dynamic_vla,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
@@ -392,12 +393,14 @@ void test_dynamic_struct_vla(void)
 {
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
-			side_arg_dynamic_u32(1), side_arg_dynamic_u32(2), side_arg_dynamic_u32(3))
-		);
+			side_arg_dynamic_u32(1), side_arg_dynamic_u32(2), side_arg_dynamic_u32(3),
+		)
+	);
 	side_arg_dynamic_define_vec(myvla2,
 		side_arg_list(
-			side_arg_dynamic_u32(4), side_arg_dynamic_u64(5), side_arg_dynamic_u32(6))
-		);
+			side_arg_dynamic_u32(4), side_arg_dynamic_u64(5), side_arg_dynamic_u32(6),
+		)
+	);
 	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
