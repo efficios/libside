@@ -108,7 +108,8 @@ enum side_visitor_status test_visitor(const struct side_tracer_visitor_ctx *trac
 				.side_u32 = ctx->ptr[i],
 			},
 		};
-		tracer_ctx->write_elem(tracer_ctx, &elem);
+		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
+			return SIDE_VISITOR_STATUS_ERROR;
 	}
 	return SIDE_VISITOR_STATUS_OK;
 }
@@ -155,7 +156,8 @@ enum side_visitor_status test_inner_visitor(const struct side_tracer_visitor_ctx
 				.side_u32 = ctx->ptr[i],
 			},
 		};
-		tracer_ctx->write_elem(tracer_ctx, &elem);
+		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
+			return SIDE_VISITOR_STATUS_ERROR;
 	}
 	return SIDE_VISITOR_STATUS_OK;
 }
@@ -177,7 +179,8 @@ enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx
 			.length = 2,
 		};
 		const struct side_arg_vec elem = side_arg_vla_visitor(&inner_ctx);
-		tracer_ctx->write_elem(tracer_ctx, &elem);
+		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
+			return SIDE_VISITOR_STATUS_ERROR;
 	}
 	return SIDE_VISITOR_STATUS_OK;
 }

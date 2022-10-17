@@ -95,9 +95,8 @@ enum side_loglevel {
 };
 
 enum side_visitor_status {
-	SIDE_VISITOR_STATUS_ERROR = -1,
 	SIDE_VISITOR_STATUS_OK = 0,
-	SIDE_VISITOR_STATUS_END = 1,
+	SIDE_VISITOR_STATUS_ERROR = -1,
 };
 
 typedef enum side_visitor_status (*side_visitor)(const struct side_tracer_visitor_ctx *tracer_ctx,

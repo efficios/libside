@@ -230,8 +230,6 @@ void tracer_print_vla_visitor(const struct side_type_description *type_desc, voi
 	case SIDE_VISITOR_STATUS_ERROR:
 		printf("ERROR: Visitor error\n");
 		abort();
-	case SIDE_VISITOR_STATUS_END:
-		break;
 	}
 	printf(" ]");
 }
