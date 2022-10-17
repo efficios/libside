@@ -309,7 +309,7 @@ void test_dynamic_struct(void)
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
 			side_arg_dynamic_field("b", side_arg_dynamic_string("zzz")),
-			side_arg_dynamic_field("c", side_arg_dynamic_null())
+			side_arg_dynamic_field("c", side_arg_dynamic_null()),
 		)
 	);
 
