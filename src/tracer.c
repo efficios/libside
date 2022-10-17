@@ -64,6 +64,9 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 	}
 	switch (item->type) {
+	case SIDE_TYPE_BOOL:
+		printf("%s", item->u.side_bool ? "true" : "false");
+		break;
 	case SIDE_TYPE_U8:
 		printf("%" PRIu8, item->u.side_u8);
 		break;
@@ -470,6 +473,9 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
 		printf("<NULL TYPE>");
+		break;
+	case SIDE_DYNAMIC_TYPE_BOOL:
+		printf("%s", item->u.side_bool ? "true" : "false");
 		break;
 	case SIDE_DYNAMIC_TYPE_U8:
 		printf("%" PRIu8, item->u.side_u8);

@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <side/trace.h>
 #include "tracer.h"
@@ -485,6 +486,63 @@ void test_static_variadic(void)
 	);
 }
 
+static side_define_event(my_provider_event_bool, "myprovider", "myeventbool", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field("a_false", SIDE_TYPE_BOOL),
+		side_field("b_true", SIDE_TYPE_BOOL),
+		side_field("c_true", SIDE_TYPE_BOOL),
+		side_field("d_true", SIDE_TYPE_BOOL),
+		side_field("e_true", SIDE_TYPE_BOOL),
+		side_field("f_false", SIDE_TYPE_BOOL),
+		side_field("g_true", SIDE_TYPE_BOOL),
+	)
+);
+
+static
+void test_bool(void)
+{
+	uint32_t a = 0;
+	uint32_t b = 1;
+	uint64_t c = 0x12345678;
+	int16_t d = -32768;
+	bool e = true;
+	bool f = false;
+	uint32_t g = 256;
+
+	my_provider_event_bool.enabled = 1;
+	side_event(&my_provider_event_bool,
+		side_arg_list(
+			side_arg_bool(a),
+			side_arg_bool(b),
+			side_arg_bool(c),
+			side_arg_bool(d),
+			side_arg_bool(e),
+			side_arg_bool(f),
+			side_arg_bool(g),
+		)
+	);
+}
+
+static side_define_event(my_provider_event_dynamic_bool,
+	"myprovider", "mydynamicbool", SIDE_LOGLEVEL_DEBUG,
+	side_field_list()
+);
+
+static
+void test_dynamic_bool(void)
+{
+	my_provider_event_dynamic_bool.enabled = 1;
+	side_event_variadic(&my_provider_event_dynamic_bool,
+		side_arg_list(),
+		side_arg_list(
+			side_arg_dynamic_field("a_true", side_arg_dynamic_bool(55)),
+			side_arg_dynamic_field("b_true", side_arg_dynamic_bool(-4)),
+			side_arg_dynamic_field("c_false", side_arg_dynamic_bool(0)),
+			side_arg_dynamic_field("d_true", side_arg_dynamic_bool(256)),
+		)
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -505,5 +563,7 @@ int main()
 	test_dynamic_nested_vla();
 	test_variadic();
 	test_static_variadic();
+	test_bool();
+	test_dynamic_bool();
 	return 0;
 }

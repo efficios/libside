@@ -25,6 +25,8 @@ struct side_tracer_dynamic_struct_visitor_ctx;
 struct side_tracer_dynamic_vla_visitor_ctx;
 
 enum side_type {
+	SIDE_TYPE_BOOL,
+
 	SIDE_TYPE_U8,
 	SIDE_TYPE_U16,
 	SIDE_TYPE_U32,
@@ -64,6 +66,8 @@ enum side_type {
 
 enum side_dynamic_type {
 	SIDE_DYNAMIC_TYPE_NULL,
+
+	SIDE_DYNAMIC_TYPE_BOOL,
 
 	SIDE_DYNAMIC_TYPE_U8,
 	SIDE_DYNAMIC_TYPE_U16,
@@ -154,6 +158,8 @@ struct side_arg_dynamic_vec_vla {
 struct side_arg_dynamic_vec {
 	uint32_t dynamic_type;	/* enum side_dynamic_type */
 	union {
+		uint8_t side_bool;
+
 		uint8_t side_u8;
 		uint16_t side_u16;
 		uint32_t side_u32;
@@ -193,6 +199,8 @@ struct side_arg_dynamic_event_struct {
 struct side_arg_vec {
 	enum side_type type;
 	union {
+		uint8_t side_bool;
+
 		uint8_t side_u8;
 		uint16_t side_u16;
 		uint32_t side_u32;
@@ -325,6 +333,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)
 
+#define side_arg_bool(val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_bool = !!(val) } }
 #define side_arg_u8(val)		{ .type = SIDE_TYPE_U8, .u = { .side_u8 = (val) } }
 #define side_arg_u16(val)		{ .type = SIDE_TYPE_U16, .u = { .side_u16 = (val) } }
 #define side_arg_u32(val)		{ .type = SIDE_TYPE_U32, .u = { .side_u32 = (val) } }
@@ -367,6 +376,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 #define side_arg_dynamic_null(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_NULL }
 
+#define side_arg_dynamic_bool(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_BOOL, .u = { .side_bool = !!(val) } }
 #define side_arg_dynamic_u8(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_U8, .u = { .side_u8 = (val) } }
 #define side_arg_dynamic_u16(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_U16, .u = { .side_u16 = (val) } }
 #define side_arg_dynamic_u32(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_U32, .u = { .side_u32 = (val) } }
