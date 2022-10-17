@@ -516,7 +516,10 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	}
 }
 
-void tracer_call(const struct side_event_description *desc, const struct side_arg_vec_description *sav_desc)
+static
+void tracer_print_static_fields(const struct side_event_description *desc,
+		const struct side_arg_vec_description *sav_desc,
+		int *nr_items)
 {
 	const struct side_arg_vec *sav = sav_desc->sav;
 	uint32_t side_sav_len = sav_desc->len;
@@ -531,6 +534,13 @@ void tracer_call(const struct side_event_description *desc, const struct side_ar
 		printf("%s", i ? ", " : "");
 		tracer_print_field(&desc->fields[i], &sav[i]);
 	}
+	if (nr_items)
+		*nr_items = i;
+}
+
+void tracer_call(const struct side_event_description *desc, const struct side_arg_vec_description *sav_desc)
+{
+	tracer_print_static_fields(desc, sav_desc, NULL);
 	printf("\n");
 }
 
@@ -538,26 +548,15 @@ void tracer_call_variadic(const struct side_event_description *desc,
 	const struct side_arg_vec_description *sav_desc,
 	const struct side_arg_dynamic_event_struct *var_struct)
 {
-	const struct side_arg_vec *sav = sav_desc->sav;
-	uint32_t side_sav_len = sav_desc->len,
-		var_struct_len = var_struct->len;
-	int i, j;
+	uint32_t var_struct_len = var_struct->len;
+	int nr_fields = 0, i;
 
-	printf("provider: %s, event: %s, ", desc->provider_name, desc->event_name);
-	if (desc->nr_fields != side_sav_len) {
-		printf("ERROR: number of fields mismatch between description and arguments\n");
-		abort();
-	}
-	/* static */
-	for (i = 0; i < side_sav_len; i++) {
-		printf("%s", i ? ", " : "");
-		tracer_print_field(&desc->fields[i], &sav[i]);
-	}
-	/* variadic */
-	for (j = 0; j < var_struct_len; j++, i++) {
-		printf("%s", i ? ", " : "");
-		printf("%s:: ", var_struct->fields[j].field_name);
-		tracer_print_dynamic(&var_struct->fields[j].elem);
+	tracer_print_static_fields(desc, sav_desc, &nr_fields);
+
+	for (i = 0; i < var_struct_len; i++, nr_fields++) {
+		printf("%s", nr_fields ? ", " : "");
+		printf("%s:: ", var_struct->fields[i].field_name);
+		tracer_print_dynamic(&var_struct->fields[i].elem);
 	}
 	printf("\n");
 }
