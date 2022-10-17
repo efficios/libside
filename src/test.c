@@ -313,6 +313,40 @@ void test_dynamic_map(void)
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_map(&mymap))));
 }
 
+static side_define_event(my_provider_event_dynamic_nested_map,
+	"myprovider", "mydynamicnestedmap", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
+	)
+);
+
+static
+void test_dynamic_nested_map(void)
+{
+	side_arg_dynamic_define_map(nested,
+		side_arg_list(
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
+			side_arg_dynamic_field("b", side_arg_dynamic_u8(55)),
+		)
+	);
+	side_arg_dynamic_define_map(nested2,
+		side_arg_list(
+			side_arg_dynamic_field("aa", side_arg_dynamic_u64(128)),
+			side_arg_dynamic_field("bb", side_arg_dynamic_u16(1)),
+		)
+	);
+	side_arg_dynamic_define_map(mymap,
+		side_arg_list(
+			side_arg_dynamic_field("nested", side_arg_dynamic_map(&nested)),
+			side_arg_dynamic_field("nested2", side_arg_dynamic_map(&nested2)),
+		)
+	);
+
+	my_provider_event_dynamic_nested_map.enabled = 1;
+	side_event(&my_provider_event_dynamic_nested_map,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_map(&mymap))));
+}
+
 int main()
 {
 	test_fields();
@@ -327,5 +361,6 @@ int main()
 	test_dynamic_vla();
 	test_dynamic_null();
 	test_dynamic_map();
+	test_dynamic_nested_map();
 	return 0;
 }
