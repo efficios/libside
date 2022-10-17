@@ -295,17 +295,17 @@ void test_dynamic_null(void)
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_null())));
 }
 
-static side_define_event(my_provider_event_dynamic_kvpairs,
-	"myprovider", "mydynamickvpairs", SIDE_LOGLEVEL_DEBUG,
+static side_define_event(my_provider_event_dynamic_struct,
+	"myprovider", "mydynamicstruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
 	)
 );
 
 static
-void test_dynamic_kvpairs(void)
+void test_dynamic_struct(void)
 {
-	side_arg_dynamic_define_kvpairs(mykvpairs,
+	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
 			side_arg_dynamic_field("b", side_arg_dynamic_string("zzz")),
@@ -313,55 +313,55 @@ void test_dynamic_kvpairs(void)
 		)
 	);
 
-	my_provider_event_dynamic_kvpairs.enabled = 1;
-	side_event(&my_provider_event_dynamic_kvpairs,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_kvpairs(&mykvpairs))));
+	my_provider_event_dynamic_struct.enabled = 1;
+	side_event(&my_provider_event_dynamic_struct,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
 
-static side_define_event(my_provider_event_dynamic_nested_kvpairs,
-	"myprovider", "mydynamicnestedkvpairs", SIDE_LOGLEVEL_DEBUG,
+static side_define_event(my_provider_event_dynamic_nested_struct,
+	"myprovider", "mydynamicnestedstruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
 	)
 );
 
 static
-void test_dynamic_nested_kvpairs(void)
+void test_dynamic_nested_struct(void)
 {
-	side_arg_dynamic_define_kvpairs(nested,
+	side_arg_dynamic_define_struct(nested,
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
 			side_arg_dynamic_field("b", side_arg_dynamic_u8(55)),
 		)
 	);
-	side_arg_dynamic_define_kvpairs(nested2,
+	side_arg_dynamic_define_struct(nested2,
 		side_arg_list(
 			side_arg_dynamic_field("aa", side_arg_dynamic_u64(128)),
 			side_arg_dynamic_field("bb", side_arg_dynamic_u16(1)),
 		)
 	);
-	side_arg_dynamic_define_kvpairs(mykvpairs,
+	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
-			side_arg_dynamic_field("nested", side_arg_dynamic_kvpairs(&nested)),
-			side_arg_dynamic_field("nested2", side_arg_dynamic_kvpairs(&nested2)),
+			side_arg_dynamic_field("nested", side_arg_dynamic_struct(&nested)),
+			side_arg_dynamic_field("nested2", side_arg_dynamic_struct(&nested2)),
 		)
 	);
-	my_provider_event_dynamic_nested_kvpairs.enabled = 1;
-	side_event(&my_provider_event_dynamic_nested_kvpairs,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_kvpairs(&mykvpairs))));
+	my_provider_event_dynamic_nested_struct.enabled = 1;
+	side_event(&my_provider_event_dynamic_nested_struct,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
 
-static side_define_event(my_provider_event_dynamic_vla_kvpairs,
-	"myprovider", "mydynamicvlakvpairs", SIDE_LOGLEVEL_DEBUG,
+static side_define_event(my_provider_event_dynamic_vla_struct,
+	"myprovider", "mydynamicvlastruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
 	)
 );
 
 static
-void test_dynamic_vla_kvpairs(void)
+void test_dynamic_vla_struct(void)
 {
-	side_arg_dynamic_define_kvpairs(nested,
+	side_arg_dynamic_define_struct(nested,
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
 			side_arg_dynamic_field("b", side_arg_dynamic_u8(55)),
@@ -369,26 +369,26 @@ void test_dynamic_vla_kvpairs(void)
 	);
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
-			side_arg_dynamic_kvpairs(&nested),
-			side_arg_dynamic_kvpairs(&nested),
-			side_arg_dynamic_kvpairs(&nested),
-			side_arg_dynamic_kvpairs(&nested),
+			side_arg_dynamic_struct(&nested),
+			side_arg_dynamic_struct(&nested),
+			side_arg_dynamic_struct(&nested),
+			side_arg_dynamic_struct(&nested),
 		)
 	);
-	my_provider_event_dynamic_vla_kvpairs.enabled = 1;
-	side_event(&my_provider_event_dynamic_vla_kvpairs,
+	my_provider_event_dynamic_vla_struct.enabled = 1;
+	side_event(&my_provider_event_dynamic_vla_struct,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
 
-static side_define_event(my_provider_event_dynamic_kvpairs_vla,
-	"myprovider", "mydynamickvpairsvla", SIDE_LOGLEVEL_DEBUG,
+static side_define_event(my_provider_event_dynamic_struct_vla,
+	"myprovider", "mydynamicstructvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field(SIDE_TYPE_DYNAMIC, "dynamic"),
 	)
 );
 
 static
-void test_dynamic_kvpairs_vla(void)
+void test_dynamic_struct_vla(void)
 {
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
@@ -398,15 +398,15 @@ void test_dynamic_kvpairs_vla(void)
 		side_arg_list(
 			side_arg_dynamic_u32(4), side_arg_dynamic_u64(5), side_arg_dynamic_u32(6))
 		);
-	side_arg_dynamic_define_kvpairs(mykvpairs,
+	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
 			side_arg_dynamic_field("b", side_arg_dynamic_vla(&myvla2)),
 		)
 	);
-	my_provider_event_dynamic_kvpairs_vla.enabled = 1;
-	side_event(&my_provider_event_dynamic_kvpairs_vla,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_kvpairs(&mykvpairs))));
+	my_provider_event_dynamic_struct_vla.enabled = 1;
+	side_event(&my_provider_event_dynamic_struct_vla,
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
 
 static side_define_event(my_provider_event_dynamic_nested_vla,
@@ -453,10 +453,10 @@ int main()
 	test_dynamic_basic_type();
 	test_dynamic_vla();
 	test_dynamic_null();
-	test_dynamic_kvpairs();
-	test_dynamic_nested_kvpairs();
-	test_dynamic_vla_kvpairs();
-	test_dynamic_kvpairs_vla();
+	test_dynamic_struct();
+	test_dynamic_nested_struct();
+	test_dynamic_vla_struct();
+	test_dynamic_struct_vla();
 	test_dynamic_nested_vla();
 	return 0;
 }

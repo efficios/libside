@@ -21,7 +21,7 @@ struct side_arg_dynamic_vec_vla;
 struct side_type_description;
 struct side_event_field;
 struct side_tracer_visitor_ctx;
-struct side_tracer_dynamic_kvpairs_visitor_ctx;
+struct side_tracer_dynamic_struct_visitor_ctx;
 struct side_tracer_dynamic_vla_visitor_ctx;
 
 enum side_type {
@@ -76,8 +76,8 @@ enum side_dynamic_type {
 
 	SIDE_DYNAMIC_TYPE_STRING,
 
-	SIDE_DYNAMIC_TYPE_KVPAIRS,
-	SIDE_DYNAMIC_TYPE_KVPAIRS_VISITOR,
+	SIDE_DYNAMIC_TYPE_STRUCT,
+	SIDE_DYNAMIC_TYPE_STRUCT_VISITOR,
 
 	SIDE_DYNAMIC_TYPE_VLA,
 	SIDE_DYNAMIC_TYPE_VLA_VISITOR,
@@ -101,7 +101,7 @@ enum side_visitor_status {
 
 typedef enum side_visitor_status (*side_visitor)(const struct side_tracer_visitor_ctx *tracer_ctx,
 						void *app_ctx);
-typedef enum side_visitor_status (*side_dynamic_kvpairs_visitor)(const struct side_tracer_dynamic_kvpairs_visitor_ctx *tracer_ctx,
+typedef enum side_visitor_status (*side_dynamic_struct_visitor)(const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
 						void *app_ctx);
 typedef enum side_visitor_status (*side_dynamic_vla_visitor)(const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
 						void *app_ctx);
@@ -162,11 +162,11 @@ struct side_arg_dynamic_vec {
 
 		const char *string;
 
-		const struct side_arg_dynamic_event_kvpairs *side_dynamic_kvpairs;
+		const struct side_arg_dynamic_event_struct *side_dynamic_struct;
 		struct {
 			void *app_dynamic_visitor_ctx;
-			side_dynamic_kvpairs_visitor visitor;
-		} side_dynamic_kvpairs_visitor;
+			side_dynamic_struct_visitor visitor;
+		} side_dynamic_struct_visitor;
 
 		const struct side_arg_dynamic_vec_vla *side_dynamic_vla;
 		struct {
@@ -182,7 +182,7 @@ struct side_arg_dynamic_event_field {
 	//TODO: we should add something like a list of user attributes (namespaced strings)
 };
 
-struct side_arg_dynamic_event_kvpairs {
+struct side_arg_dynamic_event_struct {
 	const struct side_arg_dynamic_event_field *fields;
 	uint32_t len;
 };
@@ -227,8 +227,8 @@ struct side_tracer_visitor_ctx {
 	void *priv;		/* Private tracer context. */
 };
 
-struct side_tracer_dynamic_kvpairs_visitor_ctx {
-	enum side_visitor_status (*write_field)(const struct side_tracer_dynamic_kvpairs_visitor_ctx *tracer_ctx,
+struct side_tracer_dynamic_struct_visitor_ctx {
+	enum side_visitor_status (*write_field)(const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
 					const struct side_arg_dynamic_event_field *field);
 	void *priv;		/* Private tracer context. */
 };
@@ -376,13 +376,13 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 
-#define side_arg_dynamic_kvpairs(_kvpairs)	{ .type = SIDE_DYNAMIC_TYPE_KVPAIRS, .u = { .side_dynamic_kvpairs = (_kvpairs) } }
-#define side_arg_dynamic_kvpairs_visitor(_dynamic_kvpairs_visitor, _ctx) \
+#define side_arg_dynamic_struct(_struct)	{ .type = SIDE_DYNAMIC_TYPE_STRUCT, .u = { .side_dynamic_struct = (_struct) } }
+#define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor, _ctx) \
 	{ \
-		.type = SIDE_DYNAMIC_TYPE_KVPAIRS_VISITOR, \
+		.type = SIDE_DYNAMIC_TYPE_STRUCT_VISITOR, \
 		.app_dynamic_visitor_ctx = _ctx, \
 		.u = { \
-			.kvpairs_visitor = _dynamic_kvpairs_visitor, \
+			.struct_visitor = _dynamic_struct_visitor, \
 		}, \
 	}
 
@@ -393,9 +393,9 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
 	}
 
-#define side_arg_dynamic_define_kvpairs(_identifier, _kvpairs_fields) \
-	const struct side_arg_dynamic_event_field _identifier##_fields[] = { _kvpairs_fields }; \
-	const struct side_arg_dynamic_event_kvpairs _identifier = { \
+#define side_arg_dynamic_define_struct(_identifier, _struct_fields) \
+	const struct side_arg_dynamic_event_field _identifier##_fields[] = { _struct_fields }; \
+	const struct side_arg_dynamic_event_struct _identifier = { \
 		.fields = _identifier##_fields, \
 		.len = SIDE_ARRAY_SIZE(_identifier##_fields), \
 	}

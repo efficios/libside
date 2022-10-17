@@ -450,10 +450,10 @@ type_error:
 }
 
 static
-void tracer_print_dynamic_kvpairs(const struct side_arg_dynamic_event_kvpairs *kvpairs)
+void tracer_print_dynamic_struct(const struct side_arg_dynamic_event_struct *dynamic_struct)
 {
-	const struct side_arg_dynamic_event_field *fields = kvpairs->fields;
-	uint32_t len = kvpairs->len;
+	const struct side_arg_dynamic_event_field *fields = dynamic_struct->fields;
+	uint32_t len = dynamic_struct->len;
 	int i;
 
 	printf("[ ");
@@ -466,7 +466,7 @@ void tracer_print_dynamic_kvpairs(const struct side_arg_dynamic_event_kvpairs *k
 }
 
 static
-void tracer_print_dynamic_kvpairs_visitor(const struct side_arg_dynamic_vec *item)
+void tracer_print_dynamic_struct_visitor(const struct side_arg_dynamic_vec *item)
 {
 	//TODO
 }
@@ -526,11 +526,11 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	case SIDE_DYNAMIC_TYPE_STRING:
 		printf("\"%s\"", item->u.string);
 		break;
-	case SIDE_DYNAMIC_TYPE_KVPAIRS:
-		tracer_print_dynamic_kvpairs(item->u.side_dynamic_kvpairs);
+	case SIDE_DYNAMIC_TYPE_STRUCT:
+		tracer_print_dynamic_struct(item->u.side_dynamic_struct);
 		break;
-	case SIDE_DYNAMIC_TYPE_KVPAIRS_VISITOR:
-		tracer_print_dynamic_kvpairs_visitor(item);
+	case SIDE_DYNAMIC_TYPE_STRUCT_VISITOR:
+		tracer_print_dynamic_struct_visitor(item);
 		break;
 	case SIDE_DYNAMIC_TYPE_VLA:
 		tracer_print_dynamic_vla(item->u.side_dynamic_vla);
