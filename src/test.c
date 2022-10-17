@@ -543,6 +543,58 @@ void test_dynamic_bool(void)
 	);
 }
 
+static side_define_event(my_provider_event_dynamic_vla_visitor,
+	"myprovider", "mydynamicvlavisitor", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+	)
+);
+
+struct app_dynamic_vla_visitor_ctx {
+	const uint32_t *ptr;
+	uint32_t length;
+};
+
+static
+enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx, void *_ctx)
+{
+	struct app_dynamic_vla_visitor_ctx *ctx = (struct app_dynamic_vla_visitor_ctx *) _ctx;
+	uint32_t length = ctx->length, i;
+
+	for (i = 0; i < length; i++) {
+		const struct side_arg_dynamic_vec elem = {
+			.dynamic_type = SIDE_DYNAMIC_TYPE_U32,
+			.u = {
+				.side_u32 = ctx->ptr[i],
+			},
+		};
+		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
+			return SIDE_VISITOR_STATUS_ERROR;
+	}
+	return SIDE_VISITOR_STATUS_OK;
+}
+
+static uint32_t testarray_dynamic_vla[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+
+static
+void test_dynamic_vla_with_visitor(void)
+{
+	my_provider_event_dynamic_vla_visitor.enabled = 1;
+	side_event_cond(&my_provider_event_dynamic_vla_visitor) {
+		struct app_dynamic_vla_visitor_ctx ctx = {
+			.ptr = testarray_dynamic_vla,
+			.length = SIDE_ARRAY_SIZE(testarray_dynamic_vla),
+		};
+		side_event_call(&my_provider_event_dynamic_vla_visitor,
+			side_arg_list(
+				side_arg_dynamic(
+					side_arg_dynamic_vla_visitor(test_dynamic_vla_visitor, &ctx)
+				)
+			)
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -565,5 +617,6 @@ int main()
 	test_static_variadic();
 	test_bool();
 	test_dynamic_bool();
+	test_dynamic_vla_with_visitor();
 	return 0;
 }

@@ -461,10 +461,46 @@ void tracer_print_dynamic_vla(const struct side_arg_dynamic_vec_vla *vla)
 	printf(" ]");
 }
 
+struct tracer_dynamic_vla_visitor_priv {
+	int i;
+};
+
+static
+enum side_visitor_status tracer_dynamic_vla_write_elem_cb(
+			const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
+			const struct side_arg_dynamic_vec *elem)
+{
+	struct tracer_dynamic_vla_visitor_priv *tracer_priv = tracer_ctx->priv;
+
+	printf("%s", tracer_priv->i++ ? ", " : "");
+	tracer_print_dynamic(elem);
+	return SIDE_VISITOR_STATUS_OK;
+}
+
 static
 void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
 {
-	//TODO
+	enum side_visitor_status status;
+	struct tracer_dynamic_vla_visitor_priv tracer_priv = {
+		.i = 0,
+	};
+	const struct side_tracer_dynamic_vla_visitor_ctx tracer_ctx = {
+		.write_elem = tracer_dynamic_vla_write_elem_cb,
+		.priv = &tracer_priv,
+	};
+	void *app_ctx = item->u.side_dynamic_vla_visitor.app_ctx;
+
+	printf("[ ");
+	status = item->u.side_dynamic_vla_visitor.visitor(&tracer_ctx, app_ctx);
+	switch (status) {
+	case SIDE_VISITOR_STATUS_OK:
+		break;
+	case SIDE_VISITOR_STATUS_ERROR:
+		printf("ERROR: Visitor error\n");
+		abort();
+	}
+	printf(" ]");
+
 }
 
 static

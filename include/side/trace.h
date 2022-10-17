@@ -178,13 +178,13 @@ struct side_arg_dynamic_vec {
 
 		const struct side_arg_dynamic_event_struct *side_dynamic_struct;
 		struct {
-			void *app_dynamic_visitor_ctx;
+			void *app_ctx;
 			side_dynamic_struct_visitor visitor;
 		} side_dynamic_struct_visitor;
 
 		const struct side_arg_dynamic_vec_vla *side_dynamic_vla;
 		struct {
-			void *app_dynamic_visitor_ctx;
+			void *app_ctx;
 			side_dynamic_vla_visitor visitor;
 		} side_dynamic_vla_visitor;
 	} u;
@@ -396,9 +396,11 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx) \
 	{ \
 		.dynamic_type = SIDE_DYNAMIC_TYPE_VLA_VISITOR, \
-		.app_dynamic_visitor_ctx = _ctx, \
 		.u = { \
-			.vla_visitor = _dynamic_vla_visitor, \
+			.side_dynamic_vla_visitor = { \
+				.app_ctx = _ctx, \
+				.visitor = _dynamic_vla_visitor, \
+			}, \
 		}, \
 	}
 
@@ -406,9 +408,11 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor, _ctx) \
 	{ \
 		.dynamic_type = SIDE_DYNAMIC_TYPE_STRUCT_VISITOR, \
-		.app_dynamic_visitor_ctx = _ctx, \
 		.u = { \
-			.struct_visitor = _dynamic_struct_visitor, \
+			.side_dynamic_struct_visitor = { \
+				.app_ctx = _ctx, \
+				.visitor = _dynamic_struct_visitor, \
+			}, \
 		}, \
 	}
 
