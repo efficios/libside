@@ -247,7 +247,7 @@ struct side_tracer_visitor_ctx {
 struct side_tracer_dynamic_struct_visitor_ctx {
 	enum side_visitor_status (*write_field)(
 			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-			const struct side_arg_dynamic_event_struct *dynamic_struct);
+			const struct side_arg_dynamic_event_field *dynamic_field);
 	void *priv;		/* Private tracer context. */
 };
 

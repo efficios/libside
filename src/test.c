@@ -595,6 +595,71 @@ void test_dynamic_vla_with_visitor(void)
 	}
 }
 
+static side_define_event(my_provider_event_dynamic_struct_visitor,
+	"myprovider", "mydynamicstructvisitor", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+	)
+);
+
+struct struct_visitor_pair {
+	const char *name;
+	uint32_t value;
+};
+
+struct app_dynamic_struct_visitor_ctx {
+	const struct struct_visitor_pair *ptr;
+	uint32_t length;
+};
+
+static
+enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx, void *_ctx)
+{
+	struct app_dynamic_struct_visitor_ctx *ctx = (struct app_dynamic_struct_visitor_ctx *) _ctx;
+	uint32_t length = ctx->length, i;
+
+	for (i = 0; i < length; i++) {
+		struct side_arg_dynamic_event_field dynamic_field = {
+			.field_name = ctx->ptr[i].name,
+			.elem = {
+				.dynamic_type = SIDE_DYNAMIC_TYPE_U32,
+				.u = {
+					.side_u32 = ctx->ptr[i].value,
+				},
+			},
+		};
+		if (tracer_ctx->write_field(tracer_ctx, &dynamic_field) != SIDE_VISITOR_STATUS_OK)
+			return SIDE_VISITOR_STATUS_ERROR;
+	}
+	return SIDE_VISITOR_STATUS_OK;
+}
+
+static struct struct_visitor_pair testarray_dynamic_struct[] = {
+	{ "a", 1, },
+	{ "b", 2, },
+	{ "c", 3, },
+	{ "d", 4, },
+};
+
+static
+void test_dynamic_struct_with_visitor(void)
+{
+	my_provider_event_dynamic_struct_visitor.enabled = 1;
+	side_event_cond(&my_provider_event_dynamic_struct_visitor) {
+		struct app_dynamic_struct_visitor_ctx ctx = {
+			.ptr = testarray_dynamic_struct,
+			.length = SIDE_ARRAY_SIZE(testarray_dynamic_struct),
+		};
+		side_event_call(&my_provider_event_dynamic_struct_visitor,
+			side_arg_list(
+				side_arg_dynamic(
+					side_arg_dynamic_struct_visitor(test_dynamic_struct_visitor, &ctx)
+				)
+			)
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -618,5 +683,6 @@ int main()
 	test_bool();
 	test_dynamic_bool();
 	test_dynamic_vla_with_visitor();
+	test_dynamic_struct_with_visitor();
 	return 0;
 }
