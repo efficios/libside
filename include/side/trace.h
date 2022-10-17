@@ -240,7 +240,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 };
 
 #define side_type_decl(_type)			{ .type = _type }
-#define side_field(_type, _name)		{ .field_name = _name, .side_type = side_type_decl(_type) }
+#define side_field(_name, _type)		{ .field_name = _name, .side_type = side_type_decl(_type) }
 
 #define side_type_struct_decl(_fields) \
 	{ \
