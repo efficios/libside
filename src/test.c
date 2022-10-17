@@ -444,7 +444,7 @@ void test_dynamic_nested_vla(void)
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
 
-static side_define_event(my_provider_event_variadic,
+static side_define_event_variadic(my_provider_event_variadic,
 	"myprovider", "myvariadicevent", SIDE_LOGLEVEL_DEBUG,
 	side_field_list()
 );
@@ -462,7 +462,7 @@ void test_variadic(void)
 	);
 }
 
-static side_define_event(my_provider_event_static_variadic,
+static side_define_event_variadic(my_provider_event_static_variadic,
 	"myprovider", "mystaticvariadicevent", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field("abc", SIDE_TYPE_U32),
@@ -523,7 +523,7 @@ void test_bool(void)
 	);
 }
 
-static side_define_event(my_provider_event_dynamic_bool,
+static side_define_event_variadic(my_provider_event_dynamic_bool,
 	"myprovider", "mydynamicbool", SIDE_LOGLEVEL_DEBUG,
 	side_field_list()
 );

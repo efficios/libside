@@ -546,6 +546,10 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 
 void tracer_call(const struct side_event_description *desc, const struct side_arg_vec_description *sav_desc)
 {
+	if (side_unlikely(desc->flags & SIDE_EVENT_FLAG_VARIADIC)) {
+		printf("ERROR: unexpected variadic event description\n");
+		abort();
+	}
 	tracer_print_static_fields(desc, sav_desc, NULL);
 	printf("\n");
 }
@@ -559,6 +563,10 @@ void tracer_call_variadic(const struct side_event_description *desc,
 
 	tracer_print_static_fields(desc, sav_desc, &nr_fields);
 
+	if (side_unlikely(!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))) {
+		printf("ERROR: unexpected non-variadic event description\n");
+		abort();
+	}
 	for (i = 0; i < var_struct_len; i++, nr_fields++) {
 		printf("%s", nr_fields ? ", " : "");
 		printf("%s:: ", var_struct->fields[i].field_name);
