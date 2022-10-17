@@ -234,7 +234,7 @@ struct side_tracer_visitor_ctx {
 struct side_tracer_dynamic_struct_visitor_ctx {
 	enum side_visitor_status (*write_field)(
 			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-			const struct side_arg_dynamic_event_field *field);
+			const struct side_arg_dynamic_event_struct *dynamic_struct);
 	void *priv;		/* Private tracer context. */
 };
 
@@ -427,6 +427,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_list(...)	__VA_ARGS__
 
 #define side_event_cond(desc) if (side_unlikely((desc)->enabled))
+
 #define side_event_call(desc, _sav) \
 	{ \
 		const struct side_arg_vec side_sav[] = { _sav }; \
@@ -440,6 +441,25 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_event(desc, sav) \
 	side_event_cond(desc) \
 		side_event_call(desc, SIDE_PARAM(sav))
+
+#define side_event_call_variadic(desc, _sav, _var_fields) \
+	{ \
+		const struct side_arg_vec side_sav[] = { _sav }; \
+		const struct side_arg_vec_description sav_desc = { \
+			.sav = side_sav, \
+			.len = SIDE_ARRAY_SIZE(side_sav), \
+		}; \
+		const struct side_arg_dynamic_event_field side_fields[] = { _var_fields }; \
+		const struct side_arg_dynamic_event_struct var_struct = { \
+			.fields = side_fields, \
+			.len = SIDE_ARRAY_SIZE(side_fields), \
+		}; \
+		tracer_call_variadic(desc, &sav_desc, &var_struct); \
+	}
+
+#define side_event_variadic(desc, sav, var) \
+	side_event_cond(desc) \
+		side_event_call_variadic(desc, SIDE_PARAM(sav), SIDE_PARAM(var))
 
 #define side_define_event(_identifier, _provider, _event, _loglevel, _fields) \
 	struct side_event_description _identifier = { \

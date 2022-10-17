@@ -135,9 +135,8 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 static
 void tracer_print_field(const struct side_event_field *item_desc, const struct side_arg_vec *item)
 {
-	printf("(%s: ", item_desc->field_name);
+	printf("%s: ", item_desc->field_name);
 	tracer_print_type(&item_desc->side_type, item);
-	printf(")");
 }
 
 static
@@ -558,6 +557,34 @@ void tracer_call(const struct side_event_description *desc, const struct side_ar
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
 		tracer_print_field(&desc->fields[i], &sav[i]);
+	}
+	printf("\n");
+}
+
+void tracer_call_variadic(const struct side_event_description *desc,
+	const struct side_arg_vec_description *sav_desc,
+	const struct side_arg_dynamic_event_struct *var_struct)
+{
+	const struct side_arg_vec *sav = sav_desc->sav;
+	uint32_t side_sav_len = sav_desc->len,
+		var_struct_len = var_struct->len;
+	int i, j;
+
+	printf("provider: %s, event: %s, ", desc->provider_name, desc->event_name);
+	if (desc->nr_fields != side_sav_len) {
+		printf("ERROR: number of fields mismatch between description and arguments\n");
+		abort();
+	}
+	/* static */
+	for (i = 0; i < side_sav_len; i++) {
+		printf("%s", i ? ", " : "");
+		tracer_print_field(&desc->fields[i], &sav[i]);
+	}
+	/* variadic */
+	for (j = 0; j < var_struct_len; j++, i++) {
+		printf("%s", i ? ", " : "");
+		printf("%s:: ", var_struct->fields[j].field_name);
+		tracer_print_dynamic(&var_struct->fields[j].elem);
 	}
 	printf("\n");
 }

@@ -443,6 +443,24 @@ void test_dynamic_nested_vla(void)
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
 
+static side_define_event(my_provider_event_variadic,
+	"myprovider", "myvariadicevent", SIDE_LOGLEVEL_DEBUG,
+	side_field_list()
+);
+
+static
+void test_variadic(void)
+{
+	my_provider_event_variadic.enabled = 1;
+	side_event_variadic(&my_provider_event_variadic,
+		side_arg_list(),
+		side_arg_list(
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(55)),
+			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4)),
+		)
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -461,5 +479,6 @@ int main()
 	test_dynamic_vla_struct();
 	test_dynamic_struct_vla();
 	test_dynamic_nested_vla();
+	test_variadic();
 	return 0;
 }
