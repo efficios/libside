@@ -512,7 +512,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	side_event_cond(desc) \
 		side_event_call_variadic(desc, SIDE_PARAM(sav), SIDE_PARAM(var))
 
-#define _side_define_event(_identifier, _provider, _event, _loglevel, _attr, _fields, _flags) \
+#define _side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
 	struct side_event_description _identifier = { \
 		.version = 0, \
 		.enabled = 0, \
@@ -526,13 +526,13 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.attr = _attr, \
 	}
 
-#define side_define_event(_identifier, _provider, _event, _loglevel, _attr, _fields) \
-	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_attr), \
-			SIDE_PARAM(_fields), 0)
+#define side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			SIDE_PARAM(_attr), 0)
 
-#define side_define_event_variadic(_identifier, _provider, _event, _loglevel, _attr, _fields) \
-	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_attr), \
-			SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC)
+#define side_define_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
 
 #define side_declare_event(_identifier) \
 	struct side_event_description _identifier
