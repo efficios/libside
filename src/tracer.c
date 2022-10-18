@@ -562,6 +562,10 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
 static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 {
+	printf("{ ");
+	print_attributes("attr: ", item->attr, item->nr_attr);
+	printf("%s", item->nr_attr ? ", " : "");
+	printf("value: ");
 	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
 		printf("<NULL TYPE>");
@@ -612,6 +616,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		printf("<UNKNOWN TYPE>");
 		abort();
 	}
+	printf(" }");
 }
 
 static

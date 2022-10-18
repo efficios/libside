@@ -172,6 +172,8 @@ struct side_arg_dynamic_vec_vla {
 
 struct side_arg_dynamic_vec {
 	uint32_t dynamic_type;	/* enum side_dynamic_type */
+	uint32_t nr_attr;
+	const struct side_attr *attr;
 	union {
 		uint8_t side_bool;
 
@@ -203,7 +205,6 @@ struct side_arg_dynamic_vec {
 struct side_arg_dynamic_event_field {
 	const char *field_name;
 	const struct side_arg_dynamic_vec elem;
-	//TODO: we should add something like a list of user attributes (namespaced strings)
 };
 
 struct side_arg_dynamic_event_struct {
@@ -411,23 +412,122 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 
-#define side_arg_dynamic_null(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_NULL }
+#define side_arg_dynamic_null(_attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_NULL, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+	}
 
-#define side_arg_dynamic_bool(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_BOOL, .u = { .side_bool = !!(val) } }
-#define side_arg_dynamic_u8(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_U8, .u = { .side_u8 = (val) } }
-#define side_arg_dynamic_u16(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_U16, .u = { .side_u16 = (val) } }
-#define side_arg_dynamic_u32(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_U32, .u = { .side_u32 = (val) } }
-#define side_arg_dynamic_u64(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_U64, .u = { .side_u64 = (val) } }
-#define side_arg_dynamic_s8(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_S8, .u = { .side_s8 = (val) } }
-#define side_arg_dynamic_s16(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_S16, .u = { .side_s16 = (val) } }
-#define side_arg_dynamic_s32(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_S32, .u = { .side_s32 = (val) } }
-#define side_arg_dynamic_s64(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_S64, .u = { .side_s64 = (val) } }
-#define side_arg_dynamic_string(val)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_STRING, .u = { .string = (val) } }
+#define side_arg_dynamic_bool(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_BOOL, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_bool = !!(_val), \
+		}, \
+	}
 
-#define side_arg_dynamic_vla(_vla)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_VLA, .u = { .side_dynamic_vla = (_vla) } }
-#define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx) \
+#define side_arg_dynamic_u8(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_U8, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_u8 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_u16(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_U16, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_u16 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_u32(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_U32, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_u32 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_u64(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_U64, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_u64 = (_val), \
+		}, \
+	}
+
+#define side_arg_dynamic_s8(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_S8, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_s8 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_s16(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_S16, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_s16 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_s32(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_S32, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_s32 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_s64(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_S64, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_s64 = (_val), \
+		}, \
+	}
+
+#define side_arg_dynamic_string(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_STRING, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.string = (_val), \
+		}, \
+	}
+
+#define side_arg_dynamic_vla(_vla, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_VLA, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_dynamic_vla = (_vla), \
+		}, \
+	}
+
+#define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx, _attr) \
 	{ \
 		.dynamic_type = SIDE_DYNAMIC_TYPE_VLA_VISITOR, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
 		.u = { \
 			.side_dynamic_vla_visitor = { \
 				.app_ctx = _ctx, \
@@ -436,10 +536,21 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 
-#define side_arg_dynamic_struct(_struct)	{ .dynamic_type = SIDE_DYNAMIC_TYPE_STRUCT, .u = { .side_dynamic_struct = (_struct) } }
-#define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor, _ctx) \
+#define side_arg_dynamic_struct(_struct, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_STRUCT, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_dynamic_struct = (_struct), \
+		}, \
+	}
+
+#define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor, _ctx, _attr) \
 	{ \
 		.dynamic_type = SIDE_DYNAMIC_TYPE_STRUCT_VISITOR, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
 		.u = { \
 			.side_dynamic_struct_visitor = { \
 				.app_ctx = _ctx, \
