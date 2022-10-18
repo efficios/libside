@@ -26,6 +26,22 @@ static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *dynamic_item);
 
 static
+void print_attributes(const struct side_attr *attr, uint32_t nr_attr)
+{
+	int i;
+
+	if (!nr_attr)
+		return;
+	printf(", attributes: [ ");
+	for (i = 0; i < nr_attr; i++) {
+		printf("%s", i ? ", " : "");
+		printf("{ key: \"%s\", value: \"%s\" }",
+			attr[i].key, attr[i].value);
+	}
+	printf(" ]");
+}
+
+static
 void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
 	switch (item->type) {
@@ -591,22 +607,6 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		printf("<UNKNOWN TYPE>");
 		abort();
 	}
-}
-
-static
-void print_attributes(const struct side_attr *attr, uint32_t nr_attr)
-{
-	int i;
-
-	if (!nr_attr)
-		return;
-	printf(", attributes: [ ");
-	for (i = 0; i < nr_attr; i++) {
-		printf("%s", i ? ", " : "");
-		printf("{ key: \"%s\", value: \"%s\" }",
-			attr[i].key, attr[i].value);
-	}
-	printf(" ]");
 }
 
 static
