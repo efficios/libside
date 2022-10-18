@@ -688,7 +688,7 @@ void test_dynamic_struct_with_visitor(void)
 	}
 }
 
-static side_define_event(my_provider_event_user_attribute, "myprovider", "myevent", SIDE_LOGLEVEL_DEBUG,
+static side_define_event(my_provider_event_user_attribute, "myprovider", "myevent_user_attribute", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field("abc", SIDE_TYPE_U32, side_attr_list()),
 		side_field("def", SIDE_TYPE_S64, side_attr_list()),
@@ -704,6 +704,31 @@ void test_event_user_attribute(void)
 {
 	my_provider_event_user_attribute.enabled = 1;
 	side_event(&my_provider_event_user_attribute, side_arg_list(side_arg_u32(1), side_arg_s64(2)));
+}
+
+static side_define_event(my_provider_field_user_attribute, "myprovider", "myevent_field_attribute", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field("abc", SIDE_TYPE_U32,
+			side_attr_list(
+				side_attr("user_attribute_a", "val1"),
+				side_attr("user_attribute_b", "val2"),
+			)
+		),
+		side_field("def", SIDE_TYPE_S64,
+			side_attr_list(
+				side_attr("user_attribute_c", "val3"),
+				side_attr("user_attribute_d", "val4"),
+			)
+		),
+	),
+	side_attr_list()
+);
+
+static
+void test_field_user_attribute(void)
+{
+	my_provider_field_user_attribute.enabled = 1;
+	side_event(&my_provider_field_user_attribute, side_arg_list(side_arg_u32(1), side_arg_s64(2)));
 }
 
 int main()
@@ -731,5 +756,6 @@ int main()
 	test_dynamic_vla_with_visitor();
 	test_dynamic_struct_with_visitor();
 	test_event_user_attribute();
+	test_field_user_attribute();
 	return 0;
 }
