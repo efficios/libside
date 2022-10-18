@@ -17,9 +17,9 @@
 static side_define_event(my_provider_event, "myprovider", "myevent", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("abc", SIDE_TYPE_U32),
-		side_field("def", SIDE_TYPE_S64),
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("abc", SIDE_TYPE_U32, side_attr_list()),
+		side_field("def", SIDE_TYPE_S64, side_attr_list()),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -39,11 +39,12 @@ static side_define_event(my_provider_event2, "myprovider", "myevent2", SIDE_LOGL
 	side_field_list(
 		side_field_struct("structfield",
 			side_field_list(
-				side_field("x", SIDE_TYPE_U32),
-				side_field("y", SIDE_TYPE_S64),
-			)
+				side_field("x", SIDE_TYPE_U32, side_attr_list()),
+				side_field("y", SIDE_TYPE_S64, side_attr_list()),
+			),
+			side_attr_list()
 		),
-		side_field("z", SIDE_TYPE_U8),
+		side_field("z", SIDE_TYPE_U8, side_attr_list()),
 	)
 );
 
@@ -60,8 +61,8 @@ void test_struct(void)
 static side_define_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field_array("arr", side_elem_type(SIDE_TYPE_U32), 3),
-		side_field("v", SIDE_TYPE_S64),
+		side_field_array("arr", side_elem_type(SIDE_TYPE_U32, side_attr_list()), 3, side_attr_list()),
+		side_field("v", SIDE_TYPE_S64, side_attr_list()),
 	)
 );
 
@@ -78,8 +79,8 @@ void test_array(void)
 static side_define_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field_vla("vla", side_elem_type(SIDE_TYPE_U32)),
-		side_field("v", SIDE_TYPE_S64),
+		side_field_vla("vla", side_elem_type(SIDE_TYPE_U32, side_attr_list()), side_attr_list()),
+		side_field("v", SIDE_TYPE_S64, side_attr_list()),
 	)
 );
 
@@ -124,8 +125,8 @@ static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 static side_define_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field_vla_visitor("vlavisit", side_elem_type(SIDE_TYPE_U32), test_visitor),
-		side_field("v", SIDE_TYPE_S64),
+		side_field_vla_visitor("vlavisit", side_elem_type(SIDE_TYPE_U32, side_attr_list()), test_visitor, side_attr_list()),
+		side_field("v", SIDE_TYPE_S64, side_attr_list()),
 	)
 );
 
@@ -201,8 +202,13 @@ static side_define_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavi
 	side_attr_list(),
 	side_field_list(
 		side_field_vla_visitor("vlavisit2d",
-			side_elem(side_type_vla_visitor_decl(side_elem_type(SIDE_TYPE_U32), test_inner_visitor)), test_outer_visitor),
-		side_field("v", SIDE_TYPE_S64),
+			side_elem(
+				side_type_vla_visitor_decl(
+					side_elem_type(SIDE_TYPE_U32, side_attr_list()),
+					test_inner_visitor,
+					side_attr_list())
+			), test_outer_visitor, side_attr_list()),
+		side_field("v", SIDE_TYPE_S64, side_attr_list()),
 	)
 );
 
@@ -224,8 +230,8 @@ static int64_t array_fixint[] = { -444, 555, 123, 2897432587 };
 static side_define_event(my_provider_event_array_fixint, "myprovider", "myarrayfixint", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field_array("arrfixint", side_elem_type(SIDE_TYPE_S64), SIDE_ARRAY_SIZE(array_fixint)),
-		side_field("v", SIDE_TYPE_S64),
+		side_field_array("arrfixint", side_elem_type(SIDE_TYPE_S64, side_attr_list()), SIDE_ARRAY_SIZE(array_fixint), side_attr_list()),
+		side_field("v", SIDE_TYPE_S64, side_attr_list()),
 	)
 );
 
@@ -242,8 +248,8 @@ static int64_t vla_fixint[] = { -444, 555, 123, 2897432587 };
 static side_define_event(my_provider_event_vla_fixint, "myprovider", "myvlafixint", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field_vla("vlafixint", side_elem_type(SIDE_TYPE_S64)),
-		side_field("v", SIDE_TYPE_S64),
+		side_field_vla("vlafixint", side_elem_type(SIDE_TYPE_S64, side_attr_list()), side_attr_list()),
+		side_field("v", SIDE_TYPE_S64, side_attr_list()),
 	)
 );
 
@@ -259,7 +265,7 @@ static side_define_event(my_provider_event_dynamic_basic,
 	"myprovider", "mydynamicbasic", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -275,7 +281,7 @@ static side_define_event(my_provider_event_dynamic_vla,
 	"myprovider", "mydynamicvla", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -296,7 +302,7 @@ static side_define_event(my_provider_event_dynamic_null,
 	"myprovider", "mydynamicnull", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -312,7 +318,7 @@ static side_define_event(my_provider_event_dynamic_struct,
 	"myprovider", "mydynamicstruct", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -336,7 +342,7 @@ static side_define_event(my_provider_event_dynamic_nested_struct,
 	"myprovider", "mydynamicnestedstruct", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -370,7 +376,7 @@ static side_define_event(my_provider_event_dynamic_vla_struct,
 	"myprovider", "mydynamicvlastruct", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -400,7 +406,7 @@ static side_define_event(my_provider_event_dynamic_struct_vla,
 	"myprovider", "mydynamicstructvla", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -432,7 +438,7 @@ static side_define_event(my_provider_event_dynamic_nested_vla,
 	"myprovider", "mydynamicnestedvla", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -483,8 +489,8 @@ static side_define_event_variadic(my_provider_event_static_variadic,
 	"myprovider", "mystaticvariadicevent", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("abc", SIDE_TYPE_U32),
-		side_field("def", SIDE_TYPE_U16),
+		side_field("abc", SIDE_TYPE_U32, side_attr_list()),
+		side_field("def", SIDE_TYPE_U16, side_attr_list()),
 	)
 );
 
@@ -507,13 +513,13 @@ void test_static_variadic(void)
 static side_define_event(my_provider_event_bool, "myprovider", "myeventbool", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("a_false", SIDE_TYPE_BOOL),
-		side_field("b_true", SIDE_TYPE_BOOL),
-		side_field("c_true", SIDE_TYPE_BOOL),
-		side_field("d_true", SIDE_TYPE_BOOL),
-		side_field("e_true", SIDE_TYPE_BOOL),
-		side_field("f_false", SIDE_TYPE_BOOL),
-		side_field("g_true", SIDE_TYPE_BOOL),
+		side_field("a_false", SIDE_TYPE_BOOL, side_attr_list()),
+		side_field("b_true", SIDE_TYPE_BOOL, side_attr_list()),
+		side_field("c_true", SIDE_TYPE_BOOL, side_attr_list()),
+		side_field("d_true", SIDE_TYPE_BOOL, side_attr_list()),
+		side_field("e_true", SIDE_TYPE_BOOL, side_attr_list()),
+		side_field("f_false", SIDE_TYPE_BOOL, side_attr_list()),
+		side_field("g_true", SIDE_TYPE_BOOL, side_attr_list()),
 	)
 );
 
@@ -567,7 +573,7 @@ static side_define_event(my_provider_event_dynamic_vla_visitor,
 	"myprovider", "mydynamicvlavisitor", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -620,7 +626,7 @@ static side_define_event(my_provider_event_dynamic_struct_visitor,
 	"myprovider", "mydynamicstructvisitor", SIDE_LOGLEVEL_DEBUG,
 	side_attr_list(),
 	side_field_list(
-		side_field("dynamic", SIDE_TYPE_DYNAMIC),
+		side_field("dynamic", SIDE_TYPE_DYNAMIC, side_attr_list()),
 	)
 );
 
@@ -688,8 +694,8 @@ static side_define_event(my_provider_event_user_attribute, "myprovider", "myeven
 		side_attr("user_attribute_b", "val2"),
 	),
 	side_field_list(
-		side_field("abc", SIDE_TYPE_U32),
-		side_field("def", SIDE_TYPE_S64),
+		side_field("abc", SIDE_TYPE_U32, side_attr_list()),
+		side_field("def", SIDE_TYPE_S64, side_attr_list()),
 	)
 );
 
@@ -699,7 +705,6 @@ void test_event_user_attribute(void)
 	my_provider_event_user_attribute.enabled = 1;
 	side_event(&my_provider_event_user_attribute, side_arg_list(side_arg_u32(1), side_arg_s64(2)));
 }
-
 
 int main()
 {

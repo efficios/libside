@@ -121,7 +121,8 @@ struct side_attr {
 
 struct side_type_description {
 	uint32_t type;	/* enum side_type */
-	//TODO: we should add something like a list of user attributes (namespaced strings)
+	uint32_t nr_attr;
+	const struct side_attr *attr;
 	union {
 		struct {
 			uint32_t nr_fields;
@@ -276,17 +277,24 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_attr_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_attr, __VA_ARGS__)
 
-#define side_type_decl(_type)		{ .type = _type }
-
-#define side_field(_name, _type) \
+#define side_type_decl(_type, _attr) \
 	{ \
-		.field_name = _name, \
-		.side_type = side_type_decl(_type), \
+		.type = _type, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
 	}
 
-#define side_type_struct_decl(_fields) \
+#define side_field(_name, _type, _attr) \
+	{ \
+		.field_name = _name, \
+		.side_type = side_type_decl(_type, SIDE_PARAM(_attr)), \
+	}
+
+#define side_type_struct_decl(_fields, _attr) \
 	{ \
 		.type = SIDE_TYPE_STRUCT, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
 		.u = { \
 			.side_struct = { \
 				.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
@@ -294,15 +302,17 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			}, \
 		}, \
 	}
-#define side_field_struct(_name, _fields) \
+#define side_field_struct(_name, _fields, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_struct_decl(SIDE_PARAM(_fields)), \
+		.side_type = side_type_struct_decl(SIDE_PARAM(_fields), SIDE_PARAM(_attr)), \
 	}
 
-#define side_type_array_decl(_elem_type, _length) \
+#define side_type_array_decl(_elem_type, _length, _attr) \
 	{ \
 		.type = SIDE_TYPE_ARRAY, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
 		.u = { \
 			.side_array = { \
 				.length = _length, \
@@ -310,30 +320,34 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			}, \
 		}, \
 	}
-#define side_field_array(_name, _elem_type, _length) \
+#define side_field_array(_name, _elem_type, _length, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_array_decl(_elem_type, _length), \
+		.side_type = side_type_array_decl(SIDE_PARAM(_elem_type), _length, SIDE_PARAM(_attr)), \
 	}
 
-#define side_type_vla_decl(_elem_type) \
+#define side_type_vla_decl(_elem_type, _attr) \
 	{ \
 		.type = SIDE_TYPE_VLA, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
 		.u = { \
 			.side_vla = { \
 				.elem_type = _elem_type, \
 			}, \
 		}, \
 	}
-#define side_field_vla(_name, _elem_type) \
+#define side_field_vla(_name, _elem_type, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_vla_decl(_elem_type), \
+		.side_type = side_type_vla_decl(SIDE_PARAM(_elem_type), SIDE_PARAM(_attr)), \
 	}
 
-#define side_type_vla_visitor_decl(_elem_type, _visitor) \
+#define side_type_vla_visitor_decl(_elem_type, _visitor, _attr) \
 	{ \
 		.type = SIDE_TYPE_VLA_VISITOR, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
 		.u = { \
 			.side_vla_visitor = { \
 				.elem_type = SIDE_PARAM(_elem_type), \
@@ -341,17 +355,17 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			}, \
 		}, \
 	}
-#define side_field_vla_visitor(_name, _elem_type, _visitor) \
+#define side_field_vla_visitor(_name, _elem_type, _visitor, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_vla_visitor_decl(SIDE_PARAM(_elem_type), _visitor), \
+		.side_type = side_type_vla_visitor_decl(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)), \
 	}
 
 #define side_elem(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type_description, __VA_ARGS__)
 
-#define side_elem_type(...) \
-	side_elem(side_type_decl(__VA_ARGS__))
+#define side_elem_type(_type, _attr) \
+	side_elem(side_type_decl(_type, SIDE_PARAM(_attr)))
 
 #define side_field_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)
