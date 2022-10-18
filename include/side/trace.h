@@ -113,6 +113,12 @@ typedef enum side_visitor_status (*side_dynamic_vla_visitor)(
 		const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
 		void *app_ctx);
 
+/* User attributes. */
+struct side_attr {
+	const char *key;
+	const char *value;
+};
+
 struct side_type_description {
 	uint32_t type;	/* enum side_type */
 	//TODO: we should add something like a list of user attributes (namespaced strings)
@@ -149,10 +155,13 @@ struct side_event_description {
 	uint32_t enabled;
 	uint32_t loglevel;	/* enum side_loglevel */
 	uint32_t nr_fields;
+	uint32_t nr_attr;
+	uint32_t _unused;
 	uint64_t flags;
 	const char *provider_name;
 	const char *event_name;
 	const struct side_event_field *fields;
+	const struct side_attr *attr;
 };
 
 struct side_arg_dynamic_vec_vla {
@@ -257,6 +266,15 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			const struct side_arg_dynamic_vec *elem);
 	void *priv;		/* Private tracer context. */
 };
+
+#define side_attr(_key, _value)	\
+	{ \
+		.key = _key, \
+		.value = _value, \
+	}
+
+#define side_attr_list(...) \
+	SIDE_COMPOUND_LITERAL(const struct side_attr, __VA_ARGS__)
 
 #define side_type_decl(_type)		{ .type = _type }
 
@@ -480,24 +498,27 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	side_event_cond(desc) \
 		side_event_call_variadic(desc, SIDE_PARAM(sav), SIDE_PARAM(var))
 
-#define _side_define_event(_identifier, _provider, _event, _loglevel, _fields, _flags) \
+#define _side_define_event(_identifier, _provider, _event, _loglevel, _attr, _fields, _flags) \
 	struct side_event_description _identifier = { \
 		.version = 0, \
 		.enabled = 0, \
 		.loglevel = _loglevel, \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 		.flags = (_flags), \
 		.provider_name = _provider, \
 		.event_name = _event, \
 		.fields = _fields, \
+		.attr = _attr, \
 	}
 
-#define side_define_event(_identifier, _provider, _event, _loglevel, _fields) \
-	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), 0)
+#define side_define_event(_identifier, _provider, _event, _loglevel, _attr, _fields) \
+	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_attr), \
+			SIDE_PARAM(_fields), 0)
 
-#define side_define_event_variadic(_identifier, _provider, _event, _loglevel, _fields) \
-	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
-			 SIDE_EVENT_FLAG_VARIADIC)
+#define side_define_event_variadic(_identifier, _provider, _event, _loglevel, _attr, _fields) \
+	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_attr), \
+			SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC)
 
 #define side_declare_event(_identifier) \
 	struct side_event_description _identifier
