@@ -111,6 +111,38 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_S64:
 		printf("%" PRId64, item->u.side_s64);
 		break;
+	case SIDE_TYPE_FLOAT_BINARY16:
+#if __HAVE_FLOAT16
+		printf("%g", (double) item->u.side_float_binary16);
+		break;
+#else
+		printf("ERROR: Unsupported binary16 float type\n");
+		abort();
+#endif
+	case SIDE_TYPE_FLOAT_BINARY32:
+#if __HAVE_FLOAT32
+		printf("%g", (double) item->u.side_float_binary32);
+		break;
+#else
+		printf("ERROR: Unsupported binary32 float type\n");
+		abort();
+#endif
+	case SIDE_TYPE_FLOAT_BINARY64:
+#if __HAVE_FLOAT64
+		printf("%g", (double) item->u.side_float_binary64);
+		break;
+#else
+		printf("ERROR: Unsupported binary64 float type\n");
+		abort();
+#endif
+	case SIDE_TYPE_FLOAT_BINARY128:
+#if __HAVE_FLOAT128
+		printf("%Lg", (long double) item->u.side_float_binary128);
+		break;
+#else
+		printf("ERROR: Unsupported binary128 float type\n");
+		abort();
+#endif
 	case SIDE_TYPE_STRING:
 		printf("\"%s\"", item->u.string);
 		break;
@@ -597,6 +629,38 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	case SIDE_DYNAMIC_TYPE_S64:
 		printf("%" PRId64, item->u.side_s64);
 		break;
+	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY16:
+#if __HAVE_FLOAT16
+		printf("%g", (double) item->u.side_float_binary16);
+		break;
+#else
+		printf("ERROR: Unsupported binary16 float type\n");
+		abort();
+#endif
+	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY32:
+#if __HAVE_FLOAT32
+		printf("%g", (double) item->u.side_float_binary32);
+		break;
+#else
+		printf("ERROR: Unsupported binary32 float type\n");
+		abort();
+#endif
+	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY64:
+#if __HAVE_FLOAT64
+		printf("%g", (double) item->u.side_float_binary64);
+		break;
+#else
+		printf("ERROR: Unsupported binary64 float type\n");
+		abort();
+#endif
+	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY128:
+#if __HAVE_FLOAT128
+		printf("%Lg", (long double) item->u.side_float_binary128);
+		break;
+#else
+		printf("ERROR: Unsupported binary128 float type\n");
+		abort();
+#endif
 	case SIDE_DYNAMIC_TYPE_STRING:
 		printf("\"%s\"", item->u.string);
 		break;

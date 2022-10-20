@@ -854,6 +854,83 @@ void test_variadic_struct_attr(void)
 	}
 }
 
+static side_define_event(my_provider_event_float, "myprovider", "myeventfloat", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+#if __HAVE_FLOAT16
+		side_field("binary16", SIDE_TYPE_FLOAT_BINARY16, side_attr_list()),
+#endif
+#if __HAVE_FLOAT32
+		side_field("binary32", SIDE_TYPE_FLOAT_BINARY32, side_attr_list()),
+#endif
+#if __HAVE_FLOAT64
+		side_field("binary64", SIDE_TYPE_FLOAT_BINARY64, side_attr_list()),
+#endif
+#if __HAVE_FLOAT128
+		side_field("binary128", SIDE_TYPE_FLOAT_BINARY128, side_attr_list()),
+#endif
+	),
+	side_attr_list()
+);
+
+static
+void test_float(void)
+{
+	my_provider_event_float.enabled = 1;
+	side_event(&my_provider_event_float,
+		side_arg_list(
+#if __HAVE_FLOAT16
+			side_arg_float_binary16(1.1),
+#endif
+#if __HAVE_FLOAT32
+			side_arg_float_binary32(2.2),
+#endif
+#if __HAVE_FLOAT64
+			side_arg_float_binary64(3.3),
+#endif
+#if __HAVE_FLOAT128
+			side_arg_float_binary128(4.4),
+#endif
+		)
+	);
+}
+
+static side_define_event_variadic(my_provider_event_variadic_float,
+	"myprovider", "myvariadicfloat", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(),
+	side_attr_list()
+);
+
+static
+void test_variadic_float(void)
+{
+	my_provider_event_variadic_float.enabled = 1;
+	side_event_variadic(&my_provider_event_variadic_float,
+		side_arg_list(),
+		side_arg_list(
+#if __HAVE_FLOAT16
+			side_arg_dynamic_field("binary16",
+				side_arg_dynamic_float_binary16(1.1, side_attr_list())
+			),
+#endif
+#if __HAVE_FLOAT32
+			side_arg_dynamic_field("binary32",
+				side_arg_dynamic_float_binary32(2.2, side_attr_list())
+			),
+#endif
+#if __HAVE_FLOAT64
+			side_arg_dynamic_field("binary64",
+				side_arg_dynamic_float_binary64(3.3, side_attr_list())
+			),
+#endif
+#if __HAVE_FLOAT128
+			side_arg_dynamic_field("binary128",
+				side_arg_dynamic_float_binary128(4.4, side_attr_list())
+			),
+#endif
+		)
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -883,5 +960,7 @@ int main()
 	test_variadic_attr();
 	test_variadic_vla_attr();
 	test_variadic_struct_attr();
+	test_float();
+	test_variadic_float();
 	return 0;
 }

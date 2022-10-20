@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <side/macros.h>
 
 /* SIDE stands for "Static Instrumentation Dynamically Enabled" */
@@ -35,6 +36,11 @@ enum side_type {
 	SIDE_TYPE_S16,
 	SIDE_TYPE_S32,
 	SIDE_TYPE_S64,
+
+	SIDE_TYPE_FLOAT_BINARY16,
+	SIDE_TYPE_FLOAT_BINARY32,
+	SIDE_TYPE_FLOAT_BINARY64,
+	SIDE_TYPE_FLOAT_BINARY128,
 
 	SIDE_TYPE_STRING,
 
@@ -77,6 +83,11 @@ enum side_dynamic_type {
 	SIDE_DYNAMIC_TYPE_S16,
 	SIDE_DYNAMIC_TYPE_S32,
 	SIDE_DYNAMIC_TYPE_S64,
+
+	SIDE_DYNAMIC_TYPE_FLOAT_BINARY16,
+	SIDE_DYNAMIC_TYPE_FLOAT_BINARY32,
+	SIDE_DYNAMIC_TYPE_FLOAT_BINARY64,
+	SIDE_DYNAMIC_TYPE_FLOAT_BINARY128,
 
 	SIDE_DYNAMIC_TYPE_STRING,
 
@@ -186,6 +197,19 @@ struct side_arg_dynamic_vec {
 		int32_t side_s32;
 		int64_t side_s64;
 
+#if __HAVE_FLOAT16
+		_Float16 side_float_binary16;
+#endif
+#if __HAVE_FLOAT32
+		_Float32 side_float_binary32;
+#endif
+#if __HAVE_FLOAT64
+		_Float64 side_float_binary64;
+#endif
+#if __HAVE_FLOAT128
+		_Float128 side_float_binary128;
+#endif
+
 		const char *string;
 
 		const struct side_arg_dynamic_event_struct *side_dynamic_struct;
@@ -225,6 +249,19 @@ struct side_arg_vec {
 		int16_t side_s16;
 		int32_t side_s32;
 		int64_t side_s64;
+
+#if __HAVE_FLOAT16
+		_Float16 side_float_binary16;
+#endif
+#if __HAVE_FLOAT32
+		_Float32 side_float_binary32;
+#endif
+#if __HAVE_FLOAT64
+		_Float64 side_float_binary64;
+#endif
+#if __HAVE_FLOAT128
+		_Float128 side_float_binary128;
+#endif
 
 		const char *string;
 		const struct side_arg_vec_description *side_struct;
@@ -380,6 +417,11 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_s16(val)		{ .type = SIDE_TYPE_S16, .u = { .side_s16 = (val) } }
 #define side_arg_s32(val)		{ .type = SIDE_TYPE_S32, .u = { .side_s32 = (val) } }
 #define side_arg_s64(val)		{ .type = SIDE_TYPE_S64, .u = { .side_s64 = (val) } }
+#define side_arg_float_binary16(val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (val) } }
+#define side_arg_float_binary32(val)	{ .type = SIDE_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (val) } }
+#define side_arg_float_binary64(val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (val) } }
+#define side_arg_float_binary128(val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .side_float_binary128 = (val) } }
+
 #define side_arg_string(val)		{ .type = SIDE_TYPE_STRING, .u = { .string = (val) } }
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_struct = (_side_type) } }
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_array = (_side_type) } }
@@ -500,6 +542,43 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.attr = _attr, \
 		.u = { \
 			.side_s64 = (_val), \
+		}, \
+	}
+
+#define side_arg_dynamic_float_binary16(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_FLOAT_BINARY16, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_float_binary16 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_float_binary32(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_FLOAT_BINARY32, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_float_binary32 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_float_binary64(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_FLOAT_BINARY64, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_float_binary64 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_float_binary128(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_FLOAT_BINARY128, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_float_binary128 = (_val), \
 		}, \
 	}
 
