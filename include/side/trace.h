@@ -15,6 +15,10 @@
 
 /* SIDE stands for "Static Instrumentation Dynamically Enabled" */
 
+//TODO: as those structures will be ABI, we need to either consider them
+//fixed forever, or think of a scheme that would allow their binary
+//representation to be extected if need be.
+
 struct side_arg_vec;
 struct side_arg_vec_description;
 struct side_arg_dynamic_vec;
