@@ -708,8 +708,8 @@ static side_define_event(my_provider_event_user_attribute, "myprovider", "myeven
 		side_field("def", SIDE_TYPE_S64, side_attr_list()),
 	),
 	side_attr_list(
-		side_attr("user_attribute_a", "val1"),
-		side_attr("user_attribute_b", "val2"),
+		side_attr("user_attribute_a", side_attr_string("val1")),
+		side_attr("user_attribute_b", side_attr_string("val2")),
 	)
 );
 
@@ -724,14 +724,14 @@ static side_define_event(my_provider_field_user_attribute, "myprovider", "myeven
 	side_field_list(
 		side_field("abc", SIDE_TYPE_U32,
 			side_attr_list(
-				side_attr("user_attribute_a", "val1"),
-				side_attr("user_attribute_b", "val2"),
+				side_attr("user_attribute_a", side_attr_string("val1")),
+				side_attr("user_attribute_b", side_attr_u32(2)),
 			)
 		),
 		side_field("def", SIDE_TYPE_S64,
 			side_attr_list(
-				side_attr("user_attribute_c", "val3"),
-				side_attr("user_attribute_d", "val4"),
+				side_attr("user_attribute_c", side_attr_string("val3")),
+				side_attr("user_attribute_d", side_attr_s64(-5)),
 			)
 		),
 	),
@@ -761,16 +761,16 @@ void test_variadic_attr(void)
 			side_arg_dynamic_field("a",
 				side_arg_dynamic_u32(55,
 					side_attr_list(
-						side_attr("user_attribute_c", "valX"),
-						side_attr("user_attribute_d", "valY"),
+						side_attr("user_attribute_c", side_attr_string("valX")),
+						side_attr("user_attribute_d", side_attr_u8(55)),
 					)
 				)
 			),
 			side_arg_dynamic_field("b",
 				side_arg_dynamic_s8(-4,
 					side_attr_list(
-						side_attr("X", "1"),
-						side_attr("Y", "2"),
+						side_attr("X", side_attr_u8(1)),
+						side_attr("Y", side_attr_s8(2)),
 					)
 				)
 			),
@@ -791,8 +791,8 @@ void test_variadic_vla_attr(void)
 		side_arg_list(
 			side_arg_dynamic_u32(1,
 				side_attr_list(
-					side_attr("Z", "0"),
-					side_attr("A", "123"),
+					side_attr("Z", side_attr_u8(0)),
+					side_attr("A", side_attr_u8(123)),
 				)
 			),
 			side_arg_dynamic_u32(2, side_attr_list()),
@@ -806,8 +806,8 @@ void test_variadic_vla_attr(void)
 			side_arg_dynamic_field("a",
 				side_arg_dynamic_vla(&myvla,
 					side_attr_list(
-						side_attr("X", "1"),
-						side_attr("Y", "2"),
+						side_attr("X", side_attr_u8(1)),
+						side_attr("Y", side_attr_u8(2)),
 					)
 				)
 			),
@@ -831,7 +831,7 @@ void test_variadic_struct_attr(void)
 				side_arg_dynamic_field("a",
 					side_arg_dynamic_u32(43,
 						side_attr_list(
-							side_attr("A", "1"),
+							side_attr("A", side_attr_bool(true)),
 						)
 					)
 				),
@@ -844,8 +844,8 @@ void test_variadic_struct_attr(void)
 				side_arg_dynamic_field("a",
 					side_arg_dynamic_struct(&mystruct,
 						side_attr_list(
-							side_attr("X", "1"),
-							side_attr("Y", "2"),
+							side_attr("X", side_attr_u8(1)),
+							side_attr("Y", side_attr_u8(2)),
 						)
 					)
 				),

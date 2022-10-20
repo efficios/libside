@@ -26,6 +26,80 @@ static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *dynamic_item);
 
 static
+void tracer_print_attr_type(const struct side_attr *attr)
+{
+	printf("{ key: \"%s\", value: ", attr->key);
+	switch (attr->value.type) {
+	case SIDE_ATTR_TYPE_BOOL:
+		printf("%s", attr->value.u.side_bool ? "true" : "false");
+		break;
+	case SIDE_ATTR_TYPE_U8:
+		printf("%" PRIu8, attr->value.u.side_u8);
+		break;
+	case SIDE_ATTR_TYPE_U16:
+		printf("%" PRIu16, attr->value.u.side_u16);
+		break;
+	case SIDE_ATTR_TYPE_U32:
+		printf("%" PRIu32, attr->value.u.side_u32);
+		break;
+	case SIDE_ATTR_TYPE_U64:
+		printf("%" PRIu64, attr->value.u.side_u64);
+		break;
+	case SIDE_ATTR_TYPE_S8:
+		printf("%" PRId8, attr->value.u.side_s8);
+		break;
+	case SIDE_ATTR_TYPE_S16:
+		printf("%" PRId16, attr->value.u.side_s16);
+		break;
+	case SIDE_ATTR_TYPE_S32:
+		printf("%" PRId32, attr->value.u.side_s32);
+		break;
+	case SIDE_ATTR_TYPE_S64:
+		printf("%" PRId64, attr->value.u.side_s64);
+		break;
+	case SIDE_ATTR_TYPE_FLOAT_BINARY16:
+#if __HAVE_FLOAT16
+		printf("%g", (double) attr->value.u.side_float_binary16);
+		break;
+#else
+		printf("ERROR: Unsupported binary16 float type\n");
+		abort();
+#endif
+	case SIDE_ATTR_TYPE_FLOAT_BINARY32:
+#if __HAVE_FLOAT32
+		printf("%g", (double) attr->value.u.side_float_binary32);
+		break;
+#else
+		printf("ERROR: Unsupported binary32 float type\n");
+		abort();
+#endif
+	case SIDE_ATTR_TYPE_FLOAT_BINARY64:
+#if __HAVE_FLOAT64
+		printf("%g", (double) attr->value.u.side_float_binary64);
+		break;
+#else
+		printf("ERROR: Unsupported binary64 float type\n");
+		abort();
+#endif
+	case SIDE_ATTR_TYPE_FLOAT_BINARY128:
+#if __HAVE_FLOAT128
+		printf("%Lg", (long double) attr->value.u.side_float_binary128);
+		break;
+#else
+		printf("ERROR: Unsupported binary128 float type\n");
+		abort();
+#endif
+	case SIDE_ATTR_TYPE_STRING:
+		printf("\"%s\"", attr->value.u.string);
+		break;
+	default:
+		printf("<UNKNOWN TYPE>");
+		abort();
+	}
+	printf(" }");
+}
+
+static
 void print_attributes(const char *prefix_str, const struct side_attr *attr, uint32_t nr_attr)
 {
 	int i;
@@ -35,8 +109,7 @@ void print_attributes(const char *prefix_str, const struct side_attr *attr, uint
 	printf("%s[ ", prefix_str);
 	for (i = 0; i < nr_attr; i++) {
 		printf("%s", i ? ", " : "");
-		printf("{ key: \"%s\", value: \"%s\" }",
-			attr[i].key, attr[i].value);
+		tracer_print_attr_type(&attr[i]);
 	}
 	printf(" ]");
 }
@@ -595,7 +668,7 @@ static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 {
 	printf("{ ");
-	print_attributes("attr: ", item->attr, item->nr_attr);
+	print_attributes("attr:: ", item->attr, item->nr_attr);
 	printf("%s", item->nr_attr ? ", " : "");
 	printf("value: ");
 	switch (item->dynamic_type) {

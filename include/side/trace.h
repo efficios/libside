@@ -102,6 +102,26 @@ enum side_dynamic_type {
 	SIDE_DYNAMIC_TYPE_VLA_VISITOR,
 };
 
+enum side_attr_type {
+	SIDE_ATTR_TYPE_BOOL,
+
+	SIDE_ATTR_TYPE_U8,
+	SIDE_ATTR_TYPE_U16,
+	SIDE_ATTR_TYPE_U32,
+	SIDE_ATTR_TYPE_U64,
+	SIDE_ATTR_TYPE_S8,
+	SIDE_ATTR_TYPE_S16,
+	SIDE_ATTR_TYPE_S32,
+	SIDE_ATTR_TYPE_S64,
+
+	SIDE_ATTR_TYPE_FLOAT_BINARY16,
+	SIDE_ATTR_TYPE_FLOAT_BINARY32,
+	SIDE_ATTR_TYPE_FLOAT_BINARY64,
+	SIDE_ATTR_TYPE_FLOAT_BINARY128,
+
+	SIDE_ATTR_TYPE_STRING,
+};
+
 enum side_loglevel {
 	SIDE_LOGLEVEL_EMERG = 0,
 	SIDE_LOGLEVEL_ALERT = 1,
@@ -128,10 +148,41 @@ typedef enum side_visitor_status (*side_dynamic_vla_visitor)(
 		const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
 		void *app_ctx);
 
+struct side_attr_value {
+	uint32_t type;	/* enum side_attr_type */
+	union {
+		uint8_t side_bool;
+
+		uint8_t side_u8;
+		uint16_t side_u16;
+		uint32_t side_u32;
+		uint64_t side_u64;
+		int8_t side_s8;
+		int16_t side_s16;
+		int32_t side_s32;
+		int64_t side_s64;
+
+#if __HAVE_FLOAT16
+		_Float16 side_float_binary16;
+#endif
+#if __HAVE_FLOAT32
+		_Float32 side_float_binary32;
+#endif
+#if __HAVE_FLOAT64
+		_Float64 side_float_binary64;
+#endif
+#if __HAVE_FLOAT128
+		_Float128 side_float_binary128;
+#endif
+
+		const char *string;
+	} u;
+};
+
 /* User attributes. */
 struct side_attr {
 	const char *key;
-	const char *value;
+	const struct side_attr_value value;
 };
 
 struct side_type_description {
@@ -313,7 +364,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_attr(_key, _value)	\
 	{ \
 		.key = _key, \
-		.value = _value, \
+		.value = SIDE_PARAM(_value), \
 	}
 
 #define side_attr_list(...) \
@@ -670,6 +721,21 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	}
 
 #define side_arg_list(...)	__VA_ARGS__
+
+#define side_attr_bool(val)		{ .type = SIDE_ATTR_TYPE_BOOL, .u = { .side_bool = !!(val) } }
+#define side_attr_u8(val)		{ .type = SIDE_ATTR_TYPE_U8, .u = { .side_u8 = (val) } }
+#define side_attr_u16(val)		{ .type = SIDE_ATTR_TYPE_U16, .u = { .side_u16 = (val) } }
+#define side_attr_u32(val)		{ .type = SIDE_ATTR_TYPE_U32, .u = { .side_u32 = (val) } }
+#define side_attr_u64(val)		{ .type = SIDE_ATTR_TYPE_U64, .u = { .side_u64 = (val) } }
+#define side_attr_s8(val)		{ .type = SIDE_ATTR_TYPE_S8, .u = { .side_s8 = (val) } }
+#define side_attr_s16(val)		{ .type = SIDE_ATTR_TYPE_S16, .u = { .side_s16 = (val) } }
+#define side_attr_s32(val)		{ .type = SIDE_ATTR_TYPE_S32, .u = { .side_s32 = (val) } }
+#define side_attr_s64(val)		{ .type = SIDE_ATTR_TYPE_S64, .u = { .side_s64 = (val) } }
+#define side_attr_float_binary16(val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (val) } }
+#define side_attr_float_binary32(val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (val) } }
+#define side_attr_float_binary64(val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (val) } }
+#define side_attr_float_binary128(val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY128, .u = { .side_float_binary128 = (val) } }
+#define side_attr_string(val)		{ .type = SIDE_ATTR_TYPE_STRING, .u = { .string = (val) } }
 
 #define side_event_cond(desc) if (side_unlikely((desc)->enabled))
 
