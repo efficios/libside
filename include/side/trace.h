@@ -463,10 +463,8 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 #define _side_field_enum(_name, _type, _mappings, _attr) \
-	{ \
-		.field_name = _name, \
-		.side_type = side_type_enum(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
-	}
+	_side_field(_name, side_type_enum(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)))
+
 #define side_field_enum_u8(_name, _mappings, _attr) \
 	_side_field_enum(_name, SIDE_TYPE_ENUM_U8, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
 #define side_field_enum_u16(_name, _mappings, _attr) \
@@ -494,10 +492,8 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 #define _side_field_enum_bitmap(_name, _type, _mappings, _attr) \
-	{ \
-		.field_name = _name, \
-		.side_type = side_type_enum_bitmap(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
-	}
+	_side_field(_name, side_type_enum_bitmap(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)))
+
 #define side_field_enum_bitmap8(_name, _mappings, _attr) \
 	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP8, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
 #define side_field_enum_bitmap16(_name, _mappings, _attr) \
@@ -520,10 +516,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 #define side_field_struct(_name, _fields, _attr) \
-	{ \
-		.field_name = _name, \
-		.side_type = side_type_struct(SIDE_PARAM(_fields), SIDE_PARAM(_attr)), \
-	}
+	_side_field(_name, side_type_struct(SIDE_PARAM(_fields), SIDE_PARAM(_attr)))
 
 #define side_type_array(_elem_type, _length, _attr) \
 	{ \
@@ -538,10 +531,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 #define side_field_array(_name, _elem_type, _length, _attr) \
-	{ \
-		.field_name = _name, \
-		.side_type = side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM(_attr)), \
-	}
+	_side_field(_name, side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM(_attr)))
 
 #define side_type_vla(_elem_type, _attr) \
 	{ \
@@ -555,10 +545,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 #define side_field_vla(_name, _elem_type, _attr) \
-	{ \
-		.field_name = _name, \
-		.side_type = side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM(_attr)), \
-	}
+	_side_field(_name, side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM(_attr)))
 
 #define side_type_vla_visitor(_elem_type, _visitor, _attr) \
 	{ \
@@ -573,10 +560,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 #define side_field_vla_visitor(_name, _elem_type, _visitor, _attr) \
-	{ \
-		.field_name = _name, \
-		.side_type = side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)), \
-	}
+	_side_field(_name, side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)))
 
 #define side_elem(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type_description, __VA_ARGS__)
