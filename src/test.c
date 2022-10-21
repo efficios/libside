@@ -60,7 +60,7 @@ void test_struct(void)
 
 static side_define_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_array("arr", side_elem_type(SIDE_TYPE_U32, side_attr_list()), 3, side_attr_list()),
+		side_field_array("arr", side_elem_u32(side_attr_list()), 3, side_attr_list()),
 		side_field_s64("v", side_attr_list()),
 	),
 	side_attr_list()
@@ -78,7 +78,7 @@ void test_array(void)
 
 static side_define_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vla", side_elem_type(SIDE_TYPE_U32, side_attr_list()), side_attr_list()),
+		side_field_vla("vla", side_elem_u32(side_attr_list()), side_attr_list()),
 		side_field_s64("v", side_attr_list()),
 	),
 	side_attr_list()
@@ -120,7 +120,7 @@ static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
 static side_define_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla_visitor("vlavisit", side_elem_type(SIDE_TYPE_U32, side_attr_list()), test_visitor, side_attr_list()),
+		side_field_vla_visitor("vlavisit", side_elem_u32(side_attr_list()), test_visitor, side_attr_list()),
 		side_field_s64("v", side_attr_list()),
 	),
 	side_attr_list()
@@ -195,7 +195,7 @@ static side_define_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavi
 		side_field_vla_visitor("vlavisit2d",
 			side_elem(
 				side_type_vla_visitor_decl(
-					side_elem_type(SIDE_TYPE_U32, side_attr_list()),
+					side_elem_u32(side_attr_list()),
 					test_inner_visitor,
 					side_attr_list())
 			), test_outer_visitor, side_attr_list()),
@@ -221,7 +221,7 @@ static int64_t array_fixint[] = { -444, 555, 123, 2897432587 };
 
 static side_define_event(my_provider_event_array_fixint, "myprovider", "myarrayfixint", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_array("arrfixint", side_elem_type(SIDE_TYPE_S64, side_attr_list()), SIDE_ARRAY_SIZE(array_fixint), side_attr_list()),
+		side_field_array("arrfixint", side_elem_s64(side_attr_list()), SIDE_ARRAY_SIZE(array_fixint), side_attr_list()),
 		side_field_s64("v", side_attr_list()),
 	),
 	side_attr_list()
@@ -239,7 +239,7 @@ static int64_t vla_fixint[] = { -444, 555, 123, 2897432587 };
 
 static side_define_event(my_provider_event_vla_fixint, "myprovider", "myvlafixint", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vlafixint", side_elem_type(SIDE_TYPE_S64, side_attr_list()), side_attr_list()),
+		side_field_vla("vlafixint", side_elem_s64(side_attr_list()), side_attr_list()),
 		side_field_s64("v", side_attr_list()),
 	),
 	side_attr_list()
