@@ -956,10 +956,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	}
 
 #define _side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
-	uint32_t _identifier##_enabled; \
+	uint32_t _identifier##_enabled __attribute__((section("side_event_enable"))); \
 	const struct side_event_description _identifier = { \
 		.version = 0, \
-		.enabled = &_identifier##_enabled, \
+		.enabled = &(_identifier##_enabled), \
 		.loglevel = _loglevel, \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -968,7 +968,9 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.event_name = _event, \
 		.fields = _fields, \
 		.attr = _attr, \
-	}
+	}; \
+	const struct side_event_description *_identifier##_ptr \
+		__attribute__((section("side_event_description"), used)) = &(_identifier);
 
 #define side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
 	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
