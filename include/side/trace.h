@@ -104,6 +104,7 @@ enum side_dynamic_type {
 	SIDE_DYNAMIC_TYPE_S16,
 	SIDE_DYNAMIC_TYPE_S32,
 	SIDE_DYNAMIC_TYPE_S64,
+	SIDE_DYNAMIC_TYPE_BLOB,
 
 	SIDE_DYNAMIC_TYPE_FLOAT_BINARY16,
 	SIDE_DYNAMIC_TYPE_FLOAT_BINARY32,
@@ -292,6 +293,7 @@ struct side_arg_dynamic_vec {
 		int16_t side_s16;
 		int32_t side_s32;
 		int64_t side_s64;
+		uint8_t side_blob;
 
 #if __HAVE_FLOAT16
 		_Float16 side_float_binary16;
@@ -723,6 +725,15 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.attr = _attr, \
 		.u = { \
 			.side_s64 = (_val), \
+		}, \
+	}
+#define side_arg_dynamic_blob(_val, _attr) \
+	{ \
+		.dynamic_type = SIDE_DYNAMIC_TYPE_BLOB, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_blob = (_val), \
 		}, \
 	}
 

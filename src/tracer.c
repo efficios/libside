@@ -832,6 +832,10 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	case SIDE_DYNAMIC_TYPE_S64:
 		printf("%" PRId64, item->u.side_s64);
 		break;
+	case SIDE_DYNAMIC_TYPE_BLOB:
+		printf("0x%" PRIx8, item->u.side_blob);
+		break;
+
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY16:
 #if __HAVE_FLOAT16
 		printf("%g", (double) item->u.side_float_binary16);
