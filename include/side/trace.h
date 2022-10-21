@@ -581,22 +581,6 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_elem(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type_description, __VA_ARGS__)
 
-#define side_elem_bool(_attr) 			side_elem(side_type_bool(SIDE_PARAM(_attr)))
-#define side_elem_u8(_attr) 			side_elem(side_type_u8(SIDE_PARAM(_attr)))
-#define side_elem_u16(_attr)			side_elem(side_type_u16(SIDE_PARAM(_attr)))
-#define side_elem_u32(_attr)			side_elem(side_type_u32(SIDE_PARAM(_attr)))
-#define side_elem_u64(_attr)			side_elem(side_type_u64(SIDE_PARAM(_attr)))
-#define side_elem_s8(_attr)			side_elem(side_type_s8(SIDE_PARAM(_attr)))
-#define side_elem_s16(_attr)			side_elem(side_type_s16(SIDE_PARAM(_attr)))
-#define side_elem_s32(_attr)			side_elem(side_type_s32(SIDE_PARAM(_attr)))
-#define side_elem_s64(_attr)			side_elem(side_type_s64(SIDE_PARAM(_attr)))
-#define side_elem_float_binary16(_attr)		side_elem(side_type_float_binary16(SIDE_PARAM(_attr)))
-#define side_elem_float_binary32(_attr)		side_elem(side_type_float_binary32(SIDE_PARAM(_attr)))
-#define side_elem_float_binary64(_attr)		side_elem(side_type_float_binary64(SIDE_PARAM(_attr)))
-#define side_elem_float_binary128(_attr)	side_elem(side_type_float_binary128(SIDE_PARAM(_attr)))
-#define side_elem_string(_attr)			side_elem(side_type_string(SIDE_PARAM(_attr)))
-#define side_elem_dynamic(_attr)		side_elem(side_type_dynamic(SIDE_PARAM(_attr)))
-
 #define side_field_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)
 
