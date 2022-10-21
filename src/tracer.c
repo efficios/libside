@@ -184,6 +184,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_ARRAY_S16:
 	case SIDE_TYPE_ARRAY_S32:
 	case SIDE_TYPE_ARRAY_S64:
+	case SIDE_TYPE_ARRAY_BLOB:
 		if (type_desc->type != SIDE_TYPE_ARRAY) {
 			printf("ERROR: type mismatch between description and arguments\n");
 			abort();
@@ -197,6 +198,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_VLA_S16:
 	case SIDE_TYPE_VLA_S32:
 	case SIDE_TYPE_VLA_S64:
+	case SIDE_TYPE_VLA_BLOB:
 		if (type_desc->type != SIDE_TYPE_VLA) {
 			printf("ERROR: type mismatch between description and arguments\n");
 			abort();
@@ -241,6 +243,9 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 	case SIDE_TYPE_S64:
 		printf("%" PRId64, item->u.side_s64);
+		break;
+	case SIDE_TYPE_BLOB:
+		printf("0x%" PRIx8, item->u.side_blob);
 		break;
 
 	case SIDE_TYPE_ENUM_U8:
@@ -348,6 +353,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_ARRAY_S16:
 	case SIDE_TYPE_ARRAY_S32:
 	case SIDE_TYPE_ARRAY_S64:
+	case SIDE_TYPE_ARRAY_BLOB:
 		tracer_print_array_fixint(type_desc, item);
 		break;
 	case SIDE_TYPE_VLA_U8:
@@ -358,6 +364,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_VLA_S16:
 	case SIDE_TYPE_VLA_S32:
 	case SIDE_TYPE_VLA_S64:
+	case SIDE_TYPE_VLA_BLOB:
 		tracer_print_vla_fixint(type_desc, item);
 		break;
 	case SIDE_TYPE_DYNAMIC:
@@ -512,6 +519,10 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 		if (elem_type->type != SIDE_TYPE_S64)
 			goto type_error;
 		break;
+	case SIDE_TYPE_ARRAY_BLOB:
+		if (elem_type->type != SIDE_TYPE_BLOB)
+			goto type_error;
+		break;
 	default:
 		goto type_error;
 	}
@@ -547,6 +558,9 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 			break;
 		case SIDE_TYPE_S64:
 			sav_elem.u.side_s64 = ((const int64_t *) p)[i];
+			break;
+		case SIDE_TYPE_BLOB:
+			sav_elem.u.side_blob = ((const uint8_t *) p)[i];
 			break;
 
 		default:
@@ -606,6 +620,10 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 		if (elem_type->type != SIDE_TYPE_S64)
 			goto type_error;
 		break;
+	case SIDE_TYPE_VLA_BLOB:
+		if (elem_type->type != SIDE_TYPE_BLOB)
+			goto type_error;
+		break;
 	default:
 		goto type_error;
 	}
@@ -641,6 +659,9 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 			break;
 		case SIDE_TYPE_S64:
 			sav_elem.u.side_s64 = ((const int64_t *) p)[i];
+			break;
+		case SIDE_TYPE_BLOB:
+			sav_elem.u.side_blob = ((const uint8_t *) p)[i];
 			break;
 
 		default:

@@ -40,6 +40,7 @@ enum side_type {
 	SIDE_TYPE_S16,
 	SIDE_TYPE_S32,
 	SIDE_TYPE_S64,
+	SIDE_TYPE_BLOB,
 
 	SIDE_TYPE_ENUM_U8,
 	SIDE_TYPE_ENUM_U16,
@@ -75,6 +76,7 @@ enum side_type {
 	SIDE_TYPE_ARRAY_S16,
 	SIDE_TYPE_ARRAY_S32,
 	SIDE_TYPE_ARRAY_S64,
+	SIDE_TYPE_ARRAY_BLOB,
 
 	SIDE_TYPE_VLA_U8,
 	SIDE_TYPE_VLA_U16,
@@ -84,6 +86,7 @@ enum side_type {
 	SIDE_TYPE_VLA_S16,
 	SIDE_TYPE_VLA_S32,
 	SIDE_TYPE_VLA_S64,
+	SIDE_TYPE_VLA_BLOB,
 
 	SIDE_TYPE_DYNAMIC,
 };
@@ -342,6 +345,7 @@ struct side_arg_vec {
 		int16_t side_s16;
 		int32_t side_s32;
 		int64_t side_s64;
+		uint8_t side_blob;
 
 #if __HAVE_FLOAT16
 		_Float16 side_float_binary16;
@@ -424,6 +428,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_type_s16(_attr)				_side_type(SIDE_TYPE_S16, SIDE_PARAM(_attr))
 #define side_type_s32(_attr)				_side_type(SIDE_TYPE_S32, SIDE_PARAM(_attr))
 #define side_type_s64(_attr)				_side_type(SIDE_TYPE_S64, SIDE_PARAM(_attr))
+#define side_type_blob(_attr)				_side_type(SIDE_TYPE_BLOB, SIDE_PARAM(_attr))
 #define side_type_float_binary16(_attr)			_side_type(SIDE_TYPE_FLOAT_BINARY16, SIDE_PARAM(_attr))
 #define side_type_float_binary32(_attr)			_side_type(SIDE_TYPE_FLOAT_BINARY32, SIDE_PARAM(_attr))
 #define side_type_float_binary64(_attr)			_side_type(SIDE_TYPE_FLOAT_BINARY64, SIDE_PARAM(_attr))
@@ -446,6 +451,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_s16(_name, _attr)			_side_field(_name, side_type_s16(SIDE_PARAM(_attr)))
 #define side_field_s32(_name, _attr)			_side_field(_name, side_type_s32(SIDE_PARAM(_attr)))
 #define side_field_s64(_name, _attr)			_side_field(_name, side_type_s64(SIDE_PARAM(_attr)))
+#define side_field_blob(_name, _attr)			_side_field(_name, side_type_blob(SIDE_PARAM(_attr)))
 #define side_field_float_binary16(_name, _attr)		_side_field(_name, side_type_float_binary16(SIDE_PARAM(_attr)))
 #define side_field_float_binary32(_name, _attr)		_side_field(_name, side_type_float_binary32(SIDE_PARAM(_attr)))
 #define side_field_float_binary64(_name, _attr)		_side_field(_name, side_type_float_binary64(SIDE_PARAM(_attr)))
@@ -577,6 +583,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_s16(val)		{ .type = SIDE_TYPE_S16, .u = { .side_s16 = (val) } }
 #define side_arg_s32(val)		{ .type = SIDE_TYPE_S32, .u = { .side_s32 = (val) } }
 #define side_arg_s64(val)		{ .type = SIDE_TYPE_S64, .u = { .side_s64 = (val) } }
+#define side_arg_blob(val)		{ .type = SIDE_TYPE_BLOB, .u = { .side_blob = (val) } }
 #define side_arg_enum_u8(val)		{ .type = SIDE_TYPE_ENUM_U8, .u = { .side_u8 = (val) } }
 #define side_arg_enum_u16(val)		{ .type = SIDE_TYPE_ENUM_U16, .u = { .side_u16 = (val) } }
 #define side_arg_enum_u32(val)		{ .type = SIDE_TYPE_ENUM_U32, .u = { .side_u32 = (val) } }
@@ -608,6 +615,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_array_s16(_ptr)	{ .type = SIDE_TYPE_ARRAY_S16, .u = { .side_array_fixint  = (_ptr) } }
 #define side_arg_array_s32(_ptr)	{ .type = SIDE_TYPE_ARRAY_S32, .u = { .side_array_fixint = (_ptr) } }
 #define side_arg_array_s64(_ptr)	{ .type = SIDE_TYPE_ARRAY_S64, .u = { .side_array_fixint = (_ptr) } }
+#define side_arg_array_blob(_ptr)	{ .type = SIDE_TYPE_ARRAY_BLOB, .u = { .side_array_fixint = (_ptr) } }
 
 #define side_arg_vla_u8(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U8, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } }
 #define side_arg_vla_u16(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U16, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
@@ -617,6 +625,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_vla_s16(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S16, .u = { .side_vla_fixint  = { .p = (_ptr), .length = (_length) } } }
 #define side_arg_vla_s32(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S32, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
 #define side_arg_vla_s64(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S64, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
+#define side_arg_vla_blob(_ptr, _length) { .type = SIDE_TYPE_VLA_BLOB, .u = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
 
 #define side_arg_dynamic(dynamic_arg_type) \
 	{ \

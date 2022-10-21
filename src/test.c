@@ -1000,6 +1000,34 @@ void test_enum_bitmap(void)
 	);
 }
 
+static uint8_t blob_fixint[] = { 0x55, 0x44, 0x33, 0x22, 0x11 };
+
+static side_define_event(my_provider_event_blob, "myprovider", "myeventblob", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_blob("blobfield", side_attr_list()),
+		side_field_array("arrayblob", side_elem(side_type_blob(side_attr_list())), 3, side_attr_list()),
+		side_field_array("arrayblobfix", side_elem(side_type_blob(side_attr_list())), SIDE_ARRAY_SIZE(blob_fixint), side_attr_list()),
+		side_field_vla("vlablobfix", side_elem(side_type_blob(side_attr_list())), side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static
+void test_blob(void)
+{
+	my_provider_event_blob.enabled = 1;
+	side_event_cond(&my_provider_event_blob) {
+		side_arg_define_vec(myarray, side_arg_list(side_arg_blob(1), side_arg_blob(2), side_arg_blob(3)));
+		side_event_call(&my_provider_event_blob,
+			side_arg_list(
+				side_arg_blob(0x55),
+				side_arg_array(&myarray),
+				side_arg_array_blob(blob_fixint),
+				side_arg_vla_blob(blob_fixint, SIDE_ARRAY_SIZE(blob_fixint)),
+			)
+		);
+	}
+}
 
 int main()
 {
@@ -1034,5 +1062,6 @@ int main()
 	test_variadic_float();
 	test_enum();
 	test_enum_bitmap();
+	test_blob();
 	return 0;
 }
