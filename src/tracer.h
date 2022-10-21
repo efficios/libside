@@ -9,9 +9,11 @@
 #include <side/trace.h>
 
 void tracer_call(const struct side_event_description *desc,
-	const struct side_arg_vec_description *sav_desc);
+	const struct side_arg_vec_description *sav_desc,
+	void *priv);
 void tracer_call_variadic(const struct side_event_description *desc,
 	const struct side_arg_vec_description *sav_desc,
-	const struct side_arg_dynamic_event_struct *var_struct);
+	const struct side_arg_dynamic_event_struct *var_struct,
+	void *priv);
 
 #endif

@@ -914,7 +914,9 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 		*nr_items = i;
 }
 
-void tracer_call(const struct side_event_description *desc, const struct side_arg_vec_description *sav_desc)
+void tracer_call(const struct side_event_description *desc,
+		const struct side_arg_vec_description *sav_desc,
+		void *priv __attribute__((unused)))
 {
 	int nr_fields = 0;
 
@@ -925,8 +927,9 @@ void tracer_call(const struct side_event_description *desc, const struct side_ar
 }
 
 void tracer_call_variadic(const struct side_event_description *desc,
-	const struct side_arg_vec_description *sav_desc,
-	const struct side_arg_dynamic_event_struct *var_struct)
+		const struct side_arg_vec_description *sav_desc,
+		const struct side_arg_dynamic_event_struct *var_struct,
+		void *priv __attribute__((unused)))
 {
 	uint32_t var_struct_len = var_struct->len;
 	int nr_fields = 0, i;
