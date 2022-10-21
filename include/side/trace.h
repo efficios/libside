@@ -28,6 +28,8 @@ struct side_event_field;
 struct side_tracer_visitor_ctx;
 struct side_tracer_dynamic_struct_visitor_ctx;
 struct side_tracer_dynamic_vla_visitor_ctx;
+struct side_event_description;
+struct side_arg_dynamic_event_struct;
 
 enum side_type {
 	SIDE_TYPE_BOOL,
@@ -259,6 +261,24 @@ enum side_event_flags {
 	SIDE_EVENT_FLAG_VARIADIC = (1 << 0),
 };
 
+struct side_callback {
+	union {
+		void (*call)(const struct side_event_description *desc,
+			const struct side_arg_vec_description *sav_desc,
+			void *priv);
+		void (*call_variadic)(const struct side_event_description *desc,
+			const struct side_arg_vec_description *sav_desc,
+			const struct side_arg_dynamic_event_struct *var_struct,
+			void *priv);
+	} u;
+	void *priv;
+};
+
+struct side_callbacks {
+	struct side_callback *cb;
+	uint32_t nr_cb;
+};
+
 struct side_event_description {
 	uint32_t version;
 	uint32_t *enabled;
@@ -271,6 +291,7 @@ struct side_event_description {
 	const char *event_name;
 	const struct side_event_field *fields;
 	const struct side_attr *attr;
+	struct side_callbacks *callbacks;
 };
 
 struct side_arg_dynamic_vec_vla {
@@ -957,6 +978,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 #define _side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
 	uint32_t _identifier##_enabled __attribute__((section("side_event_enable"))); \
+	struct side_callbacks _identifier##_callbacks __attribute__((section("side_event_callbacks"))); \
 	const struct side_event_description _identifier = { \
 		.version = 0, \
 		.enabled = &(_identifier##_enabled), \
@@ -968,6 +990,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.event_name = _event, \
 		.fields = _fields, \
 		.attr = _attr, \
+		.callbacks = &(_identifier##_callbacks), \
 	}; \
 	const struct side_event_description *_identifier##_ptr \
 		__attribute__((section("side_event_description"), used)) = &(_identifier);
