@@ -964,6 +964,51 @@ void test_enum(void)
 	);
 }
 
+/* A bitmap enum maps bits to labels. */
+static side_define_enum(myenum_bitmap,
+	side_mapping_list(
+		side_enum_mapping_value("0", 0),
+		side_enum_mapping_range("1-2", 1, 2),
+		side_enum_mapping_range("2-4", 2, 4),
+		side_enum_mapping_value("3", 3),
+		side_enum_mapping_value("30", 30),
+		side_enum_mapping_value("63", 63),
+	)
+);
+
+static side_define_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitmap", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_enum("bit_0", SIDE_TYPE_ENUM_BITMAP32, &myenum_bitmap, side_attr_list()),
+		side_field_enum("bit_1", SIDE_TYPE_ENUM_BITMAP32, &myenum_bitmap, side_attr_list()),
+		side_field_enum("bit_2", SIDE_TYPE_ENUM_BITMAP8, &myenum_bitmap, side_attr_list()),
+		side_field_enum("bit_3", SIDE_TYPE_ENUM_BITMAP8, &myenum_bitmap, side_attr_list()),
+		side_field_enum("bit_30", SIDE_TYPE_ENUM_BITMAP32, &myenum_bitmap, side_attr_list()),
+		side_field_enum("bit_31", SIDE_TYPE_ENUM_BITMAP32, &myenum_bitmap, side_attr_list()),
+		side_field_enum("bit_63", SIDE_TYPE_ENUM_BITMAP64, &myenum_bitmap, side_attr_list()),
+		side_field_enum("bits_1+63", SIDE_TYPE_ENUM_BITMAP64, &myenum_bitmap, side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static
+void test_enum_bitmap(void)
+{
+	my_provider_event_enum_bitmap.enabled = 1;
+	side_event(&my_provider_event_enum_bitmap,
+		side_arg_list(
+			side_arg_enum_bitmap32(1 << 0),
+			side_arg_enum_bitmap32(1 << 1),
+			side_arg_enum_bitmap8(1 << 2),
+			side_arg_enum_bitmap8(1 << 3),
+			side_arg_enum_bitmap32(1 << 30),
+			side_arg_enum_bitmap32(1 << 31),
+			side_arg_enum_bitmap64(1ULL << 63),
+			side_arg_enum_bitmap64((1ULL << 1) | (1ULL << 63)),
+		)
+	);
+}
+
+
 int main()
 {
 	test_fields();
@@ -996,5 +1041,6 @@ int main()
 	test_float();
 	test_variadic_float();
 	test_enum();
+	test_enum_bitmap();
 	return 0;
 }

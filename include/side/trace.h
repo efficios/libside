@@ -19,8 +19,6 @@
 //fixed forever, or think of a scheme that would allow their binary
 //representation to be extended if need be.
 
-//TODO: enum bitmap
-
 struct side_arg_vec;
 struct side_arg_vec_description;
 struct side_arg_dynamic_vec;
@@ -51,6 +49,11 @@ enum side_type {
 	SIDE_TYPE_ENUM_S16,
 	SIDE_TYPE_ENUM_S32,
 	SIDE_TYPE_ENUM_S64,
+
+	SIDE_TYPE_ENUM_BITMAP8,
+	SIDE_TYPE_ENUM_BITMAP16,
+	SIDE_TYPE_ENUM_BITMAP32,
+	SIDE_TYPE_ENUM_BITMAP64,
 
 	SIDE_TYPE_FLOAT_BINARY16,
 	SIDE_TYPE_FLOAT_BINARY32,
@@ -518,6 +521,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_enum_s16(val)		{ .type = SIDE_TYPE_ENUM_S16, .u = { .side_s16 = (val) } }
 #define side_arg_enum_s32(val)		{ .type = SIDE_TYPE_ENUM_S32, .u = { .side_s32 = (val) } }
 #define side_arg_enum_s64(val)		{ .type = SIDE_TYPE_ENUM_S64, .u = { .side_s64 = (val) } }
+#define side_arg_enum_bitmap8(val)	{ .type = SIDE_TYPE_ENUM_BITMAP8, .u = { .side_u8 = (val) } }
+#define side_arg_enum_bitmap16(val)	{ .type = SIDE_TYPE_ENUM_BITMAP16, .u = { .side_u16 = (val) } }
+#define side_arg_enum_bitmap32(val)	{ .type = SIDE_TYPE_ENUM_BITMAP32, .u = { .side_u32 = (val) } }
+#define side_arg_enum_bitmap64(val)	{ .type = SIDE_TYPE_ENUM_BITMAP64, .u = { .side_u64 = (val) } }
 #define side_arg_float_binary16(val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (val) } }
 #define side_arg_float_binary32(val)	{ .type = SIDE_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (val) } }
 #define side_arg_float_binary64(val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (val) } }

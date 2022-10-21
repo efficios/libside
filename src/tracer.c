@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <side/trace.h>
 
@@ -123,7 +124,45 @@ void print_enum(const struct side_enum_mappings *side_enum_mappings, int64_t val
 	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
 		const struct side_enum_mapping *mapping = &side_enum_mappings->mappings[i];
 
+		if (mapping->range_end < mapping->range_begin) {
+			printf("ERROR: Unexpected enum range: %" PRIu64 "-%" PRIu64 "\n",
+				mapping->range_begin, mapping->range_end);
+			abort();
+		}
 		if (value >= mapping->range_begin && value <= mapping->range_end) {
+			printf("%s", print_count++ ? ", " : "");
+			printf("\"%s\"", mapping->label);
+		}
+	}
+	if (!print_count)
+		printf("<NO LABEL>");
+	printf(" ]");
+}
+
+static
+void print_enum_bitmap(const struct side_enum_mappings *side_enum_mappings, uint64_t value)
+{
+	int i, print_count = 0;
+
+	printf("0x%" PRIx64 ", labels: [ ", value);
+	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
+		const struct side_enum_mapping *mapping = &side_enum_mappings->mappings[i];
+		bool match = false;
+		int64_t bit;
+
+		if (mapping->range_begin < 0 || mapping->range_end > 63
+				|| mapping->range_end < mapping->range_begin) {
+			printf("ERROR: Unexpected enum bitmap range: %" PRIu64 "-%" PRIu64 "\n",
+				mapping->range_begin, mapping->range_end);
+			abort();
+		}
+		for (bit = mapping->range_begin; bit <= mapping->range_end; bit++) {
+			if (value & (1ULL << bit)) {
+				match = true;
+				break;
+			}
+		}
+		if (match) {
 			printf("%s", print_count++ ? ", " : "");
 			printf("\"%s\"", mapping->label);
 		}
@@ -235,6 +274,23 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_ENUM_S64:
 		print_enum(type_desc->u.side_enum_mappings,
 			item->u.side_s64);
+		break;
+
+	case SIDE_TYPE_ENUM_BITMAP8:
+		print_enum_bitmap(type_desc->u.side_enum_mappings,
+			(uint64_t) item->u.side_u8);
+		break;
+	case SIDE_TYPE_ENUM_BITMAP16:
+		print_enum_bitmap(type_desc->u.side_enum_mappings,
+			(uint64_t) item->u.side_u16);
+		break;
+	case SIDE_TYPE_ENUM_BITMAP32:
+		print_enum_bitmap(type_desc->u.side_enum_mappings,
+			(uint64_t) item->u.side_u32);
+		break;
+	case SIDE_TYPE_ENUM_BITMAP64:
+		print_enum_bitmap(type_desc->u.side_enum_mappings,
+			item->u.side_u64);
 		break;
 
 	case SIDE_TYPE_FLOAT_BINARY16:
