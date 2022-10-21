@@ -408,17 +408,33 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_attr_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_attr, __VA_ARGS__)
 
-#define side_type_decl(_type, _attr) \
+#define _side_type(_type, _attr) \
 	{ \
 		.type = _type, \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 		.attr = _attr, \
 	}
 
+#define side_type_bool(_attr) 				_side_type(SIDE_TYPE_BOOL, SIDE_PARAM(_attr))
+#define side_type_u8(_attr)				_side_type(SIDE_TYPE_U8, SIDE_PARAM(_attr))
+#define side_type_u16(_attr)				_side_type(SIDE_TYPE_U16, SIDE_PARAM(_attr))
+#define side_type_u32(_attr)				_side_type(SIDE_TYPE_U32, SIDE_PARAM(_attr))
+#define side_type_u64(_attr)				_side_type(SIDE_TYPE_U64, SIDE_PARAM(_attr))
+#define side_type_s8(_attr)				_side_type(SIDE_TYPE_S8, SIDE_PARAM(_attr))
+#define side_type_s16(_attr)				_side_type(SIDE_TYPE_S16, SIDE_PARAM(_attr))
+#define side_type_s32(_attr)				_side_type(SIDE_TYPE_S32, SIDE_PARAM(_attr))
+#define side_type_s64(_attr)				_side_type(SIDE_TYPE_S64, SIDE_PARAM(_attr))
+#define side_type_float_binary16(_attr)			_side_type(SIDE_TYPE_FLOAT_BINARY16, SIDE_PARAM(_attr))
+#define side_type_float_binary32(_attr)			_side_type(SIDE_TYPE_FLOAT_BINARY32, SIDE_PARAM(_attr))
+#define side_type_float_binary64(_attr)			_side_type(SIDE_TYPE_FLOAT_BINARY64, SIDE_PARAM(_attr))
+#define side_type_float_binary128(_attr)		_side_type(SIDE_TYPE_FLOAT_BINARY128, SIDE_PARAM(_attr))
+#define side_type_string(_attr)				_side_type(SIDE_TYPE_STRING, SIDE_PARAM(_attr))
+#define side_type_dynamic(_name, _attr)			_side_type(SIDE_TYPE_DYNAMIC, SIDE_PARAM(_attr))
+
 #define _side_field(_name, _type, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_decl(_type, SIDE_PARAM(_attr)), \
+		.side_type = _side_type(_type, SIDE_PARAM(_attr)), \
 	}
 
 #define side_field_bool(_name, _attr)			_side_field(_name, SIDE_TYPE_BOOL, SIDE_PARAM(_attr))
@@ -435,10 +451,9 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_float_binary64(_name, _attr)		_side_field(_name, SIDE_TYPE_FLOAT_BINARY64, SIDE_PARAM(_attr))
 #define side_field_float_binary128(_name, _attr)	_side_field(_name, SIDE_TYPE_FLOAT_BINARY128, SIDE_PARAM(_attr))
 #define side_field_string(_name, _attr)			_side_field(_name, SIDE_TYPE_STRING, SIDE_PARAM(_attr))
-
 #define side_field_dynamic(_name, _attr)		_side_field(_name, SIDE_TYPE_DYNAMIC, SIDE_PARAM(_attr))
 
-#define side_type_enum_decl(_type, _mappings, _attr) \
+#define side_type_enum(_type, _mappings, _attr) \
 	{ \
 		.type = _type, \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -450,7 +465,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define _side_field_enum(_name, _type, _mappings, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_enum_decl(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
+		.side_type = side_type_enum(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
 	}
 #define side_field_enum_u8(_name, _mappings, _attr) \
 	_side_field_enum(_name, SIDE_TYPE_ENUM_U8, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
@@ -469,7 +484,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_enum_s64(_name, _mappings, _attr) \
 	_side_field_enum(_name, SIDE_TYPE_ENUM_S64, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
 
-#define side_type_enum_bitmap_decl(_type, _mappings, _attr) \
+#define side_type_enum_bitmap(_type, _mappings, _attr) \
 	{ \
 		.type = _type, \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -481,7 +496,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define _side_field_enum_bitmap(_name, _type, _mappings, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_enum_bitmap_decl(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
+		.side_type = side_type_enum_bitmap(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
 	}
 #define side_field_enum_bitmap8(_name, _mappings, _attr) \
 	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP8, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
@@ -492,7 +507,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_enum_bitmap64(_name, _mappings, _attr) \
 	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP64, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
 
-#define side_type_struct_decl(_fields, _attr) \
+#define side_type_struct(_fields, _attr) \
 	{ \
 		.type = SIDE_TYPE_STRUCT, \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -507,10 +522,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_struct(_name, _fields, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_struct_decl(SIDE_PARAM(_fields), SIDE_PARAM(_attr)), \
+		.side_type = side_type_struct(SIDE_PARAM(_fields), SIDE_PARAM(_attr)), \
 	}
 
-#define side_type_array_decl(_elem_type, _length, _attr) \
+#define side_type_array(_elem_type, _length, _attr) \
 	{ \
 		.type = SIDE_TYPE_ARRAY, \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -525,10 +540,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_array(_name, _elem_type, _length, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_array_decl(SIDE_PARAM(_elem_type), _length, SIDE_PARAM(_attr)), \
+		.side_type = side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM(_attr)), \
 	}
 
-#define side_type_vla_decl(_elem_type, _attr) \
+#define side_type_vla(_elem_type, _attr) \
 	{ \
 		.type = SIDE_TYPE_VLA, \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -542,10 +557,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_vla(_name, _elem_type, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_vla_decl(SIDE_PARAM(_elem_type), SIDE_PARAM(_attr)), \
+		.side_type = side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM(_attr)), \
 	}
 
-#define side_type_vla_visitor_decl(_elem_type, _visitor, _attr) \
+#define side_type_vla_visitor(_elem_type, _visitor, _attr) \
 	{ \
 		.type = SIDE_TYPE_VLA_VISITOR, \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -560,31 +575,27 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_vla_visitor(_name, _elem_type, _visitor, _attr) \
 	{ \
 		.field_name = _name, \
-		.side_type = side_type_vla_visitor_decl(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)), \
+		.side_type = side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)), \
 	}
 
 #define side_elem(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type_description, __VA_ARGS__)
 
-#define _side_elem_type(_type, _attr) \
-	side_elem(side_type_decl(_type, SIDE_PARAM(_attr)))
-
-#define side_elem_u8(_attr) \
-	side_elem(side_type_decl(SIDE_TYPE_U8, SIDE_PARAM(_attr)))
-#define side_elem_u16(_attr) \
-	side_elem(side_type_decl(SIDE_TYPE_U16, SIDE_PARAM(_attr)))
-#define side_elem_u32(_attr) \
-	side_elem(side_type_decl(SIDE_TYPE_U32, SIDE_PARAM(_attr)))
-#define side_elem_u64(_attr) \
-	side_elem(side_type_decl(SIDE_TYPE_U64, SIDE_PARAM(_attr)))
-#define side_elem_s8(_attr) \
-	side_elem(side_type_decl(SIDE_TYPE_S8, SIDE_PARAM(_attr)))
-#define side_elem_s16(_attr) \
-	side_elem(side_type_decl(SIDE_TYPE_S16, SIDE_PARAM(_attr)))
-#define side_elem_s32(_attr) \
-	side_elem(side_type_decl(SIDE_TYPE_S32, SIDE_PARAM(_attr)))
-#define side_elem_s64(_attr) \
-	side_elem(side_type_decl(SIDE_TYPE_S64, SIDE_PARAM(_attr)))
+#define side_elem_bool(_attr) 			side_elem(side_type_bool(SIDE_PARAM(_attr)))
+#define side_elem_u8(_attr) 			side_elem(side_type_u8(SIDE_PARAM(_attr)))
+#define side_elem_u16(_attr)			side_elem(side_type_u16(SIDE_PARAM(_attr)))
+#define side_elem_u32(_attr)			side_elem(side_type_u32(SIDE_PARAM(_attr)))
+#define side_elem_u64(_attr)			side_elem(side_type_u64(SIDE_PARAM(_attr)))
+#define side_elem_s8(_attr)			side_elem(side_type_s8(SIDE_PARAM(_attr)))
+#define side_elem_s16(_attr)			side_elem(side_type_s16(SIDE_PARAM(_attr)))
+#define side_elem_s32(_attr)			side_elem(side_type_s32(SIDE_PARAM(_attr)))
+#define side_elem_s64(_attr)			side_elem(side_type_s64(SIDE_PARAM(_attr)))
+#define side_elem_float_binary16(_attr)		side_elem(side_type_float_binary16(SIDE_PARAM(_attr)))
+#define side_elem_float_binary32(_attr)		side_elem(side_type_float_binary32(SIDE_PARAM(_attr)))
+#define side_elem_float_binary64(_attr)		side_elem(side_type_float_binary64(SIDE_PARAM(_attr)))
+#define side_elem_float_binary128(_attr)	side_elem(side_type_float_binary128(SIDE_PARAM(_attr)))
+#define side_elem_string(_attr)			side_elem(side_type_string(SIDE_PARAM(_attr)))
+#define side_elem_dynamic(_attr)		side_elem(side_type_dynamic(SIDE_PARAM(_attr)))
 
 #define side_field_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)

@@ -194,7 +194,7 @@ static side_define_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavi
 	side_field_list(
 		side_field_vla_visitor("vlavisit2d",
 			side_elem(
-				side_type_vla_visitor_decl(
+				side_type_vla_visitor(
 					side_elem_u32(side_attr_list()),
 					test_inner_visitor,
 					side_attr_list())
