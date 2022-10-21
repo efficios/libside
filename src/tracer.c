@@ -140,13 +140,13 @@ void print_enum(const struct side_enum_mappings *side_enum_mappings, int64_t val
 }
 
 static
-void print_enum_bitmap(const struct side_enum_mappings *side_enum_mappings, uint64_t value)
+void print_enum_bitmap(const struct side_enum_bitmap_mappings *side_enum_mappings, uint64_t value)
 {
 	int i, print_count = 0;
 
 	printf("0x%" PRIx64 ", labels: [ ", value);
 	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
-		const struct side_enum_mapping *mapping = &side_enum_mappings->mappings[i];
+		const struct side_enum_bitmap_mapping *mapping = &side_enum_mappings->mappings[i];
 		bool match = false;
 		int64_t bit;
 
@@ -277,19 +277,19 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 
 	case SIDE_TYPE_ENUM_BITMAP8:
-		print_enum_bitmap(type_desc->u.side_enum_mappings,
+		print_enum_bitmap(type_desc->u.side_enum_bitmap_mappings,
 			(uint64_t) item->u.side_u8);
 		break;
 	case SIDE_TYPE_ENUM_BITMAP16:
-		print_enum_bitmap(type_desc->u.side_enum_mappings,
+		print_enum_bitmap(type_desc->u.side_enum_bitmap_mappings,
 			(uint64_t) item->u.side_u16);
 		break;
 	case SIDE_TYPE_ENUM_BITMAP32:
-		print_enum_bitmap(type_desc->u.side_enum_mappings,
+		print_enum_bitmap(type_desc->u.side_enum_bitmap_mappings,
 			(uint64_t) item->u.side_u32);
 		break;
 	case SIDE_TYPE_ENUM_BITMAP64:
-		print_enum_bitmap(type_desc->u.side_enum_mappings,
+		print_enum_bitmap(type_desc->u.side_enum_bitmap_mappings,
 			item->u.side_u64);
 		break;
 

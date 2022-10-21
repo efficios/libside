@@ -210,6 +210,17 @@ struct side_enum_mappings {
 	uint32_t nr_mappings;
 };
 
+struct side_enum_bitmap_mapping {
+	int64_t range_begin;
+	int64_t range_end;
+	const char *label;
+};
+
+struct side_enum_bitmap_mappings {
+	const struct side_enum_bitmap_mapping *mappings;
+	uint32_t nr_mappings;
+};
+
 struct side_type_description {
 	uint32_t type;	/* enum side_type */
 	uint32_t nr_attr;
@@ -231,6 +242,7 @@ struct side_type_description {
 			side_visitor visitor;
 		} side_vla_visitor;
 		const struct side_enum_mappings *side_enum_mappings;
+		const struct side_enum_bitmap_mappings *side_enum_bitmap_mappings;
 	} u;
 };
 
@@ -422,6 +434,21 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	{ \
 		.field_name = _name, \
 		.side_type = side_type_enum_decl(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
+	}
+
+#define side_type_enum_bitmap_decl(_type, _mappings, _attr) \
+	{ \
+		.type = _type, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_enum_bitmap_mappings = _mappings, \
+		}, \
+	}
+#define side_field_enum_bitmap(_name, _type, _mappings, _attr) \
+	{ \
+		.field_name = _name, \
+		.side_type = side_type_enum_bitmap_decl(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
 	}
 
 #define side_type_struct_decl(_fields, _attr) \
@@ -831,7 +858,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
 	}
 
-#define side_mapping_list(...) \
+#define side_enum_mapping_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_enum_mapping, __VA_ARGS__)
 
 #define side_enum_mapping_range(_label, _begin, _end) \
@@ -842,6 +869,29 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	}
 
 #define side_enum_mapping_value(_label, _value) \
+	{ \
+		.range_begin = _value, \
+		.range_end = _value, \
+		.label = _label, \
+	}
+
+#define side_define_enum_bitmap(_identifier, _mappings) \
+	const struct side_enum_bitmap_mappings _identifier = { \
+		.mappings = _mappings, \
+		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
+	}
+
+#define side_enum_bitmap_mapping_list(...) \
+	SIDE_COMPOUND_LITERAL(const struct side_enum_bitmap_mapping, __VA_ARGS__)
+
+#define side_enum_bitmap_mapping_range(_label, _begin, _end) \
+	{ \
+		.range_begin = _begin, \
+		.range_end = _end, \
+		.label = _label, \
+	}
+
+#define side_enum_bitmap_mapping_value(_label, _value) \
 	{ \
 		.range_begin = _value, \
 		.range_end = _value, \
