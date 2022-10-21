@@ -893,10 +893,6 @@ void tracer_call(const struct side_event_description *desc, const struct side_ar
 {
 	int nr_fields = 0;
 
-	if (side_unlikely(desc->flags & SIDE_EVENT_FLAG_VARIADIC)) {
-		printf("ERROR: unexpected variadic event description\n");
-		abort();
-	}
 	tracer_print_static_fields(desc, sav_desc, &nr_fields);
 	if (nr_fields)
 		printf(" ]");

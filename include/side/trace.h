@@ -243,6 +243,9 @@ enum side_event_flags {
 	SIDE_EVENT_FLAG_VARIADIC = (1 << 0),
 };
 
+#define SIDE_EVENT_ENABLED_USER_MASK			0x0000FFFF
+#define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK	0x80000000
+
 struct side_event_description {
 	uint32_t version;
 	uint32_t enabled;
@@ -799,7 +802,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.sav = side_sav, \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		tracer_call(desc, &sav_desc); \
+		side_call(desc, &sav_desc); \
 	}
 
 #define side_event(desc, sav) \
@@ -818,7 +821,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.fields = side_fields, \
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 		}; \
-		tracer_call_variadic(desc, &sav_desc, &var_struct); \
+		side_call_variadic(desc, &sav_desc, &var_struct); \
 	}
 
 #define side_event_variadic(desc, sav, var) \
@@ -872,5 +875,11 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 #define side_declare_event(_identifier) \
 	struct side_event_description _identifier
+
+void side_call(const struct side_event_description *desc,
+	const struct side_arg_vec_description *sav_desc);
+void side_call_variadic(const struct side_event_description *desc,
+	const struct side_arg_vec_description *sav_desc,
+	const struct side_arg_dynamic_event_struct *var_struct);
 
 #endif /* _SIDE_TRACE_H */
