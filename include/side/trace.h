@@ -430,11 +430,27 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.side_enum_mappings = _mappings, \
 		}, \
 	}
-#define side_field_enum(_name, _type, _mappings, _attr) \
+#define _side_field_enum(_name, _type, _mappings, _attr) \
 	{ \
 		.field_name = _name, \
 		.side_type = side_type_enum_decl(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
 	}
+#define side_field_enum_u8(_name, _mappings, _attr) \
+	_side_field_enum(_name, SIDE_TYPE_ENUM_U8, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_u16(_name, _mappings, _attr) \
+	_side_field_enum(_name, SIDE_TYPE_ENUM_U16, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_u32(_name, _mappings, _attr) \
+	_side_field_enum(_name, SIDE_TYPE_ENUM_U32, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_u64(_name, _mappings, _attr) \
+	_side_field_enum(_name, SIDE_TYPE_ENUM_U64, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_s8(_name, _mappings, _attr) \
+	_side_field_enum(_name, SIDE_TYPE_ENUM_S8, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_s16(_name, _mappings, _attr) \
+	_side_field_enum(_name, SIDE_TYPE_ENUM_S16, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_s32(_name, _mappings, _attr) \
+	_side_field_enum(_name, SIDE_TYPE_ENUM_S32, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_s64(_name, _mappings, _attr) \
+	_side_field_enum(_name, SIDE_TYPE_ENUM_S64, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
 
 #define side_type_enum_bitmap_decl(_type, _mappings, _attr) \
 	{ \
@@ -445,11 +461,19 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.side_enum_bitmap_mappings = _mappings, \
 		}, \
 	}
-#define side_field_enum_bitmap(_name, _type, _mappings, _attr) \
+#define _side_field_enum_bitmap(_name, _type, _mappings, _attr) \
 	{ \
 		.field_name = _name, \
 		.side_type = side_type_enum_bitmap_decl(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
 	}
+#define side_field_enum_bitmap8(_name, _mappings, _attr) \
+	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP8, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_bitmap16(_name, _mappings, _attr) \
+	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP16, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_bitmap32(_name, _mappings, _attr) \
+	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP32, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
+#define side_field_enum_bitmap64(_name, _mappings, _attr) \
+	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP64, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
 
 #define side_type_struct_decl(_fields, _attr) \
 	{ \
