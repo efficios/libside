@@ -415,11 +415,28 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.attr = _attr, \
 	}
 
-#define side_field(_name, _type, _attr) \
+#define _side_field(_name, _type, _attr) \
 	{ \
 		.field_name = _name, \
 		.side_type = side_type_decl(_type, SIDE_PARAM(_attr)), \
 	}
+
+#define side_field_bool(_name, _attr)			_side_field(_name, SIDE_TYPE_BOOL, SIDE_PARAM(_attr))
+#define side_field_u8(_name, _attr)			_side_field(_name, SIDE_TYPE_U8, SIDE_PARAM(_attr))
+#define side_field_u16(_name, _attr)			_side_field(_name, SIDE_TYPE_U16, SIDE_PARAM(_attr))
+#define side_field_u32(_name, _attr)			_side_field(_name, SIDE_TYPE_U32, SIDE_PARAM(_attr))
+#define side_field_u64(_name, _attr)			_side_field(_name, SIDE_TYPE_U64, SIDE_PARAM(_attr))
+#define side_field_s8(_name, _attr)			_side_field(_name, SIDE_TYPE_S8, SIDE_PARAM(_attr))
+#define side_field_s16(_name, _attr)			_side_field(_name, SIDE_TYPE_S16, SIDE_PARAM(_attr))
+#define side_field_s32(_name, _attr)			_side_field(_name, SIDE_TYPE_S32, SIDE_PARAM(_attr))
+#define side_field_s64(_name, _attr)			_side_field(_name, SIDE_TYPE_S64, SIDE_PARAM(_attr))
+#define side_field_float_binary16(_name, _attr)		_side_field(_name, SIDE_TYPE_FLOAT_BINARY16, SIDE_PARAM(_attr))
+#define side_field_float_binary32(_name, _attr)		_side_field(_name, SIDE_TYPE_FLOAT_BINARY32, SIDE_PARAM(_attr))
+#define side_field_float_binary64(_name, _attr)		_side_field(_name, SIDE_TYPE_FLOAT_BINARY64, SIDE_PARAM(_attr))
+#define side_field_float_binary128(_name, _attr)	_side_field(_name, SIDE_TYPE_FLOAT_BINARY128, SIDE_PARAM(_attr))
+#define side_field_string(_name, _attr)			_side_field(_name, SIDE_TYPE_STRING, SIDE_PARAM(_attr))
+
+#define side_field_dynamic(_name, _attr)		_side_field(_name, SIDE_TYPE_DYNAMIC, SIDE_PARAM(_attr))
 
 #define side_type_enum_decl(_type, _mappings, _attr) \
 	{ \
