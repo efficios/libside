@@ -931,6 +931,39 @@ void test_variadic_float(void)
 	);
 }
 
+static side_define_enum(myenum,
+	side_mapping_list(
+		side_enum_mapping_range("one-ten", 1, 10),
+		side_enum_mapping_range("100-200", 100, 200),
+		side_enum_mapping_value("200", 200),
+		side_enum_mapping_value("300", 300),
+	)
+);
+
+static side_define_event(my_provider_event_enum, "myprovider", "myeventenum", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_enum("5", SIDE_TYPE_ENUM_U32, &myenum, side_attr_list()),
+		side_field_enum("400", SIDE_TYPE_ENUM_U64, &myenum, side_attr_list()),
+		side_field_enum("200", SIDE_TYPE_ENUM_U8, &myenum, side_attr_list()),
+		side_field_enum("-100", SIDE_TYPE_ENUM_S8, &myenum, side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static
+void test_enum(void)
+{
+	my_provider_event_enum.enabled = 1;
+	side_event(&my_provider_event_enum,
+		side_arg_list(
+			side_arg_enum_u32(5),
+			side_arg_enum_u64(400),
+			side_arg_enum_u8(200),
+			side_arg_enum_s8(-100),
+		)
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -962,5 +995,6 @@ int main()
 	test_variadic_struct_attr();
 	test_float();
 	test_variadic_float();
+	test_enum();
 	return 0;
 }

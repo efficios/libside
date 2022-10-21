@@ -19,6 +19,8 @@
 //fixed forever, or think of a scheme that would allow their binary
 //representation to be extended if need be.
 
+//TODO: enum bitmap
+
 struct side_arg_vec;
 struct side_arg_vec_description;
 struct side_arg_dynamic_vec;
@@ -40,6 +42,15 @@ enum side_type {
 	SIDE_TYPE_S16,
 	SIDE_TYPE_S32,
 	SIDE_TYPE_S64,
+
+	SIDE_TYPE_ENUM_U8,
+	SIDE_TYPE_ENUM_U16,
+	SIDE_TYPE_ENUM_U32,
+	SIDE_TYPE_ENUM_U64,
+	SIDE_TYPE_ENUM_S8,
+	SIDE_TYPE_ENUM_S16,
+	SIDE_TYPE_ENUM_S32,
+	SIDE_TYPE_ENUM_S64,
 
 	SIDE_TYPE_FLOAT_BINARY16,
 	SIDE_TYPE_FLOAT_BINARY32,
@@ -185,6 +196,17 @@ struct side_attr {
 	const struct side_attr_value value;
 };
 
+struct side_enum_mapping {
+	int64_t range_begin;
+	int64_t range_end;
+	const char *label;
+};
+
+struct side_enum_mappings {
+	const struct side_enum_mapping *mappings;
+	uint32_t nr_mappings;
+};
+
 struct side_type_description {
 	uint32_t type;	/* enum side_type */
 	uint32_t nr_attr;
@@ -205,6 +227,7 @@ struct side_type_description {
 			const struct side_type_description *elem_type;
 			side_visitor visitor;
 		} side_vla_visitor;
+		const struct side_enum_mappings *side_enum_mappings;
 	} u;
 };
 
@@ -383,6 +406,21 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.side_type = side_type_decl(_type, SIDE_PARAM(_attr)), \
 	}
 
+#define side_type_enum_decl(_type, _mappings, _attr) \
+	{ \
+		.type = _type, \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.attr = _attr, \
+		.u = { \
+			.side_enum_mappings = _mappings, \
+		}, \
+	}
+#define side_field_enum(_name, _type, _mappings, _attr) \
+	{ \
+		.field_name = _name, \
+		.side_type = side_type_enum_decl(_type, SIDE_PARAM(_mappings), SIDE_PARAM(_attr)), \
+	}
+
 #define side_type_struct_decl(_fields, _attr) \
 	{ \
 		.type = SIDE_TYPE_STRUCT, \
@@ -472,6 +510,14 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_s16(val)		{ .type = SIDE_TYPE_S16, .u = { .side_s16 = (val) } }
 #define side_arg_s32(val)		{ .type = SIDE_TYPE_S32, .u = { .side_s32 = (val) } }
 #define side_arg_s64(val)		{ .type = SIDE_TYPE_S64, .u = { .side_s64 = (val) } }
+#define side_arg_enum_u8(val)		{ .type = SIDE_TYPE_ENUM_U8, .u = { .side_u8 = (val) } }
+#define side_arg_enum_u16(val)		{ .type = SIDE_TYPE_ENUM_U16, .u = { .side_u16 = (val) } }
+#define side_arg_enum_u32(val)		{ .type = SIDE_TYPE_ENUM_U32, .u = { .side_u32 = (val) } }
+#define side_arg_enum_u64(val)		{ .type = SIDE_TYPE_ENUM_U64, .u = { .side_u64 = (val) } }
+#define side_arg_enum_s8(val)		{ .type = SIDE_TYPE_ENUM_S8, .u = { .side_s8 = (val) } }
+#define side_arg_enum_s16(val)		{ .type = SIDE_TYPE_ENUM_S16, .u = { .side_s16 = (val) } }
+#define side_arg_enum_s32(val)		{ .type = SIDE_TYPE_ENUM_S32, .u = { .side_s32 = (val) } }
+#define side_arg_enum_s64(val)		{ .type = SIDE_TYPE_ENUM_S64, .u = { .side_s64 = (val) } }
 #define side_arg_float_binary16(val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (val) } }
 #define side_arg_float_binary32(val)	{ .type = SIDE_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (val) } }
 #define side_arg_float_binary64(val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (val) } }
@@ -771,6 +817,29 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_event_variadic(desc, sav, var) \
 	side_event_cond(desc) \
 		side_event_call_variadic(desc, SIDE_PARAM(sav), SIDE_PARAM(var))
+
+#define side_define_enum(_identifier, _mappings) \
+	const struct side_enum_mappings _identifier = { \
+		.mappings = _mappings, \
+		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
+	}
+
+#define side_mapping_list(...) \
+	SIDE_COMPOUND_LITERAL(const struct side_enum_mapping, __VA_ARGS__)
+
+#define side_enum_mapping_range(_label, _begin, _end) \
+	{ \
+		.range_begin = _begin, \
+		.range_end = _end, \
+		.label = _label, \
+	}
+
+#define side_enum_mapping_value(_label, _value) \
+	{ \
+		.range_begin = _value, \
+		.range_end = _value, \
+		.label = _label, \
+	}
 
 #define _side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
 	struct side_event_description _identifier = { \

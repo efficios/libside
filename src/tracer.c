@@ -115,6 +115,25 @@ void print_attributes(const char *prefix_str, const struct side_attr *attr, uint
 }
 
 static
+void print_enum(const struct side_enum_mappings *side_enum_mappings, int64_t value)
+{
+	int i, print_count = 0;
+
+	printf("%" PRId64 ", labels: [ ", value);
+	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
+		const struct side_enum_mapping *mapping = &side_enum_mappings->mappings[i];
+
+		if (value >= mapping->range_begin && value <= mapping->range_end) {
+			printf("%s", print_count++ ? ", " : "");
+			printf("\"%s\"", mapping->label);
+		}
+	}
+	if (!print_count)
+		printf("<NO LABEL>");
+	printf(" ]");
+}
+
+static
 void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
 	switch (item->type) {
@@ -184,6 +203,40 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_S64:
 		printf("%" PRId64, item->u.side_s64);
 		break;
+
+	case SIDE_TYPE_ENUM_U8:
+		print_enum(type_desc->u.side_enum_mappings,
+			(int64_t) item->u.side_u8);
+		break;
+	case SIDE_TYPE_ENUM_U16:
+		print_enum(type_desc->u.side_enum_mappings,
+			(int64_t) item->u.side_u16);
+		break;
+	case SIDE_TYPE_ENUM_U32:
+		print_enum(type_desc->u.side_enum_mappings,
+			(int64_t) item->u.side_u32);
+		break;
+	case SIDE_TYPE_ENUM_U64:
+		print_enum(type_desc->u.side_enum_mappings,
+			(int64_t) item->u.side_u64);
+		break;
+	case SIDE_TYPE_ENUM_S8:
+		print_enum(type_desc->u.side_enum_mappings,
+			(int64_t) item->u.side_s8);
+		break;
+	case SIDE_TYPE_ENUM_S16:
+		print_enum(type_desc->u.side_enum_mappings,
+			(int64_t) item->u.side_s16);
+		break;
+	case SIDE_TYPE_ENUM_S32:
+		print_enum(type_desc->u.side_enum_mappings,
+			(int64_t) item->u.side_s32);
+		break;
+	case SIDE_TYPE_ENUM_S64:
+		print_enum(type_desc->u.side_enum_mappings,
+			item->u.side_s64);
+		break;
+
 	case SIDE_TYPE_FLOAT_BINARY16:
 #if __HAVE_FLOAT16
 		printf("%g", (double) item->u.side_float_binary16);
