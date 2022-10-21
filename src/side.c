@@ -14,7 +14,7 @@ void side_call(const struct side_event_description *desc, const struct side_arg_
 		printf("ERROR: unexpected variadic event description\n");
 		abort();
 	}
-	if (side_unlikely(desc->enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
+	if (side_unlikely(*desc->enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel ioctl.
 	}
 	//TODO: replace tracer_call by rcu iteration on list of registered callbacks
@@ -25,7 +25,7 @@ void side_call_variadic(const struct side_event_description *desc,
 	const struct side_arg_vec_description *sav_desc,
 	const struct side_arg_dynamic_event_struct *var_struct)
 {
-	if (side_unlikely(desc->enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
+	if (side_unlikely(*desc->enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel ioctl.
 	}
 	//TODO: replace tracer_call by rcu iteration on list of registered callbacks

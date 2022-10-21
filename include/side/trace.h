@@ -261,7 +261,7 @@ enum side_event_flags {
 
 struct side_event_description {
 	uint32_t version;
-	uint32_t enabled;
+	uint32_t *enabled;
 	uint32_t loglevel;	/* enum side_loglevel */
 	uint32_t nr_fields;
 	uint32_t nr_attr;
@@ -874,23 +874,23 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_attr_float_binary128(val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY128, .u = { .side_float_binary128 = (val) } }
 #define side_attr_string(val)		{ .type = SIDE_ATTR_TYPE_STRING, .u = { .string = (val) } }
 
-#define side_event_cond(desc) if (side_unlikely((desc)->enabled))
+#define side_event_cond(_desc) if (side_unlikely(_desc##_enabled))
 
-#define side_event_call(desc, _sav) \
+#define side_event_call(_desc, _sav) \
 	{ \
 		const struct side_arg_vec side_sav[] = { _sav }; \
 		const struct side_arg_vec_description sav_desc = { \
 			.sav = side_sav, \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		side_call(desc, &sav_desc); \
+		side_call(&(_desc), &sav_desc); \
 	}
 
-#define side_event(desc, sav) \
-	side_event_cond(desc) \
-		side_event_call(desc, SIDE_PARAM(sav))
+#define side_event(_desc, _sav) \
+	side_event_cond(_desc) \
+		side_event_call(_desc, SIDE_PARAM(_sav))
 
-#define side_event_call_variadic(desc, _sav, _var_fields) \
+#define side_event_call_variadic(_desc, _sav, _var_fields) \
 	{ \
 		const struct side_arg_vec side_sav[] = { _sav }; \
 		const struct side_arg_vec_description sav_desc = { \
@@ -902,12 +902,12 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.fields = side_fields, \
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 		}; \
-		side_call_variadic(desc, &sav_desc, &var_struct); \
+		side_call_variadic(&(_desc), &sav_desc, &var_struct); \
 	}
 
-#define side_event_variadic(desc, sav, var) \
-	side_event_cond(desc) \
-		side_event_call_variadic(desc, SIDE_PARAM(sav), SIDE_PARAM(var))
+#define side_event_variadic(_desc, _sav, _var) \
+	side_event_cond(_desc) \
+		side_event_call_variadic(_desc, SIDE_PARAM(_sav), SIDE_PARAM(_var))
 
 #define side_define_enum(_identifier, _mappings) \
 	const struct side_enum_mappings _identifier = { \
@@ -956,9 +956,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	}
 
 #define _side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
-	struct side_event_description _identifier = { \
+	uint32_t _identifier##_enabled; \
+	const struct side_event_description _identifier = { \
 		.version = 0, \
-		.enabled = 0, \
+		.enabled = &_identifier##_enabled, \
 		.loglevel = _loglevel, \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
