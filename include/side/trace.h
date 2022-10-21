@@ -243,9 +243,6 @@ enum side_event_flags {
 	SIDE_EVENT_FLAG_VARIADIC = (1 << 0),
 };
 
-#define SIDE_EVENT_ENABLED_USER_MASK			0x0000FFFF
-#define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK	0x80000000
-
 struct side_event_description {
 	uint32_t version;
 	uint32_t enabled;

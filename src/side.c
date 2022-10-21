@@ -6,6 +6,8 @@
 #include <side/trace.h>
 #include "tracer.h"
 
+#define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK	0x80000000
+
 void side_call(const struct side_event_description *desc, const struct side_arg_vec_description *sav_desc)
 {
 	if (side_unlikely(desc->flags & SIDE_EVENT_FLAG_VARIADIC)) {
