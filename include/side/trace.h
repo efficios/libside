@@ -227,15 +227,19 @@ struct side_enum_bitmap_mappings {
 	uint32_t nr_mappings;
 };
 
+struct side_type_struct {
+	uint32_t nr_fields;
+	uint32_t nr_attr;
+	const struct side_event_field *fields;
+	const struct side_attr *attr;
+};
+
 struct side_type_description {
 	uint32_t type;	/* enum side_type */
 	uint32_t nr_attr;
 	const struct side_attr *attr;
 	union {
-		struct {
-			uint32_t nr_fields;
-			const struct side_event_field *fields;
-		} side_struct;
+		const struct side_type_struct *side_struct;
 		struct {
 			uint32_t length;
 			const struct side_type_description *elem_type;
@@ -532,20 +536,32 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_enum_bitmap64(_name, _mappings, _attr) \
 	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP64, SIDE_PARAM(_mappings), SIDE_PARAM(_attr))
 
-#define side_type_struct(_fields, _attr) \
+#define side_type_struct(_struct) \
 	{ \
 		.type = SIDE_TYPE_STRUCT, \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-		.attr = _attr, \
+		.nr_attr = 0, \
+		.attr = NULL, \
 		.u = { \
-			.side_struct = { \
-				.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
-				.fields = _fields, \
-			}, \
+			.side_struct = _struct, \
 		}, \
 	}
-#define side_field_struct(_name, _fields, _attr) \
-	_side_field(_name, side_type_struct(SIDE_PARAM(_fields), SIDE_PARAM(_attr)))
+#define side_field_struct(_name, _struct) \
+	_side_field(_name, side_type_struct(SIDE_PARAM(_struct)))
+
+#define _side_type_struct_define(_fields, _attr) \
+	{ \
+		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
+		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.fields = _fields, \
+		.attr = _attr, \
+	}
+
+#define side_define_struct(_identifier, _fields, _attr) \
+	const struct side_type_struct _identifier = _side_type_struct_define(SIDE_PARAM(_fields), SIDE_PARAM(_attr))
+
+#define side_struct_literal(_fields, _attr) \
+	SIDE_COMPOUND_LITERAL(const struct side_type_struct, \
+		_side_type_struct_define(SIDE_PARAM(_fields), SIDE_PARAM(_attr)))
 
 #define side_type_array(_elem_type, _length, _attr) \
 	{ \

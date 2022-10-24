@@ -391,14 +391,14 @@ void tracer_print_struct(const struct side_type_description *type_desc, const st
 	uint32_t side_sav_len = sav_desc->len;
 	int i;
 
-	if (type_desc->u.side_struct.nr_fields != side_sav_len) {
+	if (type_desc->u.side_struct->nr_fields != side_sav_len) {
 		printf("ERROR: number of fields mismatch between description and arguments of structure\n");
 		abort();
 	}
 	printf("{ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_field(&type_desc->u.side_struct.fields[i], &sav[i]);
+		tracer_print_field(&type_desc->u.side_struct->fields[i], &sav[i]);
 	}
 	printf(" }");
 }

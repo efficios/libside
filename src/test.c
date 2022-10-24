@@ -34,15 +34,43 @@ void test_fields(void)
 		side_arg_dynamic(side_arg_dynamic_string("zzz", side_attr_list()))));
 }
 
-static side_define_event(my_provider_event2, "myprovider", "myevent2", SIDE_LOGLEVEL_DEBUG,
+static side_define_event(my_provider_event_struct_literal, "myprovider", "myeventstructliteral", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_struct("structfield",
-			side_field_list(
-				side_field_u32("x", side_attr_list()),
-				side_field_s64("y", side_attr_list()),
-			),
-			side_attr_list()
+		side_field_struct("structliteral",
+			side_struct_literal(
+				side_field_list(
+					side_field_u32("x", side_attr_list()),
+					side_field_s64("y", side_attr_list()),
+				),
+				side_attr_list()
+			)
 		),
+		side_field_u8("z", side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static
+void test_struct_literal(void)
+{
+	my_provider_event_struct_literal_enabled = 1;
+	side_event_cond(my_provider_event_struct_literal) {
+		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
+		side_event_call(my_provider_event_struct_literal, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
+	}
+}
+
+static side_define_struct(mystructdef,
+	side_field_list(
+		side_field_u32("x", side_attr_list()),
+		side_field_s64("y", side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static side_define_event(my_provider_event_struct, "myprovider", "myeventstruct", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_struct("struct", &mystructdef),
 		side_field_u8("z", side_attr_list()),
 	),
 	side_attr_list()
@@ -51,10 +79,10 @@ static side_define_event(my_provider_event2, "myprovider", "myevent2", SIDE_LOGL
 static
 void test_struct(void)
 {
-	my_provider_event2_enabled = 1;
-	side_event_cond(my_provider_event2) {
+	my_provider_event_struct_enabled = 1;
+	side_event_cond(my_provider_event_struct) {
 		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
-		side_event_call(my_provider_event2, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
+		side_event_call(my_provider_event_struct, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
 	}
 }
 
@@ -1046,6 +1074,7 @@ void test_blob(void)
 int main()
 {
 	test_fields();
+	test_struct_literal();
 	test_struct();
 	test_array();
 	test_vla();
