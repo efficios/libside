@@ -1095,6 +1095,40 @@ void test_blob(void)
 	}
 }
 
+static side_define_event_variadic(my_provider_event_format_string,
+	"myprovider", "myeventformatstring", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_string("fmt", side_attr_list()),
+	),
+	side_attr_list(
+		side_attr("lang.c.format_string", side_attr_bool(true)),
+	)
+);
+
+static
+void test_fmt_string(void)
+{
+	my_provider_event_format_string_enabled = 1;
+	side_event_cond(my_provider_event_format_string) {
+		side_arg_dynamic_define_vec(args,
+			side_arg_list(
+				side_arg_dynamic_string("blah", side_attr_list()),
+				side_arg_dynamic_s32(123, side_attr_list()),
+			),
+			side_attr_list()
+		);
+		side_event_call_variadic(my_provider_event_format_string,
+			side_arg_list(
+				side_arg_string("This is a formatted string with str: %s int: %d"),
+			),
+			side_arg_list(
+				side_arg_dynamic_field("arguments", side_arg_dynamic_vla(&args)),
+			),
+			side_attr_list()
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -1130,5 +1164,6 @@ int main()
 	test_enum();
 	test_enum_bitmap();
 	test_blob();
+	test_fmt_string();
 	return 0;
 }
