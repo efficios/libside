@@ -431,7 +431,7 @@ void tracer_print_array(const struct side_type_description *type_desc, const str
 		printf("ERROR: length mismatch between description and arguments of array\n");
 		abort();
 	}
-	printf("value: ");
+	printf("elements: ");
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
@@ -447,7 +447,7 @@ void tracer_print_vla(const struct side_type_description *type_desc, const struc
 	uint32_t side_sav_len = sav_desc->len;
 	int i;
 
-	printf("value: ");
+	printf("elements: ");
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
@@ -485,7 +485,7 @@ void tracer_print_vla_visitor(const struct side_type_description *type_desc, voi
 		.priv = &tracer_priv,
 	};
 
-	printf("value: ");
+	printf("elements: ");
 	printf("[ ");
 	status = type_desc->u.side_vla_visitor.visitor(&tracer_ctx, app_ctx);
 	switch (status) {
@@ -506,7 +506,7 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 	enum side_type side_type;
 	int i;
 
-	printf("value: ");
+	printf("elements: ");
 	switch (item->type) {
 	case SIDE_TYPE_ARRAY_U8:
 		if (elem_type->type != SIDE_TYPE_U8)
@@ -608,6 +608,7 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 	enum side_type side_type;
 	int i;
 
+	printf("elements: ");
 	switch (item->type) {
 	case SIDE_TYPE_VLA_U8:
 		if (elem_type->type != SIDE_TYPE_U8)
