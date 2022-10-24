@@ -177,6 +177,14 @@ void print_enum_bitmap(const struct side_enum_bitmap_mappings *side_enum_mapping
 }
 
 static
+void tracer_print_basic_type_header(const struct side_type_description *type_desc)
+{
+	print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
+	printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
+	printf("value: ");
+}
+
+static
 void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
 	switch (item->type) {
@@ -219,63 +227,43 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	printf("{ ");
 	switch (item->type) {
 	case SIDE_TYPE_BOOL:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%s", item->u.side_bool ? "true" : "false");
 		break;
 	case SIDE_TYPE_U8:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%" PRIu8, item->u.side_u8);
 		break;
 	case SIDE_TYPE_U16:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%" PRIu16, item->u.side_u16);
 		break;
 	case SIDE_TYPE_U32:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%" PRIu32, item->u.side_u32);
 		break;
 	case SIDE_TYPE_U64:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%" PRIu64, item->u.side_u64);
 		break;
 	case SIDE_TYPE_S8:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%" PRId8, item->u.side_s8);
 		break;
 	case SIDE_TYPE_S16:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%" PRId16, item->u.side_s16);
 		break;
 	case SIDE_TYPE_S32:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%" PRId32, item->u.side_s32);
 		break;
 	case SIDE_TYPE_S64:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("%" PRId64, item->u.side_s64);
 		break;
 	case SIDE_TYPE_BLOB:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("0x%" PRIx8, item->u.side_blob);
 		break;
 
@@ -330,9 +318,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 
 	case SIDE_TYPE_FLOAT_BINARY16:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 #if __HAVE_FLOAT16
 		printf("%g", (double) item->u.side_float_binary16);
 		break;
@@ -341,9 +327,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		abort();
 #endif
 	case SIDE_TYPE_FLOAT_BINARY32:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 #if __HAVE_FLOAT32
 		printf("%g", (double) item->u.side_float_binary32);
 		break;
@@ -352,9 +336,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		abort();
 #endif
 	case SIDE_TYPE_FLOAT_BINARY64:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 #if __HAVE_FLOAT64
 		printf("%g", (double) item->u.side_float_binary64);
 		break;
@@ -363,9 +345,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		abort();
 #endif
 	case SIDE_TYPE_FLOAT_BINARY128:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 #if __HAVE_FLOAT128
 		printf("%Lg", (long double) item->u.side_float_binary128);
 		break;
@@ -374,9 +354,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		abort();
 #endif
 	case SIDE_TYPE_STRING:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("value: ");
+		tracer_print_basic_type_header(type_desc);
 		printf("\"%s\"", item->u.string);
 		break;
 	case SIDE_TYPE_STRUCT:
@@ -414,9 +392,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		tracer_print_vla_fixint(type_desc, item);
 		break;
 	case SIDE_TYPE_DYNAMIC:
-		print_attributes("attr: ", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-		printf("element: ");
+		tracer_print_basic_type_header(type_desc);
 		tracer_print_dynamic(&item->u.dynamic);
 		break;
 	default:
@@ -873,81 +849,65 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
 }
 
 static
+void tracer_print_dynamic_basic_type_header(const struct side_arg_dynamic_vec *item)
+{
+	print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
+	printf("%s", item->u.side_basic.nr_attr ? ", " : "");
+	printf("value:: ");
+}
+
+static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 {
 	printf("{ ");
 	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("<NULL TYPE>");
 		break;
 	case SIDE_DYNAMIC_TYPE_BOOL:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%s", item->u.side_basic.u.side_bool ? "true" : "false");
 		break;
 	case SIDE_DYNAMIC_TYPE_U8:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRIu8, item->u.side_basic.u.side_u8);
 		break;
 	case SIDE_DYNAMIC_TYPE_U16:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRIu16, item->u.side_basic.u.side_u16);
 		break;
 	case SIDE_DYNAMIC_TYPE_U32:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRIu32, item->u.side_basic.u.side_u32);
 		break;
 	case SIDE_DYNAMIC_TYPE_U64:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRIu64, item->u.side_basic.u.side_u64);
 		break;
 	case SIDE_DYNAMIC_TYPE_S8:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRId8, item->u.side_basic.u.side_s8);
 		break;
 	case SIDE_DYNAMIC_TYPE_S16:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRId16, item->u.side_basic.u.side_s16);
 		break;
 	case SIDE_DYNAMIC_TYPE_S32:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRId32, item->u.side_basic.u.side_s32);
 		break;
 	case SIDE_DYNAMIC_TYPE_S64:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRId64, item->u.side_basic.u.side_s64);
 		break;
 	case SIDE_DYNAMIC_TYPE_BLOB:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("0x%" PRIx8, item->u.side_basic.u.side_blob);
 		break;
 
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY16:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 #if __HAVE_FLOAT16
 		printf("%g", (double) item->u.side_basic.u.side_float_binary16);
 		break;
@@ -956,9 +916,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY32:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 #if __HAVE_FLOAT32
 		printf("%g", (double) item->u.side_basic.u.side_float_binary32);
 		break;
@@ -967,9 +925,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY64:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 #if __HAVE_FLOAT64
 		printf("%g", (double) item->u.side_basic.u.side_float_binary64);
 		break;
@@ -978,9 +934,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY128:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 #if __HAVE_FLOAT128
 		printf("%Lg", (long double) item->u.side_basic.u.side_float_binary128);
 		break;
@@ -989,9 +943,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_STRING:
-		print_attributes("attr:: ", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-		printf("value:: ");
+		tracer_print_dynamic_basic_type_header(item);
 		printf("\"%s\"", item->u.side_basic.u.string);
 		break;
 	case SIDE_DYNAMIC_TYPE_STRUCT:
