@@ -313,11 +313,12 @@ void test_dynamic_vla(void)
 			side_arg_dynamic_u32(1, side_attr_list()),
 			side_arg_dynamic_u32(2, side_attr_list()),
 			side_arg_dynamic_u32(3, side_attr_list()),
-		)
+		),
+		side_attr_list()
 	);
 	my_provider_event_dynamic_vla_enabled = 1;
 	side_event(my_provider_event_dynamic_vla,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla, side_attr_list()))));
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
 
 static side_define_event(my_provider_event_dynamic_null,
@@ -352,12 +353,13 @@ void test_dynamic_struct(void)
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
 			side_arg_dynamic_field("b", side_arg_dynamic_string("zzz", side_attr_list())),
 			side_arg_dynamic_field("c", side_arg_dynamic_null(side_attr_list())),
-		)
+		),
+		side_attr_list()
 	);
 
 	my_provider_event_dynamic_struct_enabled = 1;
 	side_event(my_provider_event_dynamic_struct,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct, side_attr_list()))));
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
 
 static side_define_event(my_provider_event_dynamic_nested_struct,
@@ -375,23 +377,26 @@ void test_dynamic_nested_struct(void)
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
 			side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
-		)
+		),
+		side_attr_list()
 	);
 	side_arg_dynamic_define_struct(nested2,
 		side_arg_list(
 			side_arg_dynamic_field("aa", side_arg_dynamic_u64(128, side_attr_list())),
 			side_arg_dynamic_field("bb", side_arg_dynamic_u16(1, side_attr_list())),
-		)
+		),
+		side_attr_list()
 	);
 	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
-			side_arg_dynamic_field("nested", side_arg_dynamic_struct(&nested, side_attr_list())),
-			side_arg_dynamic_field("nested2", side_arg_dynamic_struct(&nested2, side_attr_list())),
-		)
+			side_arg_dynamic_field("nested", side_arg_dynamic_struct(&nested)),
+			side_arg_dynamic_field("nested2", side_arg_dynamic_struct(&nested2)),
+		),
+		side_attr_list()
 	);
 	my_provider_event_dynamic_nested_struct_enabled = 1;
 	side_event(my_provider_event_dynamic_nested_struct,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct, side_attr_list()))));
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
 
 static side_define_event(my_provider_event_dynamic_vla_struct,
@@ -409,19 +414,21 @@ void test_dynamic_vla_struct(void)
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
 			side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
-		)
+		),
+		side_attr_list()
 	);
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
-			side_arg_dynamic_struct(&nested, side_attr_list()),
-			side_arg_dynamic_struct(&nested, side_attr_list()),
-			side_arg_dynamic_struct(&nested, side_attr_list()),
-			side_arg_dynamic_struct(&nested, side_attr_list()),
-		)
+			side_arg_dynamic_struct(&nested),
+			side_arg_dynamic_struct(&nested),
+			side_arg_dynamic_struct(&nested),
+			side_arg_dynamic_struct(&nested),
+		),
+		side_attr_list()
 	);
 	my_provider_event_dynamic_vla_struct_enabled = 1;
 	side_event(my_provider_event_dynamic_vla_struct,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla, side_attr_list()))));
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
 
 static side_define_event(my_provider_event_dynamic_struct_vla,
@@ -440,24 +447,27 @@ void test_dynamic_struct_vla(void)
 			side_arg_dynamic_u32(1, side_attr_list()),
 			side_arg_dynamic_u32(2, side_attr_list()),
 			side_arg_dynamic_u32(3, side_attr_list()),
-		)
+		),
+		side_attr_list()
 	);
 	side_arg_dynamic_define_vec(myvla2,
 		side_arg_list(
 			side_arg_dynamic_u32(4, side_attr_list()),
 			side_arg_dynamic_u64(5, side_attr_list()),
 			side_arg_dynamic_u32(6, side_attr_list()),
-		)
+		),
+		side_attr_list()
 	);
 	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_vla(&myvla2, side_attr_list())),
-		)
+			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
+			side_arg_dynamic_field("b", side_arg_dynamic_vla(&myvla2)),
+		),
+		side_attr_list()
 	);
 	my_provider_event_dynamic_struct_vla_enabled = 1;
 	side_event(my_provider_event_dynamic_struct_vla,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct, side_attr_list()))));
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
 
 static side_define_event(my_provider_event_dynamic_nested_vla,
@@ -476,24 +486,27 @@ void test_dynamic_nested_vla(void)
 			side_arg_dynamic_u32(1, side_attr_list()),
 			side_arg_dynamic_u16(2, side_attr_list()),
 			side_arg_dynamic_u32(3, side_attr_list()),
-		)
+		),
+		side_attr_list()
 	);
 	side_arg_dynamic_define_vec(nestedvla2,
 		side_arg_list(
 			side_arg_dynamic_u8(4, side_attr_list()),
 			side_arg_dynamic_u32(5, side_attr_list()),
 			side_arg_dynamic_u32(6, side_attr_list()),
-		)
+		),
+		side_attr_list()
 	);
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
-			side_arg_dynamic_vla(&nestedvla, side_attr_list()),
-			side_arg_dynamic_vla(&nestedvla2, side_attr_list()),
-		)
+			side_arg_dynamic_vla(&nestedvla),
+			side_arg_dynamic_vla(&nestedvla2),
+		),
+		side_attr_list()
 	);
 	my_provider_event_dynamic_nested_vla_enabled = 1;
 	side_event(my_provider_event_dynamic_nested_vla,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla, side_attr_list()))));
+		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
 
 static side_define_event_variadic(my_provider_event_variadic,
@@ -511,7 +524,8 @@ void test_variadic(void)
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(55, side_attr_list())),
 			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4, side_attr_list())),
-		)
+		),
+		side_attr_list()
 	);
 }
 
@@ -536,7 +550,8 @@ void test_static_variadic(void)
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_u32(55, side_attr_list())),
 			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4, side_attr_list())),
-		)
+		),
+		side_attr_list()
 	);
 }
 
@@ -595,7 +610,8 @@ void test_dynamic_bool(void)
 			side_arg_dynamic_field("b_true", side_arg_dynamic_bool(-4, side_attr_list())),
 			side_arg_dynamic_field("c_false", side_arg_dynamic_bool(0, side_attr_list())),
 			side_arg_dynamic_field("d_true", side_arg_dynamic_bool(256, side_attr_list())),
-		)
+		),
+		side_attr_list()
 	);
 }
 
@@ -621,10 +637,14 @@ enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_dynam
 	for (i = 0; i < length; i++) {
 		const struct side_arg_dynamic_vec elem = {
 			.dynamic_type = SIDE_DYNAMIC_TYPE_U32,
-			.nr_attr = 0,
-			.attr = NULL,
 			.u = {
-				.side_u32 = ctx->ptr[i],
+				.side_basic = {
+					.attr = NULL,
+					.nr_attr = 0,
+					.u = {
+						.side_u32 = ctx->ptr[i],
+					},
+				},
 			},
 		};
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
@@ -683,10 +703,14 @@ enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dy
 			.field_name = ctx->ptr[i].name,
 			.elem = {
 				.dynamic_type = SIDE_DYNAMIC_TYPE_U32,
-				.nr_attr = 0,
-				.attr = NULL,
 				.u = {
-					.side_u32 = ctx->ptr[i].value,
+					.side_basic = {
+						.nr_attr = 0,
+						.attr = NULL,
+						.u = {
+							.side_u32 = ctx->ptr[i].value,
+						},
+					},
 				},
 			},
 		};
@@ -794,7 +818,8 @@ void test_variadic_attr(void)
 					)
 				)
 			),
-		)
+		),
+		side_attr_list()
 	);
 }
 
@@ -817,21 +842,19 @@ void test_variadic_vla_attr(void)
 			),
 			side_arg_dynamic_u32(2, side_attr_list()),
 			side_arg_dynamic_u32(3, side_attr_list()),
+		),
+		side_attr_list(
+			side_attr("X", side_attr_u8(1)),
+			side_attr("Y", side_attr_u8(2)),
 		)
 	);
 	my_provider_event_variadic_vla_attr_enabled = 1;
 	side_event_variadic(my_provider_event_variadic_vla_attr,
 		side_arg_list(),
 		side_arg_list(
-			side_arg_dynamic_field("a",
-				side_arg_dynamic_vla(&myvla,
-					side_attr_list(
-						side_attr("X", side_attr_u8(1)),
-						side_attr("Y", side_attr_u8(2)),
-					)
-				)
-			),
-		)
+			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
+		),
+		side_attr_list()
 	);
 }
 
@@ -856,20 +879,18 @@ void test_variadic_struct_attr(void)
 					)
 				),
 				side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
+			),
+			side_attr_list(
+				side_attr("X", side_attr_u8(1)),
+				side_attr("Y", side_attr_u8(2)),
 			)
 		);
 		side_event_call_variadic(my_provider_event_variadic_struct_attr,
 			side_arg_list(),
 			side_arg_list(
-				side_arg_dynamic_field("a",
-					side_arg_dynamic_struct(&mystruct,
-						side_attr_list(
-							side_attr("X", side_attr_u8(1)),
-							side_attr("Y", side_attr_u8(2)),
-						)
-					)
-				),
-			)
+				side_arg_dynamic_field("a", side_arg_dynamic_struct(&mystruct)),
+			),
+			side_attr_list()
 		);
 	}
 }
@@ -947,7 +968,8 @@ void test_variadic_float(void)
 				side_arg_dynamic_float_binary128(4.4, side_attr_list())
 			),
 #endif
-		)
+		),
+		side_attr_list()
 	);
 }
 
@@ -1052,7 +1074,8 @@ void test_blob(void)
 			side_arg_list(
 				side_arg_dynamic_blob(0x22, side_attr_list()),
 				side_arg_dynamic_blob(0x33, side_attr_list()),
-			)
+			),
+			side_attr_list()
 		);
 		side_event_call_variadic(my_provider_event_blob,
 			side_arg_list(
@@ -1065,10 +1088,9 @@ void test_blob(void)
 				side_arg_dynamic_field("varblobfield",
 					side_arg_dynamic_blob(0x55, side_attr_list())
 				),
-				side_arg_dynamic_field("varblobvla",
-					side_arg_dynamic_vla(&myvla, side_attr_list())
-				),
-			)
+				side_arg_dynamic_field("varblobvla", side_arg_dynamic_vla(&myvla)),
+			),
+			side_attr_list()
 		);
 	}
 }
