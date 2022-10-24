@@ -987,6 +987,8 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 	}
 	if (nr_items)
 		*nr_items = i;
+	if (side_sav_len)
+		printf(" ]");
 }
 
 void tracer_call(const struct side_event_description *desc,
@@ -996,8 +998,6 @@ void tracer_call(const struct side_event_description *desc,
 	int nr_fields = 0;
 
 	tracer_print_static_fields(desc, sav_desc, &nr_fields);
-	if (nr_fields)
-		printf(" ]");
 	printf("\n");
 }
 
@@ -1015,9 +1015,11 @@ void tracer_call_variadic(const struct side_event_description *desc,
 		printf("ERROR: unexpected non-variadic event description\n");
 		abort();
 	}
-	printf("%s", var_struct_len && !nr_fields ? ", fields: [ " : "");
+	printf("%s", var_struct->nr_attr && nr_fields ? ", " : "");
+	print_attributes("attributes:: ", var_struct->attr, var_struct->nr_attr);
+	printf("%s", var_struct_len && (nr_fields || var_struct->nr_attr) ? ", fields:: [ " : "");
 	for (i = 0; i < var_struct_len; i++, nr_fields++) {
-		printf("%s", nr_fields ? ", " : "");
+		printf("%s", i ? ", " : "");
 		printf("%s:: ", var_struct->fields[i].field_name);
 		tracer_print_dynamic(&var_struct->fields[i].elem);
 	}
