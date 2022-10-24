@@ -957,15 +957,16 @@ static side_define_enum(myenum,
 		side_enum_mapping_range("100-200", 100, 200),
 		side_enum_mapping_value("200", 200),
 		side_enum_mapping_value("300", 300),
-	)
+	),
+	side_attr_list()
 );
 
 static side_define_event(my_provider_event_enum, "myprovider", "myeventenum", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_enum_u32("5", &myenum, side_attr_list()),
-		side_field_enum_u64("400", &myenum, side_attr_list()),
-		side_field_enum_u8("200", &myenum, side_attr_list()),
-		side_field_enum_s8("-100", &myenum, side_attr_list()),
+		side_field_enum_u32("5", &myenum),
+		side_field_enum_u64("400", &myenum),
+		side_field_enum_u8("200", &myenum),
+		side_field_enum_s8("-100", &myenum),
 	),
 	side_attr_list()
 );
@@ -993,19 +994,20 @@ static side_define_enum_bitmap(myenum_bitmap,
 		side_enum_bitmap_mapping_value("3", 3),
 		side_enum_bitmap_mapping_value("30", 30),
 		side_enum_bitmap_mapping_value("63", 63),
-	)
+	),
+	side_attr_list()
 );
 
 static side_define_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitmap", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_enum_bitmap32("bit_0", &myenum_bitmap, side_attr_list()),
-		side_field_enum_bitmap32("bit_1", &myenum_bitmap, side_attr_list()),
-		side_field_enum_bitmap8("bit_2", &myenum_bitmap, side_attr_list()),
-		side_field_enum_bitmap8("bit_3", &myenum_bitmap, side_attr_list()),
-		side_field_enum_bitmap32("bit_30", &myenum_bitmap, side_attr_list()),
-		side_field_enum_bitmap32("bit_31", &myenum_bitmap, side_attr_list()),
-		side_field_enum_bitmap64("bit_63", &myenum_bitmap, side_attr_list()),
-		side_field_enum_bitmap64("bits_1+63", &myenum_bitmap, side_attr_list()),
+		side_field_enum_bitmap32("bit_0", &myenum_bitmap),
+		side_field_enum_bitmap32("bit_1", &myenum_bitmap),
+		side_field_enum_bitmap8("bit_2", &myenum_bitmap),
+		side_field_enum_bitmap8("bit_3", &myenum_bitmap),
+		side_field_enum_bitmap32("bit_30", &myenum_bitmap),
+		side_field_enum_bitmap32("bit_31", &myenum_bitmap),
+		side_field_enum_bitmap64("bit_63", &myenum_bitmap),
+		side_field_enum_bitmap64("bits_1+63", &myenum_bitmap),
 	),
 	side_attr_list()
 );
