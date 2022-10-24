@@ -709,6 +709,7 @@ void tracer_print_dynamic_struct(const struct side_arg_dynamic_event_struct *dyn
 	uint32_t len = dynamic_struct->len;
 	int i;
 
+	printf("fields:: ");
 	printf("[ ");
 	for (i = 0; i < len; i++) {
 		printf("%s", i ? ", " : "");
@@ -748,6 +749,7 @@ void tracer_print_dynamic_struct_visitor(const struct side_arg_dynamic_vec *item
 	};
 	void *app_ctx = item->u.side_dynamic_struct_visitor.app_ctx;
 
+	printf("fields:: ");
 	printf("[ ");
 	status = item->u.side_dynamic_struct_visitor.visitor(&tracer_ctx, app_ctx);
 	switch (status) {
@@ -767,6 +769,7 @@ void tracer_print_dynamic_vla(const struct side_arg_dynamic_vec_vla *vla)
 	uint32_t side_sav_len = vla->len;
 	int i;
 
+	printf("elements:: ");
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
@@ -804,6 +807,7 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
 	};
 	void *app_ctx = item->u.side_dynamic_vla_visitor.app_ctx;
 
+	printf("elements:: ");
 	printf("[ ");
 	status = item->u.side_dynamic_vla_visitor.visitor(&tracer_ctx, app_ctx);
 	switch (status) {
@@ -820,45 +824,56 @@ static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 {
 	printf("{ ");
-	print_attributes("attr: ", item->attr, item->nr_attr);
+	print_attributes("attr:: ", item->attr, item->nr_attr);
 	printf("%s", item->nr_attr ? ", " : "");
-	printf("value: ");
 	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
+		printf("value:: ");
 		printf("<NULL TYPE>");
 		break;
 	case SIDE_DYNAMIC_TYPE_BOOL:
+		printf("value:: ");
 		printf("%s", item->u.side_bool ? "true" : "false");
 		break;
 	case SIDE_DYNAMIC_TYPE_U8:
+		printf("value:: ");
 		printf("%" PRIu8, item->u.side_u8);
 		break;
 	case SIDE_DYNAMIC_TYPE_U16:
+		printf("value:: ");
 		printf("%" PRIu16, item->u.side_u16);
 		break;
 	case SIDE_DYNAMIC_TYPE_U32:
+		printf("value:: ");
 		printf("%" PRIu32, item->u.side_u32);
 		break;
 	case SIDE_DYNAMIC_TYPE_U64:
+		printf("value:: ");
 		printf("%" PRIu64, item->u.side_u64);
 		break;
 	case SIDE_DYNAMIC_TYPE_S8:
+		printf("value:: ");
 		printf("%" PRId8, item->u.side_s8);
 		break;
 	case SIDE_DYNAMIC_TYPE_S16:
+		printf("value:: ");
 		printf("%" PRId16, item->u.side_s16);
 		break;
 	case SIDE_DYNAMIC_TYPE_S32:
+		printf("value:: ");
 		printf("%" PRId32, item->u.side_s32);
 		break;
 	case SIDE_DYNAMIC_TYPE_S64:
+		printf("value:: ");
 		printf("%" PRId64, item->u.side_s64);
 		break;
 	case SIDE_DYNAMIC_TYPE_BLOB:
+		printf("value:: ");
 		printf("0x%" PRIx8, item->u.side_blob);
 		break;
 
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY16:
+		printf("value:: ");
 #if __HAVE_FLOAT16
 		printf("%g", (double) item->u.side_float_binary16);
 		break;
@@ -867,6 +882,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY32:
+		printf("value:: ");
 #if __HAVE_FLOAT32
 		printf("%g", (double) item->u.side_float_binary32);
 		break;
@@ -875,6 +891,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY64:
+		printf("value:: ");
 #if __HAVE_FLOAT64
 		printf("%g", (double) item->u.side_float_binary64);
 		break;
@@ -883,6 +900,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY128:
+		printf("value:: ");
 #if __HAVE_FLOAT128
 		printf("%Lg", (long double) item->u.side_float_binary128);
 		break;
@@ -891,6 +909,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_STRING:
+		printf("value:: ");
 		printf("\"%s\"", item->u.string);
 		break;
 	case SIDE_DYNAMIC_TYPE_STRUCT:
