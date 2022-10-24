@@ -382,6 +382,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		tracer_print_vla_fixint(type_desc, item);
 		break;
 	case SIDE_TYPE_DYNAMIC:
+		printf("element: ");
 		tracer_print_dynamic(&item->u.dynamic);
 		break;
 	default:
