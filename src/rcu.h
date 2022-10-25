@@ -38,6 +38,10 @@ unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
 
 	if (cpu < 0)
 		cpu = 0;
+	/*
+	 * This acquire MO pairs with the release fence at the end of
+	 * side_rcu_wait_grace_period().
+	 */
 	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].begin, 1, __ATOMIC_ACQUIRE);
 	return period;
 }
@@ -49,6 +53,10 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 
 	if (cpu < 0)
 		cpu = 0;
+	/*
+	 * This release MO pairs with the acquire fence at the beginning
+	 * of side_rcu_wait_grace_period().
+	 */
 	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].end, 1, __ATOMIC_RELEASE);
 }
 
