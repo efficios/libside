@@ -186,26 +186,19 @@ uint32_t enum_elem_type_to_stride(const struct side_type_description *elem_type)
 
 	switch (elem_type->type) {
 	case SIDE_TYPE_U8:
-	case SIDE_TYPE_S8:
 		stride_bit = 8;
 		break;
 	case SIDE_TYPE_U16:
-	case SIDE_TYPE_S16:
 		stride_bit = 16;
 		break;
 	case SIDE_TYPE_U32:
-	case SIDE_TYPE_S32:
 		stride_bit = 32;
 		break;
 	case SIDE_TYPE_U64:
-	case SIDE_TYPE_S64:
 		stride_bit = 64;
 		break;
-	case SIDE_TYPE_ARRAY:
-		return enum_elem_type_to_stride(elem_type->u.side_array.elem_type);
-	case SIDE_TYPE_VLA:
-		return enum_elem_type_to_stride(elem_type->u.side_vla.elem_type);
 	default:
+		printf("ERROR: Unexpected enum element type\n");
 		abort();
 	}
 	return stride_bit;
@@ -221,25 +214,22 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 	uint32_t stride_bit, nr_items;
 	const struct side_arg_vec *array_item;
 
-	stride_bit = enum_elem_type_to_stride(elem_type);
-
 	switch (elem_type->type) {
 	case SIDE_TYPE_U8:		/* Fall-through */
 	case SIDE_TYPE_U16:		/* Fall-through */
 	case SIDE_TYPE_U32:		/* Fall-through */
 	case SIDE_TYPE_U64:		/* Fall-through */
-	case SIDE_TYPE_S8:		/* Fall-through */
-	case SIDE_TYPE_S16:		/* Fall-through */
-	case SIDE_TYPE_S32:		/* Fall-through */
-	case SIDE_TYPE_S64:
+		stride_bit = enum_elem_type_to_stride(elem_type);
 		array_item = item;
 		nr_items = 1;
 		break;
 	case SIDE_TYPE_ARRAY:
+		stride_bit = enum_elem_type_to_stride(elem_type->u.side_array.elem_type);
 		array_item = item->u.side_array->sav;
 		nr_items = type_desc->u.side_array.length;
 		break;
 	case SIDE_TYPE_VLA:
+		stride_bit = enum_elem_type_to_stride(elem_type->u.side_vla.elem_type);
 		array_item = item->u.side_vla->sav;
 		nr_items = item->u.side_vla->len;
 		break;
@@ -329,55 +319,78 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 {
 	enum side_type type;
 
-	switch (item->type) {
-	case SIDE_TYPE_ARRAY_U8:
-	case SIDE_TYPE_ARRAY_U16:
-	case SIDE_TYPE_ARRAY_U32:
-	case SIDE_TYPE_ARRAY_U64:
-	case SIDE_TYPE_ARRAY_S8:
-	case SIDE_TYPE_ARRAY_S16:
-	case SIDE_TYPE_ARRAY_S32:
-	case SIDE_TYPE_ARRAY_S64:
-	case SIDE_TYPE_ARRAY_BLOB:
-		if (type_desc->type != SIDE_TYPE_ARRAY) {
+	switch (type_desc->type) {
+	case SIDE_TYPE_ARRAY:
+		switch (item->type) {
+		case SIDE_TYPE_ARRAY_U8:
+		case SIDE_TYPE_ARRAY_U16:
+		case SIDE_TYPE_ARRAY_U32:
+		case SIDE_TYPE_ARRAY_U64:
+		case SIDE_TYPE_ARRAY_S8:
+		case SIDE_TYPE_ARRAY_S16:
+		case SIDE_TYPE_ARRAY_S32:
+		case SIDE_TYPE_ARRAY_S64:
+		case SIDE_TYPE_ARRAY_BLOB:
+		case SIDE_TYPE_ARRAY:
+			break;
+		default:
 			printf("ERROR: type mismatch between description and arguments\n");
 			abort();
-		}
-		break;
-	case SIDE_TYPE_VLA_U8:
-	case SIDE_TYPE_VLA_U16:
-	case SIDE_TYPE_VLA_U32:
-	case SIDE_TYPE_VLA_U64:
-	case SIDE_TYPE_VLA_S8:
-	case SIDE_TYPE_VLA_S16:
-	case SIDE_TYPE_VLA_S32:
-	case SIDE_TYPE_VLA_S64:
-	case SIDE_TYPE_VLA_BLOB:
-		if (type_desc->type != SIDE_TYPE_VLA) {
-			printf("ERROR: type mismatch between description and arguments\n");
-			abort();
+			break;
 		}
 		break;
 
-	case SIDE_TYPE_U8:
-	case SIDE_TYPE_U16:
-	case SIDE_TYPE_U32:
-	case SIDE_TYPE_U64:
-	case SIDE_TYPE_S8:
-	case SIDE_TYPE_S16:
-	case SIDE_TYPE_S32:
-	case SIDE_TYPE_S64:
-	case SIDE_TYPE_ARRAY:
 	case SIDE_TYPE_VLA:
-		switch (type_desc->type) {
-		case SIDE_TYPE_ENUM:		/* Fall-through */
-		case SIDE_TYPE_ENUM_BITMAP:
+		switch (item->type) {
+		case SIDE_TYPE_VLA_U8:
+		case SIDE_TYPE_VLA_U16:
+		case SIDE_TYPE_VLA_U32:
+		case SIDE_TYPE_VLA_U64:
+		case SIDE_TYPE_VLA_S8:
+		case SIDE_TYPE_VLA_S16:
+		case SIDE_TYPE_VLA_S32:
+		case SIDE_TYPE_VLA_S64:
+		case SIDE_TYPE_VLA_BLOB:
+		case SIDE_TYPE_VLA:
 			break;
 		default:
-			if (type_desc->type != item->type) {
-				printf("ERROR: type mismatch between description and arguments\n");
-				abort();
-			}
+			printf("ERROR: type mismatch between description and arguments\n");
+			abort();
+			break;
+		}
+		break;
+
+	case SIDE_TYPE_ENUM:
+		switch (item->type) {
+		case SIDE_TYPE_U8:
+		case SIDE_TYPE_U16:
+		case SIDE_TYPE_U32:
+		case SIDE_TYPE_U64:
+		case SIDE_TYPE_S8:
+		case SIDE_TYPE_S16:
+		case SIDE_TYPE_S32:
+		case SIDE_TYPE_S64:
+			break;
+		default:
+			printf("ERROR: type mismatch between description and arguments\n");
+			abort();
+			break;
+		}
+		break;
+
+	case SIDE_TYPE_ENUM_BITMAP:
+		switch (item->type) {
+		case SIDE_TYPE_U8:
+		case SIDE_TYPE_U16:
+		case SIDE_TYPE_U32:
+		case SIDE_TYPE_U64:
+		case SIDE_TYPE_ARRAY:
+		case SIDE_TYPE_VLA:
+			break;
+		default:
+			printf("ERROR: type mismatch between description and arguments\n");
+			abort();
+			break;
 		}
 		break;
 
