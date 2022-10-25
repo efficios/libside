@@ -330,7 +330,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		case SIDE_TYPE_ARRAY_S16:
 		case SIDE_TYPE_ARRAY_S32:
 		case SIDE_TYPE_ARRAY_S64:
-		case SIDE_TYPE_ARRAY_BLOB:
+		case SIDE_TYPE_ARRAY_BYTE:
 		case SIDE_TYPE_ARRAY:
 			break;
 		default:
@@ -350,7 +350,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		case SIDE_TYPE_VLA_S16:
 		case SIDE_TYPE_VLA_S32:
 		case SIDE_TYPE_VLA_S64:
-		case SIDE_TYPE_VLA_BLOB:
+		case SIDE_TYPE_VLA_BYTE:
 		case SIDE_TYPE_VLA:
 			break;
 		default:
@@ -445,9 +445,9 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		tracer_print_basic_type_header(type_desc);
 		printf("%" PRId64, item->u.side_s64);
 		break;
-	case SIDE_TYPE_BLOB:
+	case SIDE_TYPE_BYTE:
 		tracer_print_basic_type_header(type_desc);
-		printf("0x%" PRIx8, item->u.side_blob);
+		printf("0x%" PRIx8, item->u.side_byte);
 		break;
 
 	case SIDE_TYPE_ENUM:
@@ -518,7 +518,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_ARRAY_S16:
 	case SIDE_TYPE_ARRAY_S32:
 	case SIDE_TYPE_ARRAY_S64:
-	case SIDE_TYPE_ARRAY_BLOB:
+	case SIDE_TYPE_ARRAY_BYTE:
 		tracer_print_array_fixint(type_desc, item);
 		break;
 	case SIDE_TYPE_VLA_U8:
@@ -529,7 +529,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_VLA_S16:
 	case SIDE_TYPE_VLA_S32:
 	case SIDE_TYPE_VLA_S64:
-	case SIDE_TYPE_VLA_BLOB:
+	case SIDE_TYPE_VLA_BYTE:
 		tracer_print_vla_fixint(type_desc, item);
 		break;
 	case SIDE_TYPE_DYNAMIC:
@@ -699,8 +699,8 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 		if (elem_type->type != SIDE_TYPE_S64)
 			goto type_error;
 		break;
-	case SIDE_TYPE_ARRAY_BLOB:
-		if (elem_type->type != SIDE_TYPE_BLOB)
+	case SIDE_TYPE_ARRAY_BYTE:
+		if (elem_type->type != SIDE_TYPE_BYTE)
 			goto type_error;
 		break;
 	default:
@@ -739,8 +739,8 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 		case SIDE_TYPE_S64:
 			sav_elem.u.side_s64 = ((const int64_t *) p)[i];
 			break;
-		case SIDE_TYPE_BLOB:
-			sav_elem.u.side_blob = ((const uint8_t *) p)[i];
+		case SIDE_TYPE_BYTE:
+			sav_elem.u.side_byte = ((const uint8_t *) p)[i];
 			break;
 
 		default:
@@ -803,8 +803,8 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 		if (elem_type->type != SIDE_TYPE_S64)
 			goto type_error;
 		break;
-	case SIDE_TYPE_VLA_BLOB:
-		if (elem_type->type != SIDE_TYPE_BLOB)
+	case SIDE_TYPE_VLA_BYTE:
+		if (elem_type->type != SIDE_TYPE_BYTE)
 			goto type_error;
 		break;
 	default:
@@ -843,8 +843,8 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 		case SIDE_TYPE_S64:
 			sav_elem.u.side_s64 = ((const int64_t *) p)[i];
 			break;
-		case SIDE_TYPE_BLOB:
-			sav_elem.u.side_blob = ((const uint8_t *) p)[i];
+		case SIDE_TYPE_BYTE:
+			sav_elem.u.side_byte = ((const uint8_t *) p)[i];
 			break;
 
 		default:
@@ -1042,9 +1042,9 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRId64, item->u.side_basic.u.side_s64);
 		break;
-	case SIDE_DYNAMIC_TYPE_BLOB:
+	case SIDE_DYNAMIC_TYPE_BYTE:
 		tracer_print_dynamic_basic_type_header(item);
-		printf("0x%" PRIx8, item->u.side_basic.u.side_blob);
+		printf("0x%" PRIx8, item->u.side_basic.u.side_byte);
 		break;
 
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY16:
