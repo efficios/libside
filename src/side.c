@@ -5,6 +5,7 @@
 
 #include <side/trace.h>
 #include "tracer.h"
+#include "rcu.h"
 
 #define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK	0x80000000
 
