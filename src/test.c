@@ -1016,6 +1016,9 @@ static side_define_enum_bitmap(myenum_bitmap,
 		side_enum_bitmap_mapping_value("3", 3),
 		side_enum_bitmap_mapping_value("30", 30),
 		side_enum_bitmap_mapping_value("63", 63),
+		side_enum_bitmap_mapping_range("158-160", 158, 160),
+		side_enum_bitmap_mapping_value("159", 159),
+		side_enum_bitmap_mapping_range("500-700", 500, 700),
 	),
 	side_attr_list()
 );
@@ -1030,6 +1033,10 @@ static side_define_event(my_provider_event_enum_bitmap, "myprovider", "myeventen
 		side_field_enum_bitmap32("bit_31", &myenum_bitmap),
 		side_field_enum_bitmap64("bit_63", &myenum_bitmap),
 		side_field_enum_bitmap64("bits_1+63", &myenum_bitmap),
+		side_field_enum_bitmap_array("bit_159", &myenum_bitmap,
+			side_elem(side_type_u32(side_attr_list())), 5),
+		side_field_enum_bitmap_vla("bit_159", &myenum_bitmap,
+			side_elem(side_type_u32(side_attr_list()))),
 	),
 	side_attr_list()
 );
@@ -1038,18 +1045,31 @@ static
 void test_enum_bitmap(void)
 {
 	my_provider_event_enum_bitmap_enabled = 1;
-	side_event(my_provider_event_enum_bitmap,
-		side_arg_list(
-			side_arg_enum_bitmap32(1 << 0),
-			side_arg_enum_bitmap32(1 << 1),
-			side_arg_enum_bitmap8(1 << 2),
-			side_arg_enum_bitmap8(1 << 3),
-			side_arg_enum_bitmap32(1 << 30),
-			side_arg_enum_bitmap32(1 << 31),
-			side_arg_enum_bitmap64(1ULL << 63),
-			side_arg_enum_bitmap64((1ULL << 1) | (1ULL << 63)),
-		)
-	);
+	side_event_cond(my_provider_event_enum_bitmap) {
+		side_arg_define_vec(myarray,
+			side_arg_list(
+				side_arg_u32(0),
+				side_arg_u32(0),
+				side_arg_u32(0),
+				side_arg_u32(0),
+				side_arg_u32(0x80000000),	/* bit 159 */
+			)
+		);
+		side_event_call(my_provider_event_enum_bitmap,
+			side_arg_list(
+				side_arg_enum_bitmap32(1 << 0),
+				side_arg_enum_bitmap32(1 << 1),
+				side_arg_enum_bitmap8(1 << 2),
+				side_arg_enum_bitmap8(1 << 3),
+				side_arg_enum_bitmap32(1 << 30),
+				side_arg_enum_bitmap32(1 << 31),
+				side_arg_enum_bitmap64(1ULL << 63),
+				side_arg_enum_bitmap64((1ULL << 1) | (1ULL << 63)),
+				side_arg_enum_bitmap_array(&myarray),
+				side_arg_enum_bitmap_vla(&myarray),
+			)
+		);
+	}
 }
 
 static uint8_t blob_fixint[] = { 0x55, 0x44, 0x33, 0x22, 0x11 };

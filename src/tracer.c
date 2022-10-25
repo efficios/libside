@@ -142,30 +142,135 @@ void print_enum(const struct side_enum_mappings *side_enum_mappings, int64_t val
 }
 
 static
-void print_enum_bitmap(const struct side_enum_bitmap_mappings *side_enum_mappings, uint64_t value)
+uint32_t enum_type_to_stride(const struct side_type_description *type_desc)
 {
+	uint32_t stride_bit;
+
+	switch (type_desc->type) {
+	case SIDE_TYPE_ENUM_BITMAP8:
+	case SIDE_TYPE_U8:
+	case SIDE_TYPE_S8:
+		stride_bit = 8;
+		break;
+	case SIDE_TYPE_ENUM_BITMAP16:
+	case SIDE_TYPE_U16:
+	case SIDE_TYPE_S16:
+		stride_bit = 16;
+		break;
+	case SIDE_TYPE_ENUM_BITMAP32:
+	case SIDE_TYPE_U32:
+	case SIDE_TYPE_S32:
+		stride_bit = 32;
+		break;
+	case SIDE_TYPE_ENUM_BITMAP64:
+	case SIDE_TYPE_U64:
+	case SIDE_TYPE_S64:
+		stride_bit = 64;
+		break;
+	case SIDE_TYPE_ENUM_BITMAP_ARRAY:
+		stride_bit = enum_type_to_stride(type_desc->u.side_enum_bitmap_array.elem_type);
+		break;
+	case SIDE_TYPE_ENUM_BITMAP_VLA:
+		stride_bit = enum_type_to_stride(type_desc->u.side_enum_bitmap_vla.elem_type);
+		break;
+	default:
+		abort();
+	}
+	return stride_bit;
+}
+
+static
+void print_enum_bitmap(const struct side_type_description *type_desc,
+		const struct side_arg_vec *item)
+{
+	const struct side_enum_bitmap_mappings *side_enum_mappings;
 	int i, print_count = 0;
+	uint32_t stride_bit, nr_items;
+	const struct side_arg_vec *array_item;
+
+	stride_bit = enum_type_to_stride(type_desc);
+
+	switch (type_desc->type) {
+	case SIDE_TYPE_ENUM_BITMAP8:	/* Fall-through */
+	case SIDE_TYPE_ENUM_BITMAP16:	/* Fall-through */
+	case SIDE_TYPE_ENUM_BITMAP32:	/* Fall-through */
+	case SIDE_TYPE_ENUM_BITMAP64:
+		array_item = item;
+		nr_items = 1;
+		side_enum_mappings = type_desc->u.side_enum_bitmap_mappings;
+		break;
+	case SIDE_TYPE_ENUM_BITMAP_ARRAY:
+		nr_items = type_desc->u.side_enum_bitmap_array.length;
+		array_item = item->u.side_array->sav;
+		side_enum_mappings = type_desc->u.side_enum_bitmap_array.mappings;
+		break;
+	case SIDE_TYPE_ENUM_BITMAP_VLA:
+		nr_items = item->u.side_vla->len;
+		array_item = item->u.side_vla->sav;
+		side_enum_mappings = type_desc->u.side_enum_bitmap_vla.mappings;
+		break;
+	default:
+		abort();
+	}
 
 	print_attributes("attr: ", side_enum_mappings->attr, side_enum_mappings->nr_attr);
 	printf("%s", side_enum_mappings->nr_attr ? ", " : "");
-	printf("value: 0x%" PRIx64 ", labels: [ ", value);
+	printf("labels: [ ");
 	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
 		const struct side_enum_bitmap_mapping *mapping = &side_enum_mappings->mappings[i];
 		bool match = false;
 		int64_t bit;
 
-		if (mapping->range_begin < 0 || mapping->range_end > 63
-				|| mapping->range_end < mapping->range_begin) {
+		if (mapping->range_begin < 0 || mapping->range_end < mapping->range_begin) {
 			printf("ERROR: Unexpected enum bitmap range: %" PRIu64 "-%" PRIu64 "\n",
 				mapping->range_begin, mapping->range_end);
 			abort();
 		}
 		for (bit = mapping->range_begin; bit <= mapping->range_end; bit++) {
-			if (value & (1ULL << bit)) {
-				match = true;
+			if (bit > (nr_items * stride_bit) - 1)
+				break;
+			switch (stride_bit) {
+			case 8:
+			{
+				uint8_t v = array_item[bit / 8].u.side_u8;
+				if (v & (1ULL << (bit % 8))) {
+					match = true;
+					goto match;
+				}
 				break;
 			}
+			case 16:
+			{
+				uint16_t v = array_item[bit / 16].u.side_u16;
+				if (v & (1ULL << (bit % 16))) {
+					match = true;
+					goto match;
+				}
+				break;
+			}
+			case 32:
+			{
+				uint32_t v = array_item[bit / 32].u.side_u32;
+				if (v & (1ULL << (bit % 32))) {
+					match = true;
+					goto match;
+				}
+				break;
+			}
+			case 64:
+			{
+				uint64_t v = array_item[bit / 64].u.side_u64;
+				if (v & (1ULL << (bit % 64))) {
+					match = true;
+					goto match;
+				}
+				break;
+			}
+			default:
+				abort();
+			}
 		}
+match:
 		if (match) {
 			printf("%s", print_count++ ? ", " : "");
 			printf("\"%s\"", mapping->label);
@@ -300,21 +405,13 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 			item->u.side_s64);
 		break;
 
-	case SIDE_TYPE_ENUM_BITMAP8:
-		print_enum_bitmap(type_desc->u.side_enum_bitmap_mappings,
-			(uint64_t) item->u.side_u8);
-		break;
-	case SIDE_TYPE_ENUM_BITMAP16:
-		print_enum_bitmap(type_desc->u.side_enum_bitmap_mappings,
-			(uint64_t) item->u.side_u16);
-		break;
-	case SIDE_TYPE_ENUM_BITMAP32:
-		print_enum_bitmap(type_desc->u.side_enum_bitmap_mappings,
-			(uint64_t) item->u.side_u32);
-		break;
+	case SIDE_TYPE_ENUM_BITMAP8:	/* Fall-through */
+	case SIDE_TYPE_ENUM_BITMAP16:	/* Fall-through */
+	case SIDE_TYPE_ENUM_BITMAP32:	/* Fall-through */
 	case SIDE_TYPE_ENUM_BITMAP64:
-		print_enum_bitmap(type_desc->u.side_enum_bitmap_mappings,
-			item->u.side_u64);
+	case SIDE_TYPE_ENUM_BITMAP_ARRAY:
+	case SIDE_TYPE_ENUM_BITMAP_VLA:
+		print_enum_bitmap(type_desc, item);
 		break;
 
 	case SIDE_TYPE_FLOAT_BINARY16:

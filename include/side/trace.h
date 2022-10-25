@@ -49,21 +49,6 @@ enum side_type {
 	SIDE_TYPE_FLOAT_BINARY128,
 	SIDE_TYPE_STRING,
 
-	/* Enumeration types */
-	SIDE_TYPE_ENUM_U8,
-	SIDE_TYPE_ENUM_U16,
-	SIDE_TYPE_ENUM_U32,
-	SIDE_TYPE_ENUM_U64,
-	SIDE_TYPE_ENUM_S8,
-	SIDE_TYPE_ENUM_S16,
-	SIDE_TYPE_ENUM_S32,
-	SIDE_TYPE_ENUM_S64,
-
-	SIDE_TYPE_ENUM_BITMAP8,
-	SIDE_TYPE_ENUM_BITMAP16,
-	SIDE_TYPE_ENUM_BITMAP32,
-	SIDE_TYPE_ENUM_BITMAP64,
-
 	/* Compound types */
 	SIDE_TYPE_STRUCT,
 	SIDE_TYPE_ARRAY,
@@ -89,6 +74,24 @@ enum side_type {
 	SIDE_TYPE_VLA_S32,
 	SIDE_TYPE_VLA_S64,
 	SIDE_TYPE_VLA_BLOB,
+
+	/* Enumeration types */
+	SIDE_TYPE_ENUM_U8,
+	SIDE_TYPE_ENUM_U16,
+	SIDE_TYPE_ENUM_U32,
+	SIDE_TYPE_ENUM_U64,
+	SIDE_TYPE_ENUM_S8,
+	SIDE_TYPE_ENUM_S16,
+	SIDE_TYPE_ENUM_S32,
+	SIDE_TYPE_ENUM_S64,
+
+	SIDE_TYPE_ENUM_BITMAP8,
+	SIDE_TYPE_ENUM_BITMAP16,
+	SIDE_TYPE_ENUM_BITMAP32,
+	SIDE_TYPE_ENUM_BITMAP64,
+
+	SIDE_TYPE_ENUM_BITMAP_ARRAY,
+	SIDE_TYPE_ENUM_BITMAP_VLA,
 
 	/* Dynamic type */
 	SIDE_TYPE_DYNAMIC,
@@ -239,10 +242,6 @@ struct side_type_description {
 			uint32_t nr_attr;
 		} side_basic;
 
-		/* Enumeration types */
-		const struct side_enum_mappings *side_enum_mappings;
-		const struct side_enum_bitmap_mappings *side_enum_bitmap_mappings;
-
 		/* Compound types */
 		struct {
 			const struct side_type_description *elem_type;
@@ -262,6 +261,19 @@ struct side_type_description {
 			uint32_t nr_attr;
 		} side_vla_visitor;
 		const struct side_type_struct *side_struct;
+
+		/* Enumeration types */
+		const struct side_enum_mappings *side_enum_mappings;
+		const struct side_enum_bitmap_mappings *side_enum_bitmap_mappings;
+		struct {
+			const struct side_type_description *elem_type;
+			const struct side_enum_bitmap_mappings *mappings;
+			uint32_t length;
+		} side_enum_bitmap_array;
+		struct {
+			const struct side_type_description *elem_type;
+			const struct side_enum_bitmap_mappings *mappings;
+		} side_enum_bitmap_vla;
 	} u;
 };
 
@@ -562,17 +574,52 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.side_enum_bitmap_mappings = _mappings, \
 		}, \
 	}
-#define _side_field_enum_bitmap(_name, _type, _mappings) \
-	_side_field(_name, side_type_enum_bitmap(_type, SIDE_PARAM(_mappings)))
+#define side_type_enum_bitmap8(_mappings) \
+	side_type_enum_bitmap(SIDE_TYPE_ENUM_BITMAP8, SIDE_PARAM(_mappings))
+#define side_type_enum_bitmap16(_mappings) \
+	side_type_enum_bitmap(SIDE_TYPE_ENUM_BITMAP16, SIDE_PARAM(_mappings))
+#define side_type_enum_bitmap32(_mappings) \
+	side_type_enum_bitmap(SIDE_TYPE_ENUM_BITMAP32, SIDE_PARAM(_mappings))
+#define side_type_enum_bitmap64(_mappings) \
+	side_type_enum_bitmap(SIDE_TYPE_ENUM_BITMAP64, SIDE_PARAM(_mappings))
+
+#define _side_field_enum_bitmap(_name, _type)	_side_field(_name, SIDE_PARAM(_type))
 
 #define side_field_enum_bitmap8(_name, _mappings) \
-	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP8, SIDE_PARAM(_mappings))
+	_side_field_enum_bitmap(_name, side_type_enum_bitmap8(SIDE_PARAM(_mappings)))
 #define side_field_enum_bitmap16(_name, _mappings) \
-	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP16, SIDE_PARAM(_mappings))
+	_side_field_enum_bitmap(_name, side_type_enum_bitmap16(SIDE_PARAM(_mappings)))
 #define side_field_enum_bitmap32(_name, _mappings) \
-	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP32, SIDE_PARAM(_mappings))
+	_side_field_enum_bitmap(_name, side_type_enum_bitmap32(SIDE_PARAM(_mappings)))
 #define side_field_enum_bitmap64(_name, _mappings) \
-	_side_field_enum_bitmap(_name, SIDE_TYPE_ENUM_BITMAP64, SIDE_PARAM(_mappings))
+	_side_field_enum_bitmap(_name, side_type_enum_bitmap64(SIDE_PARAM(_mappings)))
+
+#define side_type_enum_bitmap_array(_mappings, _elem_type, _length) \
+	{ \
+		.type = SIDE_TYPE_ENUM_BITMAP_ARRAY, \
+		.u = { \
+			.side_enum_bitmap_array = { \
+				.elem_type = _elem_type, \
+				.mappings = _mappings, \
+				.length = _length, \
+			}, \
+		}, \
+	}
+#define side_field_enum_bitmap_array(_name, _mappings, _elem_type, _length) \
+	_side_field(_name, side_type_enum_bitmap_array(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type), _length))
+
+#define side_type_enum_bitmap_vla(_mappings, _elem_type) \
+	{ \
+		.type = SIDE_TYPE_ENUM_BITMAP_VLA, \
+		.u = { \
+			.side_enum_bitmap_vla = { \
+				.elem_type = _elem_type, \
+				.mappings = _mappings, \
+			}, \
+		}, \
+	}
+#define side_field_enum_bitmap_vla(_name, _mappings, _elem_type) \
+	_side_field(_name, side_type_enum_bitmap_vla(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define side_type_struct(_struct) \
 	{ \
@@ -673,6 +720,8 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_enum_bitmap16(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP16, .u = { .side_u16 = (_val) } }
 #define side_arg_enum_bitmap32(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP32, .u = { .side_u32 = (_val) } }
 #define side_arg_enum_bitmap64(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP64, .u = { .side_u64 = (_val) } }
+#define side_arg_enum_bitmap_array(_side_type)	{ .type = SIDE_TYPE_ENUM_BITMAP_ARRAY, .u = { .side_array = (_side_type) } }
+#define side_arg_enum_bitmap_vla(_side_type)	{ .type = SIDE_TYPE_ENUM_BITMAP_VLA, .u = { .side_vla = (_side_type) } }
 #define side_arg_float_binary16(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (_val) } }
 #define side_arg_float_binary32(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (_val) } }
 #define side_arg_float_binary64(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (_val) } }
