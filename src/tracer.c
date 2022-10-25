@@ -247,9 +247,9 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
 		const struct side_enum_bitmap_mapping *mapping = &side_enum_mappings->mappings[i];
 		bool match = false;
-		int64_t bit;
+		uint64_t bit;
 
-		if (mapping->range_begin < 0 || mapping->range_end < mapping->range_begin) {
+		if (mapping->range_end < mapping->range_begin) {
 			fprintf(stderr, "ERROR: Unexpected enum bitmap range: %" PRIu64 "-%" PRIu64 "\n",
 				mapping->range_begin, mapping->range_end);
 			abort();

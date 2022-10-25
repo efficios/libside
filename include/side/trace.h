@@ -201,8 +201,8 @@ struct side_enum_mappings {
 };
 
 struct side_enum_bitmap_mapping {
-	int64_t range_begin;
-	int64_t range_end;
+	uint64_t range_begin;
+	uint64_t range_end;
 	const char *label;
 };
 
