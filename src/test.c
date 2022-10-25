@@ -985,10 +985,10 @@ static side_define_enum(myenum,
 
 static side_define_event(my_provider_event_enum, "myprovider", "myeventenum", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_enum_u32("5", &myenum),
-		side_field_enum_u64("400", &myenum),
-		side_field_enum_u8("200", &myenum),
-		side_field_enum_s8("-100", &myenum),
+		side_field_enum("5", side_elem(side_type_u32(side_attr_list())), &myenum),
+		side_field_enum("400", side_elem(side_type_u64(side_attr_list())), &myenum),
+		side_field_enum("200", side_elem(side_type_u8(side_attr_list())), &myenum),
+		side_field_enum("-100", side_elem(side_type_s8(side_attr_list())), &myenum),
 	),
 	side_attr_list()
 );
@@ -999,10 +999,10 @@ void test_enum(void)
 	my_provider_event_enum_enabled = 1;
 	side_event(my_provider_event_enum,
 		side_arg_list(
-			side_arg_enum_u32(5),
-			side_arg_enum_u64(400),
-			side_arg_enum_u8(200),
-			side_arg_enum_s8(-100),
+			side_arg_u32(5),
+			side_arg_u64(400),
+			side_arg_u8(200),
+			side_arg_s8(-100),
 		)
 	);
 }

@@ -25,6 +25,8 @@ static
 void tracer_print_vla_fixint(const struct side_type_description *type_desc, const struct side_arg_vec *item);
 static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *dynamic_item);
+static
+void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item);
 
 static
 void tracer_print_attr_type(const struct side_attr *attr)
@@ -116,15 +118,51 @@ void print_attributes(const char *prefix_str, const struct side_attr *attr, uint
 }
 
 static
-void print_enum(const struct side_enum_mappings *side_enum_mappings, int64_t value)
+void print_enum(const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
+	const struct side_enum_mappings *mappings = type_desc->u.side_enum.mappings;
 	int i, print_count = 0;
+	int64_t value;
 
-	print_attributes("attr: ", side_enum_mappings->attr, side_enum_mappings->nr_attr);
-	printf("%s", side_enum_mappings->nr_attr ? ", " : "");
-	printf("value: %" PRId64 ", labels: [ ", value);
-	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
-		const struct side_enum_mapping *mapping = &side_enum_mappings->mappings[i];
+	if (type_desc->u.side_enum.elem_type->type != item->type) {
+		printf("ERROR: Unexpected enum element type\n");
+		abort();
+	}
+	switch (item->type) {
+	case SIDE_TYPE_U8:
+		value = (int64_t) item->u.side_u8;
+		break;
+	case SIDE_TYPE_U16:
+		value = (int64_t) item->u.side_u16;
+		break;
+	case SIDE_TYPE_U32:
+		value = (int64_t) item->u.side_u32;
+		break;
+	case SIDE_TYPE_U64:
+		value = (int64_t) item->u.side_u64;
+		break;
+	case SIDE_TYPE_S8:
+		value = (int64_t) item->u.side_s8;
+		break;
+	case SIDE_TYPE_S16:
+		value = (int64_t) item->u.side_s16;
+		break;
+	case SIDE_TYPE_S32:
+		value = (int64_t) item->u.side_s32;
+		break;
+	case SIDE_TYPE_S64:
+		value = (int64_t) item->u.side_s64;
+		break;
+	default:
+		printf("ERROR: Unexpected enum element type\n");
+		abort();
+	}
+	print_attributes("attr: ", mappings->attr, mappings->nr_attr);
+	printf("%s", mappings->nr_attr ? ", " : "");
+	tracer_print_type(type_desc->u.side_enum.elem_type, item);
+	printf(", labels: [ ");
+	for (i = 0; i < mappings->nr_mappings; i++) {
+		const struct side_enum_mapping *mapping = &mappings->mappings[i];
 
 		if (mapping->range_end < mapping->range_begin) {
 			printf("ERROR: Unexpected enum range: %" PRIu64 "-%" PRIu64 "\n",
@@ -292,6 +330,8 @@ void tracer_print_basic_type_header(const struct side_type_description *type_des
 static
 void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
+	enum side_type type;
+
 	switch (item->type) {
 	case SIDE_TYPE_ARRAY_U8:
 	case SIDE_TYPE_ARRAY_U16:
@@ -322,6 +362,20 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		}
 		break;
 
+	case SIDE_TYPE_U8:
+	case SIDE_TYPE_U16:
+	case SIDE_TYPE_U32:
+	case SIDE_TYPE_U64:
+	case SIDE_TYPE_S8:
+	case SIDE_TYPE_S16:
+	case SIDE_TYPE_S32:
+	case SIDE_TYPE_S64:
+		if (type_desc->type != item->type && type_desc->type != SIDE_TYPE_ENUM) {
+			printf("ERROR: type mismatch between description and arguments\n");
+			abort();
+		}
+		break;
+
 	default:
 		if (type_desc->type != item->type) {
 			printf("ERROR: type mismatch between description and arguments\n");
@@ -329,8 +383,14 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		}
 		break;
 	}
+
+	if (type_desc->type == SIDE_TYPE_ENUM)
+		type = SIDE_TYPE_ENUM;
+	else
+		type = item->type;
+
 	printf("{ ");
-	switch (item->type) {
+	switch (type) {
 	case SIDE_TYPE_BOOL:
 		tracer_print_basic_type_header(type_desc);
 		printf("%s", item->u.side_bool ? "true" : "false");
@@ -372,37 +432,8 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		printf("0x%" PRIx8, item->u.side_blob);
 		break;
 
-	case SIDE_TYPE_ENUM_U8:
-		print_enum(type_desc->u.side_enum_mappings,
-			(int64_t) item->u.side_u8);
-		break;
-	case SIDE_TYPE_ENUM_U16:
-		print_enum(type_desc->u.side_enum_mappings,
-			(int64_t) item->u.side_u16);
-		break;
-	case SIDE_TYPE_ENUM_U32:
-		print_enum(type_desc->u.side_enum_mappings,
-			(int64_t) item->u.side_u32);
-		break;
-	case SIDE_TYPE_ENUM_U64:
-		print_enum(type_desc->u.side_enum_mappings,
-			(int64_t) item->u.side_u64);
-		break;
-	case SIDE_TYPE_ENUM_S8:
-		print_enum(type_desc->u.side_enum_mappings,
-			(int64_t) item->u.side_s8);
-		break;
-	case SIDE_TYPE_ENUM_S16:
-		print_enum(type_desc->u.side_enum_mappings,
-			(int64_t) item->u.side_s16);
-		break;
-	case SIDE_TYPE_ENUM_S32:
-		print_enum(type_desc->u.side_enum_mappings,
-			(int64_t) item->u.side_s32);
-		break;
-	case SIDE_TYPE_ENUM_S64:
-		print_enum(type_desc->u.side_enum_mappings,
-			item->u.side_s64);
+	case SIDE_TYPE_ENUM:
+		print_enum(type_desc, item);
 		break;
 
 	case SIDE_TYPE_ENUM_BITMAP8:	/* Fall-through */
