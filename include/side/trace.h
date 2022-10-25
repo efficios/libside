@@ -250,12 +250,12 @@ struct side_type_description {
 
 		/* Enumeration types */
 		struct {
-			const struct side_type_description *elem_type;
 			const struct side_enum_mappings *mappings;
+			const struct side_type_description *elem_type;
 		} side_enum;
 		struct {
-			const struct side_type_description *elem_type;
 			const struct side_enum_bitmap_mappings *mappings;
+			const struct side_type_description *elem_type;
 		} side_enum_bitmap;
 	} u;
 };
@@ -523,31 +523,31 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_string(_name, _attr)			_side_field(_name, side_type_string(SIDE_PARAM(_attr)))
 #define side_field_dynamic(_name, _attr)		_side_field(_name, side_type_dynamic(SIDE_PARAM(_attr)))
 
-#define side_type_enum(_elem_type, _mappings) \
+#define side_type_enum(_mappings, _elem_type) \
 	{ \
 		.type = SIDE_TYPE_ENUM, \
 		.u = { \
 			.side_enum = { \
-				.elem_type = _elem_type, \
 				.mappings = _mappings, \
+				.elem_type = _elem_type, \
 			}, \
 		}, \
 	}
-#define side_field_enum(_name, _elem_type, _mappings) \
-	_side_field(_name, side_type_enum(SIDE_PARAM(_elem_type), SIDE_PARAM(_mappings)))
+#define side_field_enum(_name, _mappings, _elem_type) \
+	_side_field(_name, side_type_enum(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
-#define side_type_enum_bitmap(_elem_type, _mappings) \
+#define side_type_enum_bitmap(_mappings, _elem_type) \
 	{ \
 		.type = SIDE_TYPE_ENUM_BITMAP, \
 		.u = { \
 			.side_enum_bitmap = { \
-				.elem_type = _elem_type, \
 				.mappings = _mappings, \
+				.elem_type = _elem_type, \
 			}, \
 		}, \
 	}
-#define side_field_enum_bitmap(_name, _elem_type, _mappings) \
-	_side_field(_name, side_type_enum_bitmap(SIDE_PARAM(_elem_type), SIDE_PARAM(_mappings)))
+#define side_field_enum_bitmap(_name, _mappings, _elem_type) \
+	_side_field(_name, side_type_enum_bitmap(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define side_type_struct(_struct) \
 	{ \
