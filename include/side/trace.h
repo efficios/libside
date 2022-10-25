@@ -110,6 +110,7 @@ enum side_dynamic_type {
 };
 
 enum side_attr_type {
+	SIDE_ATTR_TYPE_NULL,
 	SIDE_ATTR_TYPE_BOOL,
 	SIDE_ATTR_TYPE_U8,
 	SIDE_ATTR_TYPE_U16,
@@ -455,6 +456,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_attr_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_attr, __VA_ARGS__)
 
+#define side_attr_null(_val)		{ .type = SIDE_ATTR_TYPE_NULL }
 #define side_attr_bool(_val)		{ .type = SIDE_ATTR_TYPE_BOOL, .u = { .side_bool = !!(_val) } }
 #define side_attr_u8(_val)		{ .type = SIDE_ATTR_TYPE_U8, .u = { .side_u8 = (_val) } }
 #define side_attr_u16(_val)		{ .type = SIDE_ATTR_TYPE_U16, .u = { .side_u16 = (_val) } }
