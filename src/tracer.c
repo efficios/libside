@@ -185,7 +185,8 @@ uint32_t enum_elem_type_to_stride(const struct side_type_description *elem_type)
 	uint32_t stride_bit;
 
 	switch (elem_type->type) {
-	case SIDE_TYPE_U8:
+	case SIDE_TYPE_U8:	/* Fall-through */
+	case SIDE_TYPE_BYTE:
 		stride_bit = 8;
 		break;
 	case SIDE_TYPE_U16:
@@ -216,9 +217,10 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 
 	switch (elem_type->type) {
 	case SIDE_TYPE_U8:		/* Fall-through */
+	case SIDE_TYPE_BYTE:		/* Fall-through */
 	case SIDE_TYPE_U16:		/* Fall-through */
 	case SIDE_TYPE_U32:		/* Fall-through */
-	case SIDE_TYPE_U64:		/* Fall-through */
+	case SIDE_TYPE_U64:
 		stride_bit = enum_elem_type_to_stride(elem_type);
 		array_item = item;
 		nr_items = 1;
@@ -381,6 +383,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_ENUM_BITMAP:
 		switch (item->type) {
 		case SIDE_TYPE_U8:
+		case SIDE_TYPE_BYTE:
 		case SIDE_TYPE_U16:
 		case SIDE_TYPE_U32:
 		case SIDE_TYPE_U64:

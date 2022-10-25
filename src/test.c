@@ -1033,6 +1033,7 @@ static side_define_event(my_provider_event_enum_bitmap, "myprovider", "myeventen
 		side_field_enum_bitmap("bit_31", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
 		side_field_enum_bitmap("bit_63", &myenum_bitmap, side_elem(side_type_u64(side_attr_list()))),
 		side_field_enum_bitmap("bits_1+63", &myenum_bitmap, side_elem(side_type_u64(side_attr_list()))),
+		side_field_enum_bitmap("byte_bit_2", &myenum_bitmap, side_elem(side_type_byte(side_attr_list()))),
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
 			side_elem(side_type_array(side_elem(side_type_u32(side_attr_list())), 5, side_attr_list()))),
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
@@ -1065,6 +1066,7 @@ void test_enum_bitmap(void)
 				side_arg_u32(1 << 31),
 				side_arg_u64(1ULL << 63),
 				side_arg_u64((1ULL << 1) | (1ULL << 63)),
+				side_arg_byte(1 << 2),
 				side_arg_array(&myarray),
 				side_arg_vla(&myarray),
 			)
