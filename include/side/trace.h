@@ -283,24 +283,19 @@ struct side_callback {
 	void *priv;
 };
 
-struct side_callbacks {
-	struct side_callback *cb;
-	uint32_t nr_cb;
-};
-
 struct side_event_description {
 	uint32_t version;
 	uint32_t *enabled;
 	uint32_t loglevel;	/* enum side_loglevel */
 	uint32_t nr_fields;
 	uint32_t nr_attr;
-	uint32_t _unused;
+	uint32_t nr_cb;
 	uint64_t flags;
 	const char *provider_name;
 	const char *event_name;
 	const struct side_event_field *fields;
 	const struct side_attr *attr;
-	struct side_callbacks *callbacks;
+	struct side_callback *callbacks;
 };
 
 struct side_arg_dynamic_vec {
@@ -1021,23 +1016,23 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.label = _label, \
 	}
 
-#define side_event_cond(_desc) if (side_unlikely(_desc##_enabled))
+#define side_event_cond(_identifier) if (side_unlikely(side_event_enable__##_identifier))
 
-#define side_event_call(_desc, _sav) \
+#define side_event_call(_identifier, _sav) \
 	{ \
 		const struct side_arg_vec side_sav[] = { _sav }; \
 		const struct side_arg_vec_description sav_desc = { \
 			.sav = side_sav, \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		side_call(&(_desc), &sav_desc); \
+		side_call(&(_identifier), &sav_desc); \
 	}
 
-#define side_event(_desc, _sav) \
-	side_event_cond(_desc) \
-		side_event_call(_desc, SIDE_PARAM(_sav))
+#define side_event(_identifier, _sav) \
+	side_event_cond(_identifier) \
+		side_event_call(_identifier, SIDE_PARAM(_sav))
 
-#define side_event_call_variadic(_desc, _sav, _var_fields, _attr) \
+#define side_event_call_variadic(_identifier, _sav, _var_fields, _attr) \
 	{ \
 		const struct side_arg_vec side_sav[] = { _sav }; \
 		const struct side_arg_vec_description sav_desc = { \
@@ -1051,42 +1046,60 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 		}; \
-		side_call_variadic(&(_desc), &sav_desc, &var_struct); \
+		side_call_variadic(&(_identifier), &sav_desc, &var_struct); \
 	}
 
-#define side_event_variadic(_desc, _sav, _var, _attr) \
-	side_event_cond(_desc) \
-		side_event_call_variadic(_desc, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM(_attr))
+#define side_event_variadic(_identifier, _sav, _var, _attr) \
+	side_event_cond(_identifier) \
+		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM(_attr))
 
-#define _side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
-	uint32_t _identifier##_enabled __attribute__((section("side_event_enable"))); \
-	struct side_callbacks _identifier##_callbacks __attribute__((section("side_event_callbacks"))); \
-	const struct side_event_description _identifier = { \
+#define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
+	_linkage uint32_t side_event_enable__##_identifier __attribute__((section("side_event_enable"))); \
+	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
+			_identifier = { \
 		.version = 0, \
-		.enabled = &(_identifier##_enabled), \
+		.enabled = &(side_event_enable__##_identifier), \
 		.loglevel = _loglevel, \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.nr_cb = 0, \
 		.flags = (_flags), \
 		.provider_name = _provider, \
 		.event_name = _event, \
 		.fields = _fields, \
 		.attr = _attr, \
-		.callbacks = &(_identifier##_callbacks), \
+		.callbacks = NULL, \
 	}; \
-	const struct side_event_description *_identifier##_ptr \
-		__attribute__((section("side_event_description"), used)) = &(_identifier);
+	static const struct side_event_description *side_event_ptr__##_identifier \
+		__attribute__((section("side_event_description_ptr"), used)) = &(_identifier);
 
-#define side_define_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
-	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+#define side_static_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+	_side_define_event(static, _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
 			SIDE_PARAM(_attr), 0)
 
-#define side_define_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
-	_side_define_event(_identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+#define side_static_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+	_side_define_event(static, _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
+
+#define side_hidden_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			SIDE_PARAM(_attr), 0)
+
+#define side_hidden_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
+
+#define side_export_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			SIDE_PARAM(_attr), 0)
+
+#define side_export_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
 			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
 
 #define side_declare_event(_identifier) \
-	struct side_event_description _identifier
+	extern uint32_t side_event_enable_##_identifier; \
+	extern struct side_event_description _identifier
 
 void side_call(const struct side_event_description *desc,
 	const struct side_arg_vec_description *sav_desc);
