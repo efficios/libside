@@ -65,7 +65,7 @@ void tracer_print_attr_type(const struct side_attr *attr)
 		printf("%g", (double) attr->value.u.side_float_binary16);
 		break;
 #else
-		printf("ERROR: Unsupported binary16 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
 		abort();
 #endif
 	case SIDE_ATTR_TYPE_FLOAT_BINARY32:
@@ -73,7 +73,7 @@ void tracer_print_attr_type(const struct side_attr *attr)
 		printf("%g", (double) attr->value.u.side_float_binary32);
 		break;
 #else
-		printf("ERROR: Unsupported binary32 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
 		abort();
 #endif
 	case SIDE_ATTR_TYPE_FLOAT_BINARY64:
@@ -81,7 +81,7 @@ void tracer_print_attr_type(const struct side_attr *attr)
 		printf("%g", (double) attr->value.u.side_float_binary64);
 		break;
 #else
-		printf("ERROR: Unsupported binary64 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
 		abort();
 #endif
 	case SIDE_ATTR_TYPE_FLOAT_BINARY128:
@@ -89,14 +89,14 @@ void tracer_print_attr_type(const struct side_attr *attr)
 		printf("%Lg", (long double) attr->value.u.side_float_binary128);
 		break;
 #else
-		printf("ERROR: Unsupported binary128 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
 		abort();
 #endif
 	case SIDE_ATTR_TYPE_STRING:
 		printf("\"%s\"", attr->value.u.string);
 		break;
 	default:
-		printf("<UNKNOWN TYPE>");
+		fprintf(stderr, "ERROR: <UNKNOWN ATTRIBUTE TYPE>");
 		abort();
 	}
 	printf(" }");
@@ -125,7 +125,7 @@ void print_enum(const struct side_type_description *type_desc, const struct side
 	int64_t value;
 
 	if (type_desc->u.side_enum.elem_type->type != item->type) {
-		printf("ERROR: Unexpected enum element type\n");
+		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
 	}
 	switch (item->type) {
@@ -154,7 +154,7 @@ void print_enum(const struct side_type_description *type_desc, const struct side
 		value = (int64_t) item->u.side_s64;
 		break;
 	default:
-		printf("ERROR: Unexpected enum element type\n");
+		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
 	}
 	print_attributes("attr: ", mappings->attr, mappings->nr_attr);
@@ -165,7 +165,7 @@ void print_enum(const struct side_type_description *type_desc, const struct side
 		const struct side_enum_mapping *mapping = &mappings->mappings[i];
 
 		if (mapping->range_end < mapping->range_begin) {
-			printf("ERROR: Unexpected enum range: %" PRIu64 "-%" PRIu64 "\n",
+			fprintf(stderr, "ERROR: Unexpected enum range: %" PRIu64 "-%" PRIu64 "\n",
 				mapping->range_begin, mapping->range_end);
 			abort();
 		}
@@ -199,7 +199,7 @@ uint32_t enum_elem_type_to_stride(const struct side_type_description *elem_type)
 		stride_bit = 64;
 		break;
 	default:
-		printf("ERROR: Unexpected enum element type\n");
+		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
 	}
 	return stride_bit;
@@ -236,7 +236,7 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 		nr_items = item->u.side_vla->len;
 		break;
 	default:
-		printf("ERROR: Unexpected enum element type\n");
+		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
 	}
 
@@ -249,7 +249,7 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 		int64_t bit;
 
 		if (mapping->range_begin < 0 || mapping->range_end < mapping->range_begin) {
-			printf("ERROR: Unexpected enum bitmap range: %" PRIu64 "-%" PRIu64 "\n",
+			fprintf(stderr, "ERROR: Unexpected enum bitmap range: %" PRIu64 "-%" PRIu64 "\n",
 				mapping->range_begin, mapping->range_end);
 			abort();
 		}
@@ -336,7 +336,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		case SIDE_TYPE_ARRAY:
 			break;
 		default:
-			printf("ERROR: type mismatch between description and arguments\n");
+			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
 			abort();
 			break;
 		}
@@ -356,7 +356,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		case SIDE_TYPE_VLA:
 			break;
 		default:
-			printf("ERROR: type mismatch between description and arguments\n");
+			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
 			abort();
 			break;
 		}
@@ -374,7 +374,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		case SIDE_TYPE_S64:
 			break;
 		default:
-			printf("ERROR: type mismatch between description and arguments\n");
+			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
 			abort();
 			break;
 		}
@@ -391,7 +391,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		case SIDE_TYPE_VLA:
 			break;
 		default:
-			printf("ERROR: type mismatch between description and arguments\n");
+			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
 			abort();
 			break;
 		}
@@ -399,7 +399,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 
 	default:
 		if (type_desc->type != item->type) {
-			printf("ERROR: type mismatch between description and arguments\n");
+			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
 			abort();
 		}
 		break;
@@ -467,7 +467,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		printf("%g", (double) item->u.side_float_binary16);
 		break;
 #else
-		printf("ERROR: Unsupported binary16 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
 		abort();
 #endif
 	case SIDE_TYPE_FLOAT_BINARY32:
@@ -476,7 +476,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		printf("%g", (double) item->u.side_float_binary32);
 		break;
 #else
-		printf("ERROR: Unsupported binary32 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
 		abort();
 #endif
 	case SIDE_TYPE_FLOAT_BINARY64:
@@ -485,7 +485,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		printf("%g", (double) item->u.side_float_binary64);
 		break;
 #else
-		printf("ERROR: Unsupported binary64 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
 		abort();
 #endif
 	case SIDE_TYPE_FLOAT_BINARY128:
@@ -494,7 +494,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		printf("%Lg", (long double) item->u.side_float_binary128);
 		break;
 #else
-		printf("ERROR: Unsupported binary128 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
 		abort();
 #endif
 	case SIDE_TYPE_STRING:
@@ -540,7 +540,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		tracer_print_dynamic(&item->u.dynamic);
 		break;
 	default:
-		printf("<UNKNOWN TYPE>");
+		fprintf(stderr, "<UNKNOWN TYPE>");
 		abort();
 	}
 	printf(" }");
@@ -561,7 +561,7 @@ void tracer_print_struct(const struct side_type_description *type_desc, const st
 	int i;
 
 	if (type_desc->u.side_struct->nr_fields != side_sav_len) {
-		printf("ERROR: number of fields mismatch between description and arguments of structure\n");
+		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments of structure\n");
 		abort();
 	}
 	print_attributes("attr: ", type_desc->u.side_struct->attr, type_desc->u.side_struct->nr_attr);
@@ -582,7 +582,7 @@ void tracer_print_array(const struct side_type_description *type_desc, const str
 	int i;
 
 	if (type_desc->u.side_array.length != side_sav_len) {
-		printf("ERROR: length mismatch between description and arguments of array\n");
+		fprintf(stderr, "ERROR: length mismatch between description and arguments of array\n");
 		abort();
 	}
 	print_attributes("attr: ", type_desc->u.side_array.attr, type_desc->u.side_array.nr_attr);
@@ -652,7 +652,7 @@ void tracer_print_vla_visitor(const struct side_type_description *type_desc, voi
 	case SIDE_VISITOR_STATUS_OK:
 		break;
 	case SIDE_VISITOR_STATUS_ERROR:
-		printf("ERROR: Visitor error\n");
+		fprintf(stderr, "ERROR: Visitor error\n");
 		abort();
 	}
 	printf(" ]");
@@ -747,7 +747,7 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 			break;
 
 		default:
-			printf("ERROR: Unexpected type\n");
+			fprintf(stderr, "ERROR: Unexpected type\n");
 			abort();
 		}
 
@@ -758,7 +758,7 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 	return;
 
 type_error:
-	printf("ERROR: type mismatch\n");
+	fprintf(stderr, "ERROR: type mismatch\n");
 	abort();
 }
 
@@ -851,7 +851,7 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 			break;
 
 		default:
-			printf("ERROR: Unexpected type\n");
+			fprintf(stderr, "ERROR: Unexpected type\n");
 			abort();
 		}
 
@@ -862,7 +862,7 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 	return;
 
 type_error:
-	printf("ERROR: type mismatch\n");
+	fprintf(stderr, "ERROR: type mismatch\n");
 	abort();
 }
 
@@ -924,7 +924,7 @@ void tracer_print_dynamic_struct_visitor(const struct side_arg_dynamic_vec *item
 	case SIDE_VISITOR_STATUS_OK:
 		break;
 	case SIDE_VISITOR_STATUS_ERROR:
-		printf("ERROR: Visitor error\n");
+		fprintf(stderr, "ERROR: Visitor error\n");
 		abort();
 	}
 	printf(" ]");
@@ -986,7 +986,7 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
 	case SIDE_VISITOR_STATUS_OK:
 		break;
 	case SIDE_VISITOR_STATUS_ERROR:
-		printf("ERROR: Visitor error\n");
+		fprintf(stderr, "ERROR: Visitor error\n");
 		abort();
 	}
 	printf(" ]");
@@ -1056,7 +1056,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		printf("%g", (double) item->u.side_basic.u.side_float_binary16);
 		break;
 #else
-		printf("ERROR: Unsupported binary16 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY32:
@@ -1065,7 +1065,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		printf("%g", (double) item->u.side_basic.u.side_float_binary32);
 		break;
 #else
-		printf("ERROR: Unsupported binary32 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY64:
@@ -1074,7 +1074,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		printf("%g", (double) item->u.side_basic.u.side_float_binary64);
 		break;
 #else
-		printf("ERROR: Unsupported binary64 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY128:
@@ -1083,7 +1083,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		printf("%Lg", (long double) item->u.side_basic.u.side_float_binary128);
 		break;
 #else
-		printf("ERROR: Unsupported binary128 float type\n");
+		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
 		abort();
 #endif
 	case SIDE_DYNAMIC_TYPE_STRING:
@@ -1103,7 +1103,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		tracer_print_dynamic_vla_visitor(item);
 		break;
 	default:
-		printf("<UNKNOWN TYPE>");
+		fprintf(stderr, "<UNKNOWN TYPE>");
 		abort();
 	}
 	printf(" }");
@@ -1120,7 +1120,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 
 	printf("provider: %s, event: %s", desc->provider_name, desc->event_name);
 	if (desc->nr_fields != side_sav_len) {
-		printf("ERROR: number of fields mismatch between description and arguments\n");
+		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments\n");
 		abort();
 	}
 	print_attributes(", attributes: ", desc->attr, desc->nr_attr);
@@ -1156,7 +1156,7 @@ void tracer_call_variadic(const struct side_event_description *desc,
 	tracer_print_static_fields(desc, sav_desc, &nr_fields);
 
 	if (side_unlikely(!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))) {
-		printf("ERROR: unexpected non-variadic event description\n");
+		fprintf(stderr, "ERROR: unexpected non-variadic event description\n");
 		abort();
 	}
 	printf("%s", var_struct->nr_attr && nr_fields ? ", " : "");
