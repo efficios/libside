@@ -1,16 +1,21 @@
 all: test
 
-side.o: side.c
-	gcc -O2 -g -Wall -I../include/ -c -o side.o side.c
+HEADERS = ../include/side/trace.h ../include/side/macros.h
 
-tracer.o: tracer.c
-	gcc -O2 -g -Wall -I../include/ -c -o tracer.o tracer.c
+CFLAGS = -g -O2 -Wall
+CPPFLAGS = -I../include/
 
-test.o: test.c
-	gcc -O2 -g -Wall -I../include/ -c -o test.o test.c
+side.o: side.c $(HEADERS)
+	gcc $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+tracer.o: tracer.c $(HEADERS)
+	gcc $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+test.o: test.c $(HEADERS)
+	gcc $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 test: tracer.o test.o side.o
-	gcc -O2 -g -Wall -o test tracer.o test.o side.o
+	gcc $(CFLAGS) -o $@ $^
 
 .PHONY: clean
 
