@@ -180,37 +180,31 @@ void print_enum(const struct side_type_description *type_desc, const struct side
 }
 
 static
-uint32_t enum_type_to_stride(const struct side_type_description *type_desc)
+uint32_t enum_elem_type_to_stride(const struct side_type_description *elem_type)
 {
 	uint32_t stride_bit;
 
-	switch (type_desc->type) {
-	case SIDE_TYPE_ENUM_BITMAP8:
+	switch (elem_type->type) {
 	case SIDE_TYPE_U8:
 	case SIDE_TYPE_S8:
 		stride_bit = 8;
 		break;
-	case SIDE_TYPE_ENUM_BITMAP16:
 	case SIDE_TYPE_U16:
 	case SIDE_TYPE_S16:
 		stride_bit = 16;
 		break;
-	case SIDE_TYPE_ENUM_BITMAP32:
 	case SIDE_TYPE_U32:
 	case SIDE_TYPE_S32:
 		stride_bit = 32;
 		break;
-	case SIDE_TYPE_ENUM_BITMAP64:
 	case SIDE_TYPE_U64:
 	case SIDE_TYPE_S64:
 		stride_bit = 64;
 		break;
-	case SIDE_TYPE_ENUM_BITMAP_ARRAY:
-		stride_bit = enum_type_to_stride(type_desc->u.side_enum_bitmap_array.elem_type);
-		break;
-	case SIDE_TYPE_ENUM_BITMAP_VLA:
-		stride_bit = enum_type_to_stride(type_desc->u.side_enum_bitmap_vla.elem_type);
-		break;
+	case SIDE_TYPE_ARRAY:
+		return enum_elem_type_to_stride(elem_type->u.side_array.elem_type);
+	case SIDE_TYPE_VLA:
+		return enum_elem_type_to_stride(elem_type->u.side_vla.elem_type);
 	default:
 		abort();
 	}
@@ -221,33 +215,36 @@ static
 void print_enum_bitmap(const struct side_type_description *type_desc,
 		const struct side_arg_vec *item)
 {
-	const struct side_enum_bitmap_mappings *side_enum_mappings;
+	const struct side_type_description *elem_type = type_desc->u.side_enum_bitmap.elem_type;
+	const struct side_enum_bitmap_mappings *side_enum_mappings = type_desc->u.side_enum_bitmap.mappings;
 	int i, print_count = 0;
 	uint32_t stride_bit, nr_items;
 	const struct side_arg_vec *array_item;
 
-	stride_bit = enum_type_to_stride(type_desc);
+	stride_bit = enum_elem_type_to_stride(elem_type);
 
-	switch (type_desc->type) {
-	case SIDE_TYPE_ENUM_BITMAP8:	/* Fall-through */
-	case SIDE_TYPE_ENUM_BITMAP16:	/* Fall-through */
-	case SIDE_TYPE_ENUM_BITMAP32:	/* Fall-through */
-	case SIDE_TYPE_ENUM_BITMAP64:
+	switch (elem_type->type) {
+	case SIDE_TYPE_U8:		/* Fall-through */
+	case SIDE_TYPE_U16:		/* Fall-through */
+	case SIDE_TYPE_U32:		/* Fall-through */
+	case SIDE_TYPE_U64:		/* Fall-through */
+	case SIDE_TYPE_S8:		/* Fall-through */
+	case SIDE_TYPE_S16:		/* Fall-through */
+	case SIDE_TYPE_S32:		/* Fall-through */
+	case SIDE_TYPE_S64:
 		array_item = item;
 		nr_items = 1;
-		side_enum_mappings = type_desc->u.side_enum_bitmap_mappings;
 		break;
-	case SIDE_TYPE_ENUM_BITMAP_ARRAY:
-		nr_items = type_desc->u.side_enum_bitmap_array.length;
+	case SIDE_TYPE_ARRAY:
 		array_item = item->u.side_array->sav;
-		side_enum_mappings = type_desc->u.side_enum_bitmap_array.mappings;
+		nr_items = type_desc->u.side_array.length;
 		break;
-	case SIDE_TYPE_ENUM_BITMAP_VLA:
-		nr_items = item->u.side_vla->len;
+	case SIDE_TYPE_VLA:
 		array_item = item->u.side_vla->sav;
-		side_enum_mappings = type_desc->u.side_enum_bitmap_vla.mappings;
+		nr_items = item->u.side_vla->len;
 		break;
 	default:
+		printf("ERROR: Unexpected enum element type\n");
 		abort();
 	}
 
@@ -370,9 +367,17 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_S16:
 	case SIDE_TYPE_S32:
 	case SIDE_TYPE_S64:
-		if (type_desc->type != item->type && type_desc->type != SIDE_TYPE_ENUM) {
-			printf("ERROR: type mismatch between description and arguments\n");
-			abort();
+	case SIDE_TYPE_ARRAY:
+	case SIDE_TYPE_VLA:
+		switch (type_desc->type) {
+		case SIDE_TYPE_ENUM:		/* Fall-through */
+		case SIDE_TYPE_ENUM_BITMAP:
+			break;
+		default:
+			if (type_desc->type != item->type) {
+				printf("ERROR: type mismatch between description and arguments\n");
+				abort();
+			}
 		}
 		break;
 
@@ -384,8 +389,8 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 	}
 
-	if (type_desc->type == SIDE_TYPE_ENUM)
-		type = SIDE_TYPE_ENUM;
+	if (type_desc->type == SIDE_TYPE_ENUM || type_desc->type == SIDE_TYPE_ENUM_BITMAP)
+		type = type_desc->type;
 	else
 		type = item->type;
 
@@ -436,12 +441,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		print_enum(type_desc, item);
 		break;
 
-	case SIDE_TYPE_ENUM_BITMAP8:	/* Fall-through */
-	case SIDE_TYPE_ENUM_BITMAP16:	/* Fall-through */
-	case SIDE_TYPE_ENUM_BITMAP32:	/* Fall-through */
-	case SIDE_TYPE_ENUM_BITMAP64:
-	case SIDE_TYPE_ENUM_BITMAP_ARRAY:
-	case SIDE_TYPE_ENUM_BITMAP_VLA:
+	case SIDE_TYPE_ENUM_BITMAP:
 		print_enum_bitmap(type_desc, item);
 		break;
 
