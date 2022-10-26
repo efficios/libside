@@ -72,7 +72,7 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 static inline
 void wait_for_cpus(struct side_rcu_gp_state *gp_state)
 {
-	unsigned int prev_period = 1 - gp_state->period;
+	unsigned int prev_period = gp_state->period ^ 1;
 
 	/*
 	 * Wait for the sum of CPU begin/end counts to match for the
