@@ -42,7 +42,7 @@ unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
 	 * This acquire MO pairs with the release fence at the end of
 	 * side_rcu_wait_grace_period().
 	 */
-	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].begin, 1, __ATOMIC_ACQUIRE);
+	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].begin, 1, __ATOMIC_SEQ_CST);
 	return period;
 }
 
@@ -57,7 +57,7 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 	 * This release MO pairs with the acquire fence at the beginning
 	 * of side_rcu_wait_grace_period().
 	 */
-	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].end, 1, __ATOMIC_RELEASE);
+	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].end, 1, __ATOMIC_SEQ_CST);
 }
 
 #define side_rcu_dereference(p) \
@@ -115,8 +115,8 @@ static inline
 void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 {
 	/*
-	 * This fence pairs with the acquire MO __atomic_add_fetch in
-	 * side_rcu_read_begin().
+	 * This fence pairs with the __atomic_add_fetch __ATOMIC_SEQ_CST in
+	 * side_rcu_read_end().
 	 */
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 
@@ -132,8 +132,8 @@ void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 	pthread_mutex_unlock(&gp_state->gp_lock);
 
 	/*
-	 * This fence pairs with the release MO __atomic_add_fetch in
-	 * side_rcu_read_end().
+	 * This fence pairs with the __atomic_add_fetch __ATOMIC_SEQ_CST in
+	 * side_rcu_read_begin().
 	 */
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 }
