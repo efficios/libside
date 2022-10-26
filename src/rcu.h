@@ -60,6 +60,15 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].end, 1, __ATOMIC_RELEASE);
 }
 
+#define side_rcu_dereference(p) \
+	__extension__ \
+	({ \
+		(__typeof__(p) _____side_v = __atomic_load_n(&(p), __ATOMIC_CONSUME); \
+		(_____side_v); \
+	})
+
+#define side_rcu_assign_pointer(p, v)	__atomic_store_n(&(p), v, __ATOMIC_RELEASE); \
+
 static inline
 void wait_for_cpus(struct side_rcu_gp_state *gp_state)
 {
