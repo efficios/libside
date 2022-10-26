@@ -86,7 +86,7 @@ void wait_for_cpus(struct side_rcu_gp_state *gp_state)
 		 * a thread migration during the traversal over each
 		 * cpu.
 		 */
-		__atomic_thread_fence(__ATOMIC_ACQ_REL);
+		__atomic_thread_fence(__ATOMIC_SEQ_CST);
 
 		for (i = 0; i < gp_state->nr_cpus; i++) {
 			struct side_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
@@ -106,25 +106,25 @@ static inline
 void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 {
 	/*
-	 * This release fence pairs with the acquire MO __atomic_add_fetch
-	 * in side_rcu_read_begin().
+	 * This fence pairs with the acquire MO __atomic_add_fetch in
+	 * side_rcu_read_begin().
 	 */
-	__atomic_thread_fence(__ATOMIC_RELEASE);
+	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 
 	pthread_mutex_lock(&gp_state->gp_lock);
 
 	wait_for_cpus(gp_state);
 
 	/* Flip period: 0 -> 1, 1 -> 0. */
-	(void) __atomic_xor_fetch(&gp_state->period, 1, __ATOMIC_RELAXED);
+	(void) __atomic_xor_fetch(&gp_state->period, 1, __ATOMIC_SEQ_CST);
 
 	wait_for_cpus(gp_state);
 
 	pthread_mutex_unlock(&gp_state->gp_lock);
 
 	/*
-	 * This acquire fence pairs with the release MO __atomic_add_fetch
-	 * in side_rcu_read_end().
+	 * This fence pairs with the release MO __atomic_add_fetch in
+	 * side_rcu_read_end().
 	 */
-	__atomic_thread_fence(__ATOMIC_ACQUIRE);
+	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 }
