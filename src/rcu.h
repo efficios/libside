@@ -78,7 +78,7 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 #define side_rcu_dereference(p) \
 	__extension__ \
 	({ \
-		(__typeof__(p) _____side_v = __atomic_load_n(&(p), __ATOMIC_CONSUME); \
+		__typeof__(p) _____side_v = __atomic_load_n(&(p), __ATOMIC_CONSUME); \
 		(_____side_v); \
 	})
 
