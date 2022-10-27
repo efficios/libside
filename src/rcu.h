@@ -69,6 +69,7 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 
 #define side_rcu_assign_pointer(p, v)	__atomic_store_n(&(p), v, __ATOMIC_RELEASE); \
 
+/* active_readers is an input/output parameter. */
 static inline
 void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_readers)
 {
@@ -97,16 +98,29 @@ void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_reade
 		sum[0] += __atomic_load_n(&cpu_state->count[0].begin, __ATOMIC_RELAXED);
 		sum[1] += __atomic_load_n(&cpu_state->count[1].begin, __ATOMIC_RELAXED);
 	}
-	active_readers[0] = sum[0];
-	active_readers[1] = sum[1];
+	if (active_readers[0])
+		active_readers[0] = sum[0];
+	if (active_readers[1])
+		active_readers[1] = sum[1];
 }
 
+/*
+ * Wait for previous period to have no active readers.
+ *
+ * active_readers is an input/output parameter.
+ */
 static inline
-void wait_for_prev_period_readers(struct side_rcu_gp_state *gp_state)
+void wait_for_prev_period_readers(struct side_rcu_gp_state *gp_state, bool *active_readers)
 {
 	unsigned int prev_period = gp_state->period ^ 1;
-	bool active_readers[2];
 
+	/*
+	 * If a prior active readers scan already observed that no
+	 * readers are present for the previous period, there is no need
+	 * to scan again.
+	 */
+	if (!active_readers[prev_period])
+		return;
 	/*
 	 * Wait for the sum of CPU begin/end counts to match for the
 	 * previous period.
@@ -120,10 +134,18 @@ void wait_for_prev_period_readers(struct side_rcu_gp_state *gp_state)
 	}
 }
 
+/*
+ * The grace period completes when it observes that there are no active
+ * readers within each of the periods.
+ *
+ * The active_readers state is initially true for each period, until the
+ * grace period observes that no readers are present for each given
+ * period, at which point the active_readers state becomes false.
+ */
 static inline
 void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 {
-	bool active_readers[2];
+	bool active_readers[2] = { true, true };
 
 	/*
 	 * This fence pairs with the __atomic_add_fetch __ATOMIC_SEQ_CST in
@@ -142,15 +164,21 @@ void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 
 	pthread_mutex_lock(&gp_state->gp_lock);
 
-	wait_for_prev_period_readers(gp_state);
+	wait_for_prev_period_readers(gp_state, active_readers);
+	/*
+	 * If the reader scan detected that there are no readers in the
+	 * current period as well, we can complete the grace period
+	 * immediately.
+	 */
+	if (!active_readers[gp_state->period])
+		goto unlock;
 
 	/* Flip period: 0 -> 1, 1 -> 0. */
 	(void) __atomic_xor_fetch(&gp_state->period, 1, __ATOMIC_RELAXED);
 
-	wait_for_prev_period_readers(gp_state);
-
+	wait_for_prev_period_readers(gp_state, active_readers);
+unlock:
 	pthread_mutex_unlock(&gp_state->gp_lock);
-
 end:
 	/*
 	 * This fence pairs with the __atomic_add_fetch __ATOMIC_SEQ_CST in
