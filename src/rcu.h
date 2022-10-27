@@ -165,6 +165,13 @@ void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 	/*
 	 * This memory barrier (D) pairs with memory barriers (A) and
 	 * (B) on the read-side.
+	 *
+	 * It orders prior loads and stores before the "end"/"begin"
+	 * reader state loads. In other words, it orders prior loads and
+	 * stores before observation of active readers quiescence,
+	 * effectively ensuring that read-side critical sections which
+	 * exist after the grace period completes are ordered after
+	 * loads and stores performed before the grace period.
 	 */
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 
@@ -198,6 +205,14 @@ end:
 	/*
 	 * This memory barrier (E) pairs with memory barriers (A) and
 	 * (B) on the read-side.
+	 *
+	 * It orders the "end"/"begin" reader state loads before
+	 * following loads and stores. In other words, it orders
+	 * observation of active readers quiescence before following
+	 * loads and stores, effectively ensuring that read-side
+	 * critical sections which existed prior to the grace period
+	 * are ordered before loads and stores performed after the grace
+	 * period.
 	 */
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 }
