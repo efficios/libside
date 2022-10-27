@@ -39,8 +39,14 @@ unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
 	if (cpu < 0)
 		cpu = 0;
 	/*
-	 * This acquire MO pairs with the release fence at the end of
-	 * side_rcu_wait_grace_period().
+	 * This memory barrier (A) ensures that the contents of the
+	 * read-side critical section does not leak before the "begin"
+	 * counter increment. It pairs with memory barriers (D) and (E).
+	 *
+	 * This memory barrier (A) also ensures that the "begin"
+	 * increment is before the "end" increment. It pairs with memory
+	 * barrier (C). It is redundant with memory barrier (B) for that
+	 * purpose.
 	 */
 	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].begin, 1, __ATOMIC_SEQ_CST);
 	return period;
@@ -54,8 +60,14 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 	if (cpu < 0)
 		cpu = 0;
 	/*
-	 * This release MO pairs with the acquire fence at the beginning
-	 * of side_rcu_wait_grace_period().
+	 * This memory barrier (B) ensures that the contents of the
+	 * read-side critical section does not leak after the "end"
+	 * counter increment. It pairs with memory barriers (D) and (E).
+	 *
+	 * This memory barrier (B) also ensures that the "begin"
+	 * increment is before the "end" increment. It pairs with memory
+	 * barrier (C). It is redundant with memory barrier (A) for that
+	 * purpose.
 	 */
 	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].end, 1, __ATOMIC_SEQ_CST);
 }
@@ -84,11 +96,14 @@ void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_reade
 	}
 
 	/*
-	 * Read end counts before begin counts. Reading end
-	 * before begin count ensures we never see an end
-	 * without having seen its associated begin, in case of
-	 * a thread migration during the traversal over each
-	 * cpu.
+	 * This memory barrier (C) pairs with either of memory barriers
+	 * (A) or (B) (one is sufficient).
+	 *
+	 * Read end counts before begin counts. Reading "end" before
+	 * "begin" counts ensures we never see an "end" without having
+	 * seen its associated "begin", because "begin" is always
+	 * incremented before "end", as guaranteed by memory barriers
+	 * (A) or (B).
 	 */
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 
@@ -148,8 +163,8 @@ void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 	bool active_readers[2] = { true, true };
 
 	/*
-	 * This fence pairs with the __atomic_add_fetch __ATOMIC_SEQ_CST in
-	 * side_rcu_read_end().
+	 * This memory barrier (D) pairs with memory barriers (A) and
+	 * (B) on the read-side.
 	 */
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 
@@ -181,8 +196,8 @@ unlock:
 	pthread_mutex_unlock(&gp_state->gp_lock);
 end:
 	/*
-	 * This fence pairs with the __atomic_add_fetch __ATOMIC_SEQ_CST in
-	 * side_rcu_read_begin().
+	 * This memory barrier (E) pairs with memory barriers (A) and
+	 * (B) on the read-side.
 	 */
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 }
