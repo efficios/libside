@@ -137,7 +137,6 @@ void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 	 * complete the grace period immediately.
 	 */
 	check_active_readers(gp_state, active_readers);
-		goto end;
 	if (!active_readers[0] && !active_readers[1])
 		goto end;
 
