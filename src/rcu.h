@@ -3,6 +3,9 @@
  * Copyright 2022 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
+#ifndef _SIDE_RCU_H
+#define _SIDE_RCU_H
+
 #include <sched.h>
 #include <stdint.h>
 #include <pthread.h>
@@ -82,3 +85,5 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 #define side_rcu_assign_pointer(p, v)	__atomic_store_n(&(p), v, __ATOMIC_RELEASE); \
 
 void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state) __attribute__((visibility("hidden")));
+
+#endif /* _SIDE_RCU_H */
