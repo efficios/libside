@@ -7,6 +7,6 @@
 #ifndef _SIDE_SMP_H
 #define _SIDE_SMP_H
 
-int get_possible_cpus_array_len(void);
+int get_possible_cpus_array_len(void) __attribute__((visibility("hidden")));
 
 #endif /* _SIDE_SMP_H */
