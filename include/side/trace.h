@@ -289,13 +289,13 @@ struct side_event_description {
 	uint32_t loglevel;	/* enum side_loglevel */
 	uint32_t nr_fields;
 	uint32_t nr_attr;
-	uint32_t nr_cb;
+	uint32_t _unused;
 	uint64_t flags;
 	const char *provider_name;
 	const char *event_name;
 	const struct side_event_field *fields;
 	const struct side_attr *attr;
-	struct side_callback *callbacks;
+	const struct side_callback *callbacks;
 };
 
 struct side_arg_dynamic_vec {
@@ -1062,13 +1062,13 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.loglevel = _loglevel, \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-		.nr_cb = 0, \
+		._unused = 0, \
 		.flags = (_flags), \
 		.provider_name = _provider, \
 		.event_name = _event, \
 		.fields = _fields, \
 		.attr = _attr, \
-		.callbacks = NULL, \
+		.callbacks = &side_empty_callback, \
 	}; \
 	static const struct side_event_description *side_event_ptr__##_identifier \
 		__attribute__((section("side_event_description_ptr"), used)) = &(_identifier);
@@ -1106,5 +1106,7 @@ void side_call(const struct side_event_description *desc,
 void side_call_variadic(const struct side_event_description *desc,
 	const struct side_arg_vec_description *sav_desc,
 	const struct side_arg_dynamic_event_struct *var_struct);
+
+extern const struct side_callback side_empty_callback;
 
 #endif /* _SIDE_TRACE_H */

@@ -4,12 +4,15 @@
  */
 
 #include <sched.h>
+#include <string.h>
 #include <stdint.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <poll.h>
+#include <stdlib.h>
 
 #include "rcu.h"
+#include "smp.h"
 
 /* active_readers is an input/output parameter. */
 static
@@ -148,4 +151,16 @@ end:
 	 * period.
 	 */
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+}
+
+void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
+{
+	memset(rcu_gp, 0, sizeof(*rcu_gp));
+	rcu_gp->nr_cpus = get_possible_cpus_array_len();
+	if (!rcu_gp->nr_cpus)
+		abort();
+	pthread_mutex_init(&rcu_gp->gp_lock, NULL);
+	rcu_gp->percpu_state = calloc(rcu_gp->nr_cpus, sizeof(struct side_rcu_cpu_gp_state));
+	if (!rcu_gp->percpu_state)
+		abort();
 }
