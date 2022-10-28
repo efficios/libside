@@ -6,6 +6,8 @@
 #ifndef _SIDE_MACROS_H
 #define _SIDE_MACROS_H
 
+#include <stddef.h>
+
 /* Helper macros */
 
 #define SIDE_ARRAY_SIZE(arr)	(sizeof(arr) / sizeof((arr)[0]))

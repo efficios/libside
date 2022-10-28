@@ -30,6 +30,7 @@ struct side_tracer_dynamic_struct_visitor_ctx;
 struct side_tracer_dynamic_vla_visitor_ctx;
 struct side_event_description;
 struct side_arg_dynamic_event_struct;
+struct side_events_register_handle;
 
 enum side_type {
 	/* Basic types */
@@ -149,6 +150,7 @@ enum side_error {
 	SIDE_ERROR_EXIST = 2,
 	SIDE_ERROR_NOMEM = 3,
 	SIDE_ERROR_NOENT = 4,
+	SIDE_ERROR_EXITING = 5,
 };
 
 typedef enum side_visitor_status (*side_visitor)(
@@ -1141,5 +1143,11 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 			const struct side_arg_dynamic_event_struct *var_struct,
 			void *priv),
 		void *priv);
+
+struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events);
+void side_events_unregister(struct side_events_register_handle *handle);
+
+void side_init(void);
+void side_exit(void);
 
 #endif /* _SIDE_TRACE_H */

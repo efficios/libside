@@ -164,3 +164,9 @@ void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
 	if (!rcu_gp->percpu_state)
 		abort();
 }
+
+void side_rcu_gp_exit(struct side_rcu_gp_state *rcu_gp)
+{
+	pthread_mutex_destroy(&rcu_gp->gp_lock);
+	free(rcu_gp->percpu_state);
+}
