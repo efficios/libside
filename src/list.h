@@ -50,8 +50,8 @@ void side_list_remove_node(struct side_list_node *node)
 
 #define side_list_for_each_entry(_entry, _head, _member) \
 	for ((_entry) = side_container_of((_head)->node.next, __typeof__(*(_entry)), _member); \
-		&(_entry)->member != &head->node; \
-		(_entry) = side_container_of((_entry)->member.next, __typeof__(*(_entry)), _member))
+		&(_entry)->_member != &(_head)->node; \
+		(_entry) = side_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member))
 
 /* List iteration, safe against node reclaim while iterating. */
 #define side_list_for_each_entry_safe(_entry, _next_entry, _head, _member) \

@@ -23,6 +23,13 @@ struct side_events_register_handle {
 	uint32_t nr_events;
 };
 
+struct side_tracer_handle {
+	struct side_list_node node;
+	void (*cb)(enum side_tracer_notification notif,
+		struct side_event_description **events, uint32_t nr_events, void *priv);
+	void *priv;
+};
+
 static struct side_rcu_gp_state rcu_gp;
 
 /*
@@ -36,7 +43,8 @@ static bool finalized;
 
 static pthread_mutex_t side_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static DEFINE_SIDE_LIST_HEAD(side_list);
+static DEFINE_SIDE_LIST_HEAD(side_events_list);
+static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
 
 /*
  * The empty callback has a NULL function callback pointer, which stops
@@ -135,6 +143,8 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		return SIDE_ERROR_INVAL;
 	if (finalized)
 		return SIDE_ERROR_EXITING;
+	if (!initialized)
+		side_init();
 	pthread_mutex_lock(&side_lock);
 	old_nr_cb = *desc->enabled & SIDE_EVENT_ENABLED_USER_MASK;
 	if (old_nr_cb == SIDE_EVENT_ENABLED_USER_MASK) {
@@ -206,6 +216,8 @@ int _side_tracer_callback_unregister(struct side_event_description *desc,
 		return SIDE_ERROR_INVAL;
 	if (finalized)
 		return SIDE_ERROR_EXITING;
+	if (!initialized)
+		side_init();
 	pthread_mutex_lock(&side_lock);
 	cb_pos = side_tracer_callback_lookup(desc, call, priv);
 	if (!cb_pos) {
@@ -263,20 +275,28 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 
 struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events)
 {
-	struct side_events_register_handle *handle = NULL;
+	struct side_events_register_handle *events_handle = NULL;
+	struct side_tracer_handle *tracer_handle;
 
 	if (finalized)
 		return NULL;
-	handle = calloc(1, sizeof(struct side_events_register_handle));
-	if (!handle)
+	if (!initialized)
+		side_init();
+	events_handle = calloc(1, sizeof(struct side_events_register_handle));
+	if (!events_handle)
 		return NULL;
+	events_handle->events = events;
+	events_handle->nr_events = nr_events;
+
 	pthread_mutex_lock(&side_lock);
-	handle->events = events;
-	handle->nr_events = nr_events;
-	side_list_insert_node_tail(&side_list, &handle->node);
+	side_list_insert_node_tail(&side_events_list, &events_handle->node);
+	side_list_for_each_entry(tracer_handle, &side_tracer_list, node) {
+		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
+			events, nr_events, tracer_handle->priv);
+	}
 	pthread_mutex_unlock(&side_lock);
 	//TODO: call event batch register ioctl
-	return handle;
+	return events_handle;
 }
 
 static
@@ -306,16 +326,24 @@ void side_event_remove_callbacks(struct side_event_description *desc)
  * Unregister event handle. At this point, all side events in that
  * handle should be unreachable.
  */
-void side_events_unregister(struct side_events_register_handle *handle)
+void side_events_unregister(struct side_events_register_handle *events_handle)
 {
+	struct side_tracer_handle *tracer_handle;
 	uint32_t i;
 
 	if (finalized)
 		return;
+	if (!initialized)
+		side_init();
 	pthread_mutex_lock(&side_lock);
-	side_list_remove_node(&handle->node);
-	for (i = 0; i < handle->nr_events; i++) {
-		struct side_event_description *event = handle->events[i];
+	side_list_remove_node(&events_handle->node);
+	side_list_for_each_entry(tracer_handle, &side_tracer_list, node) {
+		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
+			events_handle->events, events_handle->nr_events,
+			tracer_handle->priv);
+	}
+	for (i = 0; i < events_handle->nr_events; i++) {
+		struct side_event_description *event = events_handle->events[i];
 
 		/* Skip NULL pointers */
 		if (!event)
@@ -324,7 +352,52 @@ void side_events_unregister(struct side_events_register_handle *handle)
 	}
 	pthread_mutex_unlock(&side_lock);
 	//TODO: call event batch unregister ioctl
-	free(handle);
+	free(events_handle);
+}
+
+struct side_tracer_handle *side_tracer_event_notification_register(
+		void (*cb)(enum side_tracer_notification notif,
+			struct side_event_description **events, uint32_t nr_events, void *priv),
+		void *priv)
+{
+	struct side_tracer_handle *tracer_handle;
+	struct side_events_register_handle *events_handle;
+
+	if (finalized)
+		return NULL;
+	if (!initialized)
+		side_init();
+	tracer_handle = calloc(1, sizeof(struct side_tracer_handle));
+	if (!tracer_handle)
+		return NULL;
+	pthread_mutex_lock(&side_lock);
+	tracer_handle->cb = cb;
+	tracer_handle->priv = priv;
+	side_list_insert_node_tail(&side_tracer_list, &tracer_handle->node);
+	side_list_for_each_entry(events_handle, &side_events_list, node) {
+		cb(SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
+			events_handle->events, events_handle->nr_events, priv);
+	}
+	pthread_mutex_unlock(&side_lock);
+	return tracer_handle;
+}
+
+void side_tracer_event_notification_unregister(struct side_tracer_handle *tracer_handle)
+{
+	struct side_events_register_handle *events_handle;
+
+	if (finalized)
+		return;
+	if (!initialized)
+		side_init();
+	pthread_mutex_lock(&side_lock);
+	side_list_for_each_entry(events_handle, &side_events_list, node) {
+		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
+			events_handle->events, events_handle->nr_events,
+			tracer_handle->priv);
+	}
+	side_list_remove_node(&tracer_handle->node);
+	pthread_mutex_unlock(&side_lock);
 }
 
 void side_init(void)
@@ -347,7 +420,7 @@ void side_exit(void)
 	if (finalized)
 		return;
 	side_rcu_gp_exit(&rcu_gp);
-	side_list_for_each_entry_safe(handle, tmp, &side_list, node)
+	side_list_for_each_entry_safe(handle, tmp, &side_events_list, node)
 		side_events_unregister(handle);
 	finalized = true;
 }

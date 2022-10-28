@@ -1147,6 +1147,18 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events);
 void side_events_unregister(struct side_events_register_handle *handle);
 
+enum side_tracer_notification {
+	SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
+	SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
+};
+
+/* Callback is invoked with side library internal lock held. */
+struct side_tracer_handle *side_tracer_event_notification_register(
+		void (*cb)(enum side_tracer_notification notif,
+			struct side_event_description **events, uint32_t nr_events, void *priv),
+		void *priv);
+void side_tracer_event_notification_unregister(struct side_tracer_handle *handle);
+
 void side_init(void);
 void side_exit(void);
 
