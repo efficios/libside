@@ -1178,10 +1178,11 @@ void tracer_event_notification(enum side_tracer_notification notif,
 		struct side_event_description **events, uint32_t nr_events, void *priv)
 {
 	uint32_t i;
+	int ret;
 
 	printf("----------------------------------------------------------\n");
 	printf("Tracer notified of events %s\n",
-		SIDE_TRACER_NOTIFICATION_INSERT_EVENTS ? "inserted" : "removed");
+		notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS ? "inserted" : "removed");
 	for (i = 0; i < nr_events; i++) {
 		struct side_event_description *event = events[i];
 
@@ -1190,6 +1191,27 @@ void tracer_event_notification(enum side_tracer_notification notif,
 			continue;
 		printf("provider: %s, event: %s\n",
 			event->provider_name, event->event_name);
+		if  (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS) {
+			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
+				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL);
+				if (ret)
+					abort();
+			} else {
+				ret = side_tracer_callback_register(event, tracer_call, NULL);
+				if (ret)
+					abort();
+			}
+		} else {
+			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
+				ret = side_tracer_callback_variadic_unregister(event, tracer_call_variadic, NULL);
+				if (ret)
+					abort();
+			} else {
+				ret = side_tracer_callback_unregister(event, tracer_call, NULL);
+				if (ret)
+					abort();
+			}
+		}
 	}
 	printf("----------------------------------------------------------\n");
 }

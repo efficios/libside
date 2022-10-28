@@ -29,7 +29,6 @@ void test_fields(void)
 	uint32_t uw = 42;
 	int64_t sdw = -500;
 
-	side_event_enable__my_provider_event = 1;
 	side_event(my_provider_event, side_arg_list(side_arg_u32(uw), side_arg_s64(sdw),
 		side_arg_dynamic(side_arg_dynamic_string("zzz", side_attr_list()))));
 }
@@ -44,7 +43,6 @@ side_hidden_event(my_provider_event_hidden, "myprovider", "myeventhidden", SIDE_
 static
 void test_event_hidden(void)
 {
-	side_event_enable__my_provider_event_hidden = 1;
 	side_event(my_provider_event_hidden, side_arg_list(side_arg_u32(2)));
 }
 
@@ -60,7 +58,6 @@ side_export_event(my_provider_event_export, "myprovider", "myeventexport", SIDE_
 static
 void test_event_export(void)
 {
-	side_event_enable__my_provider_event_export = 1;
 	side_event(my_provider_event_export, side_arg_list(side_arg_u32(2)));
 }
 
@@ -83,7 +80,6 @@ side_static_event(my_provider_event_struct_literal, "myprovider", "myeventstruct
 static
 void test_struct_literal(void)
 {
-	side_event_enable__my_provider_event_struct_literal = 1;
 	side_event_cond(my_provider_event_struct_literal) {
 		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
 		side_event_call(my_provider_event_struct_literal, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
@@ -109,7 +105,6 @@ side_static_event(my_provider_event_struct, "myprovider", "myeventstruct", SIDE_
 static
 void test_struct(void)
 {
-	side_event_enable__my_provider_event_struct = 1;
 	side_event_cond(my_provider_event_struct) {
 		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
 		side_event_call(my_provider_event_struct, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
@@ -127,7 +122,6 @@ side_static_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVE
 static
 void test_array(void)
 {
-	side_event_enable__my_provider_event_array = 1;
 	side_event_cond(my_provider_event_array) {
 		side_arg_define_vec(myarray, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
 		side_event_call(my_provider_event_array, side_arg_list(side_arg_array(&myarray), side_arg_s64(42)));
@@ -145,7 +139,6 @@ side_static_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DE
 static
 void test_vla(void)
 {
-	side_event_enable__my_provider_event_vla = 1;
 	side_event_cond(my_provider_event_vla) {
 		side_arg_define_vec(myvla, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
 		side_event_call(my_provider_event_vla, side_arg_list(side_arg_vla(&myvla), side_arg_s64(42)));
@@ -187,7 +180,6 @@ side_static_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SID
 static
 void test_vla_visitor(void)
 {
-	side_event_enable__my_provider_event_vla_visitor = 1;
 	side_event_cond(my_provider_event_vla_visitor) {
 		struct app_visitor_ctx ctx = {
 			.ptr = testarray,
@@ -265,7 +257,6 @@ side_static_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d",
 static
 void test_vla_visitor_2d(void)
 {
-	side_event_enable__my_provider_event_vla_visitor2d = 1;
 	side_event_cond(my_provider_event_vla_visitor2d) {
 		struct app_visitor_2d_outer_ctx ctx = {
 			.ptr = testarray2d,
@@ -288,7 +279,6 @@ side_static_event(my_provider_event_array_fixint, "myprovider", "myarrayfixint",
 static
 void test_array_fixint(void)
 {
-	side_event_enable__my_provider_event_array_fixint = 1;
 	side_event(my_provider_event_array_fixint,
 		side_arg_list(side_arg_array_s64(array_fixint), side_arg_s64(42)));
 }
@@ -306,7 +296,6 @@ side_static_event(my_provider_event_vla_fixint, "myprovider", "myvlafixint", SID
 static
 void test_vla_fixint(void)
 {
-	side_event_enable__my_provider_event_vla_fixint = 1;
 	side_event(my_provider_event_vla_fixint,
 		side_arg_list(side_arg_vla_s64(vla_fixint, SIDE_ARRAY_SIZE(vla_fixint)), side_arg_s64(42)));
 }
@@ -322,7 +311,6 @@ side_static_event(my_provider_event_dynamic_basic,
 static
 void test_dynamic_basic_type(void)
 {
-	side_event_enable__my_provider_event_dynamic_basic = 1;
 	side_event(my_provider_event_dynamic_basic,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_s16(-33, side_attr_list()))));
 }
@@ -346,7 +334,6 @@ void test_dynamic_vla(void)
 		),
 		side_attr_list()
 	);
-	side_event_enable__my_provider_event_dynamic_vla = 1;
 	side_event(my_provider_event_dynamic_vla,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
@@ -362,7 +349,6 @@ side_static_event(my_provider_event_dynamic_null,
 static
 void test_dynamic_null(void)
 {
-	side_event_enable__my_provider_event_dynamic_null = 1;
 	side_event(my_provider_event_dynamic_null,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_null(side_attr_list()))));
 }
@@ -387,7 +373,6 @@ void test_dynamic_struct(void)
 		side_attr_list()
 	);
 
-	side_event_enable__my_provider_event_dynamic_struct = 1;
 	side_event(my_provider_event_dynamic_struct,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
@@ -424,7 +409,6 @@ void test_dynamic_nested_struct(void)
 		),
 		side_attr_list()
 	);
-	side_event_enable__my_provider_event_dynamic_nested_struct = 1;
 	side_event(my_provider_event_dynamic_nested_struct,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
@@ -456,7 +440,6 @@ void test_dynamic_vla_struct(void)
 		),
 		side_attr_list()
 	);
-	side_event_enable__my_provider_event_dynamic_vla_struct = 1;
 	side_event(my_provider_event_dynamic_vla_struct,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
@@ -495,7 +478,6 @@ void test_dynamic_struct_vla(void)
 		),
 		side_attr_list()
 	);
-	side_event_enable__my_provider_event_dynamic_struct_vla = 1;
 	side_event(my_provider_event_dynamic_struct_vla,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
 }
@@ -534,7 +516,6 @@ void test_dynamic_nested_vla(void)
 		),
 		side_attr_list()
 	);
-	side_event_enable__my_provider_event_dynamic_nested_vla = 1;
 	side_event(my_provider_event_dynamic_nested_vla,
 		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
 }
@@ -548,7 +529,6 @@ side_static_event_variadic(my_provider_event_variadic,
 static
 void test_variadic(void)
 {
-	side_event_enable__my_provider_event_variadic = 1;
 	side_event_variadic(my_provider_event_variadic,
 		side_arg_list(),
 		side_arg_list(
@@ -571,7 +551,6 @@ side_static_event_variadic(my_provider_event_static_variadic,
 static
 void test_static_variadic(void)
 {
-	side_event_enable__my_provider_event_static_variadic = 1;
 	side_event_variadic(my_provider_event_static_variadic,
 		side_arg_list(
 			side_arg_u32(1),
@@ -609,7 +588,6 @@ void test_bool(void)
 	bool f = false;
 	uint32_t g = 256;
 
-	side_event_enable__my_provider_event_bool = 1;
 	side_event(my_provider_event_bool,
 		side_arg_list(
 			side_arg_bool(a),
@@ -632,7 +610,6 @@ side_static_event_variadic(my_provider_event_dynamic_bool,
 static
 void test_dynamic_bool(void)
 {
-	side_event_enable__my_provider_event_dynamic_bool = 1;
 	side_event_variadic(my_provider_event_dynamic_bool,
 		side_arg_list(),
 		side_arg_list(
@@ -688,7 +665,6 @@ static uint32_t testarray_dynamic_vla[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 static
 void test_dynamic_vla_with_visitor(void)
 {
-	side_event_enable__my_provider_event_dynamic_vla_visitor = 1;
 	side_event_cond(my_provider_event_dynamic_vla_visitor) {
 		struct app_dynamic_vla_visitor_ctx ctx = {
 			.ptr = testarray_dynamic_vla,
@@ -760,7 +736,6 @@ static struct struct_visitor_pair testarray_dynamic_struct[] = {
 static
 void test_dynamic_struct_with_visitor(void)
 {
-	side_event_enable__my_provider_event_dynamic_struct_visitor = 1;
 	side_event_cond(my_provider_event_dynamic_struct_visitor) {
 		struct app_dynamic_struct_visitor_ctx ctx = {
 			.ptr = testarray_dynamic_struct,
@@ -790,7 +765,6 @@ side_static_event(my_provider_event_user_attribute, "myprovider", "myevent_user_
 static
 void test_event_user_attribute(void)
 {
-	side_event_enable__my_provider_event_user_attribute = 1;
 	side_event(my_provider_event_user_attribute, side_arg_list(side_arg_u32(1), side_arg_s64(2)));
 }
 
@@ -815,7 +789,6 @@ side_static_event(my_provider_field_user_attribute, "myprovider", "myevent_field
 static
 void test_field_user_attribute(void)
 {
-	side_event_enable__my_provider_field_user_attribute = 1;
 	side_event(my_provider_field_user_attribute, side_arg_list(side_arg_u32(1), side_arg_s64(2)));
 }
 
@@ -828,7 +801,6 @@ side_static_event_variadic(my_provider_event_variadic_attr,
 static
 void test_variadic_attr(void)
 {
-	side_event_enable__my_provider_event_variadic_attr = 1;
 	side_event_variadic(my_provider_event_variadic_attr,
 		side_arg_list(),
 		side_arg_list(
@@ -878,7 +850,6 @@ void test_variadic_vla_attr(void)
 			side_attr("Y", side_attr_u8(2)),
 		)
 	);
-	side_event_enable__my_provider_event_variadic_vla_attr = 1;
 	side_event_variadic(my_provider_event_variadic_vla_attr,
 		side_arg_list(),
 		side_arg_list(
@@ -897,7 +868,6 @@ side_static_event_variadic(my_provider_event_variadic_struct_attr,
 static
 void test_variadic_struct_attr(void)
 {
-	side_event_enable__my_provider_event_variadic_struct_attr = 1;
 	side_event_cond(my_provider_event_variadic_struct_attr) {
 		side_arg_dynamic_define_struct(mystruct,
 			side_arg_list(
@@ -946,7 +916,6 @@ side_static_event(my_provider_event_float, "myprovider", "myeventfloat", SIDE_LO
 static
 void test_float(void)
 {
-	side_event_enable__my_provider_event_float = 1;
 	side_event(my_provider_event_float,
 		side_arg_list(
 #if __HAVE_FLOAT16
@@ -974,7 +943,6 @@ side_static_event_variadic(my_provider_event_variadic_float,
 static
 void test_variadic_float(void)
 {
-	side_event_enable__my_provider_event_variadic_float = 1;
 	side_event_variadic(my_provider_event_variadic_float,
 		side_arg_list(),
 		side_arg_list(
@@ -1026,7 +994,6 @@ side_static_event(my_provider_event_enum, "myprovider", "myeventenum", SIDE_LOGL
 static
 void test_enum(void)
 {
-	side_event_enable__my_provider_event_enum = 1;
 	side_event(my_provider_event_enum,
 		side_arg_list(
 			side_arg_u32(5),
@@ -1075,7 +1042,6 @@ side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitma
 static
 void test_enum_bitmap(void)
 {
-	side_event_enable__my_provider_event_enum_bitmap = 1;
 	side_event_cond(my_provider_event_enum_bitmap) {
 		side_arg_define_vec(myarray,
 			side_arg_list(
@@ -1119,7 +1085,6 @@ side_static_event_variadic(my_provider_event_blob, "myprovider", "myeventblob", 
 static
 void test_blob(void)
 {
-	side_event_enable__my_provider_event_blob = 1;
 	side_event_cond(my_provider_event_blob) {
 		side_arg_define_vec(myarray, side_arg_list(side_arg_byte(1), side_arg_byte(2), side_arg_byte(3)));
 		side_arg_dynamic_define_vec(myvla,
@@ -1160,7 +1125,6 @@ side_static_event_variadic(my_provider_event_format_string,
 static
 void test_fmt_string(void)
 {
-	side_event_enable__my_provider_event_format_string = 1;
 	side_event_cond(my_provider_event_format_string) {
 		side_arg_dynamic_define_vec(args,
 			side_arg_list(

@@ -1162,4 +1162,44 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *handle
 void side_init(void);
 void side_exit(void);
 
+/*
+ * These weak symbols, the constructor, and destructor take care of
+ * registering only _one_ instance of the side instrumentation per
+ * shared-ojbect (or for the whole main program).
+ */
+extern struct side_event_description * __start_side_event_description_ptr[]
+	__attribute__((weak, visibility("hidden")));
+extern struct side_event_description * __stop_side_event_description_ptr[]
+	__attribute__((weak, visibility("hidden")));
+int side_event_description_ptr_registered
+        __attribute__((weak, visibility("hidden")));
+struct side_events_register_handle *side_events_handle
+	__attribute__((weak, visibility("hidden")));
+
+static void
+side_event_description_ptr_init(void)
+	__attribute__((no_instrument_function))
+	__attribute__((constructor));
+static void
+side_event_description_ptr_init(void)
+{
+	if (side_event_description_ptr_registered++)
+		return;
+	side_events_handle = side_events_register(__start_side_event_description_ptr,
+		__stop_side_event_description_ptr - __start_side_event_description_ptr);
+}
+
+static void
+side_event_description_ptr_exit(void)
+	__attribute__((no_instrument_function))
+	__attribute__((destructor));
+static void
+side_event_description_ptr_exit(void)
+{
+	if (--side_event_description_ptr_registered)
+		return;
+	side_events_unregister(side_events_handle);
+	side_events_handle = NULL;
+}
+
 #endif /* _SIDE_TRACE_H */

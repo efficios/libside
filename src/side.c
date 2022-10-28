@@ -331,6 +331,8 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 	struct side_tracer_handle *tracer_handle;
 	uint32_t i;
 
+	if (!events_handle)
+		return;
 	if (finalized)
 		return;
 	if (!initialized)
