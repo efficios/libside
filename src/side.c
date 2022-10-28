@@ -335,6 +335,11 @@ void side_init(void)
 	initialized = true;
 }
 
+/*
+ * side_exit() is executed from a library destructor. It can be called
+ * explicitly at application exit as well. Concurrent side API use is
+ * not expected at that point.
+ */
 void side_exit(void)
 {
 	struct side_events_register_handle *handle, *tmp;
