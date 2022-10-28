@@ -11,6 +11,8 @@
 
 #include <side/trace.h>
 
+static struct side_tracer_handle *tracer_handle;
+
 static
 void tracer_print_struct(const struct side_type_description *type_desc, const struct side_arg_vec_description *sav_desc);
 static
@@ -1170,4 +1172,42 @@ void tracer_call_variadic(const struct side_event_description *desc,
 	if (i)
 		printf(" ]");
 	printf("\n");
+}
+
+void tracer_event_notification(enum side_tracer_notification notif,
+		struct side_event_description **events, uint32_t nr_events, void *priv)
+{
+	uint32_t i;
+
+	printf("----------------------------------------------------------\n");
+	printf("Tracer notified of events %s\n",
+		SIDE_TRACER_NOTIFICATION_INSERT_EVENTS ? "inserted" : "removed");
+	for (i = 0; i < nr_events; i++) {
+		struct side_event_description *event = events[i];
+
+		/* Skip NULL pointers */
+		if (!event)
+			continue;
+		printf("provider: %s, event: %s\n",
+			event->provider_name, event->event_name);
+	}
+	printf("----------------------------------------------------------\n");
+}
+
+static __attribute__((constructor))
+void tracer_init(void);
+static
+void tracer_init(void)
+{
+	tracer_handle = side_tracer_event_notification_register(tracer_event_notification, NULL);
+	if (!tracer_handle)
+		abort();
+}
+
+static __attribute__((destructor))
+void tracer_exit(void);
+static
+void tracer_exit(void)
+{
+	side_tracer_event_notification_unregister(tracer_handle);
 }
