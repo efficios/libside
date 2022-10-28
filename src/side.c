@@ -179,17 +179,13 @@ int _side_tracer_callback_unregister(struct side_event_description *desc,
 	if (!call)
 		return SIDE_ERROR_INVAL;
 	pthread_mutex_lock(&side_lock);
-	old_nr_cb = *desc->enabled & SIDE_EVENT_ENABLED_USER_MASK;
-	if (old_nr_cb == 0) {
-		ret = SIDE_ERROR_INVAL;
-		goto unlock;
-	}
-	old_cb = (struct side_callback *) desc->callbacks;
 	cb_pos = side_tracer_callback_lookup(desc, call, priv);
 	if (!cb_pos) {
 		ret = SIDE_ERROR_NOENT;
 		goto unlock;
 	}
+	old_nr_cb = *desc->enabled & SIDE_EVENT_ENABLED_USER_MASK;
+	old_cb = (struct side_callback *) desc->callbacks;
 	if (old_nr_cb == 1) {
 		new_cb = (struct side_callback *) &side_empty_callback;
 	} else {
