@@ -1024,7 +1024,9 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.label = _label, \
 	}
 
-#define side_event_cond(_identifier) if (side_unlikely(side_event_enable__##_identifier))
+#define side_event_cond(_identifier) \
+	if (side_unlikely(__atomic_load_n(&side_event_enable__##_identifier, \
+					__ATOMIC_RELAXED)))
 
 #define side_event_call(_identifier, _sav) \
 	{ \
