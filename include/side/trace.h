@@ -143,6 +143,14 @@ enum side_visitor_status {
 	SIDE_VISITOR_STATUS_ERROR = -1,
 };
 
+enum side_error {
+	SIDE_ERROR_OK = 0,
+	SIDE_ERROR_INVAL = 1,
+	SIDE_ERROR_EXIST = 2,
+	SIDE_ERROR_NOMEM = 3,
+	SIDE_ERROR_NOENT = 4,
+};
+
 typedef enum side_visitor_status (*side_visitor)(
 		const struct side_tracer_visitor_ctx *tracer_ctx,
 		void *app_ctx);
@@ -1101,12 +1109,35 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	extern uint32_t side_event_enable_##_identifier; \
 	extern struct side_event_description _identifier
 
+extern const struct side_callback side_empty_callback;
+
 void side_call(const struct side_event_description *desc,
 	const struct side_arg_vec_description *sav_desc);
 void side_call_variadic(const struct side_event_description *desc,
 	const struct side_arg_vec_description *sav_desc,
 	const struct side_arg_dynamic_event_struct *var_struct);
 
-extern const struct side_callback side_empty_callback;
+int side_tracer_callback_register(struct side_event_description *desc,
+		void (*call)(const struct side_event_description *desc,
+			const struct side_arg_vec_description *sav_desc,
+			void *priv),
+		void *priv);
+int side_tracer_callback_variadic_register(struct side_event_description *desc,
+		void (*call_variadic)(const struct side_event_description *desc,
+			const struct side_arg_vec_description *sav_desc,
+			const struct side_arg_dynamic_event_struct *var_struct,
+			void *priv),
+		void *priv);
+int side_tracer_callback_unregister(struct side_event_description *desc,
+		void (*call)(const struct side_event_description *desc,
+			const struct side_arg_vec_description *sav_desc,
+			void *priv),
+		void *priv);
+int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
+		void (*call_variadic)(const struct side_event_description *desc,
+			const struct side_arg_vec_description *sav_desc,
+			const struct side_arg_dynamic_event_struct *var_struct,
+			void *priv),
+		void *priv);
 
 #endif /* _SIDE_TRACE_H */
