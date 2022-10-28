@@ -1,6 +1,6 @@
 all: test
 
-HEADERS = ../include/side/trace.h ../include/side/macros.h rcu.h smp.h
+HEADERS = ../include/side/trace.h ../include/side/macros.h rcu.h smp.h list.h
 
 CFLAGS = -g -O2 -Wall
 CPPFLAGS = -I../include/ -D_GNU_SOURCE

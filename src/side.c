@@ -8,6 +8,7 @@
 
 #include "tracer.h"
 #include "rcu.h"
+#include "list.h"
 
 /* Top 8 bits reserved for kernel tracer use. */
 #define SIDE_EVENT_ENABLED_KERNEL_MASK			0xFF000000
@@ -24,6 +25,8 @@ static struct side_rcu_gp_state rcu_gp;
 static bool initialized;
 
 static pthread_mutex_t side_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static DEFINE_SIDE_LIST_HEAD(side_list);
 
 static
 void side_init(void)
