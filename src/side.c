@@ -81,9 +81,6 @@ void side_call(const struct side_event_description *desc, const struct side_arg_
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
 	}
-	if (side_unlikely(!(enabled & SIDE_EVENT_ENABLED_USER_MASK)))
-		return;
-
 	rcu_period = side_rcu_read_begin(&rcu_gp);
 	for (side_cb = side_rcu_dereference(desc->callbacks); side_cb->u.call != NULL; side_cb++)
 		side_cb->u.call(desc, sav_desc, side_cb->priv);
@@ -110,9 +107,6 @@ void side_call_variadic(const struct side_event_description *desc,
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
 	}
-	if (side_unlikely(!(enabled & SIDE_EVENT_ENABLED_USER_MASK)))
-		return;
-
 	rcu_period = side_rcu_read_begin(&rcu_gp);
 	for (side_cb = side_rcu_dereference(desc->callbacks); side_cb->u.call_variadic != NULL; side_cb++)
 		side_cb->u.call_variadic(desc, sav_desc, var_struct, side_cb->priv);
