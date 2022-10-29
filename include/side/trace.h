@@ -299,7 +299,7 @@ struct side_event_description {
 	uint32_t loglevel;	/* enum side_loglevel */
 	uint32_t nr_fields;
 	uint32_t nr_attr;
-	uint32_t _unused;
+	uint32_t nr_callbacks;
 	uint64_t flags;
 	const char *provider_name;
 	const char *event_name;
@@ -1074,7 +1074,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		.loglevel = _loglevel, \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-		._unused = 0, \
+		.nr_callbacks = 0, \
 		.flags = (_flags), \
 		.provider_name = _provider, \
 		.event_name = _event, \

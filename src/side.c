@@ -14,7 +14,7 @@
 #define SIDE_EVENT_ENABLED_KERNEL_MASK			0xFF000000
 #define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK	0x80000000
 
-/* Allow 2^24 tracer callbacks to be registered on an event. */
+/* Allow 2^24 tracer references on an event. */
 #define SIDE_EVENT_ENABLED_USER_MASK			0x00FFFFFF
 
 struct side_events_register_handle {
@@ -140,8 +140,8 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	if (!initialized)
 		side_init();
 	pthread_mutex_lock(&side_lock);
-	old_nr_cb = *desc->enabled & SIDE_EVENT_ENABLED_USER_MASK;
-	if (old_nr_cb == SIDE_EVENT_ENABLED_USER_MASK) {
+	old_nr_cb = desc->nr_callbacks;
+	if (old_nr_cb == UINT32_MAX) {
 		ret = SIDE_ERROR_INVAL;
 		goto unlock;
 	}
@@ -167,8 +167,10 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	side_rcu_wait_grace_period(&rcu_gp);
 	if (old_nr_cb)
 		free(old_cb);
+	desc->nr_callbacks++;
 	/* Increment concurrently with kernel setting the top bits. */
-	(void) __atomic_add_fetch(desc->enabled, 1, __ATOMIC_RELAXED);
+	if (!old_nr_cb)
+		(void) __atomic_add_fetch(desc->enabled, 1, __ATOMIC_RELAXED);
 unlock:
 	pthread_mutex_unlock(&side_lock);
 	return ret;
@@ -218,7 +220,7 @@ int _side_tracer_callback_unregister(struct side_event_description *desc,
 		ret = SIDE_ERROR_NOENT;
 		goto unlock;
 	}
-	old_nr_cb = *desc->enabled & SIDE_EVENT_ENABLED_USER_MASK;
+	old_nr_cb = desc->nr_callbacks;
 	old_cb = (struct side_callback *) desc->callbacks;
 	if (old_nr_cb == 1) {
 		new_cb = (struct side_callback *) &side_empty_callback;
@@ -237,8 +239,10 @@ int _side_tracer_callback_unregister(struct side_event_description *desc,
 	side_rcu_assign_pointer(desc->callbacks, new_cb);
 	side_rcu_wait_grace_period(&rcu_gp);
 	free(old_cb);
+	desc->nr_callbacks--;
 	/* Decrement concurrently with kernel setting the top bits. */
-	(void) __atomic_add_fetch(desc->enabled, -1, __ATOMIC_RELAXED);
+	if (old_nr_cb == 1)
+		(void) __atomic_add_fetch(desc->enabled, -1, __ATOMIC_RELAXED);
 unlock:
 	pthread_mutex_unlock(&side_lock);
 	return ret;
@@ -302,12 +306,14 @@ void side_event_remove_callbacks(struct side_event_description *desc)
 	if (!nr_cb)
 		return;
 	old_cb = (struct side_callback *) desc->callbacks;
+	if (desc->nr_callbacks)
+		(void) __atomic_add_fetch(desc->enabled, -1, __ATOMIC_RELAXED);
 	/*
 	 * Setting the state back to 0 cb and empty callbacks out of
 	 * caution. This should not matter because instrumentation is
 	 * unreachable.
 	 */
-	(void) __atomic_add_fetch(desc->enabled, -nr_cb, __ATOMIC_RELAXED);
+	desc->nr_callbacks = 0;
 	side_rcu_assign_pointer(desc->callbacks, &side_empty_callback);
 	/*
 	 * No need to wait for grace period because instrumentation is
