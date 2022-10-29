@@ -67,7 +67,7 @@ void side_call(const struct side_event_description *desc, const struct side_arg_
 {
 	const struct side_callback *side_cb;
 	unsigned int rcu_period;
-	uint32_t enabled;
+	uintptr_t enabled;
 
 	if (side_unlikely(finalized))
 		return;
@@ -96,7 +96,7 @@ void side_call_variadic(const struct side_event_description *desc,
 {
 	const struct side_callback *side_cb;
 	unsigned int rcu_period;
-	uint32_t enabled;
+	uintptr_t enabled;
 
 	if (side_unlikely(finalized))
 		return;
