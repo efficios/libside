@@ -300,14 +300,13 @@ struct side_events_register_handle *side_events_register(struct side_event_descr
 static
 void side_event_remove_callbacks(struct side_event_description *desc)
 {
-	uint32_t nr_cb = *desc->enabled & SIDE_EVENT_ENABLED_USER_MASK;
+	uint32_t nr_cb = desc->nr_callbacks;
 	struct side_callback *old_cb;
 
 	if (!nr_cb)
 		return;
 	old_cb = (struct side_callback *) desc->callbacks;
-	if (desc->nr_callbacks)
-		(void) __atomic_add_fetch(desc->enabled, -1, __ATOMIC_RELAXED);
+	(void) __atomic_add_fetch(desc->enabled, -1, __ATOMIC_RELAXED);
 	/*
 	 * Setting the state back to 0 cb and empty callbacks out of
 	 * caution. This should not matter because instrumentation is
