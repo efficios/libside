@@ -43,4 +43,12 @@
 		(type *)((char *)__ptr - offsetof(type, member));	\
 	})
 
+#if defined(__SIZEOF_LONG__)
+#define SIDE_BITS_PER_LONG	(__SIZEOF_LONG__ * 8)
+#elif defined(_LP64)
+#define SIDE_BITS_PER_LONG	64
+#else
+#define SIDE_BITS_PER_LONG	32
+#endif
+
 #endif /* _SIDE_MACROS_H */

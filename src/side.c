@@ -11,11 +11,19 @@
 #include "list.h"
 
 /* Top 8 bits reserved for kernel tracer use. */
-#define SIDE_EVENT_ENABLED_KERNEL_MASK			0xFF000000
-#define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK	0x80000000
+#if SIDE_BITS_PER_LONG == 64
+# define SIDE_EVENT_ENABLED_KERNEL_MASK			0xFF00000000000000ULL
+# define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK 	0x8000000000000000ULL
+
+/* Allow 2^56 tracer references on an event. */
+# define SIDE_EVENT_ENABLED_USER_MASK			0x00FFFFFFFFFFFFFFULL
+#else
+# define SIDE_EVENT_ENABLED_KERNEL_MASK			0xFF000000UL
+# define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK	0x80000000UL
 
 /* Allow 2^24 tracer references on an event. */
-#define SIDE_EVENT_ENABLED_USER_MASK			0x00FFFFFF
+# define SIDE_EVENT_ENABLED_USER_MASK			0x00FFFFFFUL
+#endif
 
 struct side_events_register_handle {
 	struct side_list_node node;
