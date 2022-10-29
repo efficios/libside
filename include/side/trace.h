@@ -294,18 +294,18 @@ struct side_callback {
 };
 
 struct side_event_description {
-	uint32_t version;
-	uint32_t *enabled;
-	uint32_t loglevel;	/* enum side_loglevel */
-	uint32_t nr_fields;
-	uint32_t nr_attr;
-	uint32_t nr_callbacks;
-	uint64_t flags;
+	uintptr_t *enabled;
 	const char *provider_name;
 	const char *event_name;
 	const struct side_event_field *fields;
 	const struct side_attr *attr;
 	const struct side_callback *callbacks;
+	uint64_t flags;
+	uint32_t version;
+	uint32_t loglevel;	/* enum side_loglevel */
+	uint32_t nr_fields;
+	uint32_t nr_attr;
+	uint32_t nr_callbacks;
 };
 
 struct side_arg_dynamic_vec {
@@ -1066,7 +1066,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM(_attr))
 
 #define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
-	_linkage uint32_t side_event_enable__##_identifier __attribute__((section("side_event_enable"))); \
+	_linkage uintptr_t side_event_enable__##_identifier __attribute__((section("side_event_enable"))); \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
 		.version = 0, \
@@ -1110,7 +1110,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
 
 #define side_declare_event(_identifier) \
-	extern uint32_t side_event_enable_##_identifier; \
+	extern uintptr_t side_event_enable_##_identifier; \
 	extern struct side_event_description _identifier
 
 extern const struct side_callback side_empty_callback;
