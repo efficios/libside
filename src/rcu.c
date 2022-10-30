@@ -10,9 +10,18 @@
 #include <stdbool.h>
 #include <poll.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <linux/membarrier.h>
 
 #include "rcu.h"
 #include "smp.h"
+
+static int
+membarrier(int cmd, unsigned int flags, int cpu_id)
+{
+	return syscall(__NR_membarrier, cmd, flags, cpu_id);
+}
 
 /* active_readers is an input/output parameter. */
 static
@@ -44,7 +53,8 @@ void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_reade
 	 * incremented before "end", as guaranteed by memory barriers
 	 * (A) or (B).
 	 */
-	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0))
+		abort();
 
 	for (i = 0; i < gp_state->nr_cpus; i++) {
 		struct side_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
@@ -117,7 +127,8 @@ void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 	 * exist after the grace period completes are ordered after
 	 * loads and stores performed before the grace period.
 	 */
-	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0))
+		abort();
 
 	/*
 	 * First scan through all cpus, for both period. If no readers
@@ -158,7 +169,8 @@ end:
 	 * are ordered before loads and stores performed after the grace
 	 * period.
 	 */
-	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0))
+		abort();
 }
 
 void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
@@ -170,6 +182,8 @@ void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
 	pthread_mutex_init(&rcu_gp->gp_lock, NULL);
 	rcu_gp->percpu_state = calloc(rcu_gp->nr_cpus, sizeof(struct side_rcu_cpu_gp_state));
 	if (!rcu_gp->percpu_state)
+		abort();
+	if (membarrier(MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, 0, 0))
 		abort();
 }
 

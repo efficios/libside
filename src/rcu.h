@@ -34,7 +34,6 @@ struct side_rcu_gp_state {
 	pthread_mutex_t gp_lock;
 };
 
-//TODO: replace acquire/release by membarrier+compiler barrier (when available)
 //TODO: implement wait/wakeup for grace period using sys_futex
 static inline
 unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
@@ -65,7 +64,7 @@ fence:
 	 * barrier (C). It is redundant with memory barrier (B) for that
 	 * purpose.
 	 */
-	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	rseq_barrier();
 	return period;
 }
 
@@ -85,7 +84,7 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 	 * barrier (C). It is redundant with memory barrier (A) for that
 	 * purpose.
 	 */
-	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	rseq_barrier();
 
 	if (side_likely(rseq_offset > 0)) {
 		cpu = rseq_cpu_start();
