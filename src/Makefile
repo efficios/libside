@@ -21,7 +21,7 @@ test.o: test.c $(HEADERS)
 	gcc $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 test: tracer.o test.o side.o rcu.o smp.o
-	gcc $(CFLAGS) -o $@ $^
+	gcc $(CFLAGS) -o $@ $^ -lrseq
 
 .PHONY: clean
 

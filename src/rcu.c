@@ -24,10 +24,14 @@ void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_reade
 	for (i = 0; i < gp_state->nr_cpus; i++) {
 		struct side_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
 
-		if (active_readers[0])
+		if (active_readers[0]) {
 			sum[0] -= __atomic_load_n(&cpu_state->count[0].end, __ATOMIC_RELAXED);
-		if (active_readers[1])
+			sum[0] -= __atomic_load_n(&cpu_state->count[0].rseq_end, __ATOMIC_RELAXED);
+		}
+		if (active_readers[1]) {
 			sum[1] -= __atomic_load_n(&cpu_state->count[1].end, __ATOMIC_RELAXED);
+			sum[1] -= __atomic_load_n(&cpu_state->count[1].rseq_end, __ATOMIC_RELAXED);
+		}
 	}
 
 	/*
@@ -45,10 +49,14 @@ void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_reade
 	for (i = 0; i < gp_state->nr_cpus; i++) {
 		struct side_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
 
-		if (active_readers[0])
+		if (active_readers[0]) {
 			sum[0] += __atomic_load_n(&cpu_state->count[0].begin, __ATOMIC_RELAXED);
-		if (active_readers[1])
+			sum[0] += __atomic_load_n(&cpu_state->count[0].rseq_begin, __ATOMIC_RELAXED);
+		}
+		if (active_readers[1]) {
 			sum[1] += __atomic_load_n(&cpu_state->count[1].begin, __ATOMIC_RELAXED);
+			sum[1] += __atomic_load_n(&cpu_state->count[1].rseq_begin, __ATOMIC_RELAXED);
+		}
 	}
 	if (active_readers[0])
 		active_readers[0] = sum[0];
@@ -167,6 +175,7 @@ void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
 
 void side_rcu_gp_exit(struct side_rcu_gp_state *rcu_gp)
 {
+	rseq_prepare_unload();
 	pthread_mutex_destroy(&rcu_gp->gp_lock);
 	free(rcu_gp->percpu_state);
 }

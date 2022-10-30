@@ -11,12 +11,16 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <poll.h>
+#include <side/trace.h>
+#include <rseq/rseq.h>
 
 #define SIDE_CACHE_LINE_SIZE		256
 
 struct side_rcu_percpu_count {
 	uintptr_t begin;
+	uintptr_t rseq_begin;
 	uintptr_t end;
+	uintptr_t rseq_end;
 }  __attribute__((__aligned__(SIDE_CACHE_LINE_SIZE)));
 
 struct side_rcu_cpu_gp_state {
@@ -30,17 +34,27 @@ struct side_rcu_gp_state {
 	pthread_mutex_t gp_lock;
 };
 
-//TODO: replace atomics by rseq (when available)
 //TODO: replace acquire/release by membarrier+compiler barrier (when available)
 //TODO: implement wait/wakeup for grace period using sys_futex
 static inline
 unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
 {
-	int cpu = sched_getcpu();
 	unsigned int period = __atomic_load_n(&gp_state->period, __ATOMIC_RELAXED);
+	struct side_rcu_cpu_gp_state *cpu_gp_state;
+	int cpu;
 
-	if (cpu < 0)
+	if (side_likely(rseq_offset > 0)) {
+		cpu = rseq_cpu_start();
+		cpu_gp_state = &gp_state->percpu_state[cpu];
+		if (!rseq_addv((intptr_t *)&cpu_gp_state->count[period].rseq_begin, 1, cpu))
+			goto fence;
+	}
+	cpu = sched_getcpu();
+	if (side_unlikely(cpu < 0))
 		cpu = 0;
+	cpu_gp_state = &gp_state->percpu_state[cpu];
+	(void) __atomic_add_fetch(&cpu_gp_state->count[period].begin, 1, __ATOMIC_RELAXED);
+fence:
 	/*
 	 * This memory barrier (A) ensures that the contents of the
 	 * read-side critical section does not leak before the "begin"
@@ -51,17 +65,16 @@ unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
 	 * barrier (C). It is redundant with memory barrier (B) for that
 	 * purpose.
 	 */
-	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].begin, 1, __ATOMIC_SEQ_CST);
+	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 	return period;
 }
 
 static inline
 void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 {
-	int cpu = sched_getcpu();
+	struct side_rcu_cpu_gp_state *cpu_gp_state;
+	int cpu;
 
-	if (cpu < 0)
-		cpu = 0;
 	/*
 	 * This memory barrier (B) ensures that the contents of the
 	 * read-side critical section does not leak after the "end"
@@ -72,7 +85,19 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 	 * barrier (C). It is redundant with memory barrier (A) for that
 	 * purpose.
 	 */
-	(void) __atomic_add_fetch(&gp_state->percpu_state[cpu].count[period].end, 1, __ATOMIC_SEQ_CST);
+	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+
+	if (side_likely(rseq_offset > 0)) {
+		cpu = rseq_cpu_start();
+		cpu_gp_state = &gp_state->percpu_state[cpu];
+		if (!rseq_addv((intptr_t *)&cpu_gp_state->count[period].rseq_end, 1, cpu))
+			return;
+	}
+	cpu = sched_getcpu();
+	if (side_unlikely(cpu < 0))
+		cpu = 0;
+	cpu_gp_state = &gp_state->percpu_state[cpu];
+	(void) __atomic_add_fetch(&cpu_gp_state->count[period].end, 1, __ATOMIC_RELAXED);
 }
 
 #define side_rcu_dereference(p) \
