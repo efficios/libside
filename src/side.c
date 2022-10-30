@@ -425,8 +425,8 @@ void side_exit(void)
 
 	if (finalized)
 		return;
-	side_rcu_gp_exit(&rcu_gp);
 	side_list_for_each_entry_safe(handle, tmp, &side_events_list, node)
 		side_events_unregister(handle);
+	side_rcu_gp_exit(&rcu_gp);
 	finalized = true;
 }
