@@ -49,7 +49,10 @@ static bool initialized;
  */
 static bool finalized;
 
-static pthread_mutex_t side_lock = PTHREAD_MUTEX_INITIALIZER;
+/*
+ * Recursive mutex to allow tracer callbacks to use the side API.
+ */
+static pthread_mutex_t side_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 static DEFINE_SIDE_LIST_HEAD(side_events_list);
 static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
