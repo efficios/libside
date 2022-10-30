@@ -55,14 +55,17 @@ unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
 	(void) __atomic_add_fetch(&cpu_gp_state->count[period].begin, 1, __ATOMIC_RELAXED);
 fence:
 	/*
-	 * This memory barrier (A) ensures that the contents of the
-	 * read-side critical section does not leak before the "begin"
-	 * counter increment. It pairs with memory barriers (D) and (E).
+	 * This compiler barrier (A) is paired with membarrier() at (C),
+	 * (D), (E). It effectively upgrades this compiler barrier to a
+	 * SEQ_CST fence with respect to the paired barriers.
 	 *
-	 * This memory barrier (A) also ensures that the "begin"
-	 * increment is before the "end" increment. It pairs with memory
-	 * barrier (C). It is redundant with memory barrier (B) for that
-	 * purpose.
+	 * This barrier (A) ensures that the contents of the read-side
+	 * critical section does not leak before the "begin" counter
+	 * increment. It pairs with memory barriers (D) and (E).
+	 *
+	 * This barrier (A) also ensures that the "begin" increment is
+	 * before the "end" increment. It pairs with memory barrier (C).
+	 * It is redundant with barrier (B) for that purpose.
 	 */
 	rseq_barrier();
 	return period;
@@ -75,14 +78,17 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 	int cpu;
 
 	/*
-	 * This memory barrier (B) ensures that the contents of the
-	 * read-side critical section does not leak after the "end"
-	 * counter increment. It pairs with memory barriers (D) and (E).
+	 * This compiler barrier (B) is paired with membarrier() at (C),
+	 * (D), (E). It effectively upgrades this compiler barrier to a
+	 * SEQ_CST fence with respect to the paired barriers.
 	 *
-	 * This memory barrier (B) also ensures that the "begin"
-	 * increment is before the "end" increment. It pairs with memory
-	 * barrier (C). It is redundant with memory barrier (A) for that
-	 * purpose.
+	 * This barrier (B) ensures that the contents of the read-side
+	 * critical section does not leak after the "end" counter
+	 * increment. It pairs with memory barriers (D) and (E).
+	 *
+	 * This barrier (B) also ensures that the "begin" increment is
+	 * before the "end" increment. It pairs with memory barrier (C).
+	 * It is redundant with barrier (A) for that purpose.
 	 */
 	rseq_barrier();
 
