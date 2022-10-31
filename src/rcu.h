@@ -106,8 +106,6 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 		cpu = 0;
 	cpu_gp_state = &gp_state->percpu_state[cpu];
 	(void) __atomic_add_fetch(&cpu_gp_state->count[period].end, 1, __ATOMIC_SEQ_CST);
-
-
 }
 
 #define side_rcu_dereference(p) \
