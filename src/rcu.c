@@ -11,11 +11,18 @@
 #include <poll.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <sys/syscall.h>
 #include <linux/membarrier.h>
 
 #include "rcu.h"
 #include "smp.h"
+
+/*
+ * If both rseq (with glibc support) and membarrier system calls are
+ * available, use them to replace barriers and atomics on the fast-path.
+ */
+unsigned int side_rcu_rseq_membarrier_available;
 
 static int
 membarrier(int cmd, unsigned int flags, int cpu_id)
@@ -53,8 +60,14 @@ void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_reade
 	 * incremented before "end", as guaranteed by memory barriers
 	 * (A) or (B).
 	 */
-	if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0))
-		abort();
+	if (side_rcu_rseq_membarrier_available) {
+		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
+			perror("membarrier");
+			abort();
+		}
+	} else {
+		__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	}
 
 	for (i = 0; i < gp_state->nr_cpus; i++) {
 		struct side_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
@@ -127,8 +140,14 @@ void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 	 * exist after the grace period completes are ordered after
 	 * loads and stores performed before the grace period.
 	 */
-	if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0))
-		abort();
+	if (side_rcu_rseq_membarrier_available) {
+		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
+			perror("membarrier");
+			abort();
+		}
+	} else {
+		__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	}
 
 	/*
 	 * First scan through all cpus, for both period. If no readers
@@ -169,12 +188,20 @@ end:
 	 * are ordered before loads and stores performed after the grace
 	 * period.
 	 */
-	if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0))
-		abort();
+	if (side_rcu_rseq_membarrier_available) {
+		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
+			perror("membarrier");
+			abort();
+		}
+	} else {
+		__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	}
 }
 
 void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
 {
+	bool has_membarrier = false, has_rseq = false;
+
 	memset(rcu_gp, 0, sizeof(*rcu_gp));
 	rcu_gp->nr_cpus = get_possible_cpus_array_len();
 	if (!rcu_gp->nr_cpus)
@@ -183,8 +210,12 @@ void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
 	rcu_gp->percpu_state = calloc(rcu_gp->nr_cpus, sizeof(struct side_rcu_cpu_gp_state));
 	if (!rcu_gp->percpu_state)
 		abort();
-	if (membarrier(MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, 0, 0))
-		abort();
+	if (!membarrier(MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, 0, 0))
+		has_membarrier = true;
+	if (rseq_available(RSEQ_AVAILABLE_QUERY_LIBC))
+		has_rseq = true;
+	if (has_membarrier && has_rseq)
+		side_rcu_rseq_membarrier_available = 1;
 }
 
 void side_rcu_gp_exit(struct side_rcu_gp_state *rcu_gp)
