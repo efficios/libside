@@ -13,6 +13,10 @@
 #include <poll.h>
 #include <side/trace.h>
 #include <rseq/rseq.h>
+#include <linux/futex.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
 #define SIDE_CACHE_LINE_SIZE		256
 
@@ -30,13 +34,34 @@ struct side_rcu_cpu_gp_state {
 struct side_rcu_gp_state {
 	struct side_rcu_cpu_gp_state *percpu_state;
 	int nr_cpus;
+	int32_t futex;
 	unsigned int period;
 	pthread_mutex_t gp_lock;
 };
 
 extern unsigned int side_rcu_rseq_membarrier_available __attribute__((visibility("hidden")));
 
-//TODO: implement wait/wakeup for grace period using sys_futex
+static inline
+int futex(int32_t *uaddr, int op, int32_t val,
+	const struct timespec *timeout, int32_t *uaddr2, int32_t val3)
+{
+	return syscall(__NR_futex, uaddr, op, val, timeout, uaddr2, val3);
+}
+
+/*
+ * Wake-up side_rcu_wait_grace_period. Called concurrently from many
+ * threads.
+ */
+static inline
+void side_rcu_wake_up_gp(struct side_rcu_gp_state *gp_state)
+{
+	if (side_unlikely(__atomic_load_n(&gp_state->futex, __ATOMIC_RELAXED)) == -1) {
+		__atomic_store_n(&gp_state->futex, 0, __ATOMIC_RELAXED);
+		/* TODO: handle futex return values. */
+		(void) futex(&gp_state->futex, FUTEX_WAKE, 1, NULL, NULL, 0);
+	}
+}
+
 static inline
 unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
 {
@@ -97,8 +122,15 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 		rseq_barrier();
 		cpu = rseq_cpu_start();
 		cpu_gp_state = &gp_state->percpu_state[cpu];
-		if (side_likely(!rseq_addv((intptr_t *)&cpu_gp_state->count[period].rseq_end, 1, cpu)))
-			return;
+		if (side_likely(!rseq_addv((intptr_t *)&cpu_gp_state->count[period].rseq_end, 1, cpu))) {
+			/*
+			 * This barrier (F) is paired with membarrier()
+			 * at (G). It orders increment of the begin/end
+			 * counters before load/store to the futex.
+			 */
+			rseq_barrier();
+			goto end;
+		}
 	}
 	/* Fallback to atomic increment and SEQ_CST. */
 	cpu = sched_getcpu();
@@ -106,6 +138,14 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 		cpu = 0;
 	cpu_gp_state = &gp_state->percpu_state[cpu];
 	(void) __atomic_add_fetch(&cpu_gp_state->count[period].end, 1, __ATOMIC_SEQ_CST);
+	/*
+	 * This barrier (F) is paired with SEQ_CST barrier or
+	 * membarrier() at (G). It orders increment of the begin/end
+	 * counters before load/store to the futex.
+	 */
+	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+end:
+	side_rcu_wake_up_gp(gp_state);
 }
 
 #define side_rcu_dereference(p) \

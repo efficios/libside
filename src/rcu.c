@@ -30,6 +30,83 @@ membarrier(int cmd, unsigned int flags, int cpu_id)
 	return syscall(__NR_membarrier, cmd, flags, cpu_id);
 }
 
+/*
+ * Wait/wakeup scheme with single waiter/many wakers.
+ */
+static
+void wait_gp_prepare(struct side_rcu_gp_state *gp_state)
+{
+	__atomic_store_n(&gp_state->futex, -1, __ATOMIC_RELAXED);
+	/*
+	 * This memory barrier (H) pairs with memory barrier (F). It
+	 * orders store to futex before load of RCU reader's counter
+	 * state, thus ensuring that load of RCU reader's counters does
+	 * not leak outside of futex state=-1.
+	 */
+	if (side_rcu_rseq_membarrier_available) {
+		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
+			perror("membarrier");
+			abort();
+		}
+	} else {
+		__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	}
+}
+
+static
+void wait_gp_end(struct side_rcu_gp_state *gp_state)
+{
+	/*
+	 * This memory barrier (G) pairs with memory barrier (F). It
+	 * orders load of RCU reader's counter state before storing the
+	 * futex value, thus ensuring that load of RCU reader's counters
+	 * does not leak outside of futex state=-1.
+	 */
+	if (side_rcu_rseq_membarrier_available) {
+		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
+			perror("membarrier");
+			abort();
+		}
+	} else {
+		__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	}
+	__atomic_store_n(&gp_state->futex, 0, __ATOMIC_RELAXED);
+}
+
+static
+void wait_gp(struct side_rcu_gp_state *gp_state)
+{
+	/*
+	 * This memory barrier (G) pairs with memory barrier (F). It
+	 * orders load of RCU reader's counter state before loading the
+	 * futex value.
+	 */
+	if (side_rcu_rseq_membarrier_available) {
+		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
+			perror("membarrier");
+			abort();
+		}
+	} else {
+		__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	}
+	if (__atomic_load_n(&gp_state->futex, __ATOMIC_RELAXED) != -1)
+		return;
+	while (futex(&gp_state->futex, FUTEX_WAIT, -1, NULL, NULL, 0)) {
+		switch (errno) {
+		case EWOULDBLOCK:
+			/* Value already changed. */
+			return;
+		case EINTR:
+			/* Retry if interrupted by signal. */
+			break;	/* Get out of switch. */
+		default:
+			/* Unexpected error. */
+			abort();
+		}
+	}
+	return;
+}
+
 /* active_readers is an input/output parameter. */
 static
 void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_readers)
@@ -109,11 +186,13 @@ void wait_for_prev_period_readers(struct side_rcu_gp_state *gp_state, bool *acti
 	 * previous period.
 	 */
 	for (;;) {
+		wait_gp_prepare(gp_state);
 		check_active_readers(gp_state, active_readers);
-		if (!active_readers[prev_period])
+		if (!active_readers[prev_period]) {
+			wait_gp_end(gp_state);
 			break;
-		/* Retry after 10ms. */
-		poll(NULL, 0, 10);
+		}
+		wait_gp(gp_state);
 	}
 }
 
