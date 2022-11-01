@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include <side/trace.h>
 #include "tracer.h"
@@ -1483,6 +1484,46 @@ void test_base(void)
 	);
 }
 
+struct test {
+	uint32_t a;
+	uint64_t b;
+	uint8_t c;
+	int32_t d;
+	uint16_t e;
+};
+
+static side_define_struct_sg(mystructsgdef,
+	side_field_sg_list(
+		side_field_sg_unsigned_integer("a", offsetof(struct test, a), 32, 0, 32, side_attr_list()),
+		side_field_sg_signed_integer("d", offsetof(struct test, d), 32, 0, 32, side_attr_list()),
+		side_field_sg_unsigned_integer("e", offsetof(struct test, e), 16, 8, 4,
+			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_structsg, "myprovider", "myeventstructsg", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_struct_sg("structsg", &mystructsgdef),
+	),
+	side_attr_list()
+);
+
+static
+void test_struct_sg(void)
+{
+	side_event_cond(my_provider_event_structsg) {
+		struct test mystruct = {
+			.a = 55,
+			.b = 123,
+			.c = 2,
+			.d = -55,
+			.e = 0xABCD,
+		};
+		side_event_call(my_provider_event_structsg, side_arg_list(side_arg_struct_sg(&mystruct)));
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -1523,5 +1564,6 @@ int main()
 	test_fmt_string();
 	test_endian();
 	test_base();
+	test_struct_sg();
 	return 0;
 }
