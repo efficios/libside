@@ -20,6 +20,7 @@ side_static_event(my_provider_event, "myprovider", "myevent", SIDE_LOGLEVEL_DEBU
 		side_field_s64("def", side_attr_list()),
 		side_field_pointer("ptr", side_attr_list()),
 		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic_pointer", side_attr_list()),
 	),
 	side_attr_list()
 );
@@ -36,6 +37,7 @@ void test_fields(void)
 			side_arg_s64(sdw),
 			side_arg_pointer((void *) 0x1),
 			side_arg_dynamic(side_arg_dynamic_string("zzz", side_attr_list())),
+			side_arg_dynamic(side_arg_dynamic_pointer((void *) 0x1, side_attr_list())),
 		)
 	);
 }
