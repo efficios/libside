@@ -899,15 +899,23 @@ side_static_event(my_provider_event_float, "myprovider", "myeventfloat", SIDE_LO
 	side_field_list(
 #if __HAVE_FLOAT16
 		side_field_float_binary16("binary16", side_attr_list()),
+		side_field_float_binary16_le("binary16_le", side_attr_list()),
+		side_field_float_binary16_be("binary16_be", side_attr_list()),
 #endif
 #if __HAVE_FLOAT32
 		side_field_float_binary32("binary32", side_attr_list()),
+		side_field_float_binary32_le("binary32_le", side_attr_list()),
+		side_field_float_binary32_be("binary32_be", side_attr_list()),
 #endif
 #if __HAVE_FLOAT64
 		side_field_float_binary64("binary64", side_attr_list()),
+		side_field_float_binary64_le("binary64_le", side_attr_list()),
+		side_field_float_binary64_be("binary64_be", side_attr_list()),
 #endif
 #if __HAVE_FLOAT128
 		side_field_float_binary128("binary128", side_attr_list()),
+		side_field_float_binary128_le("binary128_le", side_attr_list()),
+		side_field_float_binary128_be("binary128_be", side_attr_list()),
 #endif
 	),
 	side_attr_list()
@@ -916,19 +924,93 @@ side_static_event(my_provider_event_float, "myprovider", "myeventfloat", SIDE_LO
 static
 void test_float(void)
 {
+#if __HAVE_FLOAT16
+	union {
+		_Float16 f;
+		uint16_t u;
+	} float16 = {
+		.f = 1.1,
+	};
+#endif
+#if __HAVE_FLOAT32
+	union {
+		_Float32 f;
+		uint32_t u;
+	} float32 = {
+		.f = 2.2,
+	};
+#endif
+#if __HAVE_FLOAT64
+	union {
+		_Float64 f;
+		uint64_t u;
+	} float64 = {
+		.f = 3.3,
+	};
+#endif
+#if __HAVE_FLOAT128
+	union {
+		_Float128 f;
+		char arr[16];
+	} float128 = {
+		.f = 4.4,
+	};
+#endif
+
+#if __HAVE_FLOAT16
+	float16.u = side_bswap_16(float16.u);
+#endif
+#if __HAVE_FLOAT32
+	float32.u = side_bswap_32(float32.u);
+#endif
+#if __HAVE_FLOAT64
+	float64.u = side_bswap_64(float64.u);
+#endif
+#if __HAVE_FLOAT128
+	side_bswap_128p(float128.arr);
+#endif
+
 	side_event(my_provider_event_float,
 		side_arg_list(
 #if __HAVE_FLOAT16
 			side_arg_float_binary16(1.1),
+# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_float_binary16(1.1),
+			side_arg_float_binary16(float16.f),
+# else
+			side_arg_float_binary16(float16.f),
+			side_arg_float_binary16(1.1),
+# endif
 #endif
 #if __HAVE_FLOAT32
 			side_arg_float_binary32(2.2),
+# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_float_binary32(2.2),
+			side_arg_float_binary32(float32.f),
+# else
+			side_arg_float_binary32(float32.f),
+			side_arg_float_binary32(2.2),
+# endif
 #endif
 #if __HAVE_FLOAT64
 			side_arg_float_binary64(3.3),
+# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_float_binary64(3.3),
+			side_arg_float_binary64(float64.f),
+# else
+			side_arg_float_binary64(float64.f),
+			side_arg_float_binary64(3.3),
+# endif
 #endif
 #if __HAVE_FLOAT128
 			side_arg_float_binary128(4.4),
+# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_float_binary128(4.4),
+			side_arg_float_binary128(float128.f),
+# else
+			side_arg_float_binary128(float128.f),
+			side_arg_float_binary128(4.4),
+# endif
 #endif
 		)
 	);
@@ -943,28 +1025,94 @@ side_static_event_variadic(my_provider_event_variadic_float,
 static
 void test_variadic_float(void)
 {
+#if __HAVE_FLOAT16
+	union {
+		_Float16 f;
+		uint16_t u;
+	} float16 = {
+		.f = 1.1,
+	};
+#endif
+#if __HAVE_FLOAT32
+	union {
+		_Float32 f;
+		uint32_t u;
+	} float32 = {
+		.f = 2.2,
+	};
+#endif
+#if __HAVE_FLOAT64
+	union {
+		_Float64 f;
+		uint64_t u;
+	} float64 = {
+		.f = 3.3,
+	};
+#endif
+#if __HAVE_FLOAT128
+	union {
+		_Float128 f;
+		char arr[16];
+	} float128 = {
+		.f = 4.4,
+	};
+#endif
+
+#if __HAVE_FLOAT16
+	float16.u = side_bswap_16(float16.u);
+#endif
+#if __HAVE_FLOAT32
+	float32.u = side_bswap_32(float32.u);
+#endif
+#if __HAVE_FLOAT64
+	float64.u = side_bswap_64(float64.u);
+#endif
+#if __HAVE_FLOAT128
+	side_bswap_128p(float128.arr);
+#endif
+
 	side_event_variadic(my_provider_event_variadic_float,
 		side_arg_list(),
 		side_arg_list(
 #if __HAVE_FLOAT16
-			side_arg_dynamic_field("binary16",
-				side_arg_dynamic_float_binary16(1.1, side_attr_list())
-			),
+			side_arg_dynamic_field("binary16", side_arg_dynamic_float_binary16(1.1, side_attr_list())),
+# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(1.1, side_attr_list())),
+			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(float16.f, side_attr_list())),
+# else
+			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(float16.f, side_attr_list())),
+			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(1.1, side_attr_list())),
+# endif
 #endif
 #if __HAVE_FLOAT32
-			side_arg_dynamic_field("binary32",
-				side_arg_dynamic_float_binary32(2.2, side_attr_list())
-			),
+			side_arg_dynamic_field("binary32", side_arg_dynamic_float_binary32(2.2, side_attr_list())),
+# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(2.2, side_attr_list())),
+			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(float32.f, side_attr_list())),
+# else
+			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(float32.f, side_attr_list())),
+			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(2.2, side_attr_list())),
+# endif
 #endif
 #if __HAVE_FLOAT64
-			side_arg_dynamic_field("binary64",
-				side_arg_dynamic_float_binary64(3.3, side_attr_list())
-			),
+			side_arg_dynamic_field("binary64", side_arg_dynamic_float_binary64(3.3, side_attr_list())),
+# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_dynamic_field("binary64_le", side_arg_dynamic_float_binary64_le(3.3, side_attr_list())),
+			side_arg_dynamic_field("binary64_be", side_arg_dynamic_float_binary64_be(float64.f, side_attr_list())),
+# else
+			side_arg_dynamic_field("binary64_le", side_arg_dynamic_float_binary64_le(float64.f, side_attr_list())),
+			side_arg_dynamic_field("binary64_be", side_arg_dynamic_float_binary64_be(3.3, side_attr_list())),
+# endif
 #endif
 #if __HAVE_FLOAT128
-			side_arg_dynamic_field("binary128",
-				side_arg_dynamic_float_binary128(4.4, side_attr_list())
-			),
+			side_arg_dynamic_field("binary128", side_arg_dynamic_float_binary128(4.4, side_attr_list())),
+# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_dynamic_field("binary128_le", side_arg_dynamic_float_binary128_le(4.4, side_attr_list())),
+			side_arg_dynamic_field("binary128_be", side_arg_dynamic_float_binary128_be(float128.f, side_attr_list())),
+# else
+			side_arg_dynamic_field("binary128_le", side_arg_dynamic_float_binary128_le(float128.f, side_attr_list())),
+			side_arg_dynamic_field("binary128_be", side_arg_dynamic_float_binary128_be(4.4, side_attr_list())),
+# endif
 #endif
 		),
 		side_attr_list()
@@ -987,6 +1135,8 @@ side_static_event(my_provider_event_enum, "myprovider", "myeventenum", SIDE_LOGL
 		side_field_enum("400", &myenum, side_elem(side_type_u64(side_attr_list()))),
 		side_field_enum("200", &myenum, side_elem(side_type_u8(side_attr_list()))),
 		side_field_enum("-100", &myenum, side_elem(side_type_s8(side_attr_list()))),
+		side_field_enum("6_be", &myenum, side_elem(side_type_u32_be(side_attr_list()))),
+		side_field_enum("6_le", &myenum, side_elem(side_type_u32_le(side_attr_list()))),
 	),
 	side_attr_list()
 );
@@ -1000,6 +1150,13 @@ void test_enum(void)
 			side_arg_u64(400),
 			side_arg_u8(200),
 			side_arg_s8(-100),
+#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_u32(side_bswap_32(6)),
+			side_arg_u32(6),
+#else
+			side_arg_u32(side_bswap_32(6)),
+			side_arg_u32(6),
+#endif
 		)
 	);
 }
@@ -1035,6 +1192,8 @@ side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitma
 			side_elem(side_type_array(side_elem(side_type_u32(side_attr_list())), 5, side_attr_list()))),
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
 			side_elem(side_type_vla(side_elem(side_type_u32(side_attr_list())), side_attr_list()))),
+		side_field_enum_bitmap("bit_2_be", &myenum_bitmap, side_elem(side_type_u32_be(side_attr_list()))),
+		side_field_enum_bitmap("bit_2_le", &myenum_bitmap, side_elem(side_type_u32_le(side_attr_list()))),
 	),
 	side_attr_list()
 );
@@ -1065,6 +1224,13 @@ void test_enum_bitmap(void)
 				side_arg_byte(1 << 2),
 				side_arg_array(&myarray),
 				side_arg_vla(&myarray),
+#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
+				side_arg_u32(side_bswap_32(1 << 2)),
+				side_arg_u32(1 << 2),
+#else
+				side_arg_u32(0x06000000),
+				side_arg_u32(side_bswap_32(1 << 2)),
+#endif
 			)
 		);
 	}
@@ -1145,6 +1311,90 @@ void test_fmt_string(void)
 	}
 }
 
+side_static_event_variadic(my_provider_event_endian, "myprovider", "myevent_endian", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_u16_le("u16_le", side_attr_list()),
+		side_field_u32_le("u32_le", side_attr_list()),
+		side_field_u64_le("u64_le", side_attr_list()),
+		side_field_s16_le("s16_le", side_attr_list()),
+		side_field_s32_le("s32_le", side_attr_list()),
+		side_field_s64_le("s64_le", side_attr_list()),
+		side_field_u16_be("u16_be", side_attr_list()),
+		side_field_u32_be("u32_be", side_attr_list()),
+		side_field_u64_be("u64_be", side_attr_list()),
+		side_field_s16_be("s16_be", side_attr_list()),
+		side_field_s32_be("s32_be", side_attr_list()),
+		side_field_s64_be("s64_be", side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static
+void test_endian(void)
+{
+	side_event_variadic(my_provider_event_endian,
+		side_arg_list(
+#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_u16(1),
+			side_arg_u32(1),
+			side_arg_u64(1),
+			side_arg_s16(1),
+			side_arg_s32(1),
+			side_arg_s64(1),
+			side_arg_u16(side_bswap_16(1)),
+			side_arg_u32(side_bswap_32(1)),
+			side_arg_u64(side_bswap_64(1)),
+			side_arg_s16(side_bswap_16(1)),
+			side_arg_s32(side_bswap_32(1)),
+			side_arg_s64(side_bswap_64(1)),
+#else
+			side_arg_u16(side_bswap_16(1)),
+			side_arg_u32(side_bswap_32(1)),
+			side_arg_u64(side_bswap_64(1)),
+			side_arg_s16(side_bswap_16(1)),
+			side_arg_s32(side_bswap_32(1)),
+			side_arg_s64(side_bswap_64(1)),
+			side_arg_u16(1),
+			side_arg_u32(1),
+			side_arg_u64(1),
+			side_arg_s16(1),
+			side_arg_s32(1),
+			side_arg_s64(1),
+#endif
+		),
+		side_arg_list(
+#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
+			side_arg_dynamic_field("u16_le", side_arg_dynamic_u16_le(1, side_attr_list())),
+			side_arg_dynamic_field("u32_le", side_arg_dynamic_u32_le(1, side_attr_list())),
+			side_arg_dynamic_field("u64_le", side_arg_dynamic_u64_le(1, side_attr_list())),
+			side_arg_dynamic_field("s16_le", side_arg_dynamic_s16_le(1, side_attr_list())),
+			side_arg_dynamic_field("s32_le", side_arg_dynamic_s32_le(1, side_attr_list())),
+			side_arg_dynamic_field("s64_le", side_arg_dynamic_s64_le(1, side_attr_list())),
+			side_arg_dynamic_field("u16_be", side_arg_dynamic_u16_be(side_bswap_16(1), side_attr_list())),
+			side_arg_dynamic_field("u32_be", side_arg_dynamic_u32_be(side_bswap_32(1), side_attr_list())),
+			side_arg_dynamic_field("u64_be", side_arg_dynamic_u64_be(side_bswap_64(1), side_attr_list())),
+			side_arg_dynamic_field("s16_be", side_arg_dynamic_s16_be(side_bswap_16(1), side_attr_list())),
+			side_arg_dynamic_field("s32_be", side_arg_dynamic_s32_be(side_bswap_32(1), side_attr_list())),
+			side_arg_dynamic_field("s64_be", side_arg_dynamic_s64_be(side_bswap_64(1), side_attr_list())),
+#else
+			side_arg_dynamic_field("u16_le", side_arg_dynamic_u16_le(side_bswap_16(1), side_attr_list())),
+			side_arg_dynamic_field("u32_le", side_arg_dynamic_u32_le(side_bswap_32(1), side_attr_list())),
+			side_arg_dynamic_field("u64_le", side_arg_dynamic_u64_le(side_bswap_64(1), side_attr_list())),
+			side_arg_dynamic_field("s16_le", side_arg_dynamic_s16_le(side_bswap_16(1), side_attr_list())),
+			side_arg_dynamic_field("s32_le", side_arg_dynamic_s32_le(side_bswap_32(1), side_attr_list())),
+			side_arg_dynamic_field("s64_le", side_arg_dynamic_s64_le(side_bswap_64(1), side_attr_list())),
+			side_arg_dynamic_field("u16_be", side_arg_dynamic_u16_be(1, side_attr_list())),
+			side_arg_dynamic_field("u32_be", side_arg_dynamic_u32_be(1, side_attr_list())),
+			side_arg_dynamic_field("u64_be", side_arg_dynamic_u64_be(1, side_attr_list())),
+			side_arg_dynamic_field("s16_be", side_arg_dynamic_s16_be(1, side_attr_list())),
+			side_arg_dynamic_field("s32_be", side_arg_dynamic_s32_be(1, side_attr_list())),
+			side_arg_dynamic_field("s64_be", side_arg_dynamic_s64_be(1, side_attr_list())),
+#endif
+		),
+		side_attr_list()
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -1183,5 +1433,6 @@ int main()
 	test_enum_bitmap();
 	test_blob();
 	test_fmt_string();
+	test_endian();
 	return 0;
 }

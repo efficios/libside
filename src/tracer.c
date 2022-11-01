@@ -31,6 +31,74 @@ static
 void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item);
 
 static
+bool type_to_host_reverse_bo(const struct side_type_description *type_desc)
+{
+	switch (type_desc->type) {
+	case SIDE_TYPE_U8:
+	case SIDE_TYPE_S8:
+	case SIDE_TYPE_BYTE:
+		return false;
+        case SIDE_TYPE_U16:
+        case SIDE_TYPE_U32:
+        case SIDE_TYPE_U64:
+        case SIDE_TYPE_S16:
+        case SIDE_TYPE_S32:
+        case SIDE_TYPE_S64:
+		if (type_desc->u.side_basic.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+			return true;
+		else
+			return false;
+		break;
+        case SIDE_TYPE_FLOAT_BINARY16:
+        case SIDE_TYPE_FLOAT_BINARY32:
+        case SIDE_TYPE_FLOAT_BINARY64:
+        case SIDE_TYPE_FLOAT_BINARY128:
+		if (type_desc->u.side_basic.byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST)
+			return true;
+		else
+			return false;
+		break;
+	default:
+		fprintf(stderr, "Unexpected type\n");
+		abort();
+	}
+}
+
+static
+bool dynamic_type_to_host_reverse_bo(const struct side_arg_dynamic_vec *item)
+{
+	switch (item->dynamic_type) {
+	case SIDE_DYNAMIC_TYPE_U8:
+	case SIDE_DYNAMIC_TYPE_S8:
+	case SIDE_DYNAMIC_TYPE_BYTE:
+		return false;
+        case SIDE_DYNAMIC_TYPE_U16:
+        case SIDE_DYNAMIC_TYPE_U32:
+        case SIDE_DYNAMIC_TYPE_U64:
+        case SIDE_DYNAMIC_TYPE_S16:
+        case SIDE_DYNAMIC_TYPE_S32:
+        case SIDE_DYNAMIC_TYPE_S64:
+		if (item->u.side_basic.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+			return true;
+		else
+			return false;
+		break;
+        case SIDE_DYNAMIC_TYPE_FLOAT_BINARY16:
+        case SIDE_DYNAMIC_TYPE_FLOAT_BINARY32:
+        case SIDE_DYNAMIC_TYPE_FLOAT_BINARY64:
+        case SIDE_DYNAMIC_TYPE_FLOAT_BINARY128:
+		if (item->u.side_basic.byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST)
+			return true;
+		else
+			return false;
+		break;
+	default:
+		fprintf(stderr, "Unexpected type\n");
+		abort();
+	}
+}
+
+static
 void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 {
 	printf("{ key%s \"%s\", value%s ", separator, attr->key, separator);
@@ -124,10 +192,11 @@ static
 void print_enum(const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
 	const struct side_enum_mappings *mappings = type_desc->u.side_enum.mappings;
+	const struct side_type_description *elem_type = type_desc->u.side_enum.elem_type;
 	int i, print_count = 0;
 	int64_t value;
 
-	if (type_desc->u.side_enum.elem_type->type != item->type) {
+	if (elem_type->type != item->type) {
 		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
 	}
@@ -136,26 +205,68 @@ void print_enum(const struct side_type_description *type_desc, const struct side
 		value = (int64_t) item->u.side_u8;
 		break;
 	case SIDE_TYPE_U16:
-		value = (int64_t) item->u.side_u16;
+	{
+		uint16_t v;
+
+		v = item->u.side_u16;
+		if (type_to_host_reverse_bo(elem_type))
+			v = side_bswap_16(v);
+		value = (int64_t) v;
 		break;
+	}
 	case SIDE_TYPE_U32:
-		value = (int64_t) item->u.side_u32;
+	{
+		uint32_t v;
+
+		v = item->u.side_u32;
+		if (type_to_host_reverse_bo(elem_type))
+			v = side_bswap_32(v);
+		value = (int64_t) v;
 		break;
+	}
 	case SIDE_TYPE_U64:
-		value = (int64_t) item->u.side_u64;
+	{
+		uint64_t v;
+
+		v = item->u.side_u64;
+		if (type_to_host_reverse_bo(elem_type))
+			v = side_bswap_64(v);
+		value = (int64_t) v;
 		break;
+	}
 	case SIDE_TYPE_S8:
 		value = (int64_t) item->u.side_s8;
 		break;
 	case SIDE_TYPE_S16:
-		value = (int64_t) item->u.side_s16;
+	{
+		int16_t v;
+
+		v = item->u.side_s16;
+		if (type_to_host_reverse_bo(elem_type))
+			v = side_bswap_16(v);
+		value = (int64_t) v;
 		break;
+	}
 	case SIDE_TYPE_S32:
-		value = (int64_t) item->u.side_s32;
+	{
+		int32_t v;
+
+		v = item->u.side_s32;
+		if (type_to_host_reverse_bo(elem_type))
+			v = side_bswap_32(v);
+		value = (int64_t) v;
 		break;
+	}
 	case SIDE_TYPE_S64:
-		value = (int64_t) item->u.side_s64;
+	{
+		int64_t v;
+
+		v = item->u.side_s64;
+		if (type_to_host_reverse_bo(elem_type))
+			v = side_bswap_64(v);
+		value = v;
 		break;
+	}
 	default:
 		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
@@ -216,6 +327,7 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 	const struct side_enum_bitmap_mappings *side_enum_mappings = type_desc->u.side_enum_bitmap.mappings;
 	int i, print_count = 0;
 	uint32_t stride_bit, nr_items;
+	bool reverse_byte_order = false;
 	const struct side_arg_vec *array_item;
 
 	switch (elem_type->type) {
@@ -225,16 +337,19 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 	case SIDE_TYPE_U32:		/* Fall-through */
 	case SIDE_TYPE_U64:
 		stride_bit = enum_elem_type_to_stride(elem_type);
+		reverse_byte_order = type_to_host_reverse_bo(elem_type);
 		array_item = item;
 		nr_items = 1;
 		break;
 	case SIDE_TYPE_ARRAY:
 		stride_bit = enum_elem_type_to_stride(elem_type->u.side_array.elem_type);
+		reverse_byte_order = type_to_host_reverse_bo(elem_type->u.side_array.elem_type);
 		array_item = item->u.side_array->sav;
 		nr_items = type_desc->u.side_array.length;
 		break;
 	case SIDE_TYPE_VLA:
 		stride_bit = enum_elem_type_to_stride(elem_type->u.side_vla.elem_type);
+		reverse_byte_order = type_to_host_reverse_bo(elem_type->u.side_vla.elem_type);
 		array_item = item->u.side_vla->sav;
 		nr_items = item->u.side_vla->len;
 		break;
@@ -272,6 +387,8 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 			case 16:
 			{
 				uint16_t v = array_item[bit / 16].u.side_u16;
+				if (reverse_byte_order)
+					v = side_bswap_16(v);
 				if (v & (1ULL << (bit % 16))) {
 					match = true;
 					goto match;
@@ -281,6 +398,8 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 			case 32:
 			{
 				uint32_t v = array_item[bit / 32].u.side_u32;
+				if (reverse_byte_order)
+					v = side_bswap_32(v);
 				if (v & (1ULL << (bit % 32))) {
 					match = true;
 					goto match;
@@ -290,6 +409,8 @@ void print_enum_bitmap(const struct side_type_description *type_desc,
 			case 64:
 			{
 				uint64_t v = array_item[bit / 64].u.side_u64;
+				if (reverse_byte_order)
+					v = side_bswap_64(v);
 				if (v & (1ULL << (bit % 64))) {
 					match = true;
 					goto match;
@@ -424,33 +545,75 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		printf("%" PRIu8, item->u.side_u8);
 		break;
 	case SIDE_TYPE_U16:
+	{
+		uint16_t v;
+
+		v = item->u.side_u16;
+		if (type_to_host_reverse_bo(type_desc))
+			v = side_bswap_16(v);
 		tracer_print_basic_type_header(type_desc);
-		printf("%" PRIu16, item->u.side_u16);
+		printf("%" PRIu16, v);
 		break;
+	}
 	case SIDE_TYPE_U32:
+	{
+		uint32_t v;
+
+		v = item->u.side_u32;
+		if (type_to_host_reverse_bo(type_desc))
+			v = side_bswap_32(v);
 		tracer_print_basic_type_header(type_desc);
-		printf("%" PRIu32, item->u.side_u32);
+		printf("%" PRIu32, v);
 		break;
+	}
 	case SIDE_TYPE_U64:
+	{
+		uint64_t v;
+
+		v = item->u.side_u64;
+		if (type_to_host_reverse_bo(type_desc))
+			v = side_bswap_64(v);
 		tracer_print_basic_type_header(type_desc);
-		printf("%" PRIu64, item->u.side_u64);
+		printf("%" PRIu64, v);
 		break;
+	}
 	case SIDE_TYPE_S8:
 		tracer_print_basic_type_header(type_desc);
 		printf("%" PRId8, item->u.side_s8);
 		break;
 	case SIDE_TYPE_S16:
+	{
+		int16_t v;
+
+		v = item->u.side_s16;
+		if (type_to_host_reverse_bo(type_desc))
+			v = side_bswap_16(v);
 		tracer_print_basic_type_header(type_desc);
-		printf("%" PRId16, item->u.side_s16);
+		printf("%" PRId16, v);
 		break;
+	}
 	case SIDE_TYPE_S32:
+	{
+		int32_t v;
+
+		v = item->u.side_s32;
+		if (type_to_host_reverse_bo(type_desc))
+			v = side_bswap_32(v);
 		tracer_print_basic_type_header(type_desc);
-		printf("%" PRId32, item->u.side_s32);
+		printf("%" PRId32, v);
 		break;
+	}
 	case SIDE_TYPE_S64:
+	{
+		int64_t v;
+
+		v = item->u.side_s64;
+		if (type_to_host_reverse_bo(type_desc))
+			v = side_bswap_64(v);
 		tracer_print_basic_type_header(type_desc);
-		printf("%" PRId64, item->u.side_s64);
+		printf("%" PRId64, v);
 		break;
+	}
 	case SIDE_TYPE_BYTE:
 		tracer_print_basic_type_header(type_desc);
 		printf("0x%" PRIx8, item->u.side_byte);
@@ -465,41 +628,85 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 
 	case SIDE_TYPE_FLOAT_BINARY16:
-		tracer_print_basic_type_header(type_desc);
+	{
 #if __HAVE_FLOAT16
-		printf("%g", (double) item->u.side_float_binary16);
+		union {
+			_Float16 f;
+			uint16_t u;
+		} float16 = {
+			.f = item->u.side_float_binary16,
+		};
+
+		if (type_to_host_reverse_bo(type_desc))
+			float16.u = side_bswap_16(float16.u);
+		tracer_print_basic_type_header(type_desc);
+		printf("%g", (double) float16.f);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
 		abort();
 #endif
+	}
 	case SIDE_TYPE_FLOAT_BINARY32:
-		tracer_print_basic_type_header(type_desc);
+	{
 #if __HAVE_FLOAT32
-		printf("%g", (double) item->u.side_float_binary32);
+		union {
+			_Float32 f;
+			uint32_t u;
+		} float32 = {
+			.f = item->u.side_float_binary32,
+		};
+
+		if (type_to_host_reverse_bo(type_desc))
+			float32.u = side_bswap_32(float32.u);
+		tracer_print_basic_type_header(type_desc);
+		printf("%g", (double) float32.f);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
 		abort();
 #endif
+	}
 	case SIDE_TYPE_FLOAT_BINARY64:
-		tracer_print_basic_type_header(type_desc);
+	{
 #if __HAVE_FLOAT64
-		printf("%g", (double) item->u.side_float_binary64);
+		union {
+			_Float64 f;
+			uint64_t u;
+		} float64 = {
+			.f = item->u.side_float_binary64,
+		};
+
+		if (type_to_host_reverse_bo(type_desc))
+			float64.u = side_bswap_64(float64.u);
+		tracer_print_basic_type_header(type_desc);
+		printf("%g", (double) float64.f);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
 		abort();
 #endif
+	}
 	case SIDE_TYPE_FLOAT_BINARY128:
-		tracer_print_basic_type_header(type_desc);
+	{
 #if __HAVE_FLOAT128
-		printf("%Lg", (long double) item->u.side_float_binary128);
+		union {
+			_Float128 f;
+			char arr[16];
+		} float128 = {
+			.f = item->u.side_float_binary128,
+		};
+
+		if (type_to_host_reverse_bo(type_desc))
+			side_bswap_128p(float128.arr);
+		tracer_print_basic_type_header(type_desc);
+		printf("%Lg", (long double) float128.f);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
 		abort();
 #endif
+	}
 	case SIDE_TYPE_STRING:
 		tracer_print_basic_type_header(type_desc);
 		printf("\"%s\"", item->u.string);
@@ -1021,74 +1228,160 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		printf("%" PRIu8, item->u.side_basic.u.side_u8);
 		break;
 	case SIDE_DYNAMIC_TYPE_U16:
+	{
+		uint16_t v;
+
+		v = item->u.side_basic.u.side_u16;
+		if (dynamic_type_to_host_reverse_bo(item))
+			v = side_bswap_16(v);
 		tracer_print_dynamic_basic_type_header(item);
-		printf("%" PRIu16, item->u.side_basic.u.side_u16);
+		printf("%" PRIu16, v);
 		break;
+	}
 	case SIDE_DYNAMIC_TYPE_U32:
+	{
+		uint32_t v;
+
+		v = item->u.side_basic.u.side_u32;
+		if (dynamic_type_to_host_reverse_bo(item))
+			v = side_bswap_32(v);
 		tracer_print_dynamic_basic_type_header(item);
-		printf("%" PRIu32, item->u.side_basic.u.side_u32);
+		printf("%" PRIu32, v);
 		break;
+	}
 	case SIDE_DYNAMIC_TYPE_U64:
+	{
+		uint64_t v;
+
+		v = item->u.side_basic.u.side_u64;
+		if (dynamic_type_to_host_reverse_bo(item))
+			v = side_bswap_64(v);
 		tracer_print_dynamic_basic_type_header(item);
-		printf("%" PRIu64, item->u.side_basic.u.side_u64);
+		printf("%" PRIu64, v);
 		break;
+	}
 	case SIDE_DYNAMIC_TYPE_S8:
 		tracer_print_dynamic_basic_type_header(item);
 		printf("%" PRId8, item->u.side_basic.u.side_s8);
 		break;
 	case SIDE_DYNAMIC_TYPE_S16:
+	{
+		int16_t v;
+
+		v = item->u.side_basic.u.side_u16;
+		if (dynamic_type_to_host_reverse_bo(item))
+			v = side_bswap_16(v);
 		tracer_print_dynamic_basic_type_header(item);
-		printf("%" PRId16, item->u.side_basic.u.side_s16);
+		printf("%" PRId16, v);
 		break;
+	}
 	case SIDE_DYNAMIC_TYPE_S32:
+	{
+		int32_t v;
+
+		v = item->u.side_basic.u.side_u32;
+		if (dynamic_type_to_host_reverse_bo(item))
+			v = side_bswap_32(v);
 		tracer_print_dynamic_basic_type_header(item);
-		printf("%" PRId32, item->u.side_basic.u.side_s32);
+		printf("%" PRId32, v);
 		break;
+	}
 	case SIDE_DYNAMIC_TYPE_S64:
+	{
+		int64_t v;
+
+		v = item->u.side_basic.u.side_u64;
+		if (dynamic_type_to_host_reverse_bo(item))
+			v = side_bswap_64(v);
 		tracer_print_dynamic_basic_type_header(item);
-		printf("%" PRId64, item->u.side_basic.u.side_s64);
+		printf("%" PRId64, v);
 		break;
+	}
 	case SIDE_DYNAMIC_TYPE_BYTE:
 		tracer_print_dynamic_basic_type_header(item);
 		printf("0x%" PRIx8, item->u.side_basic.u.side_byte);
 		break;
 
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY16:
-		tracer_print_dynamic_basic_type_header(item);
+	{
 #if __HAVE_FLOAT16
-		printf("%g", (double) item->u.side_basic.u.side_float_binary16);
+		union {
+			_Float16 f;
+			uint16_t u;
+		} float16 = {
+			.f = item->u.side_basic.u.side_float_binary16,
+		};
+
+		if (dynamic_type_to_host_reverse_bo(item))
+			float16.u = side_bswap_16(float16.u);
+		tracer_print_dynamic_basic_type_header(item);
+		printf("%g", (double) float16.f);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
 		abort();
 #endif
+	}
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY32:
-		tracer_print_dynamic_basic_type_header(item);
+	{
 #if __HAVE_FLOAT32
-		printf("%g", (double) item->u.side_basic.u.side_float_binary32);
+		union {
+			_Float32 f;
+			uint32_t u;
+		} float32 = {
+			.f = item->u.side_basic.u.side_float_binary32,
+		};
+
+		if (dynamic_type_to_host_reverse_bo(item))
+			float32.u = side_bswap_32(float32.u);
+		tracer_print_dynamic_basic_type_header(item);
+		printf("%g", (double) float32.f);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
 		abort();
 #endif
+	}
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY64:
-		tracer_print_dynamic_basic_type_header(item);
+	{
 #if __HAVE_FLOAT64
-		printf("%g", (double) item->u.side_basic.u.side_float_binary64);
+		union {
+			_Float64 f;
+			uint64_t u;
+		} float64 = {
+			.f = item->u.side_basic.u.side_float_binary64,
+		};
+
+		if (dynamic_type_to_host_reverse_bo(item))
+			float64.u = side_bswap_64(float64.u);
+		tracer_print_dynamic_basic_type_header(item);
+		printf("%g", (double) float64.f);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
 		abort();
 #endif
+	}
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY128:
-		tracer_print_dynamic_basic_type_header(item);
+	{
 #if __HAVE_FLOAT128
-		printf("%Lg", (long double) item->u.side_basic.u.side_float_binary128);
+		union {
+			_Float128 f;
+			char arr[16];
+		} float128 = {
+			.f = item->u.side_basic.u.side_float_binary128,
+		};
+
+		if (dynamic_type_to_host_reverse_bo(item))
+			side_bswap_128p(float128.arr);
+		tracer_print_dynamic_basic_type_header(item);
+		printf("%Lg", (long double) float128.f);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
 		abort();
 #endif
+	}
 	case SIDE_DYNAMIC_TYPE_STRING:
 		tracer_print_dynamic_basic_type_header(item);
 		printf("\"%s\"", item->u.side_basic.u.string);
