@@ -1404,6 +1404,85 @@ void test_endian(void)
 	);
 }
 
+side_static_event(my_provider_event_base, "myprovider", "myevent_base", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_u8("u8base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_u8("u8base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_u8("u8base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_u8("u8base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_u16("u16base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_u16("u16base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_u16("u16base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_u16("u16base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_u32("u32base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_u32("u32base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_u32("u32base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_u32("u32base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_u64("u64base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_u64("u64base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_u64("u64base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_u64("u64base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_s8("s8base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_s8("s8base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_s8("s8base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_s8("s8base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_s16("s16base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_s16("s16base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_s16("s16base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_s16("s16base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_s32("s32base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_s32("s32base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_s32("s32base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_s32("s32base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_s64("s64base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_s64("s64base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_s64("s64base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_s64("s64base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+	),
+	side_attr_list()
+);
+
+static
+void test_base(void)
+{
+	side_event(my_provider_event_base,
+		side_arg_list(
+			side_arg_u8(55),
+			side_arg_u8(55),
+			side_arg_u8(55),
+			side_arg_u8(55),
+			side_arg_u16(55),
+			side_arg_u16(55),
+			side_arg_u16(55),
+			side_arg_u16(55),
+			side_arg_u32(55),
+			side_arg_u32(55),
+			side_arg_u32(55),
+			side_arg_u32(55),
+			side_arg_u64(55),
+			side_arg_u64(55),
+			side_arg_u64(55),
+			side_arg_u64(55),
+			side_arg_s8(-55),
+			side_arg_s8(-55),
+			side_arg_s8(-55),
+			side_arg_s8(-55),
+			side_arg_s16(-55),
+			side_arg_s16(-55),
+			side_arg_s16(-55),
+			side_arg_s16(-55),
+			side_arg_s32(-55),
+			side_arg_s32(-55),
+			side_arg_s32(-55),
+			side_arg_s32(-55),
+			side_arg_s64(-55),
+			side_arg_s64(-55),
+			side_arg_s64(-55),
+			side_arg_s64(-55),
+		)
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -1443,5 +1522,6 @@ int main()
 	test_blob();
 	test_fmt_string();
 	test_endian();
+	test_base();
 	return 0;
 }
