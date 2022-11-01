@@ -18,6 +18,7 @@ side_static_event(my_provider_event, "myprovider", "myevent", SIDE_LOGLEVEL_DEBU
 	side_field_list(
 		side_field_u32("abc", side_attr_list()),
 		side_field_s64("def", side_attr_list()),
+		side_field_pointer("ptr", side_attr_list()),
 		side_field_dynamic("dynamic", side_attr_list()),
 	),
 	side_attr_list()
@@ -29,8 +30,14 @@ void test_fields(void)
 	uint32_t uw = 42;
 	int64_t sdw = -500;
 
-	side_event(my_provider_event, side_arg_list(side_arg_u32(uw), side_arg_s64(sdw),
-		side_arg_dynamic(side_arg_dynamic_string("zzz", side_attr_list()))));
+	side_event(my_provider_event,
+		side_arg_list(
+			side_arg_u32(uw),
+			side_arg_s64(sdw),
+			side_arg_pointer((void *) 0x1),
+			side_arg_dynamic(side_arg_dynamic_string("zzz", side_attr_list())),
+		)
+	);
 }
 
 side_hidden_event(my_provider_event_hidden, "myprovider", "myeventhidden", SIDE_LOGLEVEL_DEBUG,

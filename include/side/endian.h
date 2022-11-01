@@ -29,6 +29,7 @@
 #ifndef _SIDE_ENDIAN_H
 #define _SIDE_ENDIAN_H
 
+#include <side/macros.h>
 #include <math.h>
 
 #if (defined(__linux__) || defined(__CYGWIN__))
@@ -75,6 +76,12 @@ void side_bswap_128p(char *p)
 	for (i = 0; i < 8; i++)
 		p[i] = p[15 - i];
 }
+#endif
+
+#if SIDE_BITS_PER_LONG == 64
+# define side_bswap_pointer(x)	side_bswap_64(x)
+#else
+# define side_bswap_pointer(x)	side_bswap_32(x)
 #endif
 
 #endif /* _SIDE_ENDIAN_H */
