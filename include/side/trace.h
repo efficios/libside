@@ -1241,18 +1241,18 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	_linkage uintptr_t side_event_enable__##_identifier __attribute__((section("side_event_enable"))); \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
-		.version = 0, \
 		.enabled = &(side_event_enable__##_identifier), \
-		.loglevel = _loglevel, \
-		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-		.nr_callbacks = 0, \
-		.flags = (_flags), \
 		.provider_name = _provider, \
 		.event_name = _event, \
 		.fields = _fields, \
 		.attr = _attr, \
 		.callbacks = &side_empty_callback, \
+		.flags = (_flags), \
+		.version = 0, \
+		.loglevel = _loglevel, \
+		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.nr_callbacks = 0, \
 	}; \
 	static const struct side_event_description *side_event_ptr__##_identifier \
 		__attribute__((section("side_event_description_ptr"), used)) = &(_identifier);
