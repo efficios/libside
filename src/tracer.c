@@ -173,7 +173,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 		abort();
 #endif
 	case SIDE_ATTR_TYPE_STRING:
-		printf("\"%s\"", attr->value.u.string);
+		printf("\"%s\"", (const char *)(uintptr_t) attr->value.u.string);
 		break;
 	default:
 		fprintf(stderr, "ERROR: <UNKNOWN ATTRIBUTE TYPE>");
@@ -745,7 +745,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	}
 	case SIDE_TYPE_STRING:
 		tracer_print_basic_type_header(type_desc);
-		printf("\"%s\"", item->u.string);
+		printf("\"%s\"", (const char *)(uintptr_t) item->u.string);
 		break;
 	case SIDE_TYPE_STRUCT:
 		tracer_print_struct(type_desc, item->u.side_struct);
@@ -1473,7 +1473,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	}
 	case SIDE_DYNAMIC_TYPE_STRING:
 		tracer_print_dynamic_basic_type_header(item);
-		printf("\"%s\"", item->u.side_basic.u.string);
+		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_basic.u.string);
 		break;
 	case SIDE_DYNAMIC_TYPE_STRUCT:
 		tracer_print_dynamic_struct(item->u.side_dynamic_struct);

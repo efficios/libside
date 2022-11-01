@@ -215,7 +215,7 @@ struct side_attr_value {
 #if __HAVE_FLOAT128
 		_Float128 side_float_binary128;
 #endif
-		const char *string;
+		uint64_t string;	/* const char * */
 	} u;
 };
 
@@ -368,7 +368,7 @@ struct side_arg_dynamic_vec {
 #if __HAVE_FLOAT128
 				_Float128 side_float_binary128;
 #endif
-				const char *string;
+				uint64_t string;	/* const char * */
 			} u;
 		} side_basic;
 
@@ -435,7 +435,7 @@ struct side_arg_vec {
 #if __HAVE_FLOAT128
 		_Float128 side_float_binary128;
 #endif
-		const char *string;
+		uint64_t string;	/* const char * */
 
 		/* Compound types */
 		const struct side_arg_vec_description *side_struct;
@@ -522,7 +522,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_attr_float_binary32(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (_val) } }
 #define side_attr_float_binary64(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (_val) } }
 #define side_attr_float_binary128(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY128, .u = { .side_float_binary128 = (_val) } }
-#define side_attr_string(_val)		{ .type = SIDE_ATTR_TYPE_STRING, .u = { .string = (_val) } }
+#define side_attr_string(_val)		{ .type = SIDE_ATTR_TYPE_STRING, .u = { .string = (uintptr_t) (_val) } }
 
 /* Static field definition */
 
@@ -756,7 +756,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_float_binary64(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (_val) } }
 #define side_arg_float_binary128(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .side_float_binary128 = (_val) } }
 
-#define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING, .u = { .string = (_val) } }
+#define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING, .u = { .string = (uintptr_t) (_val) } }
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_struct = (_side_type) } }
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_array = (_side_type) } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_vla = (_side_type) } }
@@ -872,7 +872,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 				.u = { \
-					.string = (_val), \
+					.string = (uintptr_t) (_val), \
 				}, \
 			}, \
 		}, \
