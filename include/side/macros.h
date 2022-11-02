@@ -7,6 +7,7 @@
 #define _SIDE_MACROS_H
 
 #include <stddef.h>
+#include <limits.h>
 
 /* Helper macros */
 
@@ -42,6 +43,9 @@
 		const __typeof__(((type *) NULL)->member) * __ptr = (ptr); \
 		(type *)((char *)__ptr - offsetof(type, member));	\
 	})
+
+#define side_struct_field_sizeof_bit(_struct, _field) \
+	(sizeof(((_struct * )NULL)->_field) * CHAR_BIT)
 
 #if defined(__SIZEOF_LONG__)
 #define SIDE_BITS_PER_LONG	(__SIZEOF_LONG__ * 8)

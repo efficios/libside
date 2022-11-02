@@ -1494,9 +1494,14 @@ struct test {
 
 static side_define_struct_sg(mystructsgdef,
 	side_field_sg_list(
-		side_field_sg_unsigned_integer("a", offsetof(struct test, a), 32, 0, 32, side_attr_list()),
-		side_field_sg_signed_integer("d", offsetof(struct test, d), 32, 0, 32, side_attr_list()),
-		side_field_sg_unsigned_integer("e", offsetof(struct test, e), 16, 8, 4,
+		side_field_sg_unsigned_integer("a", offsetof(struct test, a),
+			side_struct_field_sizeof_bit(struct test, a), 0,
+			side_struct_field_sizeof_bit(struct test, a), side_attr_list()),
+		side_field_sg_signed_integer("d", offsetof(struct test, d),
+			side_struct_field_sizeof_bit(struct test, d), 0,
+			side_struct_field_sizeof_bit(struct test, d), side_attr_list()),
+		side_field_sg_unsigned_integer("e", offsetof(struct test, e),
+			side_struct_field_sizeof_bit(struct test, e), 8, 4,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
 	),
 	side_attr_list()
