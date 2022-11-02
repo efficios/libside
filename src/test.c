@@ -655,11 +655,17 @@ enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_dynam
 		const struct side_arg_dynamic_vec elem = {
 			.dynamic_type = SIDE_DYNAMIC_TYPE_U32,
 			.u = {
-				.side_basic = {
-					.attr = NULL,
-					.nr_attr = 0,
-					.u = {
-						.integer_value.side_u32 = ctx->ptr[i],
+				.side_integer = {
+					.type = {
+						.attr = NULL,
+						.nr_attr = 0,
+						.integer_size_bits = 32,
+						.len_bits = 32,
+						.signedness = false,
+						.byte_order = SIDE_TYPE_BYTE_ORDER_HOST,
+					},
+					.value = {
+						.side_u32 = ctx->ptr[i],
 					},
 				},
 			},
@@ -720,11 +726,17 @@ enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dy
 			.elem = {
 				.dynamic_type = SIDE_DYNAMIC_TYPE_U32,
 				.u = {
-					.side_basic = {
-						.nr_attr = 0,
-						.attr = NULL,
-						.u = {
-							.integer_value.side_u32 = ctx->ptr[i].value,
+					.side_integer = {
+						.type = {
+							.attr = NULL,
+							.nr_attr = 0,
+							.integer_size_bits = 32,
+							.len_bits = 32,
+							.signedness = false,
+							.byte_order = SIDE_TYPE_BYTE_ORDER_HOST,
+						},
+						.value = {
+							.side_u32 = ctx->ptr[i].value,
 						},
 					},
 				},

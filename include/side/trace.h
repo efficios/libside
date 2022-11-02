@@ -410,13 +410,18 @@ struct side_arg_dynamic_vec {
 			uint32_t nr_attr;
 			uint32_t byte_order;	/* enum side_type_byte_order */
 			union {
-				union side_integer_value integer_value;
 				union side_float_value float_value;
 				uint8_t side_bool;
 				uint8_t side_byte;
 				uint64_t string;	/* const char * */
 			} u;
 		} side_basic;
+
+		/* Integer type */
+		struct {
+			struct side_type_integer type;
+			union side_integer_value value;
+		} side_integer;
 
 		/* Compound types */
 		const struct side_arg_dynamic_event_struct *side_dynamic_struct;
@@ -945,34 +950,6 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 
-#define side_arg_dynamic_u8(_val, _attr) \
-	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_U8, \
-		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
-				.u = { \
-					.integer_value.side_u8 = (_val), \
-				}, \
-			}, \
-		}, \
-	}
-#define side_arg_dynamic_s8(_val, _attr) \
-	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_S8, \
-		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
-				.u = { \
-					.integer_value.side_s8 = (_val), \
-				}, \
-			}, \
-		}, \
-	}
 #define side_arg_dynamic_byte(_val, _attr) \
 	{ \
 		.dynamic_type = SIDE_DYNAMIC_TYPE_BYTE, \
@@ -1002,107 +979,49 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 		}, \
 	}
 
-#define _side_arg_dynamic_u16(_val, _byte_order, _attr) \
+#define _side_arg_dynamic_integer(_field, _val, _type, _signedness, _byte_order, _integer_size_bits, _len_bits, _attr) \
 	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_U16, \
+		.dynamic_type = _type, \
 		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
-				.u = { \
-					.integer_value.side_u16 = (_val), \
+			.side_integer = { \
+				.type = { \
+					.attr = _attr, \
+					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+					.integer_size_bits = _integer_size_bits, \
+					.len_bits = _len_bits, \
+					.signedness = _signedness, \
+					.byte_order = _byte_order, \
 				}, \
-			}, \
-		}, \
-	}
-#define _side_arg_dynamic_u32(_val, _byte_order, _attr) \
-	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_U32, \
-		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
-				.u = { \
-					.integer_value.side_u32 = (_val), \
-				}, \
-			}, \
-		}, \
-	}
-#define _side_arg_dynamic_u64(_val, _byte_order, _attr) \
-	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_U64, \
-		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
-				.u = { \
-					.integer_value.side_u64 = (_val), \
+				.value = { \
+					_field = (_val), \
 				}, \
 			}, \
 		}, \
 	}
 
+#define side_arg_dynamic_u8(_val, _attr) \
+	_side_arg_dynamic_integer(.side_u8, _val, SIDE_DYNAMIC_TYPE_U8, false, SIDE_TYPE_BYTE_ORDER_HOST, 8, 8, SIDE_PARAM(_attr))
+#define side_arg_dynamic_s8(_val, _attr) \
+	_side_arg_dynamic_integer(.side_s8, _val, SIDE_DYNAMIC_TYPE_S8, true, SIDE_TYPE_BYTE_ORDER_HOST, 8, 8, SIDE_PARAM(_attr))
+
+#define _side_arg_dynamic_u16(_val, _byte_order, _attr) \
+	_side_arg_dynamic_integer(.side_u16, _val, SIDE_DYNAMIC_TYPE_U16, false, _byte_order, 16, 16, SIDE_PARAM(_attr))
+#define _side_arg_dynamic_u32(_val, _byte_order, _attr) \
+	_side_arg_dynamic_integer(.side_u32, _val, SIDE_DYNAMIC_TYPE_U32, false, _byte_order, 32, 32, SIDE_PARAM(_attr))
+#define _side_arg_dynamic_u64(_val, _byte_order, _attr) \
+	_side_arg_dynamic_integer(.side_u64, _val, SIDE_DYNAMIC_TYPE_U64, false, _byte_order, 64, 64, SIDE_PARAM(_attr))
+
 #define _side_arg_dynamic_s16(_val, _byte_order, _attr) \
-	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_S16, \
-		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
-				.u = { \
-					.integer_value.side_s16 = (_val), \
-				}, \
-			}, \
-		}, \
-	}
+	_side_arg_dynamic_integer(.side_s16, _val, SIDE_DYNAMIC_TYPE_S16, true, _byte_order, 16, 16, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_s32(_val, _byte_order, _attr) \
-	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_S32, \
-		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
-				.u = { \
-					.integer_value.side_s32 = (_val), \
-				}, \
-			}, \
-		}, \
-	}
+	_side_arg_dynamic_integer(.side_s32, _val, SIDE_DYNAMIC_TYPE_S32, true, _byte_order, 32, 32, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_s64(_val, _byte_order, _attr) \
-	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_S64, \
-		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
-				.u = { \
-					.integer_value.side_s64 = (_val), \
-				}, \
-			}, \
-		}, \
-	}
+	_side_arg_dynamic_integer(.side_s64, _val, SIDE_DYNAMIC_TYPE_S64, true, _byte_order, 64, 64, SIDE_PARAM(_attr))
+
 #define _side_arg_dynamic_pointer(_val, _byte_order, _attr) \
-	{ \
-		.dynamic_type = SIDE_DYNAMIC_TYPE_POINTER_HOST, \
-		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
-				.u = { \
-					.integer_value = { \
-						SIDE_PTR_HOST = (uintptr_t) (_val), \
-					}, \
-				}, \
-			}, \
-		}, \
-	}
+	_side_arg_dynamic_integer(SIDE_PTR_HOST, (uintptr_t) (_val), SIDE_DYNAMIC_TYPE_POINTER_HOST, false, _byte_order, \
+			SIDE_BITS_PER_LONG, SIDE_BITS_PER_LONG, SIDE_PARAM(_attr))
+
 #define _side_arg_dynamic_float_binary16(_val, _byte_order, _attr) \
 	{ \
 		.dynamic_type = SIDE_DYNAMIC_TYPE_FLOAT_BINARY16, \
