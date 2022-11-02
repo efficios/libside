@@ -127,7 +127,7 @@ bool type_to_host_reverse_bo(const struct side_type_description *type_desc)
 		break;
         case SIDE_TYPE_POINTER32:
         case SIDE_TYPE_POINTER64:
-		if (type_desc->u.side_basic.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+		if (type_desc->u.side_integer.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
 			return true;
 		else
 			return false;
@@ -562,6 +562,14 @@ void tracer_print_basic_type_header(const struct side_type_description *type_des
 }
 
 static
+void tracer_print_integer_type_header(const struct side_type_description *type_desc)
+{
+	print_attributes("attr", ":", type_desc->u.side_integer.attr, type_desc->u.side_integer.nr_attr);
+	printf("%s", type_desc->u.side_integer.nr_attr ? ", " : "");
+	printf("value: ");
+}
+
+static
 void tracer_print_type_integer(enum side_type type, const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
 	enum tracer_display_base base;
@@ -647,7 +655,7 @@ void tracer_print_type_integer(enum side_type type, const struct side_type_descr
 	}
 	if (type_desc->u.side_integer.len_bits < 64)
 		v.v_unsigned &= (1ULL << type_desc->u.side_integer.len_bits) - 1;
-	tracer_print_basic_type_header(type_desc);
+	tracer_print_integer_type_header(type_desc);
 	switch (base) {
 	case TRACER_DISPLAY_BASE_2:
 		print_integer_binary(v.v_unsigned, type_desc->u.side_integer.len_bits);
@@ -798,7 +806,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		v = item->u.integer_value.side_u32;
 		if (type_to_host_reverse_bo(type_desc))
 			v = side_bswap_32(v);
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_integer_type_header(type_desc);
 		printf("0x%" PRIx32, v);
 		break;
 	}
@@ -809,7 +817,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		v = item->u.integer_value.side_u64;
 		if (type_to_host_reverse_bo(type_desc))
 			v = side_bswap_64(v);
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_integer_type_header(type_desc);
 		printf("0x%" PRIx64, v);
 		break;
 	}
