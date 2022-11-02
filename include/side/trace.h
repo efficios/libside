@@ -305,17 +305,17 @@ struct side_type_struct_sg {
 struct side_type_integer {
 	const struct side_attr *attr;
 	uint32_t nr_attr;
+	uint16_t integer_size_bits;	/* bits */
+	uint16_t len_bits;		/* bits */
 	uint8_t signedness;		/* true/false */
 	uint8_t byte_order;		/* enum side_type_byte_order */
-	uint8_t integer_size_bits;	/* bits */
-	uint8_t len_bits;		/* bits */
 };
 
 struct side_type_float {
 	const struct side_attr *attr;
 	uint32_t nr_attr;
 	uint32_t byte_order;		/* enum side_type_byte_order */
-	uint8_t float_size_bits;	/* bits */
+	uint16_t float_size_bits;	/* bits */
 };
 
 struct side_type_description {
@@ -576,10 +576,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.side_integer = { \
 				.attr = _attr, \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.signedness = _signedness, \
-				.byte_order = _byte_order, \
 				.integer_size_bits = _integer_size_bits, \
 				.len_bits = _len_bits, \
+				.signedness = _signedness, \
+				.byte_order = _byte_order, \
 			}, \
 		}, \
 	}
