@@ -240,7 +240,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 		break;
 	case SIDE_ATTR_TYPE_FLOAT_BINARY16:
 #if __HAVE_FLOAT16
-		printf("%g", (double) attr->value.u.side_float_binary16);
+		printf("%g", (double) attr->value.u.float_value.side_float_binary16);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
@@ -248,7 +248,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 #endif
 	case SIDE_ATTR_TYPE_FLOAT_BINARY32:
 #if __HAVE_FLOAT32
-		printf("%g", (double) attr->value.u.side_float_binary32);
+		printf("%g", (double) attr->value.u.float_value.side_float_binary32);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
@@ -256,7 +256,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 #endif
 	case SIDE_ATTR_TYPE_FLOAT_BINARY64:
 #if __HAVE_FLOAT64
-		printf("%g", (double) attr->value.u.side_float_binary64);
+		printf("%g", (double) attr->value.u.float_value.side_float_binary64);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
@@ -264,7 +264,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 #endif
 	case SIDE_ATTR_TYPE_FLOAT_BINARY128:
 #if __HAVE_FLOAT128
-		printf("%Lg", (long double) attr->value.u.side_float_binary128);
+		printf("%Lg", (long double) attr->value.u.float_value.side_float_binary128);
 		break;
 #else
 		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
@@ -833,7 +833,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 			_Float16 f;
 			uint16_t u;
 		} float16 = {
-			.f = item->u.side_float_binary16,
+			.f = item->u.float_value.side_float_binary16,
 		};
 
 		if (type_to_host_reverse_bo(type_desc))
@@ -853,7 +853,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 			_Float32 f;
 			uint32_t u;
 		} float32 = {
-			.f = item->u.side_float_binary32,
+			.f = item->u.float_value.side_float_binary32,
 		};
 
 		if (type_to_host_reverse_bo(type_desc))
@@ -873,7 +873,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 			_Float64 f;
 			uint64_t u;
 		} float64 = {
-			.f = item->u.side_float_binary64,
+			.f = item->u.float_value.side_float_binary64,
 		};
 
 		if (type_to_host_reverse_bo(type_desc))
@@ -893,7 +893,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 			_Float128 f;
 			char arr[16];
 		} float128 = {
-			.f = item->u.side_float_binary128,
+			.f = item->u.float_value.side_float_binary128,
 		};
 
 		if (type_to_host_reverse_bo(type_desc))
@@ -2045,7 +2045,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 			_Float16 f;
 			uint16_t u;
 		} float16 = {
-			.f = item->u.side_basic.u.side_float_binary16,
+			.f = item->u.side_basic.u.float_value.side_float_binary16,
 		};
 
 		if (dynamic_type_to_host_reverse_bo(item))
@@ -2065,7 +2065,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 			_Float32 f;
 			uint32_t u;
 		} float32 = {
-			.f = item->u.side_basic.u.side_float_binary32,
+			.f = item->u.side_basic.u.float_value.side_float_binary32,
 		};
 
 		if (dynamic_type_to_host_reverse_bo(item))
@@ -2085,7 +2085,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 			_Float64 f;
 			uint64_t u;
 		} float64 = {
-			.f = item->u.side_basic.u.side_float_binary64,
+			.f = item->u.side_basic.u.float_value.side_float_binary64,
 		};
 
 		if (dynamic_type_to_host_reverse_bo(item))
@@ -2105,7 +2105,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 			_Float128 f;
 			char arr[16];
 		} float128 = {
-			.f = item->u.side_basic.u.side_float_binary128,
+			.f = item->u.side_basic.u.float_value.side_float_binary128,
 		};
 
 		if (dynamic_type_to_host_reverse_bo(item))

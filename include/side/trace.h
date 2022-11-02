@@ -209,12 +209,7 @@ struct side_integer_value {
 	int64_t side_s64;
 };
 
-struct side_attr_value {
-	uint32_t type;	/* enum side_attr_type */
-	union {
-		struct side_integer_value integer_value;
-		uint8_t side_bool;
-
+struct side_float_value {
 #if __HAVE_FLOAT16
 		_Float16 side_float_binary16;
 #endif
@@ -227,6 +222,14 @@ struct side_attr_value {
 #if __HAVE_FLOAT128
 		_Float128 side_float_binary128;
 #endif
+};
+
+struct side_attr_value {
+	uint32_t type;	/* enum side_attr_type */
+	union {
+		struct side_integer_value integer_value;
+		struct side_float_value float_value;
+		uint8_t side_bool;
 		uint64_t string;	/* const char * */
 	} u;
 };
@@ -400,20 +403,9 @@ struct side_arg_dynamic_vec {
 			uint32_t byte_order;	/* enum side_type_byte_order */
 			union {
 				struct side_integer_value integer_value;
+				struct side_float_value float_value;
 				uint8_t side_bool;
 				uint8_t side_byte;
-#if __HAVE_FLOAT16
-				_Float16 side_float_binary16;
-#endif
-#if __HAVE_FLOAT32
-				_Float32 side_float_binary32;
-#endif
-#if __HAVE_FLOAT64
-				_Float64 side_float_binary64;
-#endif
-#if __HAVE_FLOAT128
-				_Float128 side_float_binary128;
-#endif
 				uint64_t string;	/* const char * */
 			} u;
 		} side_basic;
@@ -462,20 +454,9 @@ struct side_arg_vec {
 		struct side_integer_value integer_value;
 
 		/* Basic types */
+		struct side_float_value float_value;
 		uint8_t side_bool;
 		uint8_t side_byte;
-#if __HAVE_FLOAT16
-		_Float16 side_float_binary16;
-#endif
-#if __HAVE_FLOAT32
-		_Float32 side_float_binary32;
-#endif
-#if __HAVE_FLOAT64
-		_Float64 side_float_binary64;
-#endif
-#if __HAVE_FLOAT128
-		_Float128 side_float_binary128;
-#endif
 		uint64_t string;	/* const char * */
 
 		/* Compound types */
@@ -560,10 +541,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_attr_s32(_val)		{ .type = SIDE_ATTR_TYPE_S32, .u = { .integer_value.side_s32 = (_val) } }
 #define side_attr_s64(_val)		{ .type = SIDE_ATTR_TYPE_S64, .u = { .integer_value.side_s64 = (_val) } }
 #define side_attr_pointer(_val)		{ .type = SIDE_ATTR_TYPE_POINTER_HOST, .u = { SIDE_PTR_HOST = (uintptr_t) (_val) } }
-#define side_attr_float_binary16(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (_val) } }
-#define side_attr_float_binary32(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (_val) } }
-#define side_attr_float_binary64(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (_val) } }
-#define side_attr_float_binary128(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY128, .u = { .side_float_binary128 = (_val) } }
+#define side_attr_float_binary16(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY16, .u = { .float_value.side_float_binary16 = (_val) } }
+#define side_attr_float_binary32(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY32, .u = { .float_value.side_float_binary32 = (_val) } }
+#define side_attr_float_binary64(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY64, .u = { .float_value.side_float_binary64 = (_val) } }
+#define side_attr_float_binary128(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY128, .u = { .float_value.side_float_binary128 = (_val) } }
 #define side_attr_string(_val)		{ .type = SIDE_ATTR_TYPE_STRING, .u = { .string = (uintptr_t) (_val) } }
 
 /* Static field definition */
@@ -872,10 +853,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_enum_bitmap64(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP64, .u = { .integer_value.side_u64 = (_val) } }
 #define side_arg_enum_bitmap_array(_side_type)	{ .type = SIDE_TYPE_ENUM_BITMAP_ARRAY, .u = { .side_array = (_side_type) } }
 #define side_arg_enum_bitmap_vla(_side_type)	{ .type = SIDE_TYPE_ENUM_BITMAP_VLA, .u = { .side_vla = (_side_type) } }
-#define side_arg_float_binary16(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (_val) } }
-#define side_arg_float_binary32(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (_val) } }
-#define side_arg_float_binary64(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .side_float_binary64 = (_val) } }
-#define side_arg_float_binary128(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .side_float_binary128 = (_val) } }
+#define side_arg_float_binary16(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .float_value.side_float_binary16 = (_val) } }
+#define side_arg_float_binary32(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY32, .u = { .float_value.side_float_binary32 = (_val) } }
+#define side_arg_float_binary64(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .float_value.side_float_binary64 = (_val) } }
+#define side_arg_float_binary128(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .float_value.side_float_binary128 = (_val) } }
 
 #define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING, .u = { .string = (uintptr_t) (_val) } }
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_struct = (_side_type) } }
@@ -1108,7 +1089,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_float_binary16 = (_val), \
+					.float_value.side_float_binary16 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1122,7 +1103,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_float_binary32 = (_val), \
+					.float_value.side_float_binary32 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1136,7 +1117,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_float_binary64 = (_val), \
+					.float_value.side_float_binary64 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1150,7 +1131,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_float_binary128 = (_val), \
+					.float_value.side_float_binary128 = (_val), \
 				}, \
 			}, \
 		}, \
