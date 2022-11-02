@@ -659,7 +659,7 @@ enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_dynam
 					.attr = NULL,
 					.nr_attr = 0,
 					.u = {
-						.side_u32 = ctx->ptr[i],
+						.integer_value.side_u32 = ctx->ptr[i],
 					},
 				},
 			},
@@ -724,7 +724,7 @@ enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dy
 						.nr_attr = 0,
 						.attr = NULL,
 						.u = {
-							.side_u32 = ctx->ptr[i].value,
+							.integer_value.side_u32 = ctx->ptr[i].value,
 						},
 					},
 				},

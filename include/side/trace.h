@@ -198,18 +198,23 @@ typedef enum side_visitor_status (*side_dynamic_vla_visitor)(
 		const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
 		void *app_ctx);
 
+struct side_integer_value {
+	uint8_t side_u8;
+	uint16_t side_u16;
+	uint32_t side_u32;
+	uint64_t side_u64;
+	int8_t side_s8;
+	int16_t side_s16;
+	int32_t side_s32;
+	int64_t side_s64;
+};
+
 struct side_attr_value {
 	uint32_t type;	/* enum side_attr_type */
 	union {
+		struct side_integer_value integer_value;
 		uint8_t side_bool;
-		uint8_t side_u8;
-		uint16_t side_u16;
-		uint32_t side_u32;
-		uint64_t side_u64;
-		int8_t side_s8;
-		int16_t side_s16;
-		int32_t side_s32;
-		int64_t side_s64;
+
 #if __HAVE_FLOAT16
 		_Float16 side_float_binary16;
 #endif
@@ -394,15 +399,8 @@ struct side_arg_dynamic_vec {
 			uint32_t nr_attr;
 			uint32_t byte_order;	/* enum side_type_byte_order */
 			union {
+				struct side_integer_value integer_value;
 				uint8_t side_bool;
-				uint8_t side_u8;
-				uint16_t side_u16;
-				uint32_t side_u32;
-				uint64_t side_u64;
-				int8_t side_s8;
-				int16_t side_s16;
-				int32_t side_s32;
-				int64_t side_s64;
 				uint8_t side_byte;
 #if __HAVE_FLOAT16
 				_Float16 side_float_binary16;
@@ -461,14 +459,7 @@ struct side_arg_vec {
 	enum side_type type;
 	union {
 		/* Integer types */
-		uint8_t side_u8;
-		uint16_t side_u16;
-		uint32_t side_u32;
-		uint64_t side_u64;
-		int8_t side_s8;
-		int16_t side_s16;
-		int32_t side_s32;
-		int64_t side_s64;
+		struct side_integer_value integer_value;
 
 		/* Basic types */
 		uint8_t side_bool;
@@ -539,14 +530,14 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 # define SIDE_TYPE_VLA_POINTER_HOST	SIDE_TYPE_VLA_POINTER64
 # define SIDE_DYNAMIC_TYPE_POINTER_HOST	SIDE_DYNAMIC_TYPE_POINTER64
 # define SIDE_ATTR_TYPE_POINTER_HOST	SIDE_ATTR_TYPE_POINTER64
-# define SIDE_PTR_HOST			.side_u64
+# define SIDE_PTR_HOST			.integer_value.side_u64
 #else
 # define SIDE_TYPE_POINTER_HOST		SIDE_TYPE_POINTER32
 # define SIDE_TYPE_ARRAY_POINTER_HOST	SIDE_TYPE_ARRAY_POINTER32
 # define SIDE_TYPE_VLA_POINTER_HOST	SIDE_TYPE_VLA_POINTER32
 # define SIDE_DYNAMIC_TYPE_POINTER_HOST	SIDE_DYNAMIC_TYPE_POINTER32
 # define SIDE_ATTR_TYPE_POINTER_HOST	SIDE_ATTR_TYPE_POINTER32
-# define SIDE_PTR_HOST			.side_u32
+# define SIDE_PTR_HOST			.integer_value.side_u32
 #endif
 
 #define side_attr(_key, _value)	\
@@ -560,14 +551,14 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 #define side_attr_null(_val)		{ .type = SIDE_ATTR_TYPE_NULL }
 #define side_attr_bool(_val)		{ .type = SIDE_ATTR_TYPE_BOOL, .u = { .side_bool = !!(_val) } }
-#define side_attr_u8(_val)		{ .type = SIDE_ATTR_TYPE_U8, .u = { .side_u8 = (_val) } }
-#define side_attr_u16(_val)		{ .type = SIDE_ATTR_TYPE_U16, .u = { .side_u16 = (_val) } }
-#define side_attr_u32(_val)		{ .type = SIDE_ATTR_TYPE_U32, .u = { .side_u32 = (_val) } }
-#define side_attr_u64(_val)		{ .type = SIDE_ATTR_TYPE_U64, .u = { .side_u64 = (_val) } }
-#define side_attr_s8(_val)		{ .type = SIDE_ATTR_TYPE_S8, .u = { .side_s8 = (_val) } }
-#define side_attr_s16(_val)		{ .type = SIDE_ATTR_TYPE_S16, .u = { .side_s16 = (_val) } }
-#define side_attr_s32(_val)		{ .type = SIDE_ATTR_TYPE_S32, .u = { .side_s32 = (_val) } }
-#define side_attr_s64(_val)		{ .type = SIDE_ATTR_TYPE_S64, .u = { .side_s64 = (_val) } }
+#define side_attr_u8(_val)		{ .type = SIDE_ATTR_TYPE_U8, .u = { .integer_value.side_u8 = (_val) } }
+#define side_attr_u16(_val)		{ .type = SIDE_ATTR_TYPE_U16, .u = { .integer_value.side_u16 = (_val) } }
+#define side_attr_u32(_val)		{ .type = SIDE_ATTR_TYPE_U32, .u = { .integer_value.side_u32 = (_val) } }
+#define side_attr_u64(_val)		{ .type = SIDE_ATTR_TYPE_U64, .u = { .integer_value.side_u64 = (_val) } }
+#define side_attr_s8(_val)		{ .type = SIDE_ATTR_TYPE_S8, .u = { .integer_value.side_s8 = (_val) } }
+#define side_attr_s16(_val)		{ .type = SIDE_ATTR_TYPE_S16, .u = { .integer_value.side_s16 = (_val) } }
+#define side_attr_s32(_val)		{ .type = SIDE_ATTR_TYPE_S32, .u = { .integer_value.side_s32 = (_val) } }
+#define side_attr_s64(_val)		{ .type = SIDE_ATTR_TYPE_S64, .u = { .integer_value.side_s64 = (_val) } }
 #define side_attr_pointer(_val)		{ .type = SIDE_ATTR_TYPE_POINTER_HOST, .u = { SIDE_PTR_HOST = (uintptr_t) (_val) } }
 #define side_attr_float_binary16(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (_val) } }
 #define side_attr_float_binary32(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY32, .u = { .side_float_binary32 = (_val) } }
@@ -865,20 +856,20 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 /* Static field arguments */
 
 #define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_bool = !!(_val) } }
-#define side_arg_u8(_val)		{ .type = SIDE_TYPE_U8, .u = { .side_u8 = (_val) } }
-#define side_arg_u16(_val)		{ .type = SIDE_TYPE_U16, .u = { .side_u16 = (_val) } }
-#define side_arg_u32(_val)		{ .type = SIDE_TYPE_U32, .u = { .side_u32 = (_val) } }
-#define side_arg_u64(_val)		{ .type = SIDE_TYPE_U64, .u = { .side_u64 = (_val) } }
-#define side_arg_s8(_val)		{ .type = SIDE_TYPE_S8, .u = { .side_s8 = (_val) } }
-#define side_arg_s16(_val)		{ .type = SIDE_TYPE_S16, .u = { .side_s16 = (_val) } }
-#define side_arg_s32(_val)		{ .type = SIDE_TYPE_S32, .u = { .side_s32 = (_val) } }
-#define side_arg_s64(_val)		{ .type = SIDE_TYPE_S64, .u = { .side_s64 = (_val) } }
+#define side_arg_u8(_val)		{ .type = SIDE_TYPE_U8, .u = { .integer_value.side_u8 = (_val) } }
+#define side_arg_u16(_val)		{ .type = SIDE_TYPE_U16, .u = { .integer_value.side_u16 = (_val) } }
+#define side_arg_u32(_val)		{ .type = SIDE_TYPE_U32, .u = { .integer_value.side_u32 = (_val) } }
+#define side_arg_u64(_val)		{ .type = SIDE_TYPE_U64, .u = { .integer_value.side_u64 = (_val) } }
+#define side_arg_s8(_val)		{ .type = SIDE_TYPE_S8, .u = { .integer_value.side_s8 = (_val) } }
+#define side_arg_s16(_val)		{ .type = SIDE_TYPE_S16, .u = { .integer_value.side_s16 = (_val) } }
+#define side_arg_s32(_val)		{ .type = SIDE_TYPE_S32, .u = { .integer_value.side_s32 = (_val) } }
+#define side_arg_s64(_val)		{ .type = SIDE_TYPE_S64, .u = { .integer_value.side_s64 = (_val) } }
 #define side_arg_byte(_val)		{ .type = SIDE_TYPE_BYTE, .u = { .side_byte = (_val) } }
 #define side_arg_pointer(_val)		{ .type = SIDE_TYPE_POINTER_HOST, .u = { SIDE_PTR_HOST = (uintptr_t) (_val) } }
-#define side_arg_enum_bitmap8(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP8, .u = { .side_u8 = (_val) } }
-#define side_arg_enum_bitmap16(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP16, .u = { .side_u16 = (_val) } }
-#define side_arg_enum_bitmap32(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP32, .u = { .side_u32 = (_val) } }
-#define side_arg_enum_bitmap64(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP64, .u = { .side_u64 = (_val) } }
+#define side_arg_enum_bitmap8(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP8, .u = { .integer_value.side_u8 = (_val) } }
+#define side_arg_enum_bitmap16(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP16, .u = { .integer_value.side_u16 = (_val) } }
+#define side_arg_enum_bitmap32(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP32, .u = { .integer_value.side_u32 = (_val) } }
+#define side_arg_enum_bitmap64(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP64, .u = { .integer_value.side_u64 = (_val) } }
 #define side_arg_enum_bitmap_array(_side_type)	{ .type = SIDE_TYPE_ENUM_BITMAP_ARRAY, .u = { .side_array = (_side_type) } }
 #define side_arg_enum_bitmap_vla(_side_type)	{ .type = SIDE_TYPE_ENUM_BITMAP_VLA, .u = { .side_vla = (_side_type) } }
 #define side_arg_float_binary16(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .side_float_binary16 = (_val) } }
@@ -961,7 +952,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 				.u = { \
-					.side_u8 = (_val), \
+					.integer_value.side_u8 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -975,7 +966,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 				.u = { \
-					.side_s8 = (_val), \
+					.integer_value.side_s8 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1018,7 +1009,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_u16 = (_val), \
+					.integer_value.side_u16 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1032,7 +1023,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_u32 = (_val), \
+					.integer_value.side_u32 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1046,7 +1037,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_u64 = (_val), \
+					.integer_value.side_u64 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1061,7 +1052,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_s16 = (_val), \
+					.integer_value.side_s16 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1075,7 +1066,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_s32 = (_val), \
+					.integer_value.side_s32 = (_val), \
 				}, \
 			}, \
 		}, \
@@ -1089,7 +1080,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.byte_order = _byte_order, \
 				.u = { \
-					.side_s64 = (_val), \
+					.integer_value.side_s64 = (_val), \
 				}, \
 			}, \
 		}, \
