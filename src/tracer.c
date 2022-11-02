@@ -1114,6 +1114,8 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		{
 			uint8_t v;
 
+			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 8)
+				abort();
 			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
 			v >>= sg_type->u.side_basic.offset_bits;
 			if (sg_type->u.side_basic.len_bits < 8)
@@ -1140,6 +1142,8 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		{
 			uint16_t v;
 
+			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 16)
+				abort();
 			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
 			if (sg_type_to_host_reverse_bo(sg_type))
 				v = side_bswap_16(v);
@@ -1168,6 +1172,8 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		{
 			uint32_t v;
 
+			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 32)
+				abort();
 			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
 			if (sg_type_to_host_reverse_bo(sg_type))
 				v = side_bswap_32(v);
@@ -1196,6 +1202,8 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		{
 			uint64_t v;
 
+			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 64)
+				abort();
 			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
 			if (sg_type_to_host_reverse_bo(sg_type))
 				v = side_bswap_64(v);
@@ -1234,6 +1242,8 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		{
 			int8_t v;
 
+			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 8)
+				abort();
 			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
 			v >>= sg_type->u.side_basic.offset_bits;
 			if (sg_type->u.side_basic.len_bits < 8)
@@ -1246,6 +1256,11 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 				printf("0%" PRIo8, v);
 				break;
 			case TRACER_DISPLAY_BASE_10:
+				/* Sign-extend. */
+				if (sg_type->u.side_basic.len_bits < 8) {
+					if (v & (1U << (sg_type->u.side_basic.len_bits - 1)))
+						v |= ~((1U << sg_type->u.side_basic.len_bits) - 1);
+				}
 				printf("%" PRId8, v);
 				break;
 			case TRACER_DISPLAY_BASE_16:
@@ -1260,6 +1275,8 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		{
 			int16_t v;
 
+			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 16)
+				abort();
 			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
 			if (sg_type_to_host_reverse_bo(sg_type))
 				v = side_bswap_16(v);
@@ -1274,6 +1291,11 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 				printf("0%" PRIo16, v);
 				break;
 			case TRACER_DISPLAY_BASE_10:
+				/* Sign-extend. */
+				if (sg_type->u.side_basic.len_bits < 16) {
+					if (v & (1U << (sg_type->u.side_basic.len_bits - 1)))
+						v |= ~((1U << sg_type->u.side_basic.len_bits) - 1);
+				}
 				printf("%" PRId16, v);
 				break;
 			case TRACER_DISPLAY_BASE_16:
@@ -1288,6 +1310,8 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		{
 			uint32_t v;
 
+			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 32)
+				abort();
 			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
 			if (sg_type_to_host_reverse_bo(sg_type))
 				v = side_bswap_32(v);
@@ -1302,6 +1326,11 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 				printf("0%" PRIo32, v);
 				break;
 			case TRACER_DISPLAY_BASE_10:
+				/* Sign-extend. */
+				if (sg_type->u.side_basic.len_bits < 32) {
+					if (v & (1U << (sg_type->u.side_basic.len_bits - 1)))
+						v |= ~((1U << sg_type->u.side_basic.len_bits) - 1);
+				}
 				printf("%" PRId32, v);
 				break;
 			case TRACER_DISPLAY_BASE_16:
@@ -1316,6 +1345,8 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		{
 			uint64_t v;
 
+			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 64)
+				abort();
 			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
 			if (sg_type_to_host_reverse_bo(sg_type))
 				v = side_bswap_64(v);
@@ -1330,6 +1361,11 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 				printf("0%" PRIo64, v);
 				break;
 			case TRACER_DISPLAY_BASE_10:
+				/* Sign-extend. */
+				if (sg_type->u.side_basic.len_bits < 64) {
+					if (v & (1ULL << (sg_type->u.side_basic.len_bits - 1)))
+						v |= ~((1ULL << sg_type->u.side_basic.len_bits) - 1);
+				}
 				printf("%" PRId64, v);
 				break;
 			case TRACER_DISPLAY_BASE_16:
