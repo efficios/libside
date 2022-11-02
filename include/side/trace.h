@@ -198,7 +198,7 @@ typedef enum side_visitor_status (*side_dynamic_vla_visitor)(
 		const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
 		void *app_ctx);
 
-struct side_integer_value {
+union side_integer_value {
 	uint8_t side_u8;
 	uint16_t side_u16;
 	uint32_t side_u32;
@@ -209,7 +209,7 @@ struct side_integer_value {
 	int64_t side_s64;
 };
 
-struct side_float_value {
+union side_float_value {
 #if __HAVE_FLOAT16
 		_Float16 side_float_binary16;
 #endif
@@ -227,8 +227,8 @@ struct side_float_value {
 struct side_attr_value {
 	uint32_t type;	/* enum side_attr_type */
 	union {
-		struct side_integer_value integer_value;
-		struct side_float_value float_value;
+		union side_integer_value integer_value;
+		union side_float_value float_value;
 		uint8_t side_bool;
 		uint64_t string;	/* const char * */
 	} u;
@@ -410,8 +410,8 @@ struct side_arg_dynamic_vec {
 			uint32_t nr_attr;
 			uint32_t byte_order;	/* enum side_type_byte_order */
 			union {
-				struct side_integer_value integer_value;
-				struct side_float_value float_value;
+				union side_integer_value integer_value;
+				union side_float_value float_value;
 				uint8_t side_bool;
 				uint8_t side_byte;
 				uint64_t string;	/* const char * */
@@ -459,10 +459,10 @@ struct side_arg_vec {
 	enum side_type type;
 	union {
 		/* Integer types */
-		struct side_integer_value integer_value;
+		union side_integer_value integer_value;
 
 		/* Basic types */
-		struct side_float_value float_value;
+		union side_float_value float_value;
 		uint8_t side_bool;
 		uint8_t side_byte;
 		uint64_t string;	/* const char * */
