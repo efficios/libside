@@ -563,8 +563,9 @@ void tracer_print_type_header(const char *separator,
 }
 
 static
-void tracer_print_type_integer(const char *separator, enum side_type type,
-		const struct side_type_description *type_desc, const struct side_arg_vec *item)
+void tracer_print_type_integer(const char *separator,
+		const struct side_type_integer *type_integer,
+		const union side_integer_value *value)
 {
 	enum tracer_display_base base;
 	union {
@@ -572,97 +573,88 @@ void tracer_print_type_integer(const char *separator, enum side_type type,
 		int64_t v_signed;
 	} v;
 
-	if (!type_desc->u.side_integer.len_bits ||
-			type_desc->u.side_integer.len_bits > type_desc->u.side_integer.integer_size_bits)
+	if (!type_integer->len_bits ||
+			type_integer->len_bits > type_integer->integer_size_bits)
 		abort();
-	base = get_attr_display_base(type_desc->u.side_integer.attr,
-			type_desc->u.side_integer.nr_attr);
-	switch (type) {
-	case SIDE_TYPE_U8:
-		v.v_unsigned = item->u.integer_value.side_u8;
+	base = get_attr_display_base(type_integer->attr,
+			type_integer->nr_attr);
+	switch (type_integer->integer_size_bits) {
+	case 8:
+		if (type_integer->signedness)
+			v.v_signed = value->side_s8;
+		else
+			v.v_unsigned = value->side_u8;
 		break;
-	case SIDE_TYPE_U16:
-	{
-		uint16_t side_u16;
+	case 16:
+		if (type_integer->signedness) {
+			int16_t side_s16;
 
-		side_u16 = item->u.integer_value.side_u16;
-		if (type_to_host_reverse_bo(type_desc))
-			side_u16 = side_bswap_16(side_u16);
-		v.v_unsigned = side_u16;
-		break;
-	}
-	case SIDE_TYPE_U32:
-	{
-		uint32_t side_u32;
+			side_s16 = value->side_s16;
+			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+				side_s16 = side_bswap_16(side_s16);
+			v.v_signed = side_s16;
+		} else {
+			uint16_t side_u16;
 
-		side_u32 = item->u.integer_value.side_u32;
-		if (type_to_host_reverse_bo(type_desc))
-			side_u32 = side_bswap_32(side_u32);
-		v.v_unsigned = side_u32;
+			side_u16 = value->side_u16;
+			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+				side_u16 = side_bswap_16(side_u16);
+			v.v_unsigned = side_u16;
+		}
 		break;
-	}
-	case SIDE_TYPE_U64:
-	{
-		uint64_t side_u64;
+	case 32:
+		if (type_integer->signedness) {
+			int32_t side_s32;
 
-		side_u64 = item->u.integer_value.side_u64;
-		if (type_to_host_reverse_bo(type_desc))
-			side_u64 = side_bswap_64(side_u64);
-		v.v_unsigned = side_u64;
-		break;
-	}
-	case SIDE_TYPE_S8:
-		v.v_signed = item->u.integer_value.side_s8;
-		break;
-	case SIDE_TYPE_S16:
-	{
-		int16_t side_s16;
+			side_s32 = value->side_s32;
+			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+				side_s32 = side_bswap_32(side_s32);
+			v.v_signed = side_s32;
+		} else {
+			uint32_t side_u32;
 
-		side_s16 = item->u.integer_value.side_s16;
-		if (type_to_host_reverse_bo(type_desc))
-			side_s16 = side_bswap_16(side_s16);
-		v.v_unsigned = side_s16;
+			side_u32 = value->side_u32;
+			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+				side_u32 = side_bswap_32(side_u32);
+			v.v_unsigned = side_u32;
+		}
 		break;
-	}
-	case SIDE_TYPE_S32:
-	{
-		int32_t side_s32;
+	case 64:
+		if (type_integer->signedness) {
+			int64_t side_s64;
 
-		side_s32 = item->u.integer_value.side_s32;
-		if (type_to_host_reverse_bo(type_desc))
-			side_s32 = side_bswap_32(side_s32);
-		v.v_unsigned = side_s32;
-		break;
-	}
-	case SIDE_TYPE_S64:
-	{
-		int64_t side_s64;
+			side_s64 = value->side_s64;
+			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+				side_s64 = side_bswap_64(side_s64);
+			v.v_signed = side_s64;
+		} else {
+			uint64_t side_u64;
 
-		side_s64 = item->u.integer_value.side_s64;
-		if (type_to_host_reverse_bo(type_desc))
-			side_s64 = side_bswap_64(side_s64);
-		v.v_unsigned = side_s64;
+			side_u64 = value->side_u64;
+			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+				side_u64 = side_bswap_64(side_u64);
+			v.v_unsigned = side_u64;
+		}
 		break;
-	}
 	default:
 		abort();
 	}
-	if (type_desc->u.side_integer.len_bits < 64)
-		v.v_unsigned &= (1ULL << type_desc->u.side_integer.len_bits) - 1;
-	tracer_print_type_header(separator, type_desc->u.side_integer.attr, type_desc->u.side_integer.nr_attr);
+	if (type_integer->len_bits < 64)
+		v.v_unsigned &= (1ULL << type_integer->len_bits) - 1;
+	tracer_print_type_header(separator, type_integer->attr, type_integer->nr_attr);
 	switch (base) {
 	case TRACER_DISPLAY_BASE_2:
-		print_integer_binary(v.v_unsigned, type_desc->u.side_integer.len_bits);
+		print_integer_binary(v.v_unsigned, type_integer->len_bits);
 		break;
 	case TRACER_DISPLAY_BASE_8:
 		printf("0%" PRIo64, v.v_unsigned);
 		break;
 	case TRACER_DISPLAY_BASE_10:
-		if (type_desc->u.side_integer.signedness) {
+		if (type_integer->signedness) {
 			/* Sign-extend. */
-			if (type_desc->u.side_integer.len_bits < 64) {
-				if (v.v_unsigned & (1ULL << (type_desc->u.side_integer.len_bits - 1)))
-					v.v_unsigned |= ~((1ULL << type_desc->u.side_integer.len_bits) - 1);
+			if (type_integer->len_bits < 64) {
+				if (v.v_unsigned & (1ULL << (type_integer->len_bits - 1)))
+					v.v_unsigned |= ~((1ULL << type_integer->len_bits) - 1);
 			}
 			printf("%" PRId64, v.v_signed);
 		} else {
@@ -790,7 +782,8 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_S16:
 	case SIDE_TYPE_S32:
 	case SIDE_TYPE_S64:
-		tracer_print_type_integer(":", type, type_desc, item);
+		tracer_print_type_integer(":", &type_desc->u.side_integer,
+					&item->u.integer_value);
 		break;
 
 	case SIDE_TYPE_POINTER32:
