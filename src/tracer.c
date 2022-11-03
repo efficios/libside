@@ -1764,24 +1764,6 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
 static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 {
-	enum tracer_display_base base = TRACER_DISPLAY_BASE_10;
-
-	switch (item->dynamic_type) {
-	case SIDE_DYNAMIC_TYPE_U8:
-	case SIDE_DYNAMIC_TYPE_U16:
-	case SIDE_DYNAMIC_TYPE_U32:
-	case SIDE_DYNAMIC_TYPE_U64:
-	case SIDE_DYNAMIC_TYPE_S8:
-	case SIDE_DYNAMIC_TYPE_S16:
-	case SIDE_DYNAMIC_TYPE_S32:
-	case SIDE_DYNAMIC_TYPE_S64:
-		base = get_attr_display_base(item->u.side_integer.type.attr,
-				item->u.side_integer.type.nr_attr);
-		break;
-	default:
-		break;
-	}
-
 	printf("{ ");
 	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
@@ -1793,209 +1775,16 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		printf("%s", item->u.side_basic.u.side_bool ? "true" : "false");
 		break;
 	case SIDE_DYNAMIC_TYPE_U8:
-	{
-		uint8_t v;
-
-		v = item->u.side_integer.value.side_u8;
-		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-		switch (base) {
-		case TRACER_DISPLAY_BASE_2:
-			print_integer_binary(v, 8);
-			break;
-		case TRACER_DISPLAY_BASE_8:
-			printf("0%" PRIo8, v);
-			break;
-		case TRACER_DISPLAY_BASE_10:
-			printf("%" PRIu8, v);
-			break;
-		case TRACER_DISPLAY_BASE_16:
-			printf("0x%" PRIx8, v);
-			break;
-		default:
-			abort();
-		}
-		break;
-	}
 	case SIDE_DYNAMIC_TYPE_U16:
-	{
-		uint16_t v;
-
-		v = item->u.side_integer.value.side_u16;
-		if (dynamic_type_to_host_reverse_bo(item))
-			v = side_bswap_16(v);
-		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-		switch (base) {
-		case TRACER_DISPLAY_BASE_2:
-			print_integer_binary(v, 16);
-			break;
-		case TRACER_DISPLAY_BASE_8:
-			printf("0%" PRIo16, v);
-			break;
-		case TRACER_DISPLAY_BASE_10:
-			printf("%" PRIu16, v);
-			break;
-		case TRACER_DISPLAY_BASE_16:
-			printf("0x%" PRIx16, v);
-			break;
-		default:
-			abort();
-		}
-		break;
-	}
 	case SIDE_DYNAMIC_TYPE_U32:
-	{
-		uint32_t v;
-
-		v = item->u.side_integer.value.side_u32;
-		if (dynamic_type_to_host_reverse_bo(item))
-			v = side_bswap_32(v);
-		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-		switch (base) {
-		case TRACER_DISPLAY_BASE_2:
-			print_integer_binary(v, 32);
-			break;
-		case TRACER_DISPLAY_BASE_8:
-			printf("0%" PRIo32, v);
-			break;
-		case TRACER_DISPLAY_BASE_10:
-			printf("%" PRIu32, v);
-			break;
-		case TRACER_DISPLAY_BASE_16:
-			printf("0x%" PRIx32, v);
-			break;
-		default:
-			abort();
-		}
-		break;
-	}
 	case SIDE_DYNAMIC_TYPE_U64:
-	{
-		uint64_t v;
-
-		v = item->u.side_integer.value.side_u64;
-		if (dynamic_type_to_host_reverse_bo(item))
-			v = side_bswap_64(v);
-		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-		switch (base) {
-		case TRACER_DISPLAY_BASE_2:
-			print_integer_binary(v, 64);
-			break;
-		case TRACER_DISPLAY_BASE_8:
-			printf("0%" PRIo64, v);
-			break;
-		case TRACER_DISPLAY_BASE_10:
-			printf("%" PRIu64, v);
-			break;
-		case TRACER_DISPLAY_BASE_16:
-			printf("0x%" PRIx64, v);
-			break;
-		default:
-			abort();
-		}
-		break;
-	}
 	case SIDE_DYNAMIC_TYPE_S8:
-	{
-		int8_t v;
-
-		v = item->u.side_integer.value.side_s8;
-		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-		switch (base) {
-		case TRACER_DISPLAY_BASE_2:
-			print_integer_binary(v, 8);
-			break;
-		case TRACER_DISPLAY_BASE_8:
-			printf("0%" PRIo8, v);
-			break;
-		case TRACER_DISPLAY_BASE_10:
-			printf("%" PRId8, v);
-			break;
-		case TRACER_DISPLAY_BASE_16:
-			printf("0x%" PRIx8, v);
-			break;
-		default:
-			abort();
-		}
-		break;
-	}
 	case SIDE_DYNAMIC_TYPE_S16:
-	{
-		int16_t v;
-
-		v = item->u.side_integer.value.side_s16;
-		if (dynamic_type_to_host_reverse_bo(item))
-			v = side_bswap_16(v);
-		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-		switch (base) {
-		case TRACER_DISPLAY_BASE_2:
-			print_integer_binary(v, 16);
-			break;
-		case TRACER_DISPLAY_BASE_8:
-			printf("0%" PRIo16, v);
-			break;
-		case TRACER_DISPLAY_BASE_10:
-			printf("%" PRId16, v);
-			break;
-		case TRACER_DISPLAY_BASE_16:
-			printf("0x%" PRIx16, v);
-			break;
-		default:
-			abort();
-		}
-		break;
-	}
 	case SIDE_DYNAMIC_TYPE_S32:
-	{
-		int32_t v;
-
-		v = item->u.side_integer.value.side_s32;
-		if (dynamic_type_to_host_reverse_bo(item))
-			v = side_bswap_32(v);
-		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-		switch (base) {
-		case TRACER_DISPLAY_BASE_2:
-			print_integer_binary(v, 32);
-			break;
-		case TRACER_DISPLAY_BASE_8:
-			printf("0%" PRIo32, v);
-			break;
-		case TRACER_DISPLAY_BASE_10:
-			printf("%" PRId32, v);
-			break;
-		case TRACER_DISPLAY_BASE_16:
-			printf("0x%" PRIx32, v);
-			break;
-		default:
-			abort();
-		}
-		break;
-	}
 	case SIDE_DYNAMIC_TYPE_S64:
-	{
-		int64_t v;
-
-		v = item->u.side_integer.value.side_s64;
-		if (dynamic_type_to_host_reverse_bo(item))
-			v = side_bswap_64(v);
-		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-		switch (base) {
-		case TRACER_DISPLAY_BASE_2:
-			print_integer_binary(v, 64);
-			break;
-		case TRACER_DISPLAY_BASE_8:
-			printf("0%" PRIo64, v);
-			break;
-		case TRACER_DISPLAY_BASE_10:
-			printf("%" PRId64, v);
-			break;
-		case TRACER_DISPLAY_BASE_16:
-			printf("0x%" PRIx64, v);
-			break;
-		default:
-			abort();
-		}
+		tracer_print_type_integer("::", &item->u.side_integer.type,
+					&item->u.side_integer.value);
 		break;
-	}
 	case SIDE_DYNAMIC_TYPE_BYTE:
 		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
 		printf("0x%" PRIx8, item->u.side_basic.u.side_byte);
