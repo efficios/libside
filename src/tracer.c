@@ -136,7 +136,7 @@ bool type_to_host_reverse_bo(const struct side_type_description *type_desc)
         case SIDE_TYPE_FLOAT_BINARY32:
         case SIDE_TYPE_FLOAT_BINARY64:
         case SIDE_TYPE_FLOAT_BINARY128:
-		if (type_desc->u.side_basic.byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST)
+		if (type_desc->u.side_float.byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST)
 			return true;
 		else
 			return false;
@@ -189,7 +189,7 @@ bool dynamic_type_to_host_reverse_bo(const struct side_arg_dynamic_vec *item)
         case SIDE_DYNAMIC_TYPE_FLOAT_BINARY32:
         case SIDE_DYNAMIC_TYPE_FLOAT_BINARY64:
         case SIDE_DYNAMIC_TYPE_FLOAT_BINARY128:
-		if (item->u.side_basic.byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST)
+		if (item->u.side_float.type.byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST)
 			return true;
 		else
 			return false;
@@ -554,23 +554,17 @@ void print_integer_binary(uint64_t v, int bits)
 }
 
 static
-void tracer_print_basic_type_header(const struct side_type_description *type_desc)
+void tracer_print_type_header(const char *separator,
+		const struct side_attr *attr, uint32_t nr_attr)
 {
-	print_attributes("attr", ":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-	printf("%s", type_desc->u.side_basic.nr_attr ? ", " : "");
-	printf("value: ");
+	print_attributes("attr", separator, attr, nr_attr);
+	printf("%s", nr_attr ? ", " : "");
+	printf("value%s ", separator);
 }
 
 static
-void tracer_print_integer_type_header(const struct side_type_description *type_desc)
-{
-	print_attributes("attr", ":", type_desc->u.side_integer.attr, type_desc->u.side_integer.nr_attr);
-	printf("%s", type_desc->u.side_integer.nr_attr ? ", " : "");
-	printf("value: ");
-}
-
-static
-void tracer_print_type_integer(enum side_type type, const struct side_type_description *type_desc, const struct side_arg_vec *item)
+void tracer_print_type_integer(const char *separator, enum side_type type,
+		const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
 	enum tracer_display_base base;
 	union {
@@ -655,7 +649,7 @@ void tracer_print_type_integer(enum side_type type, const struct side_type_descr
 	}
 	if (type_desc->u.side_integer.len_bits < 64)
 		v.v_unsigned &= (1ULL << type_desc->u.side_integer.len_bits) - 1;
-	tracer_print_integer_type_header(type_desc);
+	tracer_print_type_header(separator, type_desc->u.side_integer.attr, type_desc->u.side_integer.nr_attr);
 	switch (base) {
 	case TRACER_DISPLAY_BASE_2:
 		print_integer_binary(v.v_unsigned, type_desc->u.side_integer.len_bits);
@@ -784,7 +778,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	printf("{ ");
 	switch (type) {
 	case SIDE_TYPE_BOOL:
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
 		printf("%s", item->u.side_bool ? "true" : "false");
 		break;
 
@@ -796,7 +790,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_S16:
 	case SIDE_TYPE_S32:
 	case SIDE_TYPE_S64:
-		tracer_print_type_integer(type, type_desc, item);
+		tracer_print_type_integer(":", type, type_desc, item);
 		break;
 
 	case SIDE_TYPE_POINTER32:
@@ -806,7 +800,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		v = item->u.integer_value.side_u32;
 		if (type_to_host_reverse_bo(type_desc))
 			v = side_bswap_32(v);
-		tracer_print_integer_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_integer.attr, type_desc->u.side_integer.nr_attr);
 		printf("0x%" PRIx32, v);
 		break;
 	}
@@ -817,12 +811,12 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		v = item->u.integer_value.side_u64;
 		if (type_to_host_reverse_bo(type_desc))
 			v = side_bswap_64(v);
-		tracer_print_integer_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_integer.attr, type_desc->u.side_integer.nr_attr);
 		printf("0x%" PRIx64, v);
 		break;
 	}
 	case SIDE_TYPE_BYTE:
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
 		printf("0x%" PRIx8, item->u.side_byte);
 		break;
 
@@ -846,7 +840,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 
 		if (type_to_host_reverse_bo(type_desc))
 			float16.u = side_bswap_16(float16.u);
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
 		printf("%g", (double) float16.f);
 		break;
 #else
@@ -866,7 +860,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 
 		if (type_to_host_reverse_bo(type_desc))
 			float32.u = side_bswap_32(float32.u);
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
 		printf("%g", (double) float32.f);
 		break;
 #else
@@ -886,7 +880,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 
 		if (type_to_host_reverse_bo(type_desc))
 			float64.u = side_bswap_64(float64.u);
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
 		printf("%g", (double) float64.f);
 		break;
 #else
@@ -906,7 +900,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 
 		if (type_to_host_reverse_bo(type_desc))
 			side_bswap_128p(float128.arr);
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
 		printf("%Lg", (long double) float128.f);
 		break;
 #else
@@ -915,7 +909,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 #endif
 	}
 	case SIDE_TYPE_STRING:
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
 		printf("\"%s\"", (const char *)(uintptr_t) item->u.string);
 		break;
 	case SIDE_TYPE_STRUCT:
@@ -960,7 +954,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		tracer_print_vla_fixint(type_desc, item);
 		break;
 	case SIDE_TYPE_DYNAMIC:
-		tracer_print_basic_type_header(type_desc);
+		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
 		tracer_print_dynamic(&item->u.dynamic);
 		break;
 	default:
@@ -1775,22 +1769,6 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg_dynamic_vec *item)
 }
 
 static
-void tracer_print_dynamic_basic_type_header(const struct side_arg_dynamic_vec *item)
-{
-	print_attributes("attr", "::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-	printf("%s", item->u.side_basic.nr_attr ? ", " : "");
-	printf("value:: ");
-}
-
-static
-void tracer_print_dynamic_integer_type_header(const struct side_arg_dynamic_vec *item)
-{
-	print_attributes("attr", "::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
-	printf("%s", item->u.side_integer.type.nr_attr ? ", " : "");
-	printf("value:: ");
-}
-
-static
 void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 {
 	enum tracer_display_base base = TRACER_DISPLAY_BASE_10;
@@ -1811,15 +1789,14 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		break;
 	}
 
-
 	printf("{ ");
 	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
-		tracer_print_dynamic_basic_type_header(item);
+		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
 		printf("<NULL TYPE>");
 		break;
 	case SIDE_DYNAMIC_TYPE_BOOL:
-		tracer_print_dynamic_basic_type_header(item);
+		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
 		printf("%s", item->u.side_basic.u.side_bool ? "true" : "false");
 		break;
 	case SIDE_DYNAMIC_TYPE_U8:
@@ -1827,7 +1804,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		uint8_t v;
 
 		v = item->u.side_integer.value.side_u8;
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		switch (base) {
 		case TRACER_DISPLAY_BASE_2:
 			print_integer_binary(v, 8);
@@ -1853,7 +1830,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		v = item->u.side_integer.value.side_u16;
 		if (dynamic_type_to_host_reverse_bo(item))
 			v = side_bswap_16(v);
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		switch (base) {
 		case TRACER_DISPLAY_BASE_2:
 			print_integer_binary(v, 16);
@@ -1879,7 +1856,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		v = item->u.side_integer.value.side_u32;
 		if (dynamic_type_to_host_reverse_bo(item))
 			v = side_bswap_32(v);
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		switch (base) {
 		case TRACER_DISPLAY_BASE_2:
 			print_integer_binary(v, 32);
@@ -1905,7 +1882,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		v = item->u.side_integer.value.side_u64;
 		if (dynamic_type_to_host_reverse_bo(item))
 			v = side_bswap_64(v);
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		switch (base) {
 		case TRACER_DISPLAY_BASE_2:
 			print_integer_binary(v, 64);
@@ -1929,7 +1906,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		int8_t v;
 
 		v = item->u.side_integer.value.side_s8;
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		switch (base) {
 		case TRACER_DISPLAY_BASE_2:
 			print_integer_binary(v, 8);
@@ -1955,7 +1932,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		v = item->u.side_integer.value.side_s16;
 		if (dynamic_type_to_host_reverse_bo(item))
 			v = side_bswap_16(v);
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		switch (base) {
 		case TRACER_DISPLAY_BASE_2:
 			print_integer_binary(v, 16);
@@ -1981,7 +1958,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		v = item->u.side_integer.value.side_s32;
 		if (dynamic_type_to_host_reverse_bo(item))
 			v = side_bswap_32(v);
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		switch (base) {
 		case TRACER_DISPLAY_BASE_2:
 			print_integer_binary(v, 32);
@@ -2007,7 +1984,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		v = item->u.side_integer.value.side_s64;
 		if (dynamic_type_to_host_reverse_bo(item))
 			v = side_bswap_64(v);
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		switch (base) {
 		case TRACER_DISPLAY_BASE_2:
 			print_integer_binary(v, 64);
@@ -2027,7 +2004,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		break;
 	}
 	case SIDE_DYNAMIC_TYPE_BYTE:
-		tracer_print_dynamic_basic_type_header(item);
+		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
 		printf("0x%" PRIx8, item->u.side_basic.u.side_byte);
 		break;
 	case SIDE_DYNAMIC_TYPE_POINTER32:
@@ -2037,7 +2014,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		v = item->u.side_integer.value.side_u32;
 		if (dynamic_type_to_host_reverse_bo(item))
 			v = side_bswap_32(v);
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		printf("0x%" PRIx32, v);
 		break;
 	}
@@ -2049,7 +2026,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		v = item->u.side_integer.value.side_u64;
 		if (dynamic_type_to_host_reverse_bo(item))
 			v = side_bswap_64(v);
-		tracer_print_dynamic_integer_type_header(item);
+		tracer_print_type_header("::", item->u.side_integer.type.attr, item->u.side_integer.type.nr_attr);
 		printf("0x%" PRIx64, v);
 		break;
 	}
@@ -2061,12 +2038,12 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 			_Float16 f;
 			uint16_t u;
 		} float16 = {
-			.f = item->u.side_basic.u.float_value.side_float_binary16,
+			.f = item->u.side_float.value.side_float_binary16,
 		};
 
 		if (dynamic_type_to_host_reverse_bo(item))
 			float16.u = side_bswap_16(float16.u);
-		tracer_print_dynamic_basic_type_header(item);
+		tracer_print_type_header("::", item->u.side_float.type.attr, item->u.side_float.type.nr_attr);
 		printf("%g", (double) float16.f);
 		break;
 #else
@@ -2081,12 +2058,12 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 			_Float32 f;
 			uint32_t u;
 		} float32 = {
-			.f = item->u.side_basic.u.float_value.side_float_binary32,
+			.f = item->u.side_float.value.side_float_binary32,
 		};
 
 		if (dynamic_type_to_host_reverse_bo(item))
 			float32.u = side_bswap_32(float32.u);
-		tracer_print_dynamic_basic_type_header(item);
+		tracer_print_type_header("::", item->u.side_float.type.attr, item->u.side_float.type.nr_attr);
 		printf("%g", (double) float32.f);
 		break;
 #else
@@ -2101,12 +2078,12 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 			_Float64 f;
 			uint64_t u;
 		} float64 = {
-			.f = item->u.side_basic.u.float_value.side_float_binary64,
+			.f = item->u.side_float.value.side_float_binary64,
 		};
 
 		if (dynamic_type_to_host_reverse_bo(item))
 			float64.u = side_bswap_64(float64.u);
-		tracer_print_dynamic_basic_type_header(item);
+		tracer_print_type_header("::", item->u.side_float.type.attr, item->u.side_float.type.nr_attr);
 		printf("%g", (double) float64.f);
 		break;
 #else
@@ -2121,12 +2098,12 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 			_Float128 f;
 			char arr[16];
 		} float128 = {
-			.f = item->u.side_basic.u.float_value.side_float_binary128,
+			.f = item->u.side_float.value.side_float_binary128,
 		};
 
 		if (dynamic_type_to_host_reverse_bo(item))
 			side_bswap_128p(float128.arr);
-		tracer_print_dynamic_basic_type_header(item);
+		tracer_print_type_header("::", item->u.side_float.type.attr, item->u.side_float.type.nr_attr);
 		printf("%Lg", (long double) float128.f);
 		break;
 #else
@@ -2135,7 +2112,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 #endif
 	}
 	case SIDE_DYNAMIC_TYPE_STRING:
-		tracer_print_dynamic_basic_type_header(item);
+		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
 		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_basic.u.string);
 		break;
 	case SIDE_DYNAMIC_TYPE_STRUCT:
