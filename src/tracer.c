@@ -121,11 +121,6 @@ bool type_to_host_reverse_bo(const struct side_type_description *type_desc)
         case SIDE_TYPE_S16:
         case SIDE_TYPE_S32:
         case SIDE_TYPE_S64:
-		if (type_desc->u.side_integer.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
-			return true;
-		else
-			return false;
-		break;
         case SIDE_TYPE_POINTER32:
         case SIDE_TYPE_POINTER64:
 		if (type_desc->u.side_integer.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
