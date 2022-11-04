@@ -242,6 +242,32 @@ struct side_attr {
 	const struct side_attr_value value;
 } SIDE_PACKED;
 
+/* Type descriptions */
+struct side_type_null {
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_type_bool {
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_type_byte {
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_type_dynamic {
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_type_string {
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
 struct side_type_integer {
 	const struct side_attr *attr;
 	uint32_t nr_attr;
@@ -289,31 +315,6 @@ struct side_type_struct {
 	uint32_t nr_attr;
 	const struct side_event_field *fields;
 	const struct side_attr *attr;
-} SIDE_PACKED;
-
-struct side_type_null {
-	const struct side_attr *attr;
-	uint32_t nr_attr;
-} SIDE_PACKED;
-
-struct side_type_bool {
-	const struct side_attr *attr;
-	uint32_t nr_attr;
-} SIDE_PACKED;
-
-struct side_type_byte {
-	const struct side_attr *attr;
-	uint32_t nr_attr;
-} SIDE_PACKED;
-
-struct side_type_dynamic {
-	const struct side_attr *attr;
-	uint32_t nr_attr;
-} SIDE_PACKED;
-
-struct side_type_string {
-	const struct side_attr *attr;
-	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_sg_description {
