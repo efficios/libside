@@ -149,7 +149,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 	printf("{ key%s \"%s\", value%s ", separator, attr->key, separator);
 	switch (attr->value.type) {
 	case SIDE_ATTR_TYPE_BOOL:
-		printf("%s", attr->value.u.side_bool ? "true" : "false");
+		printf("%s", attr->value.u.bool_value ? "true" : "false");
 		break;
 	case SIDE_ATTR_TYPE_U8:
 		printf("%" PRIu8, attr->value.u.integer_value.side_u8);
@@ -214,7 +214,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 		abort();
 #endif
 	case SIDE_ATTR_TYPE_STRING:
-		printf("\"%s\"", (const char *)(uintptr_t) attr->value.u.string);
+		printf("\"%s\"", (const char *)(uintptr_t) attr->value.u.string_value);
 		break;
 	default:
 		fprintf(stderr, "ERROR: <UNKNOWN ATTRIBUTE TYPE>");
@@ -812,8 +812,8 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	printf("{ ");
 	switch (type) {
 	case SIDE_TYPE_BOOL:
-		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("%s", item->u.side_bool ? "true" : "false");
+		tracer_print_type_header(":", type_desc->u.side_bool.attr, type_desc->u.side_bool.nr_attr);
+		printf("%s", item->u.bool_value ? "true" : "false");
 		break;
 
 	case SIDE_TYPE_U8:
@@ -835,8 +835,8 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 
 	case SIDE_TYPE_BYTE:
-		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("0x%" PRIx8, item->u.side_byte);
+		tracer_print_type_header(":", type_desc->u.side_byte.attr, type_desc->u.side_byte.nr_attr);
+		printf("0x%" PRIx8, item->u.byte_value);
 		break;
 
 	case SIDE_TYPE_ENUM:
@@ -856,8 +856,8 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 
 	case SIDE_TYPE_STRING:
-		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		printf("\"%s\"", (const char *)(uintptr_t) item->u.string);
+		tracer_print_type_header(":", type_desc->u.side_string.attr, type_desc->u.side_string.nr_attr);
+		printf("\"%s\"", (const char *)(uintptr_t) item->u.string_value);
 		break;
 	case SIDE_TYPE_STRUCT:
 		tracer_print_struct(type_desc, item->u.side_struct);
@@ -901,8 +901,8 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		tracer_print_vla_fixint(type_desc, item);
 		break;
 	case SIDE_TYPE_DYNAMIC:
-		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
-		tracer_print_dynamic(&item->u.dynamic);
+		tracer_print_type_header(":", type_desc->u.side_dynamic.attr, type_desc->u.side_dynamic.nr_attr);
+		tracer_print_dynamic(&item->u.dynamic_value);
 		break;
 	default:
 		fprintf(stderr, "<UNKNOWN TYPE>");
@@ -1164,7 +1164,7 @@ void tracer_print_array_fixint(const struct side_type_description *type_desc, co
 			sav_elem.u.integer_value.side_s64 = ((const int64_t *) p)[i];
 			break;
 		case SIDE_TYPE_BYTE:
-			sav_elem.u.side_byte = ((const uint8_t *) p)[i];
+			sav_elem.u.byte_value = ((const uint8_t *) p)[i];
 			break;
 		case SIDE_TYPE_POINTER32:
 			sav_elem.u.integer_value.side_u32 = ((const uint32_t *) p)[i];
@@ -1281,7 +1281,7 @@ void tracer_print_vla_fixint(const struct side_type_description *type_desc, cons
 			sav_elem.u.integer_value.side_s64 = ((const int64_t *) p)[i];
 			break;
 		case SIDE_TYPE_BYTE:
-			sav_elem.u.side_byte = ((const uint8_t *) p)[i];
+			sav_elem.u.byte_value = ((const uint8_t *) p)[i];
 			break;
 		case SIDE_TYPE_POINTER32:
 			sav_elem.u.integer_value.side_u32 = ((const uint32_t *) p)[i];
@@ -1438,12 +1438,12 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	printf("{ ");
 	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
-		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
+		tracer_print_type_header("::", item->u.side_null_type.attr, item->u.side_null_type.nr_attr);
 		printf("<NULL TYPE>");
 		break;
 	case SIDE_DYNAMIC_TYPE_BOOL:
-		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("%s", item->u.side_basic.u.side_bool ? "true" : "false");
+		tracer_print_type_header("::", item->u.side_bool.type.attr, item->u.side_bool.type.nr_attr);
+		printf("%s", item->u.side_bool.value ? "true" : "false");
 		break;
 	case SIDE_DYNAMIC_TYPE_U8:
 	case SIDE_DYNAMIC_TYPE_U16:
@@ -1457,8 +1457,8 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 				TRACER_DISPLAY_BASE_10);
 		break;
 	case SIDE_DYNAMIC_TYPE_BYTE:
-		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("0x%" PRIx8, item->u.side_basic.u.side_byte);
+		tracer_print_type_header("::", item->u.side_byte.type.attr, item->u.side_byte.type.nr_attr);
+		printf("0x%" PRIx8, item->u.side_byte.value);
 		break;
 
 	case SIDE_DYNAMIC_TYPE_POINTER32:
@@ -1476,8 +1476,8 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 		break;
 
 	case SIDE_DYNAMIC_TYPE_STRING:
-		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
-		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_basic.u.string);
+		tracer_print_type_header("::", item->u.side_string.type.attr, item->u.side_string.type.nr_attr);
+		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_string.value);
 		break;
 	case SIDE_DYNAMIC_TYPE_STRUCT:
 		tracer_print_dynamic_struct(item->u.side_dynamic_struct);
