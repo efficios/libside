@@ -22,13 +22,13 @@ enum tracer_display_base {
 static struct side_tracer_handle *tracer_handle;
 
 static
-void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *sav_desc);
+void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
 void tracer_print_struct_sg(const struct side_type *type_desc, void *ptr);
 static
-void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *sav_desc);
+void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
-void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *sav_desc);
+void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
 void tracer_print_vla_visitor(const struct side_type *type_desc, void *app_ctx);
 static
@@ -977,10 +977,10 @@ void tracer_print_field(const struct side_event_field *item_desc, const struct s
 }
 
 static
-void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *sav_desc)
+void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
 {
-	const struct side_arg *sav = sav_desc->sav;
-	uint32_t side_sav_len = sav_desc->len;
+	const struct side_arg *sav = side_arg_vec->sav;
+	uint32_t side_sav_len = side_arg_vec->len;
 	int i;
 
 	if (type_desc->u.side_struct->nr_fields != side_sav_len) {
@@ -1056,10 +1056,10 @@ void tracer_print_struct_sg(const struct side_type *type_desc, void *ptr)
 }
 
 static
-void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *sav_desc)
+void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
 {
-	const struct side_arg *sav = sav_desc->sav;
-	uint32_t side_sav_len = sav_desc->len;
+	const struct side_arg *sav = side_arg_vec->sav;
+	uint32_t side_sav_len = side_arg_vec->len;
 	int i;
 
 	if (type_desc->u.side_array.length != side_sav_len) {
@@ -1078,10 +1078,10 @@ void tracer_print_array(const struct side_type *type_desc, const struct side_arg
 }
 
 static
-void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *sav_desc)
+void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
 {
-	const struct side_arg *sav = sav_desc->sav;
-	uint32_t side_sav_len = sav_desc->len;
+	const struct side_arg *sav = side_arg_vec->sav;
+	uint32_t side_sav_len = side_arg_vec->len;
 	int i;
 
 	print_attributes("attr", ":", type_desc->u.side_vla.attr, type_desc->u.side_vla.nr_attr);
@@ -1567,11 +1567,11 @@ void tracer_print_dynamic(const struct side_arg *item)
 
 static
 void tracer_print_static_fields(const struct side_event_description *desc,
-		const struct side_arg_vec *sav_desc,
+		const struct side_arg_vec *side_arg_vec,
 		int *nr_items)
 {
-	const struct side_arg *sav = sav_desc->sav;
-	uint32_t side_sav_len = sav_desc->len;
+	const struct side_arg *sav = side_arg_vec->sav;
+	uint32_t side_sav_len = side_arg_vec->len;
 	int i;
 
 	printf("provider: %s, event: %s", desc->provider_name, desc->event_name);
@@ -1592,24 +1592,24 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 }
 
 void tracer_call(const struct side_event_description *desc,
-		const struct side_arg_vec *sav_desc,
+		const struct side_arg_vec *side_arg_vec,
 		void *priv __attribute__((unused)))
 {
 	int nr_fields = 0;
 
-	tracer_print_static_fields(desc, sav_desc, &nr_fields);
+	tracer_print_static_fields(desc, side_arg_vec, &nr_fields);
 	printf("\n");
 }
 
 void tracer_call_variadic(const struct side_event_description *desc,
-		const struct side_arg_vec *sav_desc,
+		const struct side_arg_vec *side_arg_vec,
 		const struct side_arg_dynamic_event_struct *var_struct,
 		void *priv __attribute__((unused)))
 {
 	uint32_t var_struct_len = var_struct->len;
 	int nr_fields = 0, i;
 
-	tracer_print_static_fields(desc, sav_desc, &nr_fields);
+	tracer_print_static_fields(desc, side_arg_vec, &nr_fields);
 
 	if (side_unlikely(!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))) {
 		fprintf(stderr, "ERROR: unexpected non-variadic event description\n");

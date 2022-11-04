@@ -391,10 +391,10 @@ enum side_event_flags {
 struct side_callback {
 	union {
 		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			void *priv);
 		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			const struct side_arg_dynamic_event_struct *var_struct,
 			void *priv);
 	} SIDE_PACKED u;
@@ -1306,11 +1306,11 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_event_call(_identifier, _sav) \
 	{ \
 		const struct side_arg side_sav[] = { _sav }; \
-		const struct side_arg_vec sav_desc = { \
+		const struct side_arg_vec side_arg_vec = { \
 			.sav = side_sav, \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		side_call(&(_identifier), &sav_desc); \
+		side_call(&(_identifier), &side_arg_vec); \
 	}
 
 #define side_event(_identifier, _sav) \
@@ -1320,7 +1320,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_event_call_variadic(_identifier, _sav, _var_fields, _attr) \
 	{ \
 		const struct side_arg side_sav[] = { _sav }; \
-		const struct side_arg_vec sav_desc = { \
+		const struct side_arg_vec side_arg_vec = { \
 			.sav = side_sav, \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
@@ -1331,7 +1331,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 		}; \
-		side_call_variadic(&(_identifier), &sav_desc, &var_struct); \
+		side_call_variadic(&(_identifier), &side_arg_vec, &var_struct); \
 	}
 
 #define side_event_variadic(_identifier, _sav, _var, _attr) \
@@ -1389,30 +1389,30 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 extern const struct side_callback side_empty_callback;
 
 void side_call(const struct side_event_description *desc,
-	const struct side_arg_vec *sav_desc);
+	const struct side_arg_vec *side_arg_vec);
 void side_call_variadic(const struct side_event_description *desc,
-	const struct side_arg_vec *sav_desc,
+	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_event_struct *var_struct);
 
 int side_tracer_callback_register(struct side_event_description *desc,
 		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			void *priv),
 		void *priv);
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
 		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			const struct side_arg_dynamic_event_struct *var_struct,
 			void *priv),
 		void *priv);
 int side_tracer_callback_unregister(struct side_event_description *desc,
 		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			void *priv),
 		void *priv);
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
 		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			const struct side_arg_dynamic_event_struct *var_struct,
 			void *priv),
 		void *priv);

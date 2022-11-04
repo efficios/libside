@@ -66,7 +66,7 @@ const struct side_callback side_empty_callback;
 void side_init(void) __attribute__((constructor));
 void side_exit(void) __attribute__((destructor));
 
-void side_call(const struct side_event_description *desc, const struct side_arg_vec *sav_desc)
+void side_call(const struct side_event_description *desc, const struct side_arg_vec *side_arg_vec)
 {
 	const struct side_callback *side_cb;
 	unsigned int rcu_period;
@@ -86,12 +86,12 @@ void side_call(const struct side_event_description *desc, const struct side_arg_
 	}
 	rcu_period = side_rcu_read_begin(&rcu_gp);
 	for (side_cb = side_rcu_dereference(desc->callbacks); side_cb->u.call != NULL; side_cb++)
-		side_cb->u.call(desc, sav_desc, side_cb->priv);
+		side_cb->u.call(desc, side_arg_vec, side_cb->priv);
 	side_rcu_read_end(&rcu_gp, rcu_period);
 }
 
 void side_call_variadic(const struct side_event_description *desc,
-	const struct side_arg_vec *sav_desc,
+	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_event_struct *var_struct)
 {
 	const struct side_callback *side_cb;
@@ -112,7 +112,7 @@ void side_call_variadic(const struct side_event_description *desc,
 	}
 	rcu_period = side_rcu_read_begin(&rcu_gp);
 	for (side_cb = side_rcu_dereference(desc->callbacks); side_cb->u.call_variadic != NULL; side_cb++)
-		side_cb->u.call_variadic(desc, sav_desc, var_struct, side_cb->priv);
+		side_cb->u.call_variadic(desc, side_arg_vec, var_struct, side_cb->priv);
 	side_rcu_read_end(&rcu_gp, rcu_period);
 }
 
@@ -183,7 +183,7 @@ unlock:
 
 int side_tracer_callback_register(struct side_event_description *desc,
 		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			void *priv),
 		void *priv)
 {
@@ -194,7 +194,7 @@ int side_tracer_callback_register(struct side_event_description *desc,
 
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
 		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			const struct side_arg_dynamic_event_struct *var_struct,
 			void *priv),
 		void *priv)
@@ -255,7 +255,7 @@ unlock:
 
 int side_tracer_callback_unregister(struct side_event_description *desc,
 		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			void *priv),
 		void *priv)
 {
@@ -266,7 +266,7 @@ int side_tracer_callback_unregister(struct side_event_description *desc,
 
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
 		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *sav_desc,
+			const struct side_arg_vec *side_arg_vec,
 			const struct side_arg_dynamic_event_struct *var_struct,
 			void *priv),
 		void *priv)
