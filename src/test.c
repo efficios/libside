@@ -1474,8 +1474,8 @@ struct test {
 	int64_t k;
 };
 
-static side_define_struct_sg(mystructsgdef,
-	side_field_sg_list(
+static side_define_struct(mystructsgdef,
+	side_field_list(
 		side_field_sg_unsigned_integer("a", offsetof(struct test, a),
 			side_struct_field_sizeof_bit(struct test, a), 0,
 			side_struct_field_sizeof_bit(struct test, a), side_attr_list()),
@@ -1503,14 +1503,15 @@ static side_define_struct_sg(mystructsgdef,
 		side_field_sg_signed_integer("k", offsetof(struct test, k),
 			side_struct_field_sizeof_bit(struct test, k), 1, 63,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_sg_null("null", side_attr_list()),
 	),
 	side_attr_list()
 );
 
 side_static_event(my_provider_event_structsg, "myprovider", "myeventstructsg", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_struct_sg("structsg", &mystructsgdef),
+		side_field_struct_sg("structsg", &mystructsgdef, 0),
+		side_field_sg_signed_integer("intsg", 0, 32, 0, 32,
+			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 	),
 	side_attr_list()
 );
@@ -1532,7 +1533,13 @@ void test_struct_sg(void)
 			.j = -1,
 			.k = -1,
 		};
-		side_event_call(my_provider_event_structsg, side_arg_list(side_arg_struct_sg(&mystruct)));
+		int32_t val = -66;
+		side_event_call(my_provider_event_structsg,
+			side_arg_list(
+				side_arg_struct_sg(&mystruct),
+				side_arg_signed_integer_sg(&val),
+			)
+		);
 	}
 }
 

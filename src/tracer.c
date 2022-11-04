@@ -24,7 +24,9 @@ static struct side_tracer_handle *tracer_handle;
 static
 void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
-void tracer_print_struct_sg(const struct side_type *type_desc, void *ptr);
+void tracer_print_sg_struct(const struct side_type_sg *type_sg, void *_ptr);
+static
+void tracer_print_sg_integer_type(const struct side_type_sg *type_sg, void *_ptr);
 static
 void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
@@ -899,7 +901,11 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_struct(type_desc, item->u.side_static.side_struct);
 		break;
 	case SIDE_TYPE_STRUCT_SG:
-		tracer_print_struct_sg(type_desc, item->u.side_static.side_struct_sg_ptr);
+		tracer_print_sg_struct(&type_desc->u.side_sg, item->u.side_static.side_struct_sg_ptr);
+		break;
+	case SIDE_TYPE_SG_UNSIGNED_INT:
+	case SIDE_TYPE_SG_SIGNED_INT:
+		tracer_print_sg_integer_type(&type_desc->u.side_sg, item->u.side_static.side_integer_sg_ptr);
 		break;
 	case SIDE_TYPE_ARRAY:
 		tracer_print_array(type_desc, item->u.side_static.side_array);
@@ -998,59 +1004,63 @@ void tracer_print_struct(const struct side_type *type_desc, const struct side_ar
 }
 
 static
-void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *_ptr)
+void tracer_print_sg_integer_type(const struct side_type_sg *type_sg, void *_ptr)
 {
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
 
-	printf("{ ");
-	switch (sg_type->type) {
-	case SIDE_TYPE_SG_NULL:
-		tracer_print_type_header(":", sg_type->u.side_null.attr, sg_type->u.side_null.nr_attr);
-		printf("<NULL TYPE>");
-		break;
-
-	case SIDE_TYPE_SG_UNSIGNED_INT:
-	case SIDE_TYPE_SG_SIGNED_INT:
-		switch (sg_type->u.side_integer.type.integer_size_bits) {
-		case 8:
-		case 16:
-		case 32:
-		case 64:
-			break;
-		default:
-			abort();
-		}
-		memcpy(&value, ptr + sg_type->offset, sg_type->u.side_integer.type.integer_size_bits >> 3);
-		tracer_print_type_integer(":", &sg_type->u.side_integer.type, &value,
-				sg_type->u.side_integer.offset_bits, TRACER_DISPLAY_BASE_10);
+	switch (type_sg->u.side_integer.type.integer_size_bits) {
+	case 8:
+	case 16:
+	case 32:
+	case 64:
 		break;
 	default:
-		fprintf(stderr, "<UNKNOWN TYPE>");
+		abort();
+	}
+	memcpy(&value, ptr + type_sg->offset, type_sg->u.side_integer.type.integer_size_bits >> 3);
+	tracer_print_type_integer(":", &type_sg->u.side_integer.type, &value,
+			type_sg->u.side_integer.offset_bits, TRACER_DISPLAY_BASE_10);
+}
+
+static
+void tracer_print_sg_type(const struct side_type *type_desc, void *ptr)
+{
+	printf("{ ");
+	switch (type_desc->type) {
+	case SIDE_TYPE_SG_UNSIGNED_INT:
+	case SIDE_TYPE_SG_SIGNED_INT:
+		tracer_print_sg_integer_type(&type_desc->u.side_sg, ptr);
+		break;
+	case SIDE_TYPE_SG_STRUCT:
+		tracer_print_sg_struct(&type_desc->u.side_sg, ptr);
+		break;
+	default:
+		fprintf(stderr, "<UNKNOWN SCATTER-GATHER TYPE>");
 		abort();
 	}
 	printf(" }");
 }
 
 static
-void tracer_print_sg_field(const struct side_struct_field_sg *field_sg, void *ptr)
+void tracer_print_sg_field(const struct side_event_field *field, void *ptr)
 {
-	printf("%s: ", field_sg->field_name);
-	tracer_print_sg_type(&field_sg->side_type, ptr);
+	printf("%s: ", field->field_name);
+	tracer_print_sg_type(&field->side_type, ptr);
 }
 
 static
-void tracer_print_struct_sg(const struct side_type *type_desc, void *ptr)
+void tracer_print_sg_struct(const struct side_type_sg *type_sg, void *_ptr)
 {
-	const struct side_type_struct_sg *struct_sg = type_desc->u.side_struct_sg;
+	char *ptr = (char *) _ptr;
 	int i;
 
-	print_attributes("attr", ":", struct_sg->attr, struct_sg->nr_attr);
-	printf("%s", struct_sg->nr_attr ? ", " : "");
+	print_attributes("attr", ":", type_sg->u.side_struct->attr, type_sg->u.side_struct->nr_attr);
+	printf("%s", type_sg->u.side_struct->nr_attr ? ", " : "");
 	printf("fields: { ");
-	for (i = 0; i < struct_sg->nr_fields; i++) {
+	for (i = 0; i < type_sg->u.side_struct->nr_fields; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_sg_field(&struct_sg->fields_sg[i], ptr);
+		tracer_print_sg_field(&type_sg->u.side_struct->fields[i], ptr + type_sg->offset);
 	}
 	printf(" }");
 }
