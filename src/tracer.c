@@ -568,6 +568,7 @@ void tracer_print_type_integer(const char *separator,
 		const union side_integer_value *value)
 {
 	enum tracer_display_base base;
+	bool reverse_bo;
 	union {
 		uint64_t v_unsigned;
 		int64_t v_signed;
@@ -576,6 +577,7 @@ void tracer_print_type_integer(const char *separator,
 	if (!type_integer->len_bits ||
 			type_integer->len_bits > type_integer->integer_size_bits)
 		abort();
+	reverse_bo = type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
 	base = get_attr_display_base(type_integer->attr,
 			type_integer->nr_attr);
 	switch (type_integer->integer_size_bits) {
@@ -590,14 +592,14 @@ void tracer_print_type_integer(const char *separator,
 			int16_t side_s16;
 
 			side_s16 = value->side_s16;
-			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+			if (reverse_bo)
 				side_s16 = side_bswap_16(side_s16);
 			v.v_signed = side_s16;
 		} else {
 			uint16_t side_u16;
 
 			side_u16 = value->side_u16;
-			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+			if (reverse_bo)
 				side_u16 = side_bswap_16(side_u16);
 			v.v_unsigned = side_u16;
 		}
@@ -607,14 +609,14 @@ void tracer_print_type_integer(const char *separator,
 			int32_t side_s32;
 
 			side_s32 = value->side_s32;
-			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+			if (reverse_bo)
 				side_s32 = side_bswap_32(side_s32);
 			v.v_signed = side_s32;
 		} else {
 			uint32_t side_u32;
 
 			side_u32 = value->side_u32;
-			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+			if (reverse_bo)
 				side_u32 = side_bswap_32(side_u32);
 			v.v_unsigned = side_u32;
 		}
@@ -624,14 +626,14 @@ void tracer_print_type_integer(const char *separator,
 			int64_t side_s64;
 
 			side_s64 = value->side_s64;
-			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+			if (reverse_bo)
 				side_s64 = side_bswap_64(side_s64);
 			v.v_signed = side_s64;
 		} else {
 			uint64_t side_u64;
 
 			side_u64 = value->side_u64;
-			if (type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
+			if (reverse_bo)
 				side_u64 = side_bswap_64(side_u64);
 			v.v_unsigned = side_u64;
 		}
