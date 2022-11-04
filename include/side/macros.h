@@ -55,4 +55,6 @@
 #define SIDE_BITS_PER_LONG	32
 #endif
 
+#define SIDE_PACKED	__attribute__((packed))
+
 #endif /* _SIDE_MACROS_H */
