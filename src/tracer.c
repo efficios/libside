@@ -672,6 +672,99 @@ void tracer_print_type_integer(const char *separator,
 }
 
 static
+void tracer_print_type_float(const char *separator,
+		const struct side_type_float *type_float,
+		const union side_float_value *value)
+{
+	bool reverse_bo;
+
+	reverse_bo = type_float->byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST;
+	tracer_print_type_header(separator, type_float->attr, type_float->nr_attr);
+	switch (type_float->float_size_bits) {
+	case 16:
+	{
+#if __HAVE_FLOAT16
+		union {
+			_Float16 f;
+			uint16_t u;
+		} float16 = {
+			.f = value->side_float_binary16,
+		};
+
+		if (reverse_bo)
+			float16.u = side_bswap_16(float16.u);
+		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
+		printf("%g", (double) float16.f);
+		break;
+#else
+		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
+		abort();
+#endif
+	}
+	case 32:
+	{
+#if __HAVE_FLOAT32
+		union {
+			_Float32 f;
+			uint32_t u;
+		} float32 = {
+			.f = value->side_float_binary32,
+		};
+
+		if (reverse_bo)
+			float32.u = side_bswap_32(float32.u);
+		printf("%g", (double) float32.f);
+		break;
+#else
+		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
+		abort();
+#endif
+	}
+	case 64:
+	{
+#if __HAVE_FLOAT64
+		union {
+			_Float64 f;
+			uint64_t u;
+		} float64 = {
+			.f = value->side_float_binary64,
+		};
+
+		if (reverse_bo)
+			float64.u = side_bswap_64(float64.u);
+		printf("%g", (double) float64.f);
+		break;
+#else
+		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
+		abort();
+#endif
+	}
+	case 128:
+	{
+#if __HAVE_FLOAT128
+		union {
+			_Float128 f;
+			char arr[16];
+		} float128 = {
+			.f = value->side_float_binary128,
+		};
+
+		if (reverse_bo)
+			side_bswap_128p(float128.arr);
+		printf("%Lg", (long double) float128.f);
+		break;
+#else
+		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
+		abort();
+#endif
+	}
+	default:
+		fprintf(stderr, "ERROR: Unknown float size\n");
+		abort();
+	}
+}
+
+static
 void tracer_print_type(const struct side_type_description *type_desc, const struct side_arg_vec *item)
 {
 	enum side_type type;
@@ -824,85 +917,13 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 		break;
 
 	case SIDE_TYPE_FLOAT_BINARY16:
-	{
-#if __HAVE_FLOAT16
-		union {
-			_Float16 f;
-			uint16_t u;
-		} float16 = {
-			.f = item->u.float_value.side_float_binary16,
-		};
-
-		if (type_to_host_reverse_bo(type_desc))
-			float16.u = side_bswap_16(float16.u);
-		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
-		printf("%g", (double) float16.f);
-		break;
-#else
-		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
-		abort();
-#endif
-	}
 	case SIDE_TYPE_FLOAT_BINARY32:
-	{
-#if __HAVE_FLOAT32
-		union {
-			_Float32 f;
-			uint32_t u;
-		} float32 = {
-			.f = item->u.float_value.side_float_binary32,
-		};
-
-		if (type_to_host_reverse_bo(type_desc))
-			float32.u = side_bswap_32(float32.u);
-		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
-		printf("%g", (double) float32.f);
-		break;
-#else
-		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
-		abort();
-#endif
-	}
 	case SIDE_TYPE_FLOAT_BINARY64:
-	{
-#if __HAVE_FLOAT64
-		union {
-			_Float64 f;
-			uint64_t u;
-		} float64 = {
-			.f = item->u.float_value.side_float_binary64,
-		};
-
-		if (type_to_host_reverse_bo(type_desc))
-			float64.u = side_bswap_64(float64.u);
-		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
-		printf("%g", (double) float64.f);
-		break;
-#else
-		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
-		abort();
-#endif
-	}
 	case SIDE_TYPE_FLOAT_BINARY128:
-	{
-#if __HAVE_FLOAT128
-		union {
-			_Float128 f;
-			char arr[16];
-		} float128 = {
-			.f = item->u.float_value.side_float_binary128,
-		};
-
-		if (type_to_host_reverse_bo(type_desc))
-			side_bswap_128p(float128.arr);
-		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
-		printf("%Lg", (long double) float128.f);
+		tracer_print_type_float(":", &type_desc->u.side_float,
+					&item->u.float_value);
 		break;
-#else
-		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
-		abort();
-#endif
-	}
+
 	case SIDE_TYPE_STRING:
 		tracer_print_type_header(":", type_desc->u.side_basic.attr, type_desc->u.side_basic.nr_attr);
 		printf("\"%s\"", (const char *)(uintptr_t) item->u.string);
@@ -1816,85 +1837,13 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	}
 
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY16:
-	{
-#if __HAVE_FLOAT16
-		union {
-			_Float16 f;
-			uint16_t u;
-		} float16 = {
-			.f = item->u.side_float.value.side_float_binary16,
-		};
-
-		if (dynamic_type_to_host_reverse_bo(item))
-			float16.u = side_bswap_16(float16.u);
-		tracer_print_type_header("::", item->u.side_float.type.attr, item->u.side_float.type.nr_attr);
-		printf("%g", (double) float16.f);
-		break;
-#else
-		fprintf(stderr, "ERROR: Unsupported binary16 float type\n");
-		abort();
-#endif
-	}
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY32:
-	{
-#if __HAVE_FLOAT32
-		union {
-			_Float32 f;
-			uint32_t u;
-		} float32 = {
-			.f = item->u.side_float.value.side_float_binary32,
-		};
-
-		if (dynamic_type_to_host_reverse_bo(item))
-			float32.u = side_bswap_32(float32.u);
-		tracer_print_type_header("::", item->u.side_float.type.attr, item->u.side_float.type.nr_attr);
-		printf("%g", (double) float32.f);
-		break;
-#else
-		fprintf(stderr, "ERROR: Unsupported binary32 float type\n");
-		abort();
-#endif
-	}
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY64:
-	{
-#if __HAVE_FLOAT64
-		union {
-			_Float64 f;
-			uint64_t u;
-		} float64 = {
-			.f = item->u.side_float.value.side_float_binary64,
-		};
-
-		if (dynamic_type_to_host_reverse_bo(item))
-			float64.u = side_bswap_64(float64.u);
-		tracer_print_type_header("::", item->u.side_float.type.attr, item->u.side_float.type.nr_attr);
-		printf("%g", (double) float64.f);
-		break;
-#else
-		fprintf(stderr, "ERROR: Unsupported binary64 float type\n");
-		abort();
-#endif
-	}
 	case SIDE_DYNAMIC_TYPE_FLOAT_BINARY128:
-	{
-#if __HAVE_FLOAT128
-		union {
-			_Float128 f;
-			char arr[16];
-		} float128 = {
-			.f = item->u.side_float.value.side_float_binary128,
-		};
-
-		if (dynamic_type_to_host_reverse_bo(item))
-			side_bswap_128p(float128.arr);
-		tracer_print_type_header("::", item->u.side_float.type.attr, item->u.side_float.type.nr_attr);
-		printf("%Lg", (long double) float128.f);
+		tracer_print_type_float("::", &item->u.side_float.type,
+					&item->u.side_float.value);
 		break;
-#else
-		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
-		abort();
-#endif
-	}
+
 	case SIDE_DYNAMIC_TYPE_STRING:
 		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
 		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_basic.u.string);
