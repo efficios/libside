@@ -654,26 +654,7 @@ enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_dynam
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg elem = {
-			.type = SIDE_TYPE_DYNAMIC_U32,
-			.u = {
-				.side_dynamic = {
-					.side_integer = {
-						.type = {
-							.attr = NULL,
-							.nr_attr = 0,
-							.integer_size_bits = 32,
-							.len_bits = 32,
-							.signedness = false,
-							.byte_order = SIDE_TYPE_BYTE_ORDER_HOST,
-						},
-						.value = {
-							.side_u32 = ctx->ptr[i],
-						},
-					},
-				},
-			},
-		};
+		const struct side_arg elem = side_arg_dynamic_u32(ctx->ptr[i], side_attr_list());
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
 	}
@@ -725,26 +706,7 @@ enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dy
 	for (i = 0; i < length; i++) {
 		struct side_arg_dynamic_event_field dynamic_field = {
 			.field_name = ctx->ptr[i].name,
-			.elem = {
-				.type = SIDE_TYPE_DYNAMIC_U32,
-				.u = {
-					.side_dynamic = {
-						.side_integer = {
-							.type = {
-								.attr = NULL,
-								.nr_attr = 0,
-								.integer_size_bits = 32,
-								.len_bits = 32,
-								.signedness = false,
-								.byte_order = SIDE_TYPE_BYTE_ORDER_HOST,
-							},
-							.value = {
-								.side_u32 = ctx->ptr[i].value,
-							},
-						},
-					},
-				},
-			},
+			.elem = side_arg_dynamic_u32(ctx->ptr[i].value, side_attr_list()),
 		};
 		if (tracer_ctx->write_field(tracer_ctx, &dynamic_field) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
