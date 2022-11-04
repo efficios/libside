@@ -20,8 +20,8 @@ side_static_event(my_provider_event, "myprovider", "myevent", SIDE_LOGLEVEL_DEBU
 		side_field_u32("abc", side_attr_list()),
 		side_field_s64("def", side_attr_list()),
 		side_field_pointer("ptr", side_attr_list()),
-		side_field_dynamic("dynamic", side_attr_list()),
-		side_field_dynamic("dynamic_pointer", side_attr_list()),
+		side_field_dynamic("dynamic"),
+		side_field_dynamic("dynamic_pointer"),
 		side_field_null("null", side_attr_list()),
 	),
 	side_attr_list()
@@ -38,8 +38,8 @@ void test_fields(void)
 			side_arg_u32(uw),
 			side_arg_s64(sdw),
 			side_arg_pointer((void *) 0x1),
-			side_arg_dynamic(side_arg_dynamic_string("zzz", side_attr_list())),
-			side_arg_dynamic(side_arg_dynamic_pointer((void *) 0x1, side_attr_list())),
+			side_arg_dynamic_string("zzz", side_attr_list()),
+			side_arg_dynamic_pointer((void *) 0x1, side_attr_list()),
 			side_arg_null(),
 		)
 	);
@@ -171,7 +171,7 @@ enum side_visitor_status test_visitor(const struct side_tracer_visitor_ctx *trac
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg_vec elem = side_arg_u32(ctx->ptr[i]);
+		const struct side_arg elem = side_arg_u32(ctx->ptr[i]);
 
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
@@ -215,7 +215,7 @@ enum side_visitor_status test_inner_visitor(const struct side_tracer_visitor_ctx
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg_vec elem = side_arg_u32(ctx->ptr[i]);
+		const struct side_arg elem = side_arg_u32(ctx->ptr[i]);
 
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
@@ -239,7 +239,7 @@ enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx
 			.ptr = ctx->ptr[i],
 			.length = 2,
 		};
-		const struct side_arg_vec elem = side_arg_vla_visitor(&inner_ctx);
+		const struct side_arg elem = side_arg_vla_visitor(&inner_ctx);
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
 	}
@@ -315,7 +315,7 @@ void test_vla_fixint(void)
 side_static_event(my_provider_event_dynamic_basic,
 	"myprovider", "mydynamicbasic", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -324,13 +324,13 @@ static
 void test_dynamic_basic_type(void)
 {
 	side_event(my_provider_event_dynamic_basic,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_s16(-33, side_attr_list()))));
+		side_arg_list(side_arg_dynamic_s16(-33, side_attr_list())));
 }
 
 side_static_event(my_provider_event_dynamic_vla,
 	"myprovider", "mydynamicvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -347,13 +347,13 @@ void test_dynamic_vla(void)
 		side_attr_list()
 	);
 	side_event(my_provider_event_dynamic_vla,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
+		side_arg_list(side_arg_dynamic_vla(&myvla)));
 }
 
 side_static_event(my_provider_event_dynamic_null,
 	"myprovider", "mydynamicnull", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -362,13 +362,13 @@ static
 void test_dynamic_null(void)
 {
 	side_event(my_provider_event_dynamic_null,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_null(side_attr_list()))));
+		side_arg_list(side_arg_dynamic_null(side_attr_list())));
 }
 
 side_static_event(my_provider_event_dynamic_struct,
 	"myprovider", "mydynamicstruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -386,13 +386,13 @@ void test_dynamic_struct(void)
 	);
 
 	side_event(my_provider_event_dynamic_struct,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
+		side_arg_list(side_arg_dynamic_struct(&mystruct)));
 }
 
 side_static_event(my_provider_event_dynamic_nested_struct,
 	"myprovider", "mydynamicnestedstruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -422,13 +422,13 @@ void test_dynamic_nested_struct(void)
 		side_attr_list()
 	);
 	side_event(my_provider_event_dynamic_nested_struct,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
+		side_arg_list(side_arg_dynamic_struct(&mystruct)));
 }
 
 side_static_event(my_provider_event_dynamic_vla_struct,
 	"myprovider", "mydynamicvlastruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -453,13 +453,13 @@ void test_dynamic_vla_struct(void)
 		side_attr_list()
 	);
 	side_event(my_provider_event_dynamic_vla_struct,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
+		side_arg_list(side_arg_dynamic_vla(&myvla)));
 }
 
 side_static_event(my_provider_event_dynamic_struct_vla,
 	"myprovider", "mydynamicstructvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -491,13 +491,13 @@ void test_dynamic_struct_vla(void)
 		side_attr_list()
 	);
 	side_event(my_provider_event_dynamic_struct_vla,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_struct(&mystruct))));
+		side_arg_list(side_arg_dynamic_struct(&mystruct)));
 }
 
 side_static_event(my_provider_event_dynamic_nested_vla,
 	"myprovider", "mydynamicnestedvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -529,7 +529,7 @@ void test_dynamic_nested_vla(void)
 		side_attr_list()
 	);
 	side_event(my_provider_event_dynamic_nested_vla,
-		side_arg_list(side_arg_dynamic(side_arg_dynamic_vla(&myvla))));
+		side_arg_list(side_arg_dynamic_vla(&myvla)));
 }
 
 side_static_event_variadic(my_provider_event_variadic,
@@ -637,7 +637,7 @@ void test_dynamic_bool(void)
 side_static_event(my_provider_event_dynamic_vla_visitor,
 	"myprovider", "mydynamicvlavisitor", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -654,20 +654,22 @@ enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_dynam
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg_dynamic_vec elem = {
-			.dynamic_type = SIDE_DYNAMIC_TYPE_U32,
+		const struct side_arg elem = {
+			.type = SIDE_TYPE_DYNAMIC_U32,
 			.u = {
-				.side_integer = {
-					.type = {
-						.attr = NULL,
-						.nr_attr = 0,
-						.integer_size_bits = 32,
-						.len_bits = 32,
-						.signedness = false,
-						.byte_order = SIDE_TYPE_BYTE_ORDER_HOST,
-					},
-					.value = {
-						.side_u32 = ctx->ptr[i],
+				.side_dynamic = {
+					.side_integer = {
+						.type = {
+							.attr = NULL,
+							.nr_attr = 0,
+							.integer_size_bits = 32,
+							.len_bits = 32,
+							.signedness = false,
+							.byte_order = SIDE_TYPE_BYTE_ORDER_HOST,
+						},
+						.value = {
+							.side_u32 = ctx->ptr[i],
+						},
 					},
 				},
 			},
@@ -690,9 +692,7 @@ void test_dynamic_vla_with_visitor(void)
 		};
 		side_event_call(my_provider_event_dynamic_vla_visitor,
 			side_arg_list(
-				side_arg_dynamic(
-					side_arg_dynamic_vla_visitor(test_dynamic_vla_visitor, &ctx, side_attr_list())
-				)
+				side_arg_dynamic_vla_visitor(test_dynamic_vla_visitor, &ctx, side_attr_list())
 			)
 		);
 	}
@@ -701,7 +701,7 @@ void test_dynamic_vla_with_visitor(void)
 side_static_event(my_provider_event_dynamic_struct_visitor,
 	"myprovider", "mydynamicstructvisitor", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_dynamic("dynamic", side_attr_list()),
+		side_field_dynamic("dynamic"),
 	),
 	side_attr_list()
 );
@@ -726,19 +726,21 @@ enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dy
 		struct side_arg_dynamic_event_field dynamic_field = {
 			.field_name = ctx->ptr[i].name,
 			.elem = {
-				.dynamic_type = SIDE_DYNAMIC_TYPE_U32,
+				.type = SIDE_TYPE_DYNAMIC_U32,
 				.u = {
-					.side_integer = {
-						.type = {
-							.attr = NULL,
-							.nr_attr = 0,
-							.integer_size_bits = 32,
-							.len_bits = 32,
-							.signedness = false,
-							.byte_order = SIDE_TYPE_BYTE_ORDER_HOST,
-						},
-						.value = {
-							.side_u32 = ctx->ptr[i].value,
+					.side_dynamic = {
+						.side_integer = {
+							.type = {
+								.attr = NULL,
+								.nr_attr = 0,
+								.integer_size_bits = 32,
+								.len_bits = 32,
+								.signedness = false,
+								.byte_order = SIDE_TYPE_BYTE_ORDER_HOST,
+							},
+							.value = {
+								.side_u32 = ctx->ptr[i].value,
+							},
 						},
 					},
 				},
@@ -767,9 +769,7 @@ void test_dynamic_struct_with_visitor(void)
 		};
 		side_event_call(my_provider_event_dynamic_struct_visitor,
 			side_arg_list(
-				side_arg_dynamic(
-					side_arg_dynamic_struct_visitor(test_dynamic_struct_visitor, &ctx, side_attr_list())
-				)
+				side_arg_dynamic_struct_visitor(test_dynamic_struct_visitor, &ctx, side_attr_list())
 			)
 		);
 	}
