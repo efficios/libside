@@ -240,6 +240,22 @@ struct side_attr {
 	const struct side_attr_value value;
 };
 
+struct side_type_integer {
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+	uint16_t integer_size_bits;	/* bits */
+	uint16_t len_bits;		/* bits */
+	uint8_t signedness;		/* true/false */
+	uint8_t byte_order;		/* enum side_type_byte_order */
+};
+
+struct side_type_float {
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+	uint32_t byte_order;		/* enum side_type_byte_order */
+	uint16_t float_size_bits;	/* bits */
+};
+
 struct side_enum_mapping {
 	int64_t range_begin;
 	int64_t range_end;
@@ -274,18 +290,13 @@ struct side_type_struct {
 };
 
 struct side_type_sg_description {
-	uint32_t type;	/* enum side_type_sg */
+	uint64_t offset;	/* bytes */
+	uint32_t type;		/* enum side_type_sg */
 	union {
-		/* Basic types */
 		struct {
-			uint64_t integer_offset;	/* bytes */
-			const struct side_attr *attr;
-			uint32_t nr_attr;
-			uint32_t byte_order;		/* enum side_type_byte_order */
-			uint8_t integer_size_bits;	/* bits */
-			uint8_t offset_bits;		/* bits */
-			uint8_t len_bits;		/* bits */
-		} side_basic;
+			struct side_type_integer type;
+			uint16_t offset_bits;		/* bits */
+		} side_integer;
 	} u;
 };
 
@@ -300,22 +311,6 @@ struct side_type_struct_sg {
 	uint32_t nr_attr;
 	const struct side_struct_field_sg *fields_sg;
 	const struct side_attr *attr;
-};
-
-struct side_type_integer {
-	const struct side_attr *attr;
-	uint32_t nr_attr;
-	uint16_t integer_size_bits;	/* bits */
-	uint16_t len_bits;		/* bits */
-	uint8_t signedness;		/* true/false */
-	uint8_t byte_order;		/* enum side_type_byte_order */
-};
-
-struct side_type_float {
-	const struct side_attr *attr;
-	uint32_t nr_attr;
-	uint32_t byte_order;		/* enum side_type_byte_order */
-	uint16_t float_size_bits;	/* bits */
 };
 
 struct side_type_description {
@@ -752,18 +747,21 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 /* Scatter-gather struct */
 
-#define _side_type_sg_integer(_type, _byte_order, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+#define _side_type_sg_integer(_type, _signedness, _byte_order, _offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
 	{ \
+		.offset = _offset, \
 		.type = _type, \
 		.u = { \
-			.side_basic = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
-				.integer_offset = _integer_offset, \
-				.integer_size_bits = _integer_size_bits, \
+			.side_integer = { \
+				.type = { \
+					.attr = _attr, \
+					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+					.integer_size_bits = _integer_size_bits, \
+					.len_bits = _len_bits, \
+					.signedness = _signedness, \
+					.byte_order = _byte_order, \
+				}, \
 				.offset_bits = _offset_bits, \
-				.len_bits = _len_bits, \
 			}, \
 		}, \
 	}
@@ -775,10 +773,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	}
 
 #define side_type_sg_unsigned_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
-	_side_type_sg_integer(SIDE_TYPE_SG_UNSIGNED_INT, SIDE_TYPE_BYTE_ORDER_HOST, \
+	_side_type_sg_integer(SIDE_TYPE_SG_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_HOST, \
 			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
 #define side_type_sg_signed_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
-	_side_type_sg_integer(SIDE_TYPE_SG_SIGNED_INT, SIDE_TYPE_BYTE_ORDER_HOST, \
+	_side_type_sg_integer(SIDE_TYPE_SG_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_HOST, \
 			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
 
 #define side_field_sg_unsigned_integer(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \

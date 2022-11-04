@@ -148,23 +148,6 @@ bool type_to_host_reverse_bo(const struct side_type_description *type_desc)
 }
 
 static
-bool sg_type_to_host_reverse_bo(const struct side_type_sg_description *sg_type)
-{
-	switch (sg_type->type) {
-	case SIDE_TYPE_SG_UNSIGNED_INT:
-	case SIDE_TYPE_SG_SIGNED_INT:
-		if (sg_type->u.side_basic.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
-			return true;
-		else
-			return false;
-		break;
-	default:
-		fprintf(stderr, "Unexpected type\n");
-		abort();
-	}
-}
-
-static
 bool dynamic_type_to_host_reverse_bo(const struct side_arg_dynamic_vec *item)
 {
 	switch (item->dynamic_type) {
@@ -565,7 +548,8 @@ void tracer_print_type_header(const char *separator,
 static
 void tracer_print_type_integer(const char *separator,
 		const struct side_type_integer *type_integer,
-		const union side_integer_value *value)
+		const union side_integer_value *value,
+		uint16_t offset_bits)
 {
 	enum tracer_display_base base;
 	bool reverse_bo;
@@ -575,7 +559,7 @@ void tracer_print_type_integer(const char *separator,
 	} v;
 
 	if (!type_integer->len_bits ||
-			type_integer->len_bits > type_integer->integer_size_bits)
+			type_integer->len_bits + offset_bits > type_integer->integer_size_bits)
 		abort();
 	reverse_bo = type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
 	base = get_attr_display_base(type_integer->attr,
@@ -641,6 +625,7 @@ void tracer_print_type_integer(const char *separator,
 	default:
 		abort();
 	}
+	v.v_unsigned >>= offset_bits;
 	if (type_integer->len_bits < 64)
 		v.v_unsigned &= (1ULL << type_integer->len_bits) - 1;
 	tracer_print_type_header(separator, type_integer->attr, type_integer->nr_attr);
@@ -877,8 +862,7 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 	case SIDE_TYPE_S16:
 	case SIDE_TYPE_S32:
 	case SIDE_TYPE_S64:
-		tracer_print_type_integer(":", &type_desc->u.side_integer,
-					&item->u.integer_value);
+		tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.integer_value, 0);
 		break;
 
 	case SIDE_TYPE_POINTER32:
@@ -1009,311 +993,28 @@ void tracer_print_struct(const struct side_type_description *type_desc, const st
 }
 
 static
-void tracer_print_sg_integer_type_header(const struct side_type_sg_description *sg_type)
-{
-	print_attributes("attr", ":", sg_type->u.side_basic.attr, sg_type->u.side_basic.nr_attr);
-	printf("%s", sg_type->u.side_basic.nr_attr ? ", " : "");
-	printf("value: ");
-}
-
-static
 void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *_ptr)
 {
-	enum tracer_display_base base = TRACER_DISPLAY_BASE_10;
 	const char *ptr = (const char *) _ptr;
-
-	switch (sg_type->type) {
-	case SIDE_TYPE_SG_UNSIGNED_INT:
-	case SIDE_TYPE_SG_SIGNED_INT:
-		base = get_attr_display_base(sg_type->u.side_basic.attr,
-				sg_type->u.side_basic.nr_attr);
-		break;
-	default:
-		break;
-	}
+	union side_integer_value value;
 
 	printf("{ ");
 	switch (sg_type->type) {
 	case SIDE_TYPE_SG_UNSIGNED_INT:
-	{
-		tracer_print_sg_integer_type_header(sg_type);
-		switch (sg_type->u.side_basic.integer_size_bits) {
-		case 8:
-		{
-			uint8_t v;
-
-			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 8)
-				abort();
-			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
-			v >>= sg_type->u.side_basic.offset_bits;
-			if (sg_type->u.side_basic.len_bits < 8)
-				v &= (1U << sg_type->u.side_basic.len_bits) - 1;
-			switch (base) {
-			case TRACER_DISPLAY_BASE_2:
-				print_integer_binary(v, sg_type->u.side_basic.len_bits);
-				break;
-			case TRACER_DISPLAY_BASE_8:
-				printf("0%" PRIo8, v);
-				break;
-			case TRACER_DISPLAY_BASE_10:
-				printf("%" PRIu8, v);
-				break;
-			case TRACER_DISPLAY_BASE_16:
-				printf("0x%" PRIx8, v);
-				break;
-			default:
-				abort();
-			}
-			break;
-		}
-		case 16:
-		{
-			uint16_t v;
-
-			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 16)
-				abort();
-			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
-			if (sg_type_to_host_reverse_bo(sg_type))
-				v = side_bswap_16(v);
-			v >>= sg_type->u.side_basic.offset_bits;
-			if (sg_type->u.side_basic.len_bits < 16)
-				v &= (1U << sg_type->u.side_basic.len_bits) - 1;
-			switch (base) {
-			case TRACER_DISPLAY_BASE_2:
-				print_integer_binary(v, sg_type->u.side_basic.len_bits);
-				break;
-			case TRACER_DISPLAY_BASE_8:
-				printf("0%" PRIo16, v);
-				break;
-			case TRACER_DISPLAY_BASE_10:
-				printf("%" PRIu16, v);
-				break;
-			case TRACER_DISPLAY_BASE_16:
-				printf("0x%" PRIx16, v);
-				break;
-			default:
-				abort();
-			}
-			break;
-		}
-		case 32:
-		{
-			uint32_t v;
-
-			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 32)
-				abort();
-			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
-			if (sg_type_to_host_reverse_bo(sg_type))
-				v = side_bswap_32(v);
-			v >>= sg_type->u.side_basic.offset_bits;
-			if (sg_type->u.side_basic.len_bits < 32)
-				v &= (1U << sg_type->u.side_basic.len_bits) - 1;
-			switch (base) {
-			case TRACER_DISPLAY_BASE_2:
-				print_integer_binary(v, sg_type->u.side_basic.len_bits);
-				break;
-			case TRACER_DISPLAY_BASE_8:
-				printf("0%" PRIo32, v);
-				break;
-			case TRACER_DISPLAY_BASE_10:
-				printf("%" PRIu32, v);
-				break;
-			case TRACER_DISPLAY_BASE_16:
-				printf("0x%" PRIx32, v);
-				break;
-			default:
-				abort();
-			}
-			break;
-		}
-		case 64:
-		{
-			uint64_t v;
-
-			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 64)
-				abort();
-			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
-			if (sg_type_to_host_reverse_bo(sg_type))
-				v = side_bswap_64(v);
-			v >>= sg_type->u.side_basic.offset_bits;
-			if (sg_type->u.side_basic.len_bits < 64)
-				v &= (1ULL << sg_type->u.side_basic.len_bits) - 1;
-			switch (base) {
-			case TRACER_DISPLAY_BASE_2:
-				print_integer_binary(v, sg_type->u.side_basic.len_bits);
-				break;
-			case TRACER_DISPLAY_BASE_8:
-				printf("0%" PRIo64, v);
-				break;
-			case TRACER_DISPLAY_BASE_10:
-				printf("%" PRIu64, v);
-				break;
-			case TRACER_DISPLAY_BASE_16:
-				printf("0x%" PRIx64, v);
-				break;
-			default:
-				abort();
-			}
-			break;
-		}
-		default:
-			fprintf(stderr, "<UNKNOWN SCATTER-GATHER INTEGER SIZE>");
-			abort();
-		}
-		break;
-	}
 	case SIDE_TYPE_SG_SIGNED_INT:
-	{
-		tracer_print_sg_integer_type_header(sg_type);
-		switch (sg_type->u.side_basic.integer_size_bits) {
+		switch (sg_type->u.side_integer.type.integer_size_bits) {
 		case 8:
-		{
-			int8_t v;
-
-			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 8)
-				abort();
-			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
-			v >>= sg_type->u.side_basic.offset_bits;
-			if (sg_type->u.side_basic.len_bits < 8)
-				v &= (1U << sg_type->u.side_basic.len_bits) - 1;
-			switch (base) {
-			case TRACER_DISPLAY_BASE_2:
-				print_integer_binary(v, sg_type->u.side_basic.len_bits);
-				break;
-			case TRACER_DISPLAY_BASE_8:
-				printf("0%" PRIo8, v);
-				break;
-			case TRACER_DISPLAY_BASE_10:
-				/* Sign-extend. */
-				if (sg_type->u.side_basic.len_bits < 8) {
-					if (v & (1U << (sg_type->u.side_basic.len_bits - 1)))
-						v |= ~((1U << sg_type->u.side_basic.len_bits) - 1);
-				}
-				printf("%" PRId8, v);
-				break;
-			case TRACER_DISPLAY_BASE_16:
-				printf("0x%" PRIx8, v);
-				break;
-			default:
-				abort();
-			}
-			break;
-		}
 		case 16:
-		{
-			int16_t v;
-
-			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 16)
-				abort();
-			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
-			if (sg_type_to_host_reverse_bo(sg_type))
-				v = side_bswap_16(v);
-			v >>= sg_type->u.side_basic.offset_bits;
-			if (sg_type->u.side_basic.len_bits < 16)
-				v &= (1U << sg_type->u.side_basic.len_bits) - 1;
-			switch (base) {
-			case TRACER_DISPLAY_BASE_2:
-				print_integer_binary(v, sg_type->u.side_basic.len_bits);
-				break;
-			case TRACER_DISPLAY_BASE_8:
-				printf("0%" PRIo16, v);
-				break;
-			case TRACER_DISPLAY_BASE_10:
-				/* Sign-extend. */
-				if (sg_type->u.side_basic.len_bits < 16) {
-					if (v & (1U << (sg_type->u.side_basic.len_bits - 1)))
-						v |= ~((1U << sg_type->u.side_basic.len_bits) - 1);
-				}
-				printf("%" PRId16, v);
-				break;
-			case TRACER_DISPLAY_BASE_16:
-				printf("0x%" PRIx16, v);
-				break;
-			default:
-				abort();
-			}
-			break;
-		}
 		case 32:
-		{
-			uint32_t v;
-
-			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 32)
-				abort();
-			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
-			if (sg_type_to_host_reverse_bo(sg_type))
-				v = side_bswap_32(v);
-			v >>= sg_type->u.side_basic.offset_bits;
-			if (sg_type->u.side_basic.len_bits < 32)
-				v &= (1U << sg_type->u.side_basic.len_bits) - 1;
-			switch (base) {
-			case TRACER_DISPLAY_BASE_2:
-				print_integer_binary(v, sg_type->u.side_basic.len_bits);
-				break;
-			case TRACER_DISPLAY_BASE_8:
-				printf("0%" PRIo32, v);
-				break;
-			case TRACER_DISPLAY_BASE_10:
-				/* Sign-extend. */
-				if (sg_type->u.side_basic.len_bits < 32) {
-					if (v & (1U << (sg_type->u.side_basic.len_bits - 1)))
-						v |= ~((1U << sg_type->u.side_basic.len_bits) - 1);
-				}
-				printf("%" PRId32, v);
-				break;
-			case TRACER_DISPLAY_BASE_16:
-				printf("0x%" PRIx32, v);
-				break;
-			default:
-				abort();
-			}
-			break;
-		}
 		case 64:
-		{
-			uint64_t v;
-
-			if (!sg_type->u.side_basic.len_bits || sg_type->u.side_basic.len_bits + sg_type->u.side_basic.offset_bits > 64)
-				abort();
-			memcpy(&v, ptr + sg_type->u.side_basic.integer_offset, sizeof(v));
-			if (sg_type_to_host_reverse_bo(sg_type))
-				v = side_bswap_64(v);
-			v >>= sg_type->u.side_basic.offset_bits;
-			if (sg_type->u.side_basic.len_bits < 64)
-				v &= (1ULL << sg_type->u.side_basic.len_bits) - 1;
-			switch (base) {
-			case TRACER_DISPLAY_BASE_2:
-				print_integer_binary(v, sg_type->u.side_basic.len_bits);
-				break;
-			case TRACER_DISPLAY_BASE_8:
-				printf("0%" PRIo64, v);
-				break;
-			case TRACER_DISPLAY_BASE_10:
-				/* Sign-extend. */
-				if (sg_type->u.side_basic.len_bits < 64) {
-					if (v & (1ULL << (sg_type->u.side_basic.len_bits - 1)))
-						v |= ~((1ULL << sg_type->u.side_basic.len_bits) - 1);
-				}
-				printf("%" PRId64, v);
-				break;
-			case TRACER_DISPLAY_BASE_16:
-				printf("0x%" PRIx64, v);
-				break;
-			default:
-				abort();
-			}
 			break;
-		}
 		default:
-			fprintf(stderr, "<UNKNOWN SCATTER-GATHER INTEGER SIZE>");
 			abort();
 		}
-		break;
 	}
-	default:
-		fprintf(stderr, "<UNKNOWN SCATTER-GATHER TYPE>");
-		abort();
-	}
+	memcpy(&value, ptr + sg_type->offset, sg_type->u.side_integer.type.integer_size_bits >> 3);
+	tracer_print_type_integer(":", &sg_type->u.side_integer.type, &value,
+			sg_type->u.side_integer.offset_bits);
 	printf(" }");
 }
 
@@ -1806,7 +1507,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	case SIDE_DYNAMIC_TYPE_S32:
 	case SIDE_DYNAMIC_TYPE_S64:
 		tracer_print_type_integer("::", &item->u.side_integer.type,
-					&item->u.side_integer.value);
+					&item->u.side_integer.value, 0);
 		break;
 	case SIDE_DYNAMIC_TYPE_BYTE:
 		tracer_print_type_header("::", item->u.side_basic.attr, item->u.side_basic.nr_attr);
