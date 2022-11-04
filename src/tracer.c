@@ -811,6 +811,11 @@ void tracer_print_type(const struct side_type_description *type_desc, const stru
 
 	printf("{ ");
 	switch (type) {
+	case SIDE_TYPE_NULL:
+		tracer_print_type_header(":", type_desc->u.side_null.attr, type_desc->u.side_null.nr_attr);
+		printf("<NULL TYPE>");
+		break;
+
 	case SIDE_TYPE_BOOL:
 		tracer_print_type_header(":", type_desc->u.side_bool.attr, type_desc->u.side_bool.nr_attr);
 		printf("%s", item->u.bool_value ? "true" : "false");
@@ -947,6 +952,11 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 
 	printf("{ ");
 	switch (sg_type->type) {
+	case SIDE_TYPE_SG_NULL:
+		tracer_print_type_header(":", sg_type->u.side_null.attr, sg_type->u.side_null.nr_attr);
+		printf("<NULL TYPE>");
+		break;
+
 	case SIDE_TYPE_SG_UNSIGNED_INT:
 	case SIDE_TYPE_SG_SIGNED_INT:
 		switch (sg_type->u.side_integer.type.integer_size_bits) {
@@ -958,10 +968,14 @@ void tracer_print_sg_type(const struct side_type_sg_description *sg_type, void *
 		default:
 			abort();
 		}
+		memcpy(&value, ptr + sg_type->offset, sg_type->u.side_integer.type.integer_size_bits >> 3);
+		tracer_print_type_integer(":", &sg_type->u.side_integer.type, &value,
+				sg_type->u.side_integer.offset_bits, TRACER_DISPLAY_BASE_10);
+		break;
+	default:
+		fprintf(stderr, "<UNKNOWN TYPE>");
+		abort();
 	}
-	memcpy(&value, ptr + sg_type->offset, sg_type->u.side_integer.type.integer_size_bits >> 3);
-	tracer_print_type_integer(":", &sg_type->u.side_integer.type, &value,
-			sg_type->u.side_integer.offset_bits, TRACER_DISPLAY_BASE_10);
 	printf(" }");
 }
 
@@ -1438,7 +1452,7 @@ void tracer_print_dynamic(const struct side_arg_dynamic_vec *item)
 	printf("{ ");
 	switch (item->dynamic_type) {
 	case SIDE_DYNAMIC_TYPE_NULL:
-		tracer_print_type_header("::", item->u.side_null_type.attr, item->u.side_null_type.nr_attr);
+		tracer_print_type_header("::", item->u.side_null.attr, item->u.side_null.nr_attr);
 		printf("<NULL TYPE>");
 		break;
 	case SIDE_DYNAMIC_TYPE_BOOL:

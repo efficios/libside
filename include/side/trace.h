@@ -36,6 +36,7 @@ struct side_events_register_handle;
 
 enum side_type {
 	/* Basic types */
+	SIDE_TYPE_NULL,
 	SIDE_TYPE_BOOL,
 	SIDE_TYPE_U8,
 	SIDE_TYPE_U16,
@@ -142,6 +143,7 @@ enum side_attr_type {
 };
 
 enum side_type_sg {
+	SIDE_TYPE_SG_NULL,
 	SIDE_TYPE_SG_UNSIGNED_INT,
 	SIDE_TYPE_SG_SIGNED_INT,
 };
@@ -318,6 +320,7 @@ struct side_type_sg_description {
 	uint64_t offset;	/* bytes */
 	uint32_t type;		/* enum side_type_sg */
 	union {
+		struct side_type_null side_null;
 		struct {
 			struct side_type_integer type;
 			uint16_t offset_bits;		/* bits */
@@ -342,6 +345,7 @@ struct side_type_description {
 	uint32_t type;	/* enum side_type */
 	union {
 		/* Basic types */
+		struct side_type_null side_null;
 		struct side_type_bool side_bool;
 		struct side_type_byte side_byte;
 		struct side_type_dynamic side_dynamic;
@@ -422,7 +426,7 @@ struct side_event_description {
 struct side_arg_dynamic_vec {
 	uint32_t dynamic_type;	/* enum side_dynamic_type */
 	union {
-		struct side_type_null side_null_type;
+		struct side_type_null side_null;
 
 		/* Basic types */
 		struct {
@@ -588,6 +592,17 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 /* Static field definition */
 
+#define side_type_null(_attr) \
+	{ \
+		.type = SIDE_TYPE_NULL, \
+		.u = { \
+			.side_null = { \
+				.attr = _attr, \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+			}, \
+		}, \
+	}
+
 #define side_type_bool(_attr) \
 	{ \
 		.type = SIDE_TYPE_BOOL, \
@@ -682,6 +697,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_type_float_binary64(_attr)			_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, 64, SIDE_PARAM(_attr))
 #define side_type_float_binary128(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, 128, SIDE_PARAM(_attr))
 
+#define side_field_null(_name, _attr)			_side_field(_name, side_type_null(SIDE_PARAM(_attr)))
 #define side_field_bool(_name, _attr)			_side_field(_name, side_type_bool(SIDE_PARAM(_attr)))
 #define side_field_u8(_name, _attr)			_side_field(_name, side_type_u8(SIDE_PARAM(_attr)))
 #define side_field_u16(_name, _attr)			_side_field(_name, side_type_u16(SIDE_PARAM(_attr)))
@@ -805,6 +821,27 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 /* Scatter-gather struct */
 
+#define _side_field_sg(_name, _type) \
+	{ \
+		.field_name = _name, \
+		.side_type = _type, \
+	}
+
+#define side_type_sg_null(_attr) \
+	{ \
+		.offset = 0, \
+		.type = SIDE_TYPE_SG_NULL, \
+		.u = { \
+			.side_null = { \
+				.attr = _attr, \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+			}, \
+		}, \
+	}
+
+#define side_field_sg_null(_name, _attr) \
+	_side_field_sg(_name, side_type_sg_null(SIDE_PARAM(_attr)))
+
 #define _side_type_sg_integer(_type, _signedness, _byte_order, _offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
 	{ \
 		.offset = _offset, \
@@ -822,12 +859,6 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 				.offset_bits = _offset_bits, \
 			}, \
 		}, \
-	}
-
-#define _side_field_sg(_name, _type) \
-	{ \
-		.field_name = _name, \
-		.side_type = _type, \
 	}
 
 #define side_type_sg_unsigned_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
@@ -922,6 +953,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 /* Static field arguments */
 
+#define side_arg_null(_val)		{ .type = SIDE_TYPE_NULL }
 #define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .bool_value = !!(_val) } }
 #define side_arg_byte(_val)		{ .type = SIDE_TYPE_BYTE, .u = { .byte_value = (_val) } }
 #define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING, .u = { .string_value = (uintptr_t) (_val) } }
@@ -981,7 +1013,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	{ \
 		.dynamic_type = SIDE_DYNAMIC_TYPE_NULL, \
 		.u = { \
-			.side_null_type = { \
+			.side_null = { \
 				.attr = _attr, \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 			}, \

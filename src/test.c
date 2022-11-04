@@ -22,6 +22,7 @@ side_static_event(my_provider_event, "myprovider", "myevent", SIDE_LOGLEVEL_DEBU
 		side_field_pointer("ptr", side_attr_list()),
 		side_field_dynamic("dynamic", side_attr_list()),
 		side_field_dynamic("dynamic_pointer", side_attr_list()),
+		side_field_null("null", side_attr_list()),
 	),
 	side_attr_list()
 );
@@ -39,6 +40,7 @@ void test_fields(void)
 			side_arg_pointer((void *) 0x1),
 			side_arg_dynamic(side_arg_dynamic_string("zzz", side_attr_list())),
 			side_arg_dynamic(side_arg_dynamic_pointer((void *) 0x1, side_attr_list())),
+			side_arg_null(),
 		)
 	);
 }
@@ -1539,6 +1541,7 @@ static side_define_struct_sg(mystructsgdef,
 		side_field_sg_signed_integer("k", offsetof(struct test, k),
 			side_struct_field_sizeof_bit(struct test, k), 1, 63,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_sg_null("null", side_attr_list()),
 	),
 	side_attr_list()
 );
