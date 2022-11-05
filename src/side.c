@@ -61,7 +61,7 @@ static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
  * The empty callback has a NULL function callback pointer, which stops
  * iteration on the array of callbacks immediately.
  */
-const struct side_callback side_empty_callback;
+const struct side_callback side_empty_callback = { };
 
 void side_init(void) __attribute__((constructor));
 void side_exit(void) __attribute__((destructor));
@@ -132,7 +132,7 @@ const struct side_callback *side_tracer_callback_lookup(
 
 static
 int _side_tracer_callback_register(struct side_event_description *desc,
-		void (*call)(), void *priv)
+		void *call, void *priv)
 {
 	struct side_callback *old_cb, *new_cb;
 	int ret = SIDE_ERROR_OK;
@@ -182,9 +182,7 @@ unlock:
 }
 
 int side_tracer_callback_register(struct side_event_description *desc,
-		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			void *priv),
+		side_tracer_callback_func call,
 		void *priv)
 {
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
@@ -193,10 +191,7 @@ int side_tracer_callback_register(struct side_event_description *desc,
 }
 
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
-		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			const struct side_arg_dynamic_struct *var_struct,
-			void *priv),
+		side_tracer_callback_variadic_func call_variadic,
 		void *priv)
 {
 	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
@@ -205,7 +200,7 @@ int side_tracer_callback_variadic_register(struct side_event_description *desc,
 }
 
 int _side_tracer_callback_unregister(struct side_event_description *desc,
-		void (*call)(), void *priv)
+		void *call, void *priv)
 {
 	struct side_callback *old_cb, *new_cb;
 	const struct side_callback *cb_pos;
@@ -254,9 +249,7 @@ unlock:
 }
 
 int side_tracer_callback_unregister(struct side_event_description *desc,
-		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			void *priv),
+		side_tracer_callback_func call,
 		void *priv)
 {
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
@@ -265,10 +258,7 @@ int side_tracer_callback_unregister(struct side_event_description *desc,
 }
 
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
-		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			const struct side_arg_dynamic_struct *var_struct,
-			void *priv),
+		side_tracer_callback_variadic_func call_variadic,
 		void *priv)
 {
 	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))

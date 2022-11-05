@@ -1421,27 +1421,25 @@ void side_call_variadic(const struct side_event_description *desc,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct);
 
-int side_tracer_callback_register(struct side_event_description *desc,
-		void (*call)(const struct side_event_description *desc,
+typedef void (*side_tracer_callback_func)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
-			void *priv),
+			void *priv);
+typedef void (*side_tracer_callback_variadic_func)(const struct side_event_description *desc,
+			const struct side_arg_vec *side_arg_vec,
+			const struct side_arg_dynamic_struct *var_struct,
+			void *priv);
+
+int side_tracer_callback_register(struct side_event_description *desc,
+		side_tracer_callback_func call,
 		void *priv);
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
-		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			const struct side_arg_dynamic_struct *var_struct,
-			void *priv),
+		side_tracer_callback_variadic_func call_variadic,
 		void *priv);
 int side_tracer_callback_unregister(struct side_event_description *desc,
-		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			void *priv),
+		side_tracer_callback_func call,
 		void *priv);
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
-		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			const struct side_arg_dynamic_struct *var_struct,
-			void *priv),
+		side_tracer_callback_variadic_func call_variadic,
 		void *priv);
 
 struct side_events_register_handle *side_events_register(struct side_event_description **events,
