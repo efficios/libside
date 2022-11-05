@@ -286,7 +286,8 @@ void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
 	if (!rcu_gp->nr_cpus)
 		abort();
 	pthread_mutex_init(&rcu_gp->gp_lock, NULL);
-	rcu_gp->percpu_state = calloc(rcu_gp->nr_cpus, sizeof(struct side_rcu_cpu_gp_state));
+	rcu_gp->percpu_state = (struct side_rcu_cpu_gp_state *)
+		calloc(rcu_gp->nr_cpus, sizeof(struct side_rcu_cpu_gp_state));
 	if (!rcu_gp->percpu_state)
 		abort();
 	if (!membarrier(MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, 0, 0))
