@@ -888,7 +888,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_field_sg_float_be(_name, _offset, _float_size_bits, _attr) \
 	_side_field(_name, side_type_sg_float_be(_offset, _float_size_bits, _attr))
 
-#define side_type_struct_sg(_struct_sg, _offset) \
+#define side_type_sg_struct(_struct_sg, _offset) \
 	{ \
 		.type = SIDE_TYPE_SG_STRUCT, \
 		.u = { \
@@ -900,8 +900,8 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 			}, \
 		}, \
 	}
-#define side_field_struct_sg(_name, _struct_sg, _offset) \
-	_side_field(_name, side_type_struct_sg(SIDE_PARAM(_struct_sg), _offset))
+#define side_field_sg_struct(_name, _struct_sg, _offset) \
+	_side_field(_name, side_type_sg_struct(SIDE_PARAM(_struct_sg), _offset))
 
 #define side_type_array(_elem_type, _length, _attr) \
 	{ \
@@ -981,10 +981,10 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_float_binary128(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .side_static = { .float_value = { .side_float_binary128 = (_val) } } } }
 
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_static = { .side_struct = (_side_type) } } }
-#define side_arg_struct_sg(_ptr)	{ .type = SIDE_TYPE_SG_STRUCT, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
-#define side_arg_unsigned_integer_sg(_ptr)	{ .type = SIDE_TYPE_SG_UNSIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
-#define side_arg_signed_integer_sg(_ptr)	{ .type = SIDE_TYPE_SG_SIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
-#define side_arg_float_sg(_ptr)		{ .type = SIDE_TYPE_SG_FLOAT, .u = { .side_static = { .side_float_sg_ptr = (_ptr) } } }
+#define side_arg_sg_struct(_ptr)	{ .type = SIDE_TYPE_SG_STRUCT, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
+#define side_arg_sg_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_SG_UNSIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
+#define side_arg_sg_signed_integer(_ptr)	{ .type = SIDE_TYPE_SG_SIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
+#define side_arg_sg_float(_ptr)		{ .type = SIDE_TYPE_SG_FLOAT, .u = { .side_static = { .side_float_sg_ptr = (_ptr) } } }
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_static = { .side_array = (_side_type) } } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_static = { .side_vla = (_side_type) } } }
 #define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_static = { .side_vla_app_visitor_ctx = (_ctx) } } }
