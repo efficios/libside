@@ -93,6 +93,7 @@ enum side_type_label {
 	/* Scatter-gather types */
 	SIDE_TYPE_SG_UNSIGNED_INT,
 	SIDE_TYPE_SG_SIGNED_INT,
+	SIDE_TYPE_SG_FLOAT,
 	SIDE_TYPE_SG_STRUCT,
 
 	/* Dynamic types */
@@ -313,6 +314,7 @@ struct side_type_sg {
 			struct side_type_integer type;
 			uint16_t offset_bits;		/* bits */
 		} SIDE_PACKED side_integer;
+		struct side_type_float side_float;
 		const struct side_type_struct *side_struct;
 	} SIDE_PACKED u;
 } SIDE_PACKED;
@@ -407,6 +409,7 @@ struct side_arg_static {
 
 	/* Scatter-gather */
 	void *side_integer_sg_ptr;
+	void *side_float_sg_ptr;
 	void *side_struct_sg_ptr;
 } SIDE_PACKED;
 
@@ -824,10 +827,66 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 	_side_type_sg_integer(SIDE_TYPE_SG_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_HOST, \
 			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
 
+#define side_type_sg_unsigned_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+	_side_type_sg_integer(SIDE_TYPE_SG_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_LE, \
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
+#define side_type_sg_signed_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+	_side_type_sg_integer(SIDE_TYPE_SG_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_LE, \
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
+
+#define side_type_sg_unsigned_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+	_side_type_sg_integer(SIDE_TYPE_SG_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_BE, \
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
+#define side_type_sg_signed_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+	_side_type_sg_integer(SIDE_TYPE_SG_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_BE, \
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
+
 #define side_field_sg_unsigned_integer(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
 	_side_field(_name, side_type_sg_unsigned_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
 #define side_field_sg_signed_integer(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
 	_side_field(_name, side_type_sg_signed_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
+
+#define side_field_sg_unsigned_integer_le(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+	_side_field(_name, side_type_sg_unsigned_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
+#define side_field_sg_signed_integer_le(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+	_side_field(_name, side_type_sg_signed_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
+
+#define side_field_sg_unsigned_integer_be(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+	_side_field(_name, side_type_sg_unsigned_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
+#define side_field_sg_signed_integer_be(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+	_side_field(_name, side_type_sg_signed_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
+
+#define _side_type_sg_float(_byte_order, _offset, _float_size_bits, _attr) \
+	{ \
+		.type = SIDE_TYPE_SG_FLOAT, \
+		.u = { \
+			.side_sg = { \
+				.offset = _offset, \
+				.u = { \
+					.side_float = { \
+						.attr = _attr, \
+						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						.float_size_bits = _float_size_bits, \
+						.byte_order = _byte_order, \
+					}, \
+				}, \
+			}, \
+		}, \
+	}
+
+#define side_type_sg_float(_offset, _float_size_bits, _attr) \
+	_side_type_sg_float(SIDE_TYPE_FLOAT_WORD_ORDER_HOST, _offset, _float_size_bits, _attr)
+#define side_type_sg_float_le(_offset, _float_size_bits, _attr) \
+	_side_type_sg_float(SIDE_TYPE_BYTE_ORDER_LE, _offset, _float_size_bits, _attr)
+#define side_type_sg_float_be(_offset, _float_size_bits, _attr) \
+	_side_type_sg_float(SIDE_TYPE_BYTE_ORDER_BE, _offset, _float_size_bits, _attr)
+
+#define side_field_sg_float(_name, _offset, _float_size_bits, _attr) \
+	_side_field(_name, side_type_sg_float(_offset, _float_size_bits, _attr))
+#define side_field_sg_float_le(_name, _offset, _float_size_bits, _attr) \
+	_side_field(_name, side_type_sg_float_le(_offset, _float_size_bits, _attr))
+#define side_field_sg_float_be(_name, _offset, _float_size_bits, _attr) \
+	_side_field(_name, side_type_sg_float_be(_offset, _float_size_bits, _attr))
 
 #define side_type_struct_sg(_struct_sg, _offset) \
 	{ \

@@ -1619,6 +1619,77 @@ void test_struct_sg_nest(void)
 	}
 }
 
+struct testfloat {
+#if __HAVE_FLOAT16
+	_Float16 f16;
+#endif
+#if __HAVE_FLOAT32
+	_Float32 f32;
+#endif
+#if __HAVE_FLOAT64
+	_Float64 f64;
+#endif
+#if __HAVE_FLOAT128
+	_Float128 f128;
+#endif
+};
+
+static side_define_struct(mystructsgfloat,
+	side_field_list(
+#if __HAVE_FLOAT16
+		side_field_sg_float("f16", offsetof(struct testfloat, f16), 16,
+			side_attr_list()),
+#endif
+#if __HAVE_FLOAT32
+		side_field_sg_float("f32", offsetof(struct testfloat, f32), 32,
+			side_attr_list()),
+#endif
+#if __HAVE_FLOAT64
+		side_field_sg_float("f64", offsetof(struct testfloat, f64), 64,
+			side_attr_list()),
+#endif
+#if __HAVE_FLOAT128
+		side_field_sg_float("f128", offsetof(struct testfloat, f128), 128,
+			side_attr_list()),
+#endif
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_structsgfloat,
+	"myprovider", "myeventstructsgfloat", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_struct_sg("structsgfloat", &mystructsgfloat, 0),
+	),
+	side_attr_list()
+);
+
+static
+void test_struct_sg_float(void)
+{
+	side_event_cond(my_provider_event_structsgfloat) {
+		struct testfloat mystruct = {
+#if __HAVE_FLOAT16
+			.f16 = 1.1,
+#endif
+#if __HAVE_FLOAT32
+			.f32 = 2.2,
+#endif
+#if __HAVE_FLOAT64
+			.f64 = 3.3,
+#endif
+#if __HAVE_FLOAT128
+			.f128 = 4.4,
+#endif
+		};
+		side_event_call(my_provider_event_structsgfloat,
+			side_arg_list(
+				side_arg_struct_sg(&mystruct),
+			)
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -1661,5 +1732,6 @@ int main()
 	test_base();
 	test_struct_sg();
 	test_struct_sg_nest();
+	test_struct_sg_float();
 	return 0;
 }

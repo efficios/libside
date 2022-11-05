@@ -28,6 +28,8 @@ void tracer_print_sg_struct(const struct side_type_sg *type_sg, const void *_ptr
 static
 void tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr);
 static
+void tracer_print_sg_float_type(const struct side_type_sg *type_sg, const void *_ptr);
+static
 void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
 void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
@@ -907,6 +909,9 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_SG_SIGNED_INT:
 		tracer_print_sg_integer_type(&type_desc->u.side_sg, item->u.side_static.side_integer_sg_ptr);
 		break;
+	case SIDE_TYPE_SG_FLOAT:
+		tracer_print_sg_float_type(&type_desc->u.side_sg, item->u.side_static.side_float_sg_ptr);
+		break;
 	case SIDE_TYPE_ARRAY:
 		tracer_print_array(type_desc, item->u.side_static.side_array);
 		break;
@@ -1024,6 +1029,25 @@ void tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void
 }
 
 static
+void tracer_print_sg_float_type(const struct side_type_sg *type_sg, const void *_ptr)
+{
+	const char *ptr = (const char *) _ptr;
+	union side_float_value value;
+
+	switch (type_sg->u.side_float.float_size_bits) {
+	case 16:
+	case 32:
+	case 64:
+	case 128:
+		break;
+	default:
+		abort();
+	}
+	memcpy(&value, ptr + type_sg->offset, type_sg->u.side_float.float_size_bits >> 3);
+	tracer_print_type_float(":", &type_sg->u.side_float, &value);
+}
+
+static
 void tracer_print_sg_type(const struct side_type *type_desc, void *ptr)
 {
 	printf("{ ");
@@ -1031,6 +1055,9 @@ void tracer_print_sg_type(const struct side_type *type_desc, void *ptr)
 	case SIDE_TYPE_SG_UNSIGNED_INT:
 	case SIDE_TYPE_SG_SIGNED_INT:
 		tracer_print_sg_integer_type(&type_desc->u.side_sg, ptr);
+		break;
+	case SIDE_TYPE_SG_FLOAT:
+		tracer_print_sg_float_type(&type_desc->u.side_sg, ptr);
 		break;
 	case SIDE_TYPE_SG_STRUCT:
 		tracer_print_sg_struct(&type_desc->u.side_sg, ptr);
