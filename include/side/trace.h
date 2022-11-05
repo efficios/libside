@@ -298,10 +298,10 @@ struct side_enum_bitmap_mappings {
 } SIDE_PACKED;
 
 struct side_type_struct {
-	uint32_t nr_fields;
-	uint32_t nr_attr;
 	const struct side_event_field *fields;
 	const struct side_attr *attr;
+	uint32_t nr_fields;
+	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_array {
@@ -318,8 +318,8 @@ struct side_type_vla {
 } SIDE_PACKED;
 
 struct side_type_vla_visitor {
-	side_visitor visitor;
 	const struct side_type *elem_type;
+	side_visitor visitor;
 	const struct side_attr *attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
