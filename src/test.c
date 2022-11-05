@@ -1199,23 +1199,23 @@ void test_enum_bitmap(void)
 		);
 		side_event_call(my_provider_event_enum_bitmap,
 			side_arg_list(
-				side_arg_u32(1 << 0),
-				side_arg_u32(1 << 1),
-				side_arg_u8(1 << 2),
-				side_arg_u8(1 << 3),
-				side_arg_u32(1 << 30),
-				side_arg_u32(1 << 31),
+				side_arg_u32(1U << 0),
+				side_arg_u32(1U << 1),
+				side_arg_u8(1U << 2),
+				side_arg_u8(1U << 3),
+				side_arg_u32(1U << 30),
+				side_arg_u32(1U << 31),
 				side_arg_u64(1ULL << 63),
 				side_arg_u64((1ULL << 1) | (1ULL << 63)),
-				side_arg_byte(1 << 2),
+				side_arg_byte(1U << 2),
 				side_arg_array(&myarray),
 				side_arg_vla(&myarray),
 #if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
-				side_arg_u32(side_bswap_32(1 << 2)),
-				side_arg_u32(1 << 2),
+				side_arg_u32(side_bswap_32(1U << 2)),
+				side_arg_u32(1U << 2),
 #else
 				side_arg_u32(0x06000000),
-				side_arg_u32(side_bswap_32(1 << 2)),
+				side_arg_u32(side_bswap_32(1U << 2)),
 #endif
 			)
 		);
