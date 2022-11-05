@@ -23,6 +23,7 @@
 struct side_arg;
 struct side_arg_vec;
 struct side_arg_dynamic;
+struct side_arg_dynamic_field;
 struct side_arg_dynamic_vla;
 struct side_type;
 struct side_event_field;
@@ -204,16 +205,16 @@ union side_integer_value {
 
 union side_float_value {
 #if __HAVE_FLOAT16
-		_Float16 side_float_binary16;
+	_Float16 side_float_binary16;
 #endif
 #if __HAVE_FLOAT32
-		_Float32 side_float_binary32;
+	_Float32 side_float_binary32;
 #endif
 #if __HAVE_FLOAT64
-		_Float64 side_float_binary64;
+	_Float64 side_float_binary64;
 #endif
 #if __HAVE_FLOAT128
-		_Float128 side_float_binary128;
+	_Float128 side_float_binary128;
 #endif
 } SIDE_PACKED;
 
@@ -333,13 +334,15 @@ struct side_type_enum_bitmap {
 	const struct side_type *elem_type;
 } SIDE_PACKED;
 
+struct side_type_sg_integer {
+	struct side_type_integer type;
+	uint16_t offset_bits;		/* bits */
+} SIDE_PACKED;
+
 struct side_type_sg {
 	uint64_t offset;	/* bytes */
 	union {
-		struct {
-			struct side_type_integer type;
-			uint16_t offset_bits;		/* bits */
-		} SIDE_PACKED side_integer;
+		struct side_type_sg_integer side_integer;
 		struct side_type_float side_float;
 		const struct side_type_struct *side_struct;
 	} SIDE_PACKED u;
@@ -419,6 +422,34 @@ struct side_arg_static {
 	void *side_struct_sg_ptr;
 } SIDE_PACKED;
 
+struct side_arg_dynamic_vla {
+	const struct side_arg *sav;
+	const struct side_attr *attr;
+	uint32_t len;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_arg_dynamic_struct {
+	const struct side_arg_dynamic_field *fields;
+	const struct side_attr *attr;
+	uint32_t len;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_dynamic_struct_visitor {
+	void *app_ctx;
+	side_dynamic_struct_visitor visitor;
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_dynamic_vla_visitor {
+	void *app_ctx;
+	side_visitor visitor;
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
 struct side_arg_dynamic {
 	/* Basic types */
 	struct side_type_null side_null;
@@ -450,19 +481,10 @@ struct side_arg_dynamic {
 
 	/* Compound types */
 	const struct side_arg_dynamic_struct *side_dynamic_struct;
-	struct {
-		void *app_ctx;
-		side_dynamic_struct_visitor visitor;
-		const struct side_attr *attr;
-		uint32_t nr_attr;
-	} SIDE_PACKED side_dynamic_struct_visitor;
 	const struct side_arg_dynamic_vla *side_dynamic_vla;
-	struct {
-		void *app_ctx;
-		side_visitor visitor;
-		const struct side_attr *attr;
-		uint32_t nr_attr;
-	} SIDE_PACKED side_dynamic_vla_visitor;
+
+	struct side_dynamic_struct_visitor side_dynamic_struct_visitor;
+	struct side_dynamic_vla_visitor side_dynamic_vla_visitor;
 } SIDE_PACKED;
 
 struct side_arg {
@@ -478,38 +500,9 @@ struct side_arg_vec {
 	uint32_t len;
 } SIDE_PACKED;
 
-struct side_event_description {
-	uintptr_t *enabled;
-	const char *provider_name;
-	const char *event_name;
-	const struct side_event_field *fields;
-	const struct side_attr *attr;
-	const struct side_callback *callbacks;
-	uint64_t flags;
-	uint32_t version;
-	uint32_t loglevel;	/* enum side_loglevel */
-	uint32_t nr_fields;
-	uint32_t nr_attr;
-	uint32_t nr_callbacks;
-} SIDE_PACKED;
-
-struct side_arg_dynamic_vla {
-	const struct side_arg *sav;
-	const struct side_attr *attr;
-	uint32_t len;
-	uint32_t nr_attr;
-} SIDE_PACKED;
-
 struct side_arg_dynamic_field {
 	const char *field_name;
 	const struct side_arg elem;
-} SIDE_PACKED;
-
-struct side_arg_dynamic_struct {
-	const struct side_arg_dynamic_field *fields;
-	const struct side_attr *attr;
-	uint32_t len;
-	uint32_t nr_attr;
 } SIDE_PACKED;
 
 /* The visitor pattern is a double-dispatch visitor. */
@@ -525,6 +518,21 @@ struct side_tracer_dynamic_struct_visitor_ctx {
 			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
 			const struct side_arg_dynamic_field *dynamic_field);
 	void *priv;		/* Private tracer context. */
+} SIDE_PACKED;
+
+struct side_event_description {
+	uintptr_t *enabled;
+	const char *provider_name;
+	const char *event_name;
+	const struct side_event_field *fields;
+	const struct side_attr *attr;
+	const struct side_callback *callbacks;
+	uint64_t flags;
+	uint32_t version;
+	uint32_t loglevel;	/* enum side_loglevel */
+	uint32_t nr_fields;
+	uint32_t nr_attr;
+	uint32_t nr_callbacks;
 } SIDE_PACKED;
 
 /* Event and type attributes */
