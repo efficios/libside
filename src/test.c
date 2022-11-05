@@ -1543,6 +1543,82 @@ void test_struct_sg(void)
 	}
 }
 
+struct testnest2 {
+	uint8_t c;
+};
+
+struct testnest1 {
+	uint64_t b;
+	struct testnest2 *nest;
+};
+
+struct testnest0 {
+	uint32_t a;
+	struct testnest1 *nest;
+};
+
+static side_define_struct(mystructsgnest2,
+	side_field_list(
+		side_field_sg_unsigned_integer("c", offsetof(struct testnest2, c),
+			side_struct_field_sizeof_bit(struct testnest2, c), 0,
+			side_struct_field_sizeof_bit(struct testnest2, c), side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static side_define_struct(mystructsgnest1,
+	side_field_list(
+		side_field_sg_unsigned_integer("b", offsetof(struct testnest1, b),
+			side_struct_field_sizeof_bit(struct testnest1, b), 0,
+			side_struct_field_sizeof_bit(struct testnest1, b), side_attr_list()),
+		side_field_struct_sg("nest2", &mystructsgnest2,
+			offsetof(struct testnest1, nest)),
+	),
+	side_attr_list()
+);
+
+static side_define_struct(mystructsgnest0,
+	side_field_list(
+		side_field_sg_unsigned_integer("a", offsetof(struct testnest0, a),
+			side_struct_field_sizeof_bit(struct testnest0, a), 0,
+			side_struct_field_sizeof_bit(struct testnest0, a), side_attr_list()),
+		side_field_struct_sg("nest1", &mystructsgnest1,
+			offsetof(struct testnest0, nest)),
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_structsg_nest,
+	"myprovider", "myeventstructsgnest", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_struct_sg("nest0", &mystructsgnest0, 0),
+	),
+	side_attr_list()
+);
+
+static
+void test_struct_sg_nest(void)
+{
+	side_event_cond(my_provider_event_structsg_nest) {
+		struct testnest2 mystruct2 = {
+			.c = 77,
+		};
+		struct testnest1 mystruct1 = {
+			.b = 66,
+			.nest = &mystruct2,
+		};
+		struct testnest0 mystruct = {
+			.a = 55,
+			.nest = &mystruct1,
+		};
+		side_event_call(my_provider_event_structsg_nest,
+			side_arg_list(
+				side_arg_struct_sg(&mystruct),
+			)
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -1584,5 +1660,6 @@ int main()
 	test_endian();
 	test_base();
 	test_struct_sg();
+	test_struct_sg_nest();
 	return 0;
 }

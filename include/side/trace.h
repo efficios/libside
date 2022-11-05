@@ -56,7 +56,6 @@ enum side_type_label {
 
 	/* Statically declared compound types */
 	SIDE_TYPE_STRUCT,
-	SIDE_TYPE_STRUCT_SG,
 	SIDE_TYPE_ARRAY,
 	SIDE_TYPE_VLA,
 	SIDE_TYPE_VLA_VISITOR,
@@ -832,7 +831,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 
 #define side_type_struct_sg(_struct_sg, _offset) \
 	{ \
-		.type = SIDE_TYPE_STRUCT_SG, \
+		.type = SIDE_TYPE_SG_STRUCT, \
 		.u = { \
 			.side_sg = { \
 				.offset = _offset, \
@@ -923,7 +922,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_float_binary128(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .side_static = { .float_value = { .side_float_binary128 = (_val) } } } }
 
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_static = { .side_struct = (_side_type) } } }
-#define side_arg_struct_sg(_ptr)	{ .type = SIDE_TYPE_STRUCT_SG, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
+#define side_arg_struct_sg(_ptr)	{ .type = SIDE_TYPE_SG_STRUCT, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
 #define side_arg_unsigned_integer_sg(_ptr)	{ .type = SIDE_TYPE_SG_UNSIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
 #define side_arg_signed_integer_sg(_ptr)	{ .type = SIDE_TYPE_SG_SIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_static = { .side_array = (_side_type) } } }
