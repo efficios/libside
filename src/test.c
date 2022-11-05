@@ -1512,6 +1512,9 @@ side_static_event(my_provider_event_structsg, "myprovider", "myeventstructsg", S
 		side_field_struct_sg("structsg", &mystructsgdef, 0),
 		side_field_sg_signed_integer("intsg", 0, 32, 0, 32,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+#if __HAVE_FLOAT32
+		side_field_sg_float("f32", 0, 32, side_attr_list()),
+#endif
 	),
 	side_attr_list()
 );
@@ -1534,10 +1537,16 @@ void test_struct_sg(void)
 			.k = -1,
 		};
 		int32_t val = -66;
+#if __HAVE_FLOAT32
+		_Float32 f32 = 1.1;
+#endif
 		side_event_call(my_provider_event_structsg,
 			side_arg_list(
 				side_arg_struct_sg(&mystruct),
 				side_arg_signed_integer_sg(&val),
+#if __HAVE_FLOAT32
+				side_arg_float_sg(&f32),
+#endif
 			)
 		);
 	}

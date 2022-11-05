@@ -984,6 +984,7 @@ struct side_tracer_dynamic_vla_visitor_ctx {
 #define side_arg_struct_sg(_ptr)	{ .type = SIDE_TYPE_SG_STRUCT, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
 #define side_arg_unsigned_integer_sg(_ptr)	{ .type = SIDE_TYPE_SG_UNSIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
 #define side_arg_signed_integer_sg(_ptr)	{ .type = SIDE_TYPE_SG_SIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
+#define side_arg_float_sg(_ptr)		{ .type = SIDE_TYPE_SG_FLOAT, .u = { .side_static = { .side_float_sg_ptr = (_ptr) } } }
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_static = { .side_array = (_side_type) } } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_static = { .side_vla = (_side_type) } } }
 #define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_static = { .side_vla_app_visitor_ctx = (_ctx) } } }
