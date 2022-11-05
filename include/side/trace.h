@@ -185,10 +185,10 @@ enum side_type_label_byte_order {
 # define SIDE_TYPE_FLOAT_WORD_ORDER_HOST	SIDE_TYPE_BYTE_ORDER_BE
 #endif
 
-typedef enum side_visitor_status (*side_visitor)(
+typedef enum side_visitor_status (*side_visitor_func)(
 		const struct side_tracer_visitor_ctx *tracer_ctx,
 		void *app_ctx);
-typedef enum side_visitor_status (*side_dynamic_struct_visitor)(
+typedef enum side_visitor_status (*side_dynamic_struct_visitor_func)(
 		const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
 		void *app_ctx);
 
@@ -267,8 +267,8 @@ struct side_type_integer {
 struct side_type_float {
 	const struct side_attr *attr;
 	uint32_t nr_attr;
-	uint32_t byte_order;		/* enum side_type_label_byte_order */
 	uint16_t float_size_bits;	/* bits */
+	uint8_t byte_order;		/* enum side_type_label_byte_order */
 } SIDE_PACKED;
 
 struct side_enum_mapping {
@@ -319,7 +319,7 @@ struct side_type_vla {
 
 struct side_type_vla_visitor {
 	const struct side_type *elem_type;
-	side_visitor visitor;
+	side_visitor_func visitor;
 	const struct side_attr *attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
@@ -438,14 +438,14 @@ struct side_arg_dynamic_struct {
 
 struct side_dynamic_struct_visitor {
 	void *app_ctx;
-	side_dynamic_struct_visitor visitor;
+	side_dynamic_struct_visitor_func visitor;
 	const struct side_attr *attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_dynamic_vla_visitor {
 	void *app_ctx;
-	side_visitor visitor;
+	side_visitor_func visitor;
 	const struct side_attr *attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
@@ -652,8 +652,8 @@ struct side_event_description {
 			.side_float = { \
 				.attr = _attr, \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-				.byte_order = _byte_order, \
 				.float_size_bits = _float_size_bits, \
+				.byte_order = _byte_order, \
 			}, \
 		}, \
 	}
@@ -789,10 +789,10 @@ struct side_event_description {
 
 #define _side_type_struct_define(_fields, _attr) \
 	{ \
-		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
-		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 		.fields = _fields, \
 		.attr = _attr, \
+		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
+		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 	}
 
 #define side_define_struct(_identifier, _fields, _attr) \
@@ -1134,8 +1134,8 @@ struct side_event_description {
 					.type = { \
 						.attr = _attr, \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-						.byte_order = _byte_order, \
 						.float_size_bits = _float_size_bits, \
+						.byte_order = _byte_order, \
 					}, \
 					.value = { \
 						_field = (_val), \
