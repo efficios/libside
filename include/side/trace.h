@@ -307,6 +307,36 @@ struct side_type_struct {
 	const struct side_attr *attr;
 } SIDE_PACKED;
 
+struct side_type_array {
+	const struct side_type *elem_type;
+	const struct side_attr *attr;
+	uint32_t length;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_type_vla {
+	const struct side_type *elem_type;
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_type_vla_visitor {
+	side_visitor visitor;
+	const struct side_type *elem_type;
+	const struct side_attr *attr;
+	uint32_t nr_attr;
+} SIDE_PACKED;
+
+struct side_type_enum {
+	const struct side_enum_mappings *mappings;
+	const struct side_type *elem_type;
+} SIDE_PACKED;
+
+struct side_type_enum_bitmap {
+	const struct side_enum_bitmap_mappings *mappings;
+	const struct side_type *elem_type;
+} SIDE_PACKED;
+
 struct side_type_sg {
 	uint64_t offset;	/* bytes */
 	union {
@@ -332,36 +362,16 @@ struct side_type {
 		struct side_type_float side_float;
 
 		/* Compound types */
-		struct {
-			const struct side_type *elem_type;
-			const struct side_attr *attr;
-			uint32_t length;
-			uint32_t nr_attr;
-		} SIDE_PACKED side_array;
-		struct {
-			const struct side_type *elem_type;
-			const struct side_attr *attr;
-			uint32_t nr_attr;
-		} SIDE_PACKED side_vla;
-		struct {
-			const struct side_type *elem_type;
-			side_visitor visitor;
-			const struct side_attr *attr;
-			uint32_t nr_attr;
-		} SIDE_PACKED side_vla_visitor;
+		struct side_type_array side_array;
+		struct side_type_vla side_vla;
+		struct side_type_vla_visitor side_vla_visitor;
 		const struct side_type_struct *side_struct;
 
 		/* Enumeration types */
-		struct {
-			const struct side_enum_mappings *mappings;
-			const struct side_type *elem_type;
-		} SIDE_PACKED side_enum;
-		struct {
-			const struct side_enum_bitmap_mappings *mappings;
-			const struct side_type *elem_type;
-		} SIDE_PACKED side_enum_bitmap;
+		struct side_type_enum side_enum;
+		struct side_type_enum_bitmap side_enum_bitmap;
 
-		/* Scatter-gather type */
+		/* Scatter-gather types */
 		struct side_type_sg side_sg;
 	} SIDE_PACKED u;
 } SIDE_PACKED;
