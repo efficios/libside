@@ -1710,6 +1710,56 @@ void test_struct_sg_float(void)
 	}
 }
 
+uint32_t mysgarray[] = { 1, 2, 3, 4, 5 };
+
+uint16_t mysgarray2[] = { 6, 7, 8, 9 };
+
+struct testarray {
+	int a;
+	uint32_t *ptr;
+};
+
+static side_define_struct(mystructsgarray,
+	side_field_list(
+		side_field_sg_array("array",
+			side_elem(side_type_sg_unsigned_integer(0, 32, 0, 32, side_attr_list())),
+			SIDE_ARRAY_SIZE(mysgarray),
+			offsetof(struct testarray, ptr),
+			side_attr_list()),
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_structsgarray,
+	"myprovider", "myeventstructsgarray", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_sg_struct("structsgarray", &mystructsgarray, 0),
+		side_field_sg_array("array2",
+			side_elem(side_type_sg_unsigned_integer(0, 16, 0, 16, side_attr_list())),
+			SIDE_ARRAY_SIZE(mysgarray2), 0,
+			side_attr_list()
+		),
+	),
+	side_attr_list()
+);
+
+static
+void test_array_sg(void)
+{
+	side_event_cond(my_provider_event_structsgarray) {
+		struct testarray mystruct = {
+			.a = 55,
+			.ptr = mysgarray,
+		};
+		side_event_call(my_provider_event_structsgarray,
+			side_arg_list(
+				side_arg_sg_struct(&mystruct),
+				side_arg_sg_array(&mysgarray2),
+			)
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -1753,5 +1803,6 @@ int main()
 	test_struct_sg();
 	test_struct_sg_nest();
 	test_struct_sg_float();
+	test_array_sg();
 	return 0;
 }

@@ -24,12 +24,6 @@ static struct side_tracer_handle *tracer_handle;
 static
 void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
-void tracer_print_sg_struct(const struct side_type_sg *type_sg, const void *_ptr);
-static
-void tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr);
-static
-void tracer_print_sg_float_type(const struct side_type_sg *type_sg, const void *_ptr);
-static
 void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
 void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
@@ -41,6 +35,14 @@ static
 void tracer_print_vla_fixint(const struct side_type *type_desc, const struct side_arg *item);
 static
 void tracer_print_dynamic(const struct side_arg *dynamic_item);
+static
+uint32_t tracer_print_sg_struct(const struct side_type_sg *type_sg, const void *_ptr);
+static
+uint32_t tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr);
+static
+uint32_t tracer_print_sg_float_type(const struct side_type_sg *type_sg, const void *_ptr);
+static
+uint32_t tracer_print_sg_array(const struct side_type_sg *type_sg, const void *_ptr);
 static
 void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item);
 
@@ -902,14 +904,17 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_struct(type_desc, item->u.side_static.side_struct);
 		break;
 	case SIDE_TYPE_SG_STRUCT:
-		tracer_print_sg_struct(&type_desc->u.side_sg, &item->u.side_static.side_struct_sg_ptr);
+		(void) tracer_print_sg_struct(&type_desc->u.side_sg, &item->u.side_static.side_struct_sg_ptr);
+		break;
+	case SIDE_TYPE_SG_ARRAY:
+		(void) tracer_print_sg_array(&type_desc->u.side_sg, &item->u.side_static.side_array_sg_ptr);
 		break;
 	case SIDE_TYPE_SG_UNSIGNED_INT:
 	case SIDE_TYPE_SG_SIGNED_INT:
-		tracer_print_sg_integer_type(&type_desc->u.side_sg, item->u.side_static.side_integer_sg_ptr);
+		(void) tracer_print_sg_integer_type(&type_desc->u.side_sg, item->u.side_static.side_integer_sg_ptr);
 		break;
 	case SIDE_TYPE_SG_FLOAT:
-		tracer_print_sg_float_type(&type_desc->u.side_sg, item->u.side_static.side_float_sg_ptr);
+		(void) tracer_print_sg_float_type(&type_desc->u.side_sg, item->u.side_static.side_float_sg_ptr);
 		break;
 	case SIDE_TYPE_ARRAY:
 		tracer_print_array(type_desc, item->u.side_static.side_array);
@@ -1007,91 +1012,6 @@ void tracer_print_struct(const struct side_type *type_desc, const struct side_ar
 }
 
 static
-void tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr)
-{
-	const char *ptr = (const char *) _ptr;
-	union side_integer_value value;
-
-	switch (type_sg->u.side_integer.type.integer_size_bits) {
-	case 8:
-	case 16:
-	case 32:
-	case 64:
-		break;
-	default:
-		abort();
-	}
-	memcpy(&value, ptr + type_sg->offset, type_sg->u.side_integer.type.integer_size_bits >> 3);
-	tracer_print_type_integer(":", &type_sg->u.side_integer.type, &value,
-			type_sg->u.side_integer.offset_bits, TRACER_DISPLAY_BASE_10);
-}
-
-static
-void tracer_print_sg_float_type(const struct side_type_sg *type_sg, const void *_ptr)
-{
-	const char *ptr = (const char *) _ptr;
-	union side_float_value value;
-
-	switch (type_sg->u.side_float.float_size_bits) {
-	case 16:
-	case 32:
-	case 64:
-	case 128:
-		break;
-	default:
-		abort();
-	}
-	memcpy(&value, ptr + type_sg->offset, type_sg->u.side_float.float_size_bits >> 3);
-	tracer_print_type_float(":", &type_sg->u.side_float, &value);
-}
-
-static
-void tracer_print_sg_type(const struct side_type *type_desc, void *ptr)
-{
-	printf("{ ");
-	switch (type_desc->type) {
-	case SIDE_TYPE_SG_UNSIGNED_INT:
-	case SIDE_TYPE_SG_SIGNED_INT:
-		tracer_print_sg_integer_type(&type_desc->u.side_sg, ptr);
-		break;
-	case SIDE_TYPE_SG_FLOAT:
-		tracer_print_sg_float_type(&type_desc->u.side_sg, ptr);
-		break;
-	case SIDE_TYPE_SG_STRUCT:
-		tracer_print_sg_struct(&type_desc->u.side_sg, ptr);
-		break;
-	default:
-		fprintf(stderr, "<UNKNOWN SCATTER-GATHER TYPE>");
-		abort();
-	}
-	printf(" }");
-}
-
-static
-void tracer_print_sg_field(const struct side_event_field *field, void *ptr)
-{
-	printf("%s: ", field->field_name);
-	tracer_print_sg_type(&field->side_type, ptr);
-}
-
-static
-void tracer_print_sg_struct(const struct side_type_sg *type_sg, const void *_ptr)
-{
-	char *ptr = (char *) _ptr;
-	uint32_t i;
-
-	memcpy(&ptr, ptr + type_sg->offset, sizeof(ptr));
-	print_attributes("attr", ":", type_sg->u.side_struct->attr, type_sg->u.side_struct->nr_attr);
-	printf("%s", type_sg->u.side_struct->nr_attr ? ", " : "");
-	printf("fields: { ");
-	for (i = 0; i < type_sg->u.side_struct->nr_fields; i++) {
-		printf("%s", i ? ", " : "");
-		tracer_print_sg_field(&type_sg->u.side_struct->fields[i], ptr);
-	}
-	printf(" }");
-}
-
-static
 void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
 {
 	const struct side_arg *sav = side_arg_vec->sav;
@@ -1127,6 +1047,121 @@ void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_v
 		tracer_print_type(type_desc->u.side_vla.elem_type, &sav[i]);
 	}
 	printf(" ]");
+}
+
+static
+uint32_t tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr)
+{
+	const char *ptr = (const char *) _ptr;
+	union side_integer_value value;
+	uint32_t integer_size_bytes = type_sg->u.side_integer.type.integer_size_bits >> 3;
+
+	switch (type_sg->u.side_integer.type.integer_size_bits) {
+	case 8:
+	case 16:
+	case 32:
+	case 64:
+		break;
+	default:
+		abort();
+	}
+	memcpy(&value, ptr + type_sg->offset, integer_size_bytes);
+	tracer_print_type_integer(":", &type_sg->u.side_integer.type, &value,
+			type_sg->u.side_integer.offset_bits, TRACER_DISPLAY_BASE_10);
+	return integer_size_bytes;
+}
+
+static
+uint32_t tracer_print_sg_float_type(const struct side_type_sg *type_sg, const void *_ptr)
+{
+	const char *ptr = (const char *) _ptr;
+	union side_float_value value;
+	uint32_t float_size_bytes = type_sg->u.side_float.float_size_bits >> 3;
+
+	switch (type_sg->u.side_float.float_size_bits) {
+	case 16:
+	case 32:
+	case 64:
+	case 128:
+		break;
+	default:
+		abort();
+	}
+	memcpy(&value, ptr + type_sg->offset, float_size_bytes);
+	tracer_print_type_float(":", &type_sg->u.side_float, &value);
+	return float_size_bytes;
+}
+
+static
+uint32_t tracer_print_sg_type(const struct side_type *type_desc, void *ptr)
+{
+	uint32_t len;
+
+	printf("{ ");
+	switch (type_desc->type) {
+	case SIDE_TYPE_SG_UNSIGNED_INT:
+	case SIDE_TYPE_SG_SIGNED_INT:
+		len = tracer_print_sg_integer_type(&type_desc->u.side_sg, ptr);
+		break;
+	case SIDE_TYPE_SG_FLOAT:
+		len = tracer_print_sg_float_type(&type_desc->u.side_sg, ptr);
+		break;
+	case SIDE_TYPE_SG_STRUCT:
+		len = tracer_print_sg_struct(&type_desc->u.side_sg, ptr);
+		break;
+	case SIDE_TYPE_SG_ARRAY:
+		len = tracer_print_sg_array(&type_desc->u.side_sg, ptr);
+		break;
+	default:
+		fprintf(stderr, "<UNKNOWN SCATTER-GATHER TYPE>");
+		abort();
+	}
+	printf(" }");
+	return len;
+}
+
+static
+void tracer_print_sg_field(const struct side_event_field *field, void *ptr)
+{
+	printf("%s: ", field->field_name);
+	(void) tracer_print_sg_type(&field->side_type, ptr);
+}
+
+static
+uint32_t tracer_print_sg_struct(const struct side_type_sg *type_sg, const void *_ptr)
+{
+	char *ptr = (char *) _ptr;
+	uint32_t i;
+
+	memcpy(&ptr, ptr + type_sg->offset, sizeof(ptr));
+	print_attributes("attr", ":", type_sg->u.side_struct->attr, type_sg->u.side_struct->nr_attr);
+	printf("%s", type_sg->u.side_struct->nr_attr ? ", " : "");
+	printf("fields: { ");
+	for (i = 0; i < type_sg->u.side_struct->nr_fields; i++) {
+		printf("%s", i ? ", " : "");
+		tracer_print_sg_field(&type_sg->u.side_struct->fields[i], ptr);
+	}
+	printf(" }");
+	return sizeof(void *);
+}
+
+static
+uint32_t tracer_print_sg_array(const struct side_type_sg *type_sg, const void *_ptr)
+{
+	char *ptr = (char *) _ptr;
+	uint32_t i;
+
+	memcpy(&ptr, ptr + type_sg->offset, sizeof(ptr));
+	print_attributes("attr", ":", type_sg->u.side_array.attr, type_sg->u.side_array.nr_attr);
+	printf("%s", type_sg->u.side_array.nr_attr ? ", " : "");
+	printf("elements: ");
+	printf("[ ");
+	for (i = 0; i < type_sg->u.side_array.length; i++) {
+		printf("%s", i ? ", " : "");
+		ptr += tracer_print_sg_type(type_sg->u.side_array.elem_type, ptr);
+	}
+	printf(" ]");
+	return sizeof(void *);
 }
 
 struct tracer_visitor_priv {

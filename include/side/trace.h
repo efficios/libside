@@ -95,6 +95,7 @@ enum side_type_label {
 	SIDE_TYPE_SG_SIGNED_INT,
 	SIDE_TYPE_SG_FLOAT,
 	SIDE_TYPE_SG_STRUCT,
+	SIDE_TYPE_SG_ARRAY,
 
 	/* Dynamic types */
 	SIDE_TYPE_DYNAMIC_NULL,
@@ -344,6 +345,7 @@ struct side_type_sg {
 	union {
 		struct side_type_sg_integer side_integer;
 		struct side_type_float side_float;
+		struct side_type_array side_array;
 		const struct side_type_struct *side_struct;
 	} SIDE_PACKED u;
 } SIDE_PACKED;
@@ -419,6 +421,7 @@ struct side_arg_static {
 	/* Scatter-gather */
 	void *side_integer_sg_ptr;
 	void *side_float_sg_ptr;
+	void *side_array_sg_ptr;
 	void *side_struct_sg_ptr;
 } SIDE_PACKED;
 
@@ -802,6 +805,50 @@ struct side_event_description {
 	SIDE_COMPOUND_LITERAL(const struct side_type_struct, \
 		_side_type_struct_define(SIDE_PARAM(_fields), SIDE_PARAM(_attr)))
 
+#define side_type_array(_elem_type, _length, _attr) \
+	{ \
+		.type = SIDE_TYPE_ARRAY, \
+		.u = { \
+			.side_array = { \
+				.elem_type = _elem_type, \
+				.attr = _attr, \
+				.length = _length, \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+			}, \
+		}, \
+	}
+#define side_field_array(_name, _elem_type, _length, _attr) \
+	_side_field(_name, side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM(_attr)))
+
+#define side_type_vla(_elem_type, _attr) \
+	{ \
+		.type = SIDE_TYPE_VLA, \
+		.u = { \
+			.side_vla = { \
+				.elem_type = _elem_type, \
+				.attr = _attr, \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+			}, \
+		}, \
+	}
+#define side_field_vla(_name, _elem_type, _attr) \
+	_side_field(_name, side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM(_attr)))
+
+#define side_type_vla_visitor(_elem_type, _visitor, _attr) \
+	{ \
+		.type = SIDE_TYPE_VLA_VISITOR, \
+		.u = { \
+			.side_vla_visitor = { \
+				.elem_type = SIDE_PARAM(_elem_type), \
+				.visitor = _visitor, \
+				.attr = _attr, \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+			}, \
+		}, \
+	}
+#define side_field_vla_visitor(_name, _elem_type, _visitor, _attr) \
+	_side_field(_name, side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)))
+
 /* Scatter-gather fields */
 
 #define _side_type_sg_integer(_type, _signedness, _byte_order, _offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
@@ -910,49 +957,25 @@ struct side_event_description {
 #define side_field_sg_struct(_name, _struct_sg, _offset) \
 	_side_field(_name, side_type_sg_struct(SIDE_PARAM(_struct_sg), _offset))
 
-#define side_type_array(_elem_type, _length, _attr) \
+#define side_type_sg_array(_elem_type_sg, _length, _offset, _attr) \
 	{ \
-		.type = SIDE_TYPE_ARRAY, \
+		.type = SIDE_TYPE_SG_ARRAY, \
 		.u = { \
-			.side_array = { \
-				.elem_type = _elem_type, \
-				.attr = _attr, \
-				.length = _length, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+			.side_sg = { \
+				.offset = _offset, \
+				.u = { \
+					.side_array = { \
+						.elem_type = _elem_type_sg, \
+						.attr = _attr, \
+						.length = _length, \
+						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+					}, \
+				}, \
 			}, \
 		}, \
 	}
-#define side_field_array(_name, _elem_type, _length, _attr) \
-	_side_field(_name, side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM(_attr)))
-
-#define side_type_vla(_elem_type, _attr) \
-	{ \
-		.type = SIDE_TYPE_VLA, \
-		.u = { \
-			.side_vla = { \
-				.elem_type = _elem_type, \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-			}, \
-		}, \
-	}
-#define side_field_vla(_name, _elem_type, _attr) \
-	_side_field(_name, side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM(_attr)))
-
-#define side_type_vla_visitor(_elem_type, _visitor, _attr) \
-	{ \
-		.type = SIDE_TYPE_VLA_VISITOR, \
-		.u = { \
-			.side_vla_visitor = { \
-				.elem_type = SIDE_PARAM(_elem_type), \
-				.visitor = _visitor, \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-			}, \
-		}, \
-	}
-#define side_field_vla_visitor(_name, _elem_type, _visitor, _attr) \
-	_side_field(_name, side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)))
+#define side_field_sg_array(_name, _elem_type, _length, _offset, _attr) \
+	_side_field(_name, side_type_sg_array(SIDE_PARAM(_elem_type), _length, _offset, SIDE_PARAM(_attr)))
 
 #define side_elem(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
@@ -988,10 +1011,6 @@ struct side_event_description {
 #define side_arg_float_binary128(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .side_static = { .float_value = { .side_float_binary128 = (_val) } } } }
 
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_static = { .side_struct = (_side_type) } } }
-#define side_arg_sg_struct(_ptr)	{ .type = SIDE_TYPE_SG_STRUCT, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
-#define side_arg_sg_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_SG_UNSIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
-#define side_arg_sg_signed_integer(_ptr)	{ .type = SIDE_TYPE_SG_SIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
-#define side_arg_sg_float(_ptr)		{ .type = SIDE_TYPE_SG_FLOAT, .u = { .side_static = { .side_float_sg_ptr = (_ptr) } } }
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_static = { .side_array = (_side_type) } } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_static = { .side_vla = (_side_type) } } }
 #define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_static = { .side_vla_app_visitor_ctx = (_ctx) } } }
@@ -1017,6 +1036,13 @@ struct side_event_description {
 #define side_arg_vla_s64(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S64, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
 #define side_arg_vla_byte(_ptr, _length) { .type = SIDE_TYPE_VLA_BYTE, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
 #define side_arg_vla_pointer(_ptr, _length) { .type = SIDE_TYPE_VLA_POINTER_HOST, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
+
+/* Scatter-gather field arguments */
+#define side_arg_sg_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_SG_UNSIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
+#define side_arg_sg_signed_integer(_ptr)	{ .type = SIDE_TYPE_SG_SIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
+#define side_arg_sg_float(_ptr)		{ .type = SIDE_TYPE_SG_FLOAT, .u = { .side_static = { .side_float_sg_ptr = (_ptr) } } }
+#define side_arg_sg_struct(_ptr)	{ .type = SIDE_TYPE_SG_STRUCT, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
+#define side_arg_sg_array(_ptr)		{ .type = SIDE_TYPE_SG_ARRAY, .u = { .side_static = { .side_array_sg_ptr = (_ptr) } } }
 
 /* Dynamic field arguments */
 
