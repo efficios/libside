@@ -1472,6 +1472,7 @@ struct test {
 	int64_t i;
 	int64_t j;
 	int64_t k;
+	uint64_t test;
 };
 
 static side_define_struct(mystructsgdef,
@@ -1503,6 +1504,15 @@ static side_define_struct(mystructsgdef,
 		side_field_sg_signed_integer("k", offsetof(struct test, k),
 			side_struct_field_sizeof_bit(struct test, k), 1, 63,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_sg_unsigned_integer_le("test", offsetof(struct test, test),
+			side_struct_field_sizeof_bit(struct test, test), 0, 64,
+			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_sg_unsigned_integer_le("test_le", offsetof(struct test, test),
+			side_struct_field_sizeof_bit(struct test, test), 0, 64,
+			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_sg_unsigned_integer_be("test_be", offsetof(struct test, test),
+			side_struct_field_sizeof_bit(struct test, test), 0, 64,
+			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
 	),
 	side_attr_list()
 );
@@ -1535,6 +1545,7 @@ void test_struct_sg(void)
 			.i = -1,
 			.j = -1,
 			.k = -1,
+			.test = 0xFF,
 		};
 		int32_t val = -66;
 #if __HAVE_FLOAT32
