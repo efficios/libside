@@ -119,12 +119,12 @@ void side_call_variadic(const struct side_event_description *desc,
 static
 const struct side_callback *side_tracer_callback_lookup(
 		const struct side_event_description *desc,
-		void (*call)(), void *priv)
+		void *call, void *priv)
 {
 	const struct side_callback *cb;
 
 	for (cb = desc->callbacks; cb->u.call != NULL; cb++) {
-		if (cb->u.call == call && cb->priv == priv)
+		if ((void *) cb->u.call == call && cb->priv == priv)
 			return cb;
 	}
 	return NULL;
@@ -164,9 +164,11 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	}
 	memcpy(new_cb, old_cb, old_nr_cb);
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
-		new_cb[old_nr_cb].u.call_variadic = call;
+		new_cb[old_nr_cb].u.call_variadic =
+			(side_tracer_callback_variadic_func) call;
 	else
-		new_cb[old_nr_cb].u.call = call;
+		new_cb[old_nr_cb].u.call =
+			(side_tracer_callback_func) call;
 	new_cb[old_nr_cb].priv = priv;
 	side_rcu_assign_pointer(desc->callbacks, new_cb);
 	side_rcu_wait_grace_period(&rcu_gp);
@@ -187,7 +189,7 @@ int side_tracer_callback_register(struct side_event_description *desc,
 {
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, call, priv);
+	return _side_tracer_callback_register(desc, (void *) call, priv);
 }
 
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
@@ -196,7 +198,7 @@ int side_tracer_callback_variadic_register(struct side_event_description *desc,
 {
 	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, call_variadic, priv);
+	return _side_tracer_callback_register(desc, (void *) call_variadic, priv);
 }
 
 int _side_tracer_callback_unregister(struct side_event_description *desc,
@@ -254,7 +256,7 @@ int side_tracer_callback_unregister(struct side_event_description *desc,
 {
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, call, priv);
+	return _side_tracer_callback_unregister(desc, (void *) call, priv);
 }
 
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
@@ -263,7 +265,7 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 {
 	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, call_variadic, priv);
+	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv);
 }
 
 struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events)
@@ -275,7 +277,8 @@ struct side_events_register_handle *side_events_register(struct side_event_descr
 		return NULL;
 	if (!initialized)
 		side_init();
-	events_handle = calloc(1, sizeof(struct side_events_register_handle));
+	events_handle = (struct side_events_register_handle *)
+			calloc(1, sizeof(struct side_events_register_handle));
 	if (!events_handle)
 		return NULL;
 	events_handle->events = events;
@@ -363,7 +366,8 @@ struct side_tracer_handle *side_tracer_event_notification_register(
 		return NULL;
 	if (!initialized)
 		side_init();
-	tracer_handle = calloc(1, sizeof(struct side_tracer_handle));
+	tracer_handle = (struct side_tracer_handle *)
+				calloc(1, sizeof(struct side_tracer_handle));
 	if (!tracer_handle)
 		return NULL;
 	pthread_mutex_lock(&side_lock);
