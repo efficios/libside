@@ -1386,20 +1386,20 @@ struct side_tracer_dynamic_struct_visitor_ctx {
 			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
 
 #define side_hidden_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
-	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
-			SIDE_PARAM(_attr), 0)
+	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, \
+			_loglevel, SIDE_PARAM(_fields), SIDE_PARAM(_attr), 0)
 
 #define side_hidden_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
-	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
-			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
+	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, \
+			_loglevel, SIDE_PARAM(_fields), SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
 
 #define side_export_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
-	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
-			SIDE_PARAM(_attr), 0)
+	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, \
+			_loglevel, SIDE_PARAM(_fields), SIDE_PARAM(_attr), 0)
 
 #define side_export_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
-	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
-			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
+	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, \
+			_loglevel, SIDE_PARAM(_fields), SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
 
 #define side_declare_event(_identifier) \
 	extern uintptr_t side_event_enable_##_identifier; \
@@ -1436,7 +1436,8 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 			void *priv),
 		void *priv);
 
-struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events);
+struct side_events_register_handle *side_events_register(struct side_event_description **events,
+		uint32_t nr_events);
 void side_events_unregister(struct side_events_register_handle *handle);
 
 enum side_tracer_notification {
