@@ -1499,7 +1499,7 @@ struct tracer_dynamic_vla_visitor_priv {
 
 static
 enum side_visitor_status tracer_dynamic_vla_write_elem_cb(
-			const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
+			const struct side_tracer_visitor_ctx *tracer_ctx,
 			const struct side_arg *elem)
 {
 	struct tracer_dynamic_vla_visitor_priv *tracer_priv = tracer_ctx->priv;
@@ -1516,7 +1516,7 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg *item)
 	struct tracer_dynamic_vla_visitor_priv tracer_priv = {
 		.i = 0,
 	};
-	const struct side_tracer_dynamic_vla_visitor_ctx tracer_ctx = {
+	const struct side_tracer_visitor_ctx tracer_ctx = {
 		.write_elem = tracer_dynamic_vla_write_elem_cb,
 		.priv = &tracer_priv,
 	};

@@ -28,7 +28,6 @@ struct side_type;
 struct side_event_field;
 struct side_tracer_visitor_ctx;
 struct side_tracer_dynamic_struct_visitor_ctx;
-struct side_tracer_dynamic_vla_visitor_ctx;
 struct side_event_description;
 struct side_arg_dynamic_event_struct;
 struct side_events_register_handle;
@@ -190,9 +189,6 @@ typedef enum side_visitor_status (*side_visitor)(
 		void *app_ctx);
 typedef enum side_visitor_status (*side_dynamic_struct_visitor)(
 		const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-		void *app_ctx);
-typedef enum side_visitor_status (*side_dynamic_vla_visitor)(
-		const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
 		void *app_ctx);
 
 union side_integer_value {
@@ -463,7 +459,7 @@ struct side_arg_dynamic {
 	const struct side_arg_dynamic_vla *side_dynamic_vla;
 	struct {
 		void *app_ctx;
-		side_dynamic_vla_visitor visitor;
+		side_visitor visitor;
 		const struct side_attr *attr;
 		uint32_t nr_attr;
 	} SIDE_PACKED side_dynamic_vla_visitor;
@@ -528,13 +524,6 @@ struct side_tracer_dynamic_struct_visitor_ctx {
 	enum side_visitor_status (*write_field)(
 			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
 			const struct side_arg_dynamic_event_field *dynamic_field);
-	void *priv;		/* Private tracer context. */
-} SIDE_PACKED;
-
-struct side_tracer_dynamic_vla_visitor_ctx {
-	enum side_visitor_status (*write_elem)(
-			const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx,
-			const struct side_arg *elem);
 	void *priv;		/* Private tracer context. */
 } SIDE_PACKED;
 

@@ -648,7 +648,7 @@ struct app_dynamic_vla_visitor_ctx {
 };
 
 static
-enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_dynamic_vla_visitor_ctx *tracer_ctx, void *_ctx)
+enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
 {
 	struct app_dynamic_vla_visitor_ctx *ctx = (struct app_dynamic_vla_visitor_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
