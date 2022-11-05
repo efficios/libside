@@ -1412,9 +1412,9 @@ type_error:
 }
 
 static
-void tracer_print_dynamic_struct(const struct side_arg_dynamic_event_struct *dynamic_struct)
+void tracer_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_struct)
 {
-	const struct side_arg_dynamic_event_field *fields = dynamic_struct->fields;
+	const struct side_arg_dynamic_field *fields = dynamic_struct->fields;
 	uint32_t len = dynamic_struct->len;
 	int i;
 
@@ -1437,7 +1437,7 @@ struct tracer_dynamic_struct_visitor_priv {
 static
 enum side_visitor_status tracer_dynamic_struct_write_elem_cb(
 			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-			const struct side_arg_dynamic_event_field *dynamic_field)
+			const struct side_arg_dynamic_field *dynamic_field)
 {
 	struct tracer_dynamic_struct_visitor_priv *tracer_priv = tracer_ctx->priv;
 
@@ -1641,7 +1641,7 @@ void tracer_call(const struct side_event_description *desc,
 
 void tracer_call_variadic(const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
-		const struct side_arg_dynamic_event_struct *var_struct,
+		const struct side_arg_dynamic_struct *var_struct,
 		void *priv __attribute__((unused)))
 {
 	uint32_t var_struct_len = var_struct->len;

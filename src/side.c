@@ -92,7 +92,7 @@ void side_call(const struct side_event_description *desc, const struct side_arg_
 
 void side_call_variadic(const struct side_event_description *desc,
 	const struct side_arg_vec *side_arg_vec,
-	const struct side_arg_dynamic_event_struct *var_struct)
+	const struct side_arg_dynamic_struct *var_struct)
 {
 	const struct side_callback *side_cb;
 	unsigned int rcu_period;
@@ -195,7 +195,7 @@ int side_tracer_callback_register(struct side_event_description *desc,
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
 		void (*call_variadic)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
-			const struct side_arg_dynamic_event_struct *var_struct,
+			const struct side_arg_dynamic_struct *var_struct,
 			void *priv),
 		void *priv)
 {
@@ -267,7 +267,7 @@ int side_tracer_callback_unregister(struct side_event_description *desc,
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
 		void (*call_variadic)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
-			const struct side_arg_dynamic_event_struct *var_struct,
+			const struct side_arg_dynamic_struct *var_struct,
 			void *priv),
 		void *priv)
 {
