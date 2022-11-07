@@ -1867,6 +1867,112 @@ void test_sg_structnest(void)
 	}
 }
 
+uint32_t sgvla[] = { 1, 2, 3, 4 };
+
+struct testsgvla {
+	int a;
+	uint16_t len;
+	uint32_t *p;
+};
+
+static side_define_struct(mystructsgvla,
+	side_field_list(
+		side_field_sg_signed_integer("a", offsetof(struct testsgvla, a),
+			side_struct_field_sizeof_bit(struct testsgvla, a), 0,
+			side_struct_field_sizeof_bit(struct testsgvla, a),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()
+		),
+		side_field_sg_vla("nestvla",
+			side_elem(side_type_sg_unsigned_integer(0, 32, 0, 32, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
+			offsetof(struct testsgvla, p),
+			SIDE_TYPE_SG_ACCESS_POINTER,
+			side_length(side_type_sg_unsigned_integer(offsetof(struct testsgvla, len),
+					16, 0, 16, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
+			side_attr_list()
+		),
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_sgvla,
+	"myprovider", "myeventsgvla", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_sg_struct("structsgvla", &mystructsgvla, 0,
+				sizeof(struct testsgvla), SIDE_TYPE_SG_ACCESS_POINTER),
+	),
+	side_attr_list()
+);
+
+static
+void test_sg_vla(void)
+{
+	side_event_cond(my_provider_event_sgvla) {
+		struct testsgvla mystruct = {
+			.a = 55,
+			.len = SIDE_ARRAY_SIZE(sgvla),
+			.p = sgvla,
+		};
+		side_event_call(my_provider_event_sgvla,
+			side_arg_list(
+				side_arg_sg_struct(&mystruct),
+			)
+		);
+	}
+}
+
+struct testsgvlaflex {
+	uint8_t len;
+	uint32_t otherfield;
+	uint64_t array[];
+};
+
+static side_define_struct(mystructsgvlaflex,
+	side_field_list(
+		side_field_sg_vla("vlaflex",
+			side_elem(side_type_sg_unsigned_integer(0, 64, 0, 64, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
+			offsetof(struct testsgvlaflex, array),
+			SIDE_TYPE_SG_ACCESS_ADDRESS,
+			side_length(side_type_sg_unsigned_integer(offsetof(struct testsgvlaflex, len),
+					8, 0, 8, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
+			side_attr_list()
+		),
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_sgvlaflex,
+	"myprovider", "myeventsgvlaflex", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_sg_struct("structsgvlaflex", &mystructsgvlaflex, 0,
+				sizeof(struct testsgvlaflex), SIDE_TYPE_SG_ACCESS_POINTER),
+	),
+	side_attr_list()
+);
+
+#define VLAFLEXLEN	6
+static
+void test_sg_vla_flex(void)
+{
+	side_event_cond(my_provider_event_sgvlaflex) {
+		struct testsgvlaflex *mystruct = malloc(sizeof(*mystruct) + VLAFLEXLEN + sizeof(uint64_t));
+
+		mystruct->len = VLAFLEXLEN;
+		mystruct->otherfield = 0;
+		mystruct->array[0] = 1;
+		mystruct->array[1] = 2;
+		mystruct->array[2] = 3;
+		mystruct->array[3] = 4;
+		mystruct->array[4] = 5;
+		mystruct->array[5] = 6;
+		side_event_call(my_provider_event_sgvlaflex,
+			side_arg_list(
+				side_arg_sg_struct(mystruct),
+			)
+		);
+		free(mystruct);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -1912,5 +2018,7 @@ int main()
 	test_struct_sg_float();
 	test_array_sg();
 	test_sg_structnest();
+	test_sg_vla();
+	test_sg_vla_flex();
 	return 0;
 }

@@ -96,6 +96,7 @@ enum side_type_label {
 	SIDE_TYPE_SG_FLOAT,
 	SIDE_TYPE_SG_STRUCT,
 	SIDE_TYPE_SG_ARRAY,
+	SIDE_TYPE_SG_VLA,
 
 	/* Dynamic types */
 	SIDE_TYPE_DYNAMIC_NULL,
@@ -336,13 +337,37 @@ struct side_type_enum_bitmap {
 } SIDE_PACKED;
 
 struct side_type_sg_integer {
+	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_sg_access_mode */
 	struct side_type_integer type;
-	uint16_t offset_bits;		/* bits */
+	uint16_t offset_bits;	/* bits */
+} SIDE_PACKED;
+
+struct side_type_sg_float {
+	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_sg_access_mode */
+	struct side_type_float type;
 } SIDE_PACKED;
 
 struct side_type_sg_struct {
+	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_sg_access_mode */
 	const struct side_type_struct *type;
-	uint32_t size;			/* bytes */
+	uint32_t size;		/* bytes */
+} SIDE_PACKED;
+
+struct side_type_sg_array {
+	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_sg_access_mode */
+	struct side_type_array type;
+} SIDE_PACKED;
+
+struct side_type_sg_vla {
+	const struct side_type *length_type;	/* side_length() */
+
+	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_sg_access_mode */
+	struct side_type_vla type;
 } SIDE_PACKED;
 
 enum side_type_sg_access_mode {
@@ -351,12 +376,11 @@ enum side_type_sg_access_mode {
 };
 
 struct side_type_sg {
-	uint64_t offset;	/* bytes */
-	uint8_t access_mode;	/* enum side_type_sg_access_mode */
 	union {
 		struct side_type_sg_integer side_integer;
-		struct side_type_float side_float;
-		struct side_type_array side_array;
+		struct side_type_sg_float side_float;
+		struct side_type_sg_array side_array;
+		struct side_type_sg_vla side_vla;
 		struct side_type_sg_struct side_struct;
 	} SIDE_PACKED u;
 } SIDE_PACKED;
@@ -434,6 +458,10 @@ struct side_arg_static {
 	void *side_float_sg_ptr;
 	void *side_array_sg_ptr;
 	void *side_struct_sg_ptr;
+	struct {
+		void *ptr;
+		void *length_ptr;
+	} SIDE_PACKED side_vla_sg;
 } SIDE_PACKED;
 
 struct side_arg_dynamic_vla {
@@ -868,10 +896,10 @@ struct side_event_description {
 		.type = _type, \
 		.u = { \
 			.side_sg = { \
-				.offset = _offset, \
-				.access_mode = _access_mode, \
 				.u = { \
 					.side_integer = { \
+						.offset = _offset, \
+						.access_mode = _access_mode, \
 						.type = { \
 							.attr = _attr, \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -928,14 +956,16 @@ struct side_event_description {
 		.type = SIDE_TYPE_SG_FLOAT, \
 		.u = { \
 			.side_sg = { \
-				.offset = _offset, \
-				.access_mode = _access_mode, \
 				.u = { \
 					.side_float = { \
-						.attr = _attr, \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-						.float_size_bits = _float_size_bits, \
-						.byte_order = _byte_order, \
+						.offset = _offset, \
+						.access_mode = _access_mode, \
+						.type = { \
+							.attr = _attr, \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.float_size_bits = _float_size_bits, \
+							.byte_order = _byte_order, \
+						}, \
 					}, \
 				}, \
 			}, \
@@ -961,10 +991,10 @@ struct side_event_description {
 		.type = SIDE_TYPE_SG_STRUCT, \
 		.u = { \
 			.side_sg = { \
-				.offset = _offset, \
-				.access_mode = _access_mode, \
 				.u = { \
 					.side_struct = { \
+						.offset = _offset, \
+						.access_mode = _access_mode, \
 						.type = _struct_sg, \
 						.size = _size, \
 					}, \
@@ -980,14 +1010,16 @@ struct side_event_description {
 		.type = SIDE_TYPE_SG_ARRAY, \
 		.u = { \
 			.side_sg = { \
-				.offset = _offset, \
-				.access_mode = _access_mode, \
 				.u = { \
 					.side_array = { \
-						.elem_type = _elem_type_sg, \
-						.attr = _attr, \
-						.length = _length, \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						.offset = _offset, \
+						.access_mode = _access_mode, \
+						.type = { \
+							.elem_type = _elem_type_sg, \
+							.attr = _attr, \
+							.length = _length, \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						}, \
 					}, \
 				}, \
 			}, \
@@ -996,7 +1028,33 @@ struct side_event_description {
 #define side_field_sg_array(_name, _elem_type, _length, _offset, _access_mode, _attr) \
 	_side_field(_name, side_type_sg_array(SIDE_PARAM(_elem_type), _length, _offset, _access_mode, SIDE_PARAM(_attr)))
 
+#define side_type_sg_vla(_elem_type_sg, _offset, _access_mode, _length_type_sg, _attr) \
+	{ \
+		.type = SIDE_TYPE_SG_VLA, \
+		.u = { \
+			.side_sg = { \
+				.u = { \
+					.side_vla = { \
+						.offset = _offset, \
+						.access_mode = _access_mode, \
+						.type = { \
+							.elem_type = _elem_type_sg, \
+							.attr = _attr, \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						}, \
+						.length_type = _length_type_sg, \
+					}, \
+				}, \
+			}, \
+		}, \
+	}
+#define side_field_sg_vla(_name, _elem_type_sg, _offset, _access_mode, _length_type_sg, _attr) \
+	_side_field(_name, side_type_sg_vla(SIDE_PARAM(_elem_type_sg), _offset, _access_mode, SIDE_PARAM(_length_type_sg), SIDE_PARAM(_attr)))
+
 #define side_elem(...) \
+	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
+
+#define side_length(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
 
 #define side_field_list(...) \
@@ -1059,9 +1117,10 @@ struct side_event_description {
 /* Scatter-gather field arguments */
 #define side_arg_sg_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_SG_UNSIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
 #define side_arg_sg_signed_integer(_ptr)	{ .type = SIDE_TYPE_SG_SIGNED_INT, .u = { .side_static = { .side_integer_sg_ptr = (_ptr) } } }
-#define side_arg_sg_float(_ptr)		{ .type = SIDE_TYPE_SG_FLOAT, .u = { .side_static = { .side_float_sg_ptr = (_ptr) } } }
-#define side_arg_sg_struct(_ptr)	{ .type = SIDE_TYPE_SG_STRUCT, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
-#define side_arg_sg_array(_ptr)		{ .type = SIDE_TYPE_SG_ARRAY, .u = { .side_static = { .side_array_sg_ptr = (_ptr) } } }
+#define side_arg_sg_float(_ptr)			{ .type = SIDE_TYPE_SG_FLOAT, .u = { .side_static = { .side_float_sg_ptr = (_ptr) } } }
+#define side_arg_sg_struct(_ptr)		{ .type = SIDE_TYPE_SG_STRUCT, .u = { .side_static = { .side_struct_sg_ptr = (_ptr) } } }
+#define side_arg_sg_array(_ptr)			{ .type = SIDE_TYPE_SG_ARRAY, .u = { .side_static = { .side_array_sg_ptr = (_ptr) } } }
+#define side_arg_sg_vla(_ptr, _length_ptr)	{ .type = SIDE_TYPE_SG_VLA, .u = { .side_static = { .side_vla_sg = { .ptr = (_ptr), .length_ptr = (_length_ptr) } } } }
 
 /* Dynamic field arguments */
 

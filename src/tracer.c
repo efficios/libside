@@ -44,6 +44,8 @@ uint32_t tracer_print_sg_float_type(const struct side_type_sg *type_sg, const vo
 static
 uint32_t tracer_print_sg_array(const struct side_type_sg *type_sg, const void *_ptr);
 static
+uint32_t tracer_print_sg_vla(const struct side_type_sg *type_sg, const void *_ptr);
+static
 void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item);
 
 static
@@ -977,6 +979,9 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
 		tracer_print_dynamic(item);
 		break;
+	case SIDE_TYPE_SG_VLA:
+		fprintf(stderr, "<scatter-gather VLA only supported within scatter-gather structures>\n");
+		abort();
 	default:
 		fprintf(stderr, "<UNKNOWN TYPE>");
 		abort();
@@ -1050,9 +1055,9 @@ void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_v
 }
 
 static
-const char *tracer_sg_access(const struct side_type_sg *type_sg, const char *ptr)
+const char *tracer_sg_access(enum side_type_sg_access_mode access_mode, const char *ptr)
 {
-	switch (type_sg->access_mode) {
+	switch (access_mode) {
 	case SIDE_TYPE_SG_ACCESS_ADDRESS:
 		return ptr;
 	case SIDE_TYPE_SG_ACCESS_POINTER:
@@ -1065,9 +1070,9 @@ const char *tracer_sg_access(const struct side_type_sg *type_sg, const char *ptr
 }
 
 static
-uint32_t tracer_sg_size(const struct side_type_sg *type_sg, uint32_t len)
+uint32_t tracer_sg_size(enum side_type_sg_access_mode access_mode, uint32_t len)
 {
-	switch (type_sg->access_mode) {
+	switch (access_mode) {
 	case SIDE_TYPE_SG_ACCESS_ADDRESS:
 		return len;
 	case SIDE_TYPE_SG_ACCESS_POINTER:
@@ -1078,11 +1083,36 @@ uint32_t tracer_sg_size(const struct side_type_sg *type_sg, uint32_t len)
 }
 
 static
-uint32_t tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr)
+uint64_t tracer_load_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr)
 {
+	enum side_type_sg_access_mode access_mode = type_sg->u.side_integer.access_mode;
+	uint32_t integer_size_bytes = type_sg->u.side_integer.type.integer_size_bits >> 3;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
+
+	ptr = tracer_sg_access(access_mode, ptr + type_sg->u.side_integer.offset);
+	memcpy(&value, ptr, integer_size_bytes);
+	switch (type_sg->u.side_integer.type.integer_size_bits) {
+	case 8:
+		return (uint64_t) value.side_u8;
+	case 16:
+		return (uint64_t) value.side_u16;
+	case 32:
+		return (uint64_t) value.side_u32;
+	case 64:
+		return (uint64_t) value.side_u64;
+	default:
+		abort();
+	}
+}
+
+static
+uint32_t tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr)
+{
+	enum side_type_sg_access_mode access_mode = type_sg->u.side_integer.access_mode;
 	uint32_t integer_size_bytes = type_sg->u.side_integer.type.integer_size_bits >> 3;
+	const char *ptr = (const char *) _ptr;
+	union side_integer_value value;
 
 	switch (type_sg->u.side_integer.type.integer_size_bits) {
 	case 8:
@@ -1093,21 +1123,22 @@ uint32_t tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const 
 	default:
 		abort();
 	}
-	ptr = tracer_sg_access(type_sg, ptr + type_sg->offset);
+	ptr = tracer_sg_access(access_mode, ptr + type_sg->u.side_integer.offset);
 	memcpy(&value, ptr, integer_size_bytes);
 	tracer_print_type_integer(":", &type_sg->u.side_integer.type, &value,
 			type_sg->u.side_integer.offset_bits, TRACER_DISPLAY_BASE_10);
-	return tracer_sg_size(type_sg, integer_size_bytes);
+	return tracer_sg_size(access_mode, integer_size_bytes);
 }
 
 static
 uint32_t tracer_print_sg_float_type(const struct side_type_sg *type_sg, const void *_ptr)
 {
+	enum side_type_sg_access_mode access_mode = type_sg->u.side_float.access_mode;
+	uint32_t float_size_bytes = type_sg->u.side_float.type.float_size_bits >> 3;
 	const char *ptr = (const char *) _ptr;
 	union side_float_value value;
-	uint32_t float_size_bytes = type_sg->u.side_float.float_size_bits >> 3;
 
-	switch (type_sg->u.side_float.float_size_bits) {
+	switch (type_sg->u.side_float.type.float_size_bits) {
 	case 16:
 	case 32:
 	case 64:
@@ -1116,10 +1147,10 @@ uint32_t tracer_print_sg_float_type(const struct side_type_sg *type_sg, const vo
 	default:
 		abort();
 	}
-	ptr = tracer_sg_access(type_sg, ptr + type_sg->offset);
+	ptr = tracer_sg_access(access_mode, ptr + type_sg->u.side_float.offset);
 	memcpy(&value, ptr, float_size_bytes);
-	tracer_print_type_float(":", &type_sg->u.side_float, &value);
-	return tracer_sg_size(type_sg, float_size_bytes);
+	tracer_print_type_float(":", &type_sg->u.side_float.type, &value);
+	return tracer_sg_size(access_mode, float_size_bytes);
 }
 
 static
@@ -1142,6 +1173,9 @@ uint32_t tracer_print_sg_type(const struct side_type *type_desc, const void *ptr
 	case SIDE_TYPE_SG_ARRAY:
 		len = tracer_print_sg_array(&type_desc->u.side_sg, ptr);
 		break;
+	case SIDE_TYPE_SG_VLA:
+		len = tracer_print_sg_vla(&type_desc->u.side_sg, ptr);
+		break;
 	default:
 		fprintf(stderr, "<UNKNOWN SCATTER-GATHER TYPE>");
 		abort();
@@ -1160,10 +1194,11 @@ void tracer_print_sg_field(const struct side_event_field *field, const void *ptr
 static
 uint32_t tracer_print_sg_struct(const struct side_type_sg *type_sg, const void *_ptr)
 {
+	enum side_type_sg_access_mode access_mode = type_sg->u.side_struct.access_mode;
 	const char *ptr = (const char *) _ptr;
 	uint32_t i;
 
-	ptr = tracer_sg_access(type_sg, ptr + type_sg->offset);
+	ptr = tracer_sg_access(access_mode, ptr + type_sg->u.side_struct.offset);
 	print_attributes("attr", ":", type_sg->u.side_struct.type->attr, type_sg->u.side_struct.type->nr_attr);
 	printf("%s", type_sg->u.side_struct.type->nr_attr ? ", " : "");
 	printf("fields: { ");
@@ -1172,27 +1207,73 @@ uint32_t tracer_print_sg_struct(const struct side_type_sg *type_sg, const void *
 		tracer_print_sg_field(&type_sg->u.side_struct.type->fields[i], ptr);
 	}
 	printf(" }");
-	return tracer_sg_size(type_sg, type_sg->u.side_struct.size);
+	return tracer_sg_size(access_mode, type_sg->u.side_struct.size);
 }
 
 static
 uint32_t tracer_print_sg_array(const struct side_type_sg *type_sg, const void *_ptr)
 {
+	enum side_type_sg_access_mode access_mode = type_sg->u.side_array.access_mode;
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	uint32_t i;
 
-	ptr = tracer_sg_access(type_sg, ptr + type_sg->offset);
+	ptr = tracer_sg_access(access_mode, ptr + type_sg->u.side_array.offset);
 	orig_ptr = ptr;
-	print_attributes("attr", ":", type_sg->u.side_array.attr, type_sg->u.side_array.nr_attr);
-	printf("%s", type_sg->u.side_array.nr_attr ? ", " : "");
+	print_attributes("attr", ":", type_sg->u.side_array.type.attr, type_sg->u.side_array.type.nr_attr);
+	printf("%s", type_sg->u.side_array.type.nr_attr ? ", " : "");
 	printf("elements: ");
 	printf("[ ");
-	for (i = 0; i < type_sg->u.side_array.length; i++) {
+	for (i = 0; i < type_sg->u.side_array.type.length; i++) {
+		switch (type_sg->u.side_array.type.elem_type->type) {
+		case SIDE_TYPE_SG_VLA:
+			fprintf(stderr, "<scatter-gather VLA only supported within scatter-gather structures>\n");
+			abort();
+		default:
+			break;
+		}
 		printf("%s", i ? ", " : "");
-		ptr += tracer_print_sg_type(type_sg->u.side_array.elem_type, ptr);
+		ptr += tracer_print_sg_type(type_sg->u.side_array.type.elem_type, ptr);
 	}
 	printf(" ]");
-	return tracer_sg_size(type_sg, ptr - orig_ptr);
+	return tracer_sg_size(access_mode, ptr - orig_ptr);
+}
+
+static
+uint32_t tracer_print_sg_vla(const struct side_type_sg *type_sg, const void *_ptr)
+{
+	enum side_type_sg_access_mode access_mode = type_sg->u.side_vla.access_mode;
+	const char *ptr = (const char *) _ptr, *orig_ptr;
+	uint32_t i, length;
+
+	/* Access length */
+	switch (type_sg->u.side_vla.length_type->type) {
+	case SIDE_TYPE_SG_UNSIGNED_INT:
+	case SIDE_TYPE_SG_SIGNED_INT:
+		break;
+	default:
+		fprintf(stderr, "<scatter-gather VLA expects integer scatter-gather length type>\n");
+		abort();
+	}
+	length = (uint32_t) tracer_load_sg_integer_type(&type_sg->u.side_vla.length_type->u.side_sg, ptr);
+	ptr = tracer_sg_access(access_mode, ptr + type_sg->u.side_vla.offset);
+	orig_ptr = ptr;
+	print_attributes("attr", ":", type_sg->u.side_vla.type.attr, type_sg->u.side_vla.type.nr_attr);
+	printf("%s", type_sg->u.side_vla.type.nr_attr ? ", " : "");
+	printf("elements: ");
+	printf("[ ");
+	for (i = 0; i < length; i++) {
+		switch (type_sg->u.side_vla.type.elem_type->type) {
+		case SIDE_TYPE_SG_VLA:
+			fprintf(stderr, "<scatter-gather VLA only supported within scatter-gather structures>\n");
+			abort();
+		default:
+			break;
+		}
+		printf("%s", i ? ", " : "");
+		ptr += tracer_print_sg_type(type_sg->u.side_vla.type.elem_type, ptr);
+	}
+	printf(" ]");
+	return tracer_sg_size(access_mode, ptr - orig_ptr);
 }
 
 struct tracer_visitor_priv {
