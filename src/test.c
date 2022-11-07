@@ -1479,51 +1479,52 @@ static side_define_struct(mystructsgdef,
 	side_field_list(
 		side_field_sg_unsigned_integer("a", offsetof(struct test, a),
 			side_struct_field_sizeof_bit(struct test, a), 0,
-			side_struct_field_sizeof_bit(struct test, a), side_attr_list()),
+			side_struct_field_sizeof_bit(struct test, a), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
 		side_field_sg_signed_integer("d", offsetof(struct test, d),
 			side_struct_field_sizeof_bit(struct test, d), 0,
-			side_struct_field_sizeof_bit(struct test, d), side_attr_list()),
+			side_struct_field_sizeof_bit(struct test, d), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
 		side_field_sg_unsigned_integer("e", offsetof(struct test, e),
 			side_struct_field_sizeof_bit(struct test, e), 8, 4,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
 		side_field_sg_signed_integer("f", offsetof(struct test, f),
 			side_struct_field_sizeof_bit(struct test, f), 1, 4,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 		side_field_sg_signed_integer("g", offsetof(struct test, g),
 			side_struct_field_sizeof_bit(struct test, g), 11, 4,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 		side_field_sg_signed_integer("h", offsetof(struct test, h),
 			side_struct_field_sizeof_bit(struct test, h), 1, 31,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 		side_field_sg_signed_integer("i", offsetof(struct test, i),
 			side_struct_field_sizeof_bit(struct test, i), 33, 20,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 		side_field_sg_signed_integer("j", offsetof(struct test, j),
 			side_struct_field_sizeof_bit(struct test, j), 63, 1,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_sg_signed_integer("k", offsetof(struct test, k),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_sg_signed_integer("k", offsetof(struct test, k), 
 			side_struct_field_sizeof_bit(struct test, k), 1, 63,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 		side_field_sg_unsigned_integer_le("test", offsetof(struct test, test),
 			side_struct_field_sizeof_bit(struct test, test), 0, 64,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
 		side_field_sg_unsigned_integer_le("test_le", offsetof(struct test, test),
 			side_struct_field_sizeof_bit(struct test, test), 0, 64,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
 		side_field_sg_unsigned_integer_be("test_be", offsetof(struct test, test),
 			side_struct_field_sizeof_bit(struct test, test), 0, 64,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
 	),
 	side_attr_list()
 );
 
 side_static_event(my_provider_event_structsg, "myprovider", "myeventstructsg", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsg", &mystructsgdef, 0),
-		side_field_sg_signed_integer("intsg", 0, 32, 0, 32,
+		side_field_sg_struct("structsg", &mystructsgdef, 0, sizeof(struct test),
+				SIDE_TYPE_SG_ACCESS_POINTER),
+		side_field_sg_signed_integer("intsg", 0, 32, 0, 32, SIDE_TYPE_SG_ACCESS_ADDRESS,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 #if __HAVE_FLOAT32
-		side_field_sg_float("f32", 0, 32, side_attr_list()),
+		side_field_sg_float("f32", 0, 32, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
 #endif
 	),
 	side_attr_list()
@@ -1581,7 +1582,7 @@ static side_define_struct(mystructsgnest2,
 	side_field_list(
 		side_field_sg_unsigned_integer("c", offsetof(struct testnest2, c),
 			side_struct_field_sizeof_bit(struct testnest2, c), 0,
-			side_struct_field_sizeof_bit(struct testnest2, c), side_attr_list()),
+			side_struct_field_sizeof_bit(struct testnest2, c), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
 	),
 	side_attr_list()
 );
@@ -1590,9 +1591,10 @@ static side_define_struct(mystructsgnest1,
 	side_field_list(
 		side_field_sg_unsigned_integer("b", offsetof(struct testnest1, b),
 			side_struct_field_sizeof_bit(struct testnest1, b), 0,
-			side_struct_field_sizeof_bit(struct testnest1, b), side_attr_list()),
+			side_struct_field_sizeof_bit(struct testnest1, b), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
 		side_field_sg_struct("nest2", &mystructsgnest2,
-			offsetof(struct testnest1, nest)),
+			offsetof(struct testnest1, nest), sizeof(struct testnest2),
+			SIDE_TYPE_SG_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
@@ -1601,9 +1603,10 @@ static side_define_struct(mystructsgnest0,
 	side_field_list(
 		side_field_sg_unsigned_integer("a", offsetof(struct testnest0, a),
 			side_struct_field_sizeof_bit(struct testnest0, a), 0,
-			side_struct_field_sizeof_bit(struct testnest0, a), side_attr_list()),
+			side_struct_field_sizeof_bit(struct testnest0, a), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
 		side_field_sg_struct("nest1", &mystructsgnest1,
-			offsetof(struct testnest0, nest)),
+			offsetof(struct testnest0, nest), sizeof(struct testnest1),
+			SIDE_TYPE_SG_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
@@ -1611,13 +1614,14 @@ static side_define_struct(mystructsgnest0,
 side_static_event(my_provider_event_structsg_nest,
 	"myprovider", "myeventstructsgnest", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("nest0", &mystructsgnest0, 0),
+		side_field_sg_struct("nest0", &mystructsgnest0, 0,
+			sizeof(struct testnest0), SIDE_TYPE_SG_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
 
 static
-void test_struct_sg_nest(void)
+void test_struct_sg_nest_ptr(void)
 {
 	side_event_cond(my_provider_event_structsg_nest) {
 		struct testnest2 mystruct2 = {
@@ -1658,18 +1662,22 @@ static side_define_struct(mystructsgfloat,
 	side_field_list(
 #if __HAVE_FLOAT16
 		side_field_sg_float("f16", offsetof(struct testfloat, f16), 16,
+			SIDE_TYPE_SG_ACCESS_ADDRESS,
 			side_attr_list()),
 #endif
 #if __HAVE_FLOAT32
 		side_field_sg_float("f32", offsetof(struct testfloat, f32), 32,
+			SIDE_TYPE_SG_ACCESS_ADDRESS,
 			side_attr_list()),
 #endif
 #if __HAVE_FLOAT64
 		side_field_sg_float("f64", offsetof(struct testfloat, f64), 64,
+			SIDE_TYPE_SG_ACCESS_ADDRESS,
 			side_attr_list()),
 #endif
 #if __HAVE_FLOAT128
 		side_field_sg_float("f128", offsetof(struct testfloat, f128), 128,
+			SIDE_TYPE_SG_ACCESS_ADDRESS,
 			side_attr_list()),
 #endif
 	),
@@ -1679,7 +1687,8 @@ static side_define_struct(mystructsgfloat,
 side_static_event(my_provider_event_structsgfloat,
 	"myprovider", "myeventstructsgfloat", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsgfloat", &mystructsgfloat, 0),
+		side_field_sg_struct("structsgfloat", &mystructsgfloat, 0,
+			sizeof(struct testfloat), SIDE_TYPE_SG_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
@@ -1722,9 +1731,10 @@ struct testarray {
 static side_define_struct(mystructsgarray,
 	side_field_list(
 		side_field_sg_array("array",
-			side_elem(side_type_sg_unsigned_integer(0, 32, 0, 32, side_attr_list())),
+			side_elem(side_type_sg_unsigned_integer(0, 32, 0, 32, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
 			SIDE_ARRAY_SIZE(mysgarray),
 			offsetof(struct testarray, ptr),
+			SIDE_TYPE_SG_ACCESS_POINTER,
 			side_attr_list()),
 	),
 	side_attr_list()
@@ -1733,10 +1743,12 @@ static side_define_struct(mystructsgarray,
 side_static_event(my_provider_event_structsgarray,
 	"myprovider", "myeventstructsgarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsgarray", &mystructsgarray, 0),
+		side_field_sg_struct("structsgarray", &mystructsgarray, 0,
+				sizeof(struct testarray), SIDE_TYPE_SG_ACCESS_POINTER),
 		side_field_sg_array("array2",
-			side_elem(side_type_sg_unsigned_integer(0, 16, 0, 16, side_attr_list())),
+			side_elem(side_type_sg_unsigned_integer(0, 16, 0, 16, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
 			SIDE_ARRAY_SIZE(mysgarray2), 0,
+			SIDE_TYPE_SG_ACCESS_POINTER,
 			side_attr_list()
 		),
 	),
@@ -1755,6 +1767,101 @@ void test_array_sg(void)
 			side_arg_list(
 				side_arg_sg_struct(&mystruct),
 				side_arg_sg_array(&mysgarray2),
+			)
+		);
+	}
+}
+
+#define TESTSGNESTARRAY_LEN 4
+struct testsgstructnest1 {
+	int b;
+	int c[TESTSGNESTARRAY_LEN];
+};
+
+struct testsgstructnest0 {
+	struct testsgstructnest1 nest;
+	struct testsgstructnest1 nestarray[2];
+	int a;
+};
+
+
+static side_define_struct(mystructsgstructnest1,
+	side_field_list(
+		side_field_sg_signed_integer("b", offsetof(struct testsgstructnest1, b),
+			side_struct_field_sizeof_bit(struct testsgstructnest1, b), 0,
+			side_struct_field_sizeof_bit(struct testsgstructnest1, b),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
+		side_field_sg_array("c",
+			side_elem(
+				side_type_sg_signed_integer(0, 32, 0, 32, 
+					SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
+			),
+			TESTSGNESTARRAY_LEN,
+			offsetof(struct testsgstructnest1, c),
+			SIDE_TYPE_SG_ACCESS_ADDRESS,
+			side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static side_define_struct(mystructsgstructnest0,
+	side_field_list(
+		side_field_sg_signed_integer("a", offsetof(struct testsgstructnest0, a),
+			side_struct_field_sizeof_bit(struct testsgstructnest0, a), 0,
+			side_struct_field_sizeof_bit(struct testsgstructnest0, a),
+			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
+		side_field_sg_struct("structnest0", &mystructsgstructnest1,
+			offsetof(struct testsgstructnest0, nest),
+			sizeof(struct testsgstructnest1),
+			SIDE_TYPE_SG_ACCESS_ADDRESS),
+		side_field_sg_array("nestarray",
+			side_elem(
+				side_type_sg_struct(&mystructsgstructnest1,
+					0,
+					sizeof(struct testsgstructnest1),
+					SIDE_TYPE_SG_ACCESS_ADDRESS),
+			),
+			2,
+			offsetof(struct testsgstructnest0, nestarray),
+			SIDE_TYPE_SG_ACCESS_ADDRESS,
+			side_attr_list()),
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_sgstructnest,
+	"myprovider", "myeventsgstructnest", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_sg_struct("structsg", &mystructsgstructnest0, 0,
+				sizeof(struct testsgstructnest0), SIDE_TYPE_SG_ACCESS_POINTER),
+	),
+	side_attr_list()
+);
+
+static
+void test_sg_structnest(void)
+{
+	side_event_cond(my_provider_event_sgstructnest) {
+		struct testsgstructnest0 mystruct = {
+			.nest = {
+				.b = 66,
+				.c = { 0, 1, 2, 3 },
+			},
+			.nestarray = {
+				[0] = {
+					.b = 77,
+					.c = { 11, 12, 13, 14 },
+				},
+				[1] = {
+					.b = 88,
+					.c = { 15, 16, 17, 18 },
+				},
+			},
+			.a = 55,
+		};
+		side_event_call(my_provider_event_sgstructnest,
+			side_arg_list(
+				side_arg_sg_struct(&mystruct),
 			)
 		);
 	}
@@ -1801,8 +1908,9 @@ int main()
 	test_endian();
 	test_base();
 	test_struct_sg();
-	test_struct_sg_nest();
+	test_struct_sg_nest_ptr();
 	test_struct_sg_float();
 	test_array_sg();
+	test_sg_structnest();
 	return 0;
 }

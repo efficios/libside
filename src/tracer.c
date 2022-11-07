@@ -1050,6 +1050,34 @@ void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_v
 }
 
 static
+const char *tracer_sg_access(const struct side_type_sg *type_sg, const char *ptr)
+{
+	switch (type_sg->access_mode) {
+	case SIDE_TYPE_SG_ACCESS_ADDRESS:
+		return ptr;
+	case SIDE_TYPE_SG_ACCESS_POINTER:
+		/* Dereference pointer */
+		memcpy(&ptr, ptr, sizeof(ptr));
+		return ptr;
+	default:
+		abort();
+	}
+}
+
+static
+uint32_t tracer_sg_size(const struct side_type_sg *type_sg, uint32_t len)
+{
+	switch (type_sg->access_mode) {
+	case SIDE_TYPE_SG_ACCESS_ADDRESS:
+		return len;
+	case SIDE_TYPE_SG_ACCESS_POINTER:
+		return sizeof(void *);
+	default:
+		abort();
+	}
+}
+
+static
 uint32_t tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const void *_ptr)
 {
 	const char *ptr = (const char *) _ptr;
@@ -1065,10 +1093,11 @@ uint32_t tracer_print_sg_integer_type(const struct side_type_sg *type_sg, const 
 	default:
 		abort();
 	}
-	memcpy(&value, ptr + type_sg->offset, integer_size_bytes);
+	ptr = tracer_sg_access(type_sg, ptr + type_sg->offset);
+	memcpy(&value, ptr, integer_size_bytes);
 	tracer_print_type_integer(":", &type_sg->u.side_integer.type, &value,
 			type_sg->u.side_integer.offset_bits, TRACER_DISPLAY_BASE_10);
-	return integer_size_bytes;
+	return tracer_sg_size(type_sg, integer_size_bytes);
 }
 
 static
@@ -1087,13 +1116,14 @@ uint32_t tracer_print_sg_float_type(const struct side_type_sg *type_sg, const vo
 	default:
 		abort();
 	}
-	memcpy(&value, ptr + type_sg->offset, float_size_bytes);
+	ptr = tracer_sg_access(type_sg, ptr + type_sg->offset);
+	memcpy(&value, ptr, float_size_bytes);
 	tracer_print_type_float(":", &type_sg->u.side_float, &value);
-	return float_size_bytes;
+	return tracer_sg_size(type_sg, float_size_bytes);
 }
 
 static
-uint32_t tracer_print_sg_type(const struct side_type *type_desc, void *ptr)
+uint32_t tracer_print_sg_type(const struct side_type *type_desc, const void *ptr)
 {
 	uint32_t len;
 
@@ -1121,7 +1151,7 @@ uint32_t tracer_print_sg_type(const struct side_type *type_desc, void *ptr)
 }
 
 static
-void tracer_print_sg_field(const struct side_event_field *field, void *ptr)
+void tracer_print_sg_field(const struct side_event_field *field, const void *ptr)
 {
 	printf("%s: ", field->field_name);
 	(void) tracer_print_sg_type(&field->side_type, ptr);
@@ -1130,28 +1160,29 @@ void tracer_print_sg_field(const struct side_event_field *field, void *ptr)
 static
 uint32_t tracer_print_sg_struct(const struct side_type_sg *type_sg, const void *_ptr)
 {
-	char *ptr = (char *) _ptr;
+	const char *ptr = (const char *) _ptr;
 	uint32_t i;
 
-	memcpy(&ptr, ptr + type_sg->offset, sizeof(ptr));
-	print_attributes("attr", ":", type_sg->u.side_struct->attr, type_sg->u.side_struct->nr_attr);
-	printf("%s", type_sg->u.side_struct->nr_attr ? ", " : "");
+	ptr = tracer_sg_access(type_sg, ptr + type_sg->offset);
+	print_attributes("attr", ":", type_sg->u.side_struct.type->attr, type_sg->u.side_struct.type->nr_attr);
+	printf("%s", type_sg->u.side_struct.type->nr_attr ? ", " : "");
 	printf("fields: { ");
-	for (i = 0; i < type_sg->u.side_struct->nr_fields; i++) {
+	for (i = 0; i < type_sg->u.side_struct.type->nr_fields; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_sg_field(&type_sg->u.side_struct->fields[i], ptr);
+		tracer_print_sg_field(&type_sg->u.side_struct.type->fields[i], ptr);
 	}
 	printf(" }");
-	return sizeof(void *);
+	return tracer_sg_size(type_sg, type_sg->u.side_struct.size);
 }
 
 static
 uint32_t tracer_print_sg_array(const struct side_type_sg *type_sg, const void *_ptr)
 {
-	char *ptr = (char *) _ptr;
+	const char *ptr = (const char *) _ptr, *orig_ptr;
 	uint32_t i;
 
-	memcpy(&ptr, ptr + type_sg->offset, sizeof(ptr));
+	ptr = tracer_sg_access(type_sg, ptr + type_sg->offset);
+	orig_ptr = ptr;
 	print_attributes("attr", ":", type_sg->u.side_array.attr, type_sg->u.side_array.nr_attr);
 	printf("%s", type_sg->u.side_array.nr_attr ? ", " : "");
 	printf("elements: ");
@@ -1161,7 +1192,7 @@ uint32_t tracer_print_sg_array(const struct side_type_sg *type_sg, const void *_
 		ptr += tracer_print_sg_type(type_sg->u.side_array.elem_type, ptr);
 	}
 	printf(" ]");
-	return sizeof(void *);
+	return tracer_sg_size(type_sg, ptr - orig_ptr);
 }
 
 struct tracer_visitor_priv {

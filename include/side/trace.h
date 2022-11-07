@@ -340,13 +340,24 @@ struct side_type_sg_integer {
 	uint16_t offset_bits;		/* bits */
 } SIDE_PACKED;
 
+struct side_type_sg_struct {
+	const struct side_type_struct *type;
+	uint32_t size;			/* bytes */
+} SIDE_PACKED;
+
+enum side_type_sg_access_mode {
+	SIDE_TYPE_SG_ACCESS_ADDRESS,
+	SIDE_TYPE_SG_ACCESS_POINTER,
+};
+
 struct side_type_sg {
 	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_sg_access_mode */
 	union {
 		struct side_type_sg_integer side_integer;
 		struct side_type_float side_float;
 		struct side_type_array side_array;
-		const struct side_type_struct *side_struct;
+		struct side_type_sg_struct side_struct;
 	} SIDE_PACKED u;
 } SIDE_PACKED;
 
@@ -851,12 +862,14 @@ struct side_event_description {
 
 /* Scatter-gather fields */
 
-#define _side_type_sg_integer(_type, _signedness, _byte_order, _offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+#define _side_type_sg_integer(_type, _signedness, _byte_order, _offset, \
+		_integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	{ \
 		.type = _type, \
 		.u = { \
 			.side_sg = { \
 				.offset = _offset, \
+				.access_mode = _access_mode, \
 				.u = { \
 					.side_integer = { \
 						.type = { \
@@ -874,48 +887,49 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_type_sg_unsigned_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+#define side_type_sg_unsigned_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	_side_type_sg_integer(SIDE_TYPE_SG_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_HOST, \
-			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
-#define side_type_sg_signed_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
+#define side_type_sg_signed_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	_side_type_sg_integer(SIDE_TYPE_SG_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_HOST, \
-			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 
-#define side_type_sg_unsigned_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+#define side_type_sg_unsigned_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	_side_type_sg_integer(SIDE_TYPE_SG_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_LE, \
-			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
-#define side_type_sg_signed_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
+#define side_type_sg_signed_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	_side_type_sg_integer(SIDE_TYPE_SG_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_LE, \
-			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 
-#define side_type_sg_unsigned_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+#define side_type_sg_unsigned_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	_side_type_sg_integer(SIDE_TYPE_SG_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_BE, \
-			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
-#define side_type_sg_signed_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
+#define side_type_sg_signed_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	_side_type_sg_integer(SIDE_TYPE_SG_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_BE, \
-			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr))
+			_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 
-#define side_field_sg_unsigned_integer(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
-	_side_field(_name, side_type_sg_unsigned_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
-#define side_field_sg_signed_integer(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
-	_side_field(_name, side_type_sg_signed_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
+#define side_field_sg_unsigned_integer(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_unsigned_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_sg_signed_integer(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_signed_integer(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
 
-#define side_field_sg_unsigned_integer_le(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
-	_side_field(_name, side_type_sg_unsigned_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
-#define side_field_sg_signed_integer_le(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
-	_side_field(_name, side_type_sg_signed_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
+#define side_field_sg_unsigned_integer_le(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_unsigned_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_sg_signed_integer_le(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_signed_integer_le(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
 
-#define side_field_sg_unsigned_integer_be(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
-	_side_field(_name, side_type_sg_unsigned_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
-#define side_field_sg_signed_integer_be(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _attr) \
-	_side_field(_name, side_type_sg_signed_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, SIDE_PARAM(_attr)))
+#define side_field_sg_unsigned_integer_be(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_unsigned_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_sg_signed_integer_be(_name, _integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_signed_integer_be(_integer_offset, _integer_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
 
-#define _side_type_sg_float(_byte_order, _offset, _float_size_bits, _attr) \
+#define _side_type_sg_float(_byte_order, _offset, _float_size_bits, _access_mode, _attr) \
 	{ \
 		.type = SIDE_TYPE_SG_FLOAT, \
 		.u = { \
 			.side_sg = { \
 				.offset = _offset, \
+				.access_mode = _access_mode, \
 				.u = { \
 					.side_float = { \
 						.attr = _attr, \
@@ -928,41 +942,46 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_type_sg_float(_offset, _float_size_bits, _attr) \
-	_side_type_sg_float(SIDE_TYPE_FLOAT_WORD_ORDER_HOST, _offset, _float_size_bits, _attr)
-#define side_type_sg_float_le(_offset, _float_size_bits, _attr) \
-	_side_type_sg_float(SIDE_TYPE_BYTE_ORDER_LE, _offset, _float_size_bits, _attr)
-#define side_type_sg_float_be(_offset, _float_size_bits, _attr) \
-	_side_type_sg_float(SIDE_TYPE_BYTE_ORDER_BE, _offset, _float_size_bits, _attr)
+#define side_type_sg_float(_offset, _float_size_bits, _access_mode, _attr) \
+	_side_type_sg_float(SIDE_TYPE_FLOAT_WORD_ORDER_HOST, _offset, _float_size_bits, _access_mode, _attr)
+#define side_type_sg_float_le(_offset, _float_size_bits, _access_mode, _attr) \
+	_side_type_sg_float(SIDE_TYPE_BYTE_ORDER_LE, _offset, _float_size_bits, _access_mode, _attr)
+#define side_type_sg_float_be(_offset, _float_size_bits, _access_mode, _attr) \
+	_side_type_sg_float(SIDE_TYPE_BYTE_ORDER_BE, _offset, _float_size_bits, _access_mode, _attr)
 
-#define side_field_sg_float(_name, _offset, _float_size_bits, _attr) \
-	_side_field(_name, side_type_sg_float(_offset, _float_size_bits, _attr))
-#define side_field_sg_float_le(_name, _offset, _float_size_bits, _attr) \
-	_side_field(_name, side_type_sg_float_le(_offset, _float_size_bits, _attr))
-#define side_field_sg_float_be(_name, _offset, _float_size_bits, _attr) \
-	_side_field(_name, side_type_sg_float_be(_offset, _float_size_bits, _attr))
+#define side_field_sg_float(_name, _offset, _float_size_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_float(_offset, _float_size_bits, _access_mode, _attr))
+#define side_field_sg_float_le(_name, _offset, _float_size_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_float_le(_offset, _float_size_bits, _access_mode, _attr))
+#define side_field_sg_float_be(_name, _offset, _float_size_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_float_be(_offset, _float_size_bits, _access_mode, _attr))
 
-#define side_type_sg_struct(_struct_sg, _offset) \
+#define side_type_sg_struct(_struct_sg, _offset, _size, _access_mode) \
 	{ \
 		.type = SIDE_TYPE_SG_STRUCT, \
 		.u = { \
 			.side_sg = { \
 				.offset = _offset, \
+				.access_mode = _access_mode, \
 				.u = { \
-					.side_struct = _struct_sg, \
+					.side_struct = { \
+						.type = _struct_sg, \
+						.size = _size, \
+					}, \
 				}, \
 			}, \
 		}, \
 	}
-#define side_field_sg_struct(_name, _struct_sg, _offset) \
-	_side_field(_name, side_type_sg_struct(SIDE_PARAM(_struct_sg), _offset))
+#define side_field_sg_struct(_name, _struct_sg, _offset, _size, _access_mode) \
+	_side_field(_name, side_type_sg_struct(SIDE_PARAM(_struct_sg), _offset, _size, _access_mode))
 
-#define side_type_sg_array(_elem_type_sg, _length, _offset, _attr) \
+#define side_type_sg_array(_elem_type_sg, _length, _offset, _access_mode, _attr) \
 	{ \
 		.type = SIDE_TYPE_SG_ARRAY, \
 		.u = { \
 			.side_sg = { \
 				.offset = _offset, \
+				.access_mode = _access_mode, \
 				.u = { \
 					.side_array = { \
 						.elem_type = _elem_type_sg, \
@@ -974,8 +993,8 @@ struct side_event_description {
 			}, \
 		}, \
 	}
-#define side_field_sg_array(_name, _elem_type, _length, _offset, _attr) \
-	_side_field(_name, side_type_sg_array(SIDE_PARAM(_elem_type), _length, _offset, SIDE_PARAM(_attr)))
+#define side_field_sg_array(_name, _elem_type, _length, _offset, _access_mode, _attr) \
+	_side_field(_name, side_type_sg_array(SIDE_PARAM(_elem_type), _length, _offset, _access_mode, SIDE_PARAM(_attr)))
 
 #define side_elem(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
