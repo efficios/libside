@@ -1520,7 +1520,7 @@ static side_define_struct(mystructgatherdef,
 side_static_event(my_provider_event_structgather, "myprovider", "myeventstructgather", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_struct("structgather", &mystructgatherdef, 0, sizeof(struct test),
-				SIDE_TYPE_GATHER_ACCESS_POINTER),
+				SIDE_TYPE_GATHER_ACCESS_ADDRESS),
 		side_field_gather_signed_integer("intgather", 0, 32, 0, 32, SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 #if __HAVE_FLOAT32
@@ -1615,7 +1615,7 @@ side_static_event(my_provider_event_structgather_nest,
 	"myprovider", "myeventstructgathernest", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_struct("nest0", &mystructgathernest0, 0,
-			sizeof(struct testnest0), SIDE_TYPE_GATHER_ACCESS_POINTER),
+			sizeof(struct testnest0), SIDE_TYPE_GATHER_ACCESS_ADDRESS),
 	),
 	side_attr_list()
 );
@@ -1688,7 +1688,7 @@ side_static_event(my_provider_event_structgatherfloat,
 	"myprovider", "myeventstructgatherfloat", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_struct("structgatherfloat", &mystructgatherfloat, 0,
-			sizeof(struct testfloat), SIDE_TYPE_GATHER_ACCESS_POINTER),
+			sizeof(struct testfloat), SIDE_TYPE_GATHER_ACCESS_ADDRESS),
 	),
 	side_attr_list()
 );
@@ -1744,11 +1744,11 @@ side_static_event(my_provider_event_structgatherarray,
 	"myprovider", "myeventstructgatherarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_struct("structgatherarray", &mystructgatherarray, 0,
-				sizeof(struct testarray), SIDE_TYPE_GATHER_ACCESS_POINTER),
+				sizeof(struct testarray), SIDE_TYPE_GATHER_ACCESS_ADDRESS),
 		side_field_gather_array("array2",
 			side_elem(side_type_gather_unsigned_integer(0, 16, 0, 16, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
 			SIDE_ARRAY_SIZE(mygatherarray2), 0,
-			SIDE_TYPE_GATHER_ACCESS_POINTER,
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list()
 		),
 	),
@@ -1833,7 +1833,7 @@ side_static_event(my_provider_event_gatherstructnest,
 	"myprovider", "myeventgatherstructnest", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_struct("structgather", &mystructgatherstructnest0, 0,
-				sizeof(struct testgatherstructnest0), SIDE_TYPE_GATHER_ACCESS_POINTER),
+				sizeof(struct testgatherstructnest0), SIDE_TYPE_GATHER_ACCESS_ADDRESS),
 	),
 	side_attr_list()
 );
@@ -1898,7 +1898,7 @@ side_static_event(my_provider_event_gathervla,
 	"myprovider", "myeventgathervla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_struct("structgathervla", &mystructgathervla, 0,
-				sizeof(struct testgathervla), SIDE_TYPE_GATHER_ACCESS_POINTER),
+				sizeof(struct testgathervla), SIDE_TYPE_GATHER_ACCESS_ADDRESS),
 	),
 	side_attr_list()
 );
@@ -1944,7 +1944,7 @@ side_static_event(my_provider_event_gathervlaflex,
 	"myprovider", "myeventgathervlaflex", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_struct("structgathervlaflex", &mystructgathervlaflex, 0,
-				sizeof(struct testgathervlaflex), SIDE_TYPE_GATHER_ACCESS_POINTER),
+				sizeof(struct testgathervlaflex), SIDE_TYPE_GATHER_ACCESS_ADDRESS),
 	),
 	side_attr_list()
 );
@@ -1976,10 +1976,10 @@ void test_gather_vla_flex(void)
 side_static_event(my_provider_event_gatherbyte,
 	"myprovider", "myeventgatherbyte", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_byte("byte", 0, SIDE_TYPE_GATHER_ACCESS_POINTER, side_attr_list()),
+		side_field_gather_byte("byte", 0, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
 		side_field_gather_array("array",
 			side_elem(side_type_gather_byte(0, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_POINTER, side_attr_list()
+			3, 0, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()
 		),
 	),
 	side_attr_list()

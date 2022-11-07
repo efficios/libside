@@ -908,13 +908,13 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_struct(type_desc, item->u.side_static.side_struct);
 		break;
 	case SIDE_TYPE_GATHER_STRUCT:
-		(void) tracer_print_gather_struct(&type_desc->u.side_gather, &item->u.side_static.side_struct_gather_ptr);
+		(void) tracer_print_gather_struct(&type_desc->u.side_gather, item->u.side_static.side_struct_gather_ptr);
 		break;
 	case SIDE_TYPE_GATHER_ARRAY:
-		(void) tracer_print_gather_array(&type_desc->u.side_gather, &item->u.side_static.side_array_gather_ptr);
+		(void) tracer_print_gather_array(&type_desc->u.side_gather, item->u.side_static.side_array_gather_ptr);
 		break;
 	case SIDE_TYPE_GATHER_BYTE:
-		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, &item->u.side_static.side_byte_gather_ptr);
+		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, item->u.side_static.side_byte_gather_ptr);
 		break;
 	case SIDE_TYPE_GATHER_UNSIGNED_INT:
 	case SIDE_TYPE_GATHER_SIGNED_INT:
