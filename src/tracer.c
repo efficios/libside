@@ -36,11 +36,13 @@ void tracer_print_vla_fixint(const struct side_type *type_desc, const struct sid
 static
 void tracer_print_dynamic(const struct side_arg *dynamic_item);
 static
-uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, const void *_ptr);
+uint32_t tracer_print_gather_byte_type(const struct side_type_gather *type_gather, const void *_ptr);
 static
 uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr);
 static
 uint32_t tracer_print_gather_float_type(const struct side_type_gather *type_gather, const void *_ptr);
+static
+uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, const void *_ptr);
 static
 uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, const void *_ptr);
 static
@@ -911,6 +913,9 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_GATHER_ARRAY:
 		(void) tracer_print_gather_array(&type_desc->u.side_gather, &item->u.side_static.side_array_gather_ptr);
 		break;
+	case SIDE_TYPE_GATHER_BYTE:
+		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, &item->u.side_static.side_byte_gather_ptr);
+		break;
 	case SIDE_TYPE_GATHER_UNSIGNED_INT:
 	case SIDE_TYPE_GATHER_SIGNED_INT:
 		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr);
@@ -1107,6 +1112,21 @@ uint64_t tracer_load_gather_integer_type(const struct side_type_gather *type_gat
 }
 
 static
+uint32_t tracer_print_gather_byte_type(const struct side_type_gather *type_gather, const void *_ptr)
+{
+	enum side_type_gather_access_mode access_mode = type_gather->u.side_byte.access_mode;
+	const char *ptr = (const char *) _ptr;
+	uint8_t value;
+
+	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_byte.offset);
+	memcpy(&value, ptr, 1);
+	tracer_print_type_header(":", type_gather->u.side_byte.type.attr,
+			type_gather->u.side_byte.type.nr_attr);
+	printf("0x%" PRIx8, value);
+	return tracer_gather_size(access_mode, 1);
+}
+
+static
 uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
 	enum side_type_gather_access_mode access_mode = type_gather->u.side_integer.access_mode;
@@ -1160,6 +1180,9 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 
 	printf("{ ");
 	switch (type_desc->type) {
+	case SIDE_TYPE_GATHER_BYTE:
+		len = tracer_print_gather_byte_type(&type_desc->u.side_gather, ptr);
+		break;
 	case SIDE_TYPE_GATHER_UNSIGNED_INT:
 	case SIDE_TYPE_GATHER_SIGNED_INT:
 		len = tracer_print_gather_integer_type(&type_desc->u.side_gather, ptr);

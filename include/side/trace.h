@@ -93,6 +93,7 @@ enum side_type_label {
 	/* Gather types */
 	SIDE_TYPE_GATHER_UNSIGNED_INT,
 	SIDE_TYPE_GATHER_SIGNED_INT,
+	SIDE_TYPE_GATHER_BYTE,
 	SIDE_TYPE_GATHER_FLOAT,
 	SIDE_TYPE_GATHER_STRUCT,
 	SIDE_TYPE_GATHER_ARRAY,
@@ -336,6 +337,12 @@ struct side_type_enum_bitmap {
 	const struct side_type *elem_type;
 } SIDE_PACKED;
 
+struct side_type_gather_byte {
+	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	struct side_type_byte type;
+} SIDE_PACKED;
+
 struct side_type_gather_integer {
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
@@ -377,6 +384,7 @@ enum side_type_gather_access_mode {
 
 struct side_type_gather {
 	union {
+		struct side_type_gather_byte side_byte;
 		struct side_type_gather_integer side_integer;
 		struct side_type_gather_float side_float;
 		struct side_type_gather_array side_array;
@@ -454,6 +462,7 @@ struct side_arg_static {
 	} SIDE_PACKED side_vla_fixint;
 
 	/* Gather types */
+	void *side_byte_gather_ptr;
 	void *side_integer_gather_ptr;
 	void *side_float_gather_ptr;
 	void *side_array_gather_ptr;
@@ -890,6 +899,27 @@ struct side_event_description {
 
 /* Gather fields */
 
+#define side_type_gather_byte(_offset, _access_mode, _attr) \
+	{ \
+		.type = SIDE_TYPE_GATHER_BYTE, \
+		.u = { \
+			.side_gather = { \
+				.u = { \
+					.side_byte = { \
+						.offset = _offset, \
+						.access_mode = _access_mode, \
+						.type = { \
+							.attr = _attr, \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						}, \
+					}, \
+				}, \
+			}, \
+		}, \
+	}
+#define side_field_gather_byte(_name, _offset, _access_mode, _attr) \
+	_side_field(_name, side_type_gather_byte(_offset, _access_mode, SIDE_PARAM(_attr)))
+
 #define _side_type_gather_integer(_type, _signedness, _byte_order, _offset, \
 		_integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	{ \
@@ -1115,6 +1145,7 @@ struct side_event_description {
 #define side_arg_vla_pointer(_ptr, _length) { .type = SIDE_TYPE_VLA_POINTER_HOST, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
 
 /* Gather field arguments */
+#define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = (_ptr) } } }
 #define side_arg_gather_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_UNSIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_signed_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_SIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_float(_ptr)		{ .type = SIDE_TYPE_GATHER_FLOAT, .u = { .side_static = { .side_float_gather_ptr = (_ptr) } } }
