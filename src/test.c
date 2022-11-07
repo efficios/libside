@@ -1475,65 +1475,65 @@ struct test {
 	uint64_t test;
 };
 
-static side_define_struct(mystructsgdef,
+static side_define_struct(mystructgatherdef,
 	side_field_list(
-		side_field_sg_unsigned_integer("a", offsetof(struct test, a),
+		side_field_gather_unsigned_integer("a", offsetof(struct test, a),
 			side_struct_field_sizeof_bit(struct test, a), 0,
-			side_struct_field_sizeof_bit(struct test, a), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
-		side_field_sg_signed_integer("d", offsetof(struct test, d),
+			side_struct_field_sizeof_bit(struct test, a), SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
+		side_field_gather_signed_integer("d", offsetof(struct test, d),
 			side_struct_field_sizeof_bit(struct test, d), 0,
-			side_struct_field_sizeof_bit(struct test, d), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
-		side_field_sg_unsigned_integer("e", offsetof(struct test, e),
+			side_struct_field_sizeof_bit(struct test, d), SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
+		side_field_gather_unsigned_integer("e", offsetof(struct test, e),
 			side_struct_field_sizeof_bit(struct test, e), 8, 4,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_sg_signed_integer("f", offsetof(struct test, f),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_gather_signed_integer("f", offsetof(struct test, f),
 			side_struct_field_sizeof_bit(struct test, f), 1, 4,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_sg_signed_integer("g", offsetof(struct test, g),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_gather_signed_integer("g", offsetof(struct test, g),
 			side_struct_field_sizeof_bit(struct test, g), 11, 4,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_sg_signed_integer("h", offsetof(struct test, h),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_gather_signed_integer("h", offsetof(struct test, h),
 			side_struct_field_sizeof_bit(struct test, h), 1, 31,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_sg_signed_integer("i", offsetof(struct test, i),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_gather_signed_integer("i", offsetof(struct test, i),
 			side_struct_field_sizeof_bit(struct test, i), 33, 20,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_sg_signed_integer("j", offsetof(struct test, j),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_gather_signed_integer("j", offsetof(struct test, j),
 			side_struct_field_sizeof_bit(struct test, j), 63, 1,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_sg_signed_integer("k", offsetof(struct test, k), 
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_gather_signed_integer("k", offsetof(struct test, k), 
 			side_struct_field_sizeof_bit(struct test, k), 1, 63,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_sg_unsigned_integer_le("test", offsetof(struct test, test),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_gather_unsigned_integer_le("test", offsetof(struct test, test),
 			side_struct_field_sizeof_bit(struct test, test), 0, 64,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_sg_unsigned_integer_le("test_le", offsetof(struct test, test),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_gather_unsigned_integer_le("test_le", offsetof(struct test, test),
 			side_struct_field_sizeof_bit(struct test, test), 0, 64,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_sg_unsigned_integer_be("test_be", offsetof(struct test, test),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_gather_unsigned_integer_be("test_be", offsetof(struct test, test),
 			side_struct_field_sizeof_bit(struct test, test), 0, 64,
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
 	),
 	side_attr_list()
 );
 
-side_static_event(my_provider_event_structsg, "myprovider", "myeventstructsg", SIDE_LOGLEVEL_DEBUG,
+side_static_event(my_provider_event_structgather, "myprovider", "myeventstructgather", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsg", &mystructsgdef, 0, sizeof(struct test),
-				SIDE_TYPE_SG_ACCESS_POINTER),
-		side_field_sg_signed_integer("intsg", 0, 32, 0, 32, SIDE_TYPE_SG_ACCESS_ADDRESS,
+		side_field_gather_struct("structgather", &mystructgatherdef, 0, sizeof(struct test),
+				SIDE_TYPE_GATHER_ACCESS_POINTER),
+		side_field_gather_signed_integer("intgather", 0, 32, 0, 32, SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 #if __HAVE_FLOAT32
-		side_field_sg_float("f32", 0, 32, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
+		side_field_gather_float("f32", 0, 32, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
 #endif
 	),
 	side_attr_list()
 );
 
 static
-void test_struct_sg(void)
+void test_struct_gather(void)
 {
-	side_event_cond(my_provider_event_structsg) {
+	side_event_cond(my_provider_event_structgather) {
 		struct test mystruct = {
 			.a = 55,
 			.b = 123,
@@ -1552,12 +1552,12 @@ void test_struct_sg(void)
 #if __HAVE_FLOAT32
 		_Float32 f32 = 1.1;
 #endif
-		side_event_call(my_provider_event_structsg,
+		side_event_call(my_provider_event_structgather,
 			side_arg_list(
-				side_arg_sg_struct(&mystruct),
-				side_arg_sg_signed_integer(&val),
+				side_arg_gather_struct(&mystruct),
+				side_arg_gather_signed_integer(&val),
 #if __HAVE_FLOAT32
-				side_arg_sg_float(&f32),
+				side_arg_gather_float(&f32),
 #endif
 			)
 		);
@@ -1578,52 +1578,52 @@ struct testnest0 {
 	struct testnest1 *nest;
 };
 
-static side_define_struct(mystructsgnest2,
+static side_define_struct(mystructgathernest2,
 	side_field_list(
-		side_field_sg_unsigned_integer("c", offsetof(struct testnest2, c),
+		side_field_gather_unsigned_integer("c", offsetof(struct testnest2, c),
 			side_struct_field_sizeof_bit(struct testnest2, c), 0,
-			side_struct_field_sizeof_bit(struct testnest2, c), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
+			side_struct_field_sizeof_bit(struct testnest2, c), SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
 	),
 	side_attr_list()
 );
 
-static side_define_struct(mystructsgnest1,
+static side_define_struct(mystructgathernest1,
 	side_field_list(
-		side_field_sg_unsigned_integer("b", offsetof(struct testnest1, b),
+		side_field_gather_unsigned_integer("b", offsetof(struct testnest1, b),
 			side_struct_field_sizeof_bit(struct testnest1, b), 0,
-			side_struct_field_sizeof_bit(struct testnest1, b), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
-		side_field_sg_struct("nest2", &mystructsgnest2,
+			side_struct_field_sizeof_bit(struct testnest1, b), SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
+		side_field_gather_struct("nest2", &mystructgathernest2,
 			offsetof(struct testnest1, nest), sizeof(struct testnest2),
-			SIDE_TYPE_SG_ACCESS_POINTER),
+			SIDE_TYPE_GATHER_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
 
-static side_define_struct(mystructsgnest0,
+static side_define_struct(mystructgathernest0,
 	side_field_list(
-		side_field_sg_unsigned_integer("a", offsetof(struct testnest0, a),
+		side_field_gather_unsigned_integer("a", offsetof(struct testnest0, a),
 			side_struct_field_sizeof_bit(struct testnest0, a), 0,
-			side_struct_field_sizeof_bit(struct testnest0, a), SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
-		side_field_sg_struct("nest1", &mystructsgnest1,
+			side_struct_field_sizeof_bit(struct testnest0, a), SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
+		side_field_gather_struct("nest1", &mystructgathernest1,
 			offsetof(struct testnest0, nest), sizeof(struct testnest1),
-			SIDE_TYPE_SG_ACCESS_POINTER),
+			SIDE_TYPE_GATHER_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
 
-side_static_event(my_provider_event_structsg_nest,
-	"myprovider", "myeventstructsgnest", SIDE_LOGLEVEL_DEBUG,
+side_static_event(my_provider_event_structgather_nest,
+	"myprovider", "myeventstructgathernest", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("nest0", &mystructsgnest0, 0,
-			sizeof(struct testnest0), SIDE_TYPE_SG_ACCESS_POINTER),
+		side_field_gather_struct("nest0", &mystructgathernest0, 0,
+			sizeof(struct testnest0), SIDE_TYPE_GATHER_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
 
 static
-void test_struct_sg_nest_ptr(void)
+void test_struct_gather_nest_ptr(void)
 {
-	side_event_cond(my_provider_event_structsg_nest) {
+	side_event_cond(my_provider_event_structgather_nest) {
 		struct testnest2 mystruct2 = {
 			.c = 77,
 		};
@@ -1635,9 +1635,9 @@ void test_struct_sg_nest_ptr(void)
 			.a = 55,
 			.nest = &mystruct1,
 		};
-		side_event_call(my_provider_event_structsg_nest,
+		side_event_call(my_provider_event_structgather_nest,
 			side_arg_list(
-				side_arg_sg_struct(&mystruct),
+				side_arg_gather_struct(&mystruct),
 			)
 		);
 	}
@@ -1658,45 +1658,45 @@ struct testfloat {
 #endif
 };
 
-static side_define_struct(mystructsgfloat,
+static side_define_struct(mystructgatherfloat,
 	side_field_list(
 #if __HAVE_FLOAT16
-		side_field_sg_float("f16", offsetof(struct testfloat, f16), 16,
-			SIDE_TYPE_SG_ACCESS_ADDRESS,
+		side_field_gather_float("f16", offsetof(struct testfloat, f16), 16,
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list()),
 #endif
 #if __HAVE_FLOAT32
-		side_field_sg_float("f32", offsetof(struct testfloat, f32), 32,
-			SIDE_TYPE_SG_ACCESS_ADDRESS,
+		side_field_gather_float("f32", offsetof(struct testfloat, f32), 32,
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list()),
 #endif
 #if __HAVE_FLOAT64
-		side_field_sg_float("f64", offsetof(struct testfloat, f64), 64,
-			SIDE_TYPE_SG_ACCESS_ADDRESS,
+		side_field_gather_float("f64", offsetof(struct testfloat, f64), 64,
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list()),
 #endif
 #if __HAVE_FLOAT128
-		side_field_sg_float("f128", offsetof(struct testfloat, f128), 128,
-			SIDE_TYPE_SG_ACCESS_ADDRESS,
+		side_field_gather_float("f128", offsetof(struct testfloat, f128), 128,
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list()),
 #endif
 	),
 	side_attr_list()
 );
 
-side_static_event(my_provider_event_structsgfloat,
-	"myprovider", "myeventstructsgfloat", SIDE_LOGLEVEL_DEBUG,
+side_static_event(my_provider_event_structgatherfloat,
+	"myprovider", "myeventstructgatherfloat", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsgfloat", &mystructsgfloat, 0,
-			sizeof(struct testfloat), SIDE_TYPE_SG_ACCESS_POINTER),
+		side_field_gather_struct("structgatherfloat", &mystructgatherfloat, 0,
+			sizeof(struct testfloat), SIDE_TYPE_GATHER_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
 
 static
-void test_struct_sg_float(void)
+void test_struct_gather_float(void)
 {
-	side_event_cond(my_provider_event_structsgfloat) {
+	side_event_cond(my_provider_event_structgatherfloat) {
 		struct testfloat mystruct = {
 #if __HAVE_FLOAT16
 			.f16 = 1.1,
@@ -1711,44 +1711,44 @@ void test_struct_sg_float(void)
 			.f128 = 4.4,
 #endif
 		};
-		side_event_call(my_provider_event_structsgfloat,
+		side_event_call(my_provider_event_structgatherfloat,
 			side_arg_list(
-				side_arg_sg_struct(&mystruct),
+				side_arg_gather_struct(&mystruct),
 			)
 		);
 	}
 }
 
-uint32_t mysgarray[] = { 1, 2, 3, 4, 5 };
+uint32_t mygatherarray[] = { 1, 2, 3, 4, 5 };
 
-uint16_t mysgarray2[] = { 6, 7, 8, 9 };
+uint16_t mygatherarray2[] = { 6, 7, 8, 9 };
 
 struct testarray {
 	int a;
 	uint32_t *ptr;
 };
 
-static side_define_struct(mystructsgarray,
+static side_define_struct(mystructgatherarray,
 	side_field_list(
-		side_field_sg_array("array",
-			side_elem(side_type_sg_unsigned_integer(0, 32, 0, 32, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
-			SIDE_ARRAY_SIZE(mysgarray),
+		side_field_gather_array("array",
+			side_elem(side_type_gather_unsigned_integer(0, 32, 0, 32, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
+			SIDE_ARRAY_SIZE(mygatherarray),
 			offsetof(struct testarray, ptr),
-			SIDE_TYPE_SG_ACCESS_POINTER,
+			SIDE_TYPE_GATHER_ACCESS_POINTER,
 			side_attr_list()),
 	),
 	side_attr_list()
 );
 
-side_static_event(my_provider_event_structsgarray,
-	"myprovider", "myeventstructsgarray", SIDE_LOGLEVEL_DEBUG,
+side_static_event(my_provider_event_structgatherarray,
+	"myprovider", "myeventstructgatherarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsgarray", &mystructsgarray, 0,
-				sizeof(struct testarray), SIDE_TYPE_SG_ACCESS_POINTER),
-		side_field_sg_array("array2",
-			side_elem(side_type_sg_unsigned_integer(0, 16, 0, 16, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
-			SIDE_ARRAY_SIZE(mysgarray2), 0,
-			SIDE_TYPE_SG_ACCESS_POINTER,
+		side_field_gather_struct("structgatherarray", &mystructgatherarray, 0,
+				sizeof(struct testarray), SIDE_TYPE_GATHER_ACCESS_POINTER),
+		side_field_gather_array("array2",
+			side_elem(side_type_gather_unsigned_integer(0, 16, 0, 16, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
+			SIDE_ARRAY_SIZE(mygatherarray2), 0,
+			SIDE_TYPE_GATHER_ACCESS_POINTER,
 			side_attr_list()
 		),
 	),
@@ -1756,93 +1756,93 @@ side_static_event(my_provider_event_structsgarray,
 );
 
 static
-void test_array_sg(void)
+void test_array_gather(void)
 {
-	side_event_cond(my_provider_event_structsgarray) {
+	side_event_cond(my_provider_event_structgatherarray) {
 		struct testarray mystruct = {
 			.a = 55,
-			.ptr = mysgarray,
+			.ptr = mygatherarray,
 		};
-		side_event_call(my_provider_event_structsgarray,
+		side_event_call(my_provider_event_structgatherarray,
 			side_arg_list(
-				side_arg_sg_struct(&mystruct),
-				side_arg_sg_array(&mysgarray2),
+				side_arg_gather_struct(&mystruct),
+				side_arg_gather_array(&mygatherarray2),
 			)
 		);
 	}
 }
 
 #define TESTSGNESTARRAY_LEN 4
-struct testsgstructnest1 {
+struct testgatherstructnest1 {
 	int b;
 	int c[TESTSGNESTARRAY_LEN];
 };
 
-struct testsgstructnest0 {
-	struct testsgstructnest1 nest;
-	struct testsgstructnest1 nestarray[2];
+struct testgatherstructnest0 {
+	struct testgatherstructnest1 nest;
+	struct testgatherstructnest1 nestarray[2];
 	int a;
 };
 
 
-static side_define_struct(mystructsgstructnest1,
+static side_define_struct(mystructgatherstructnest1,
 	side_field_list(
-		side_field_sg_signed_integer("b", offsetof(struct testsgstructnest1, b),
-			side_struct_field_sizeof_bit(struct testsgstructnest1, b), 0,
-			side_struct_field_sizeof_bit(struct testsgstructnest1, b),
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
-		side_field_sg_array("c",
+		side_field_gather_signed_integer("b", offsetof(struct testgatherstructnest1, b),
+			side_struct_field_sizeof_bit(struct testgatherstructnest1, b), 0,
+			side_struct_field_sizeof_bit(struct testgatherstructnest1, b),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
+		side_field_gather_array("c",
 			side_elem(
-				side_type_sg_signed_integer(0, 32, 0, 32, 
-					SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
+				side_type_gather_signed_integer(0, 32, 0, 32, 
+					SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
 			),
 			TESTSGNESTARRAY_LEN,
-			offsetof(struct testsgstructnest1, c),
-			SIDE_TYPE_SG_ACCESS_ADDRESS,
+			offsetof(struct testgatherstructnest1, c),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list()),
 	),
 	side_attr_list()
 );
 
-static side_define_struct(mystructsgstructnest0,
+static side_define_struct(mystructgatherstructnest0,
 	side_field_list(
-		side_field_sg_signed_integer("a", offsetof(struct testsgstructnest0, a),
-			side_struct_field_sizeof_bit(struct testsgstructnest0, a), 0,
-			side_struct_field_sizeof_bit(struct testsgstructnest0, a),
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()),
-		side_field_sg_struct("structnest0", &mystructsgstructnest1,
-			offsetof(struct testsgstructnest0, nest),
-			sizeof(struct testsgstructnest1),
-			SIDE_TYPE_SG_ACCESS_ADDRESS),
-		side_field_sg_array("nestarray",
+		side_field_gather_signed_integer("a", offsetof(struct testgatherstructnest0, a),
+			side_struct_field_sizeof_bit(struct testgatherstructnest0, a), 0,
+			side_struct_field_sizeof_bit(struct testgatherstructnest0, a),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()),
+		side_field_gather_struct("structnest0", &mystructgatherstructnest1,
+			offsetof(struct testgatherstructnest0, nest),
+			sizeof(struct testgatherstructnest1),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS),
+		side_field_gather_array("nestarray",
 			side_elem(
-				side_type_sg_struct(&mystructsgstructnest1,
+				side_type_gather_struct(&mystructgatherstructnest1,
 					0,
-					sizeof(struct testsgstructnest1),
-					SIDE_TYPE_SG_ACCESS_ADDRESS),
+					sizeof(struct testgatherstructnest1),
+					SIDE_TYPE_GATHER_ACCESS_ADDRESS),
 			),
 			2,
-			offsetof(struct testsgstructnest0, nestarray),
-			SIDE_TYPE_SG_ACCESS_ADDRESS,
+			offsetof(struct testgatherstructnest0, nestarray),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS,
 			side_attr_list()),
 	),
 	side_attr_list()
 );
 
-side_static_event(my_provider_event_sgstructnest,
-	"myprovider", "myeventsgstructnest", SIDE_LOGLEVEL_DEBUG,
+side_static_event(my_provider_event_gatherstructnest,
+	"myprovider", "myeventgatherstructnest", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsg", &mystructsgstructnest0, 0,
-				sizeof(struct testsgstructnest0), SIDE_TYPE_SG_ACCESS_POINTER),
+		side_field_gather_struct("structgather", &mystructgatherstructnest0, 0,
+				sizeof(struct testgatherstructnest0), SIDE_TYPE_GATHER_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
 
 static
-void test_sg_structnest(void)
+void test_gather_structnest(void)
 {
-	side_event_cond(my_provider_event_sgstructnest) {
-		struct testsgstructnest0 mystruct = {
+	side_event_cond(my_provider_event_gatherstructnest) {
+		struct testgatherstructnest0 mystruct = {
 			.nest = {
 				.b = 66,
 				.c = { 0, 1, 2, 3 },
@@ -1859,102 +1859,102 @@ void test_sg_structnest(void)
 			},
 			.a = 55,
 		};
-		side_event_call(my_provider_event_sgstructnest,
+		side_event_call(my_provider_event_gatherstructnest,
 			side_arg_list(
-				side_arg_sg_struct(&mystruct),
+				side_arg_gather_struct(&mystruct),
 			)
 		);
 	}
 }
 
-uint32_t sgvla[] = { 1, 2, 3, 4 };
+uint32_t gathervla[] = { 1, 2, 3, 4 };
 
-struct testsgvla {
+struct testgathervla {
 	int a;
 	uint16_t len;
 	uint32_t *p;
 };
 
-static side_define_struct(mystructsgvla,
+static side_define_struct(mystructgathervla,
 	side_field_list(
-		side_field_sg_signed_integer("a", offsetof(struct testsgvla, a),
-			side_struct_field_sizeof_bit(struct testsgvla, a), 0,
-			side_struct_field_sizeof_bit(struct testsgvla, a),
-			SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list()
+		side_field_gather_signed_integer("a", offsetof(struct testgathervla, a),
+			side_struct_field_sizeof_bit(struct testgathervla, a), 0,
+			side_struct_field_sizeof_bit(struct testgathervla, a),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list()
 		),
-		side_field_sg_vla("nestvla",
-			side_elem(side_type_sg_unsigned_integer(0, 32, 0, 32, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
-			offsetof(struct testsgvla, p),
-			SIDE_TYPE_SG_ACCESS_POINTER,
-			side_length(side_type_sg_unsigned_integer(offsetof(struct testsgvla, len),
-					16, 0, 16, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
+		side_field_gather_vla("nestvla",
+			side_elem(side_type_gather_unsigned_integer(0, 32, 0, 32, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
+			offsetof(struct testgathervla, p),
+			SIDE_TYPE_GATHER_ACCESS_POINTER,
+			side_length(side_type_gather_unsigned_integer(offsetof(struct testgathervla, len),
+					16, 0, 16, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
 			side_attr_list()
 		),
 	),
 	side_attr_list()
 );
 
-side_static_event(my_provider_event_sgvla,
-	"myprovider", "myeventsgvla", SIDE_LOGLEVEL_DEBUG,
+side_static_event(my_provider_event_gathervla,
+	"myprovider", "myeventgathervla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsgvla", &mystructsgvla, 0,
-				sizeof(struct testsgvla), SIDE_TYPE_SG_ACCESS_POINTER),
+		side_field_gather_struct("structgathervla", &mystructgathervla, 0,
+				sizeof(struct testgathervla), SIDE_TYPE_GATHER_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
 
 static
-void test_sg_vla(void)
+void test_gather_vla(void)
 {
-	side_event_cond(my_provider_event_sgvla) {
-		struct testsgvla mystruct = {
+	side_event_cond(my_provider_event_gathervla) {
+		struct testgathervla mystruct = {
 			.a = 55,
-			.len = SIDE_ARRAY_SIZE(sgvla),
-			.p = sgvla,
+			.len = SIDE_ARRAY_SIZE(gathervla),
+			.p = gathervla,
 		};
-		side_event_call(my_provider_event_sgvla,
+		side_event_call(my_provider_event_gathervla,
 			side_arg_list(
-				side_arg_sg_struct(&mystruct),
+				side_arg_gather_struct(&mystruct),
 			)
 		);
 	}
 }
 
-struct testsgvlaflex {
+struct testgathervlaflex {
 	uint8_t len;
 	uint32_t otherfield;
 	uint64_t array[];
 };
 
-static side_define_struct(mystructsgvlaflex,
+static side_define_struct(mystructgathervlaflex,
 	side_field_list(
-		side_field_sg_vla("vlaflex",
-			side_elem(side_type_sg_unsigned_integer(0, 64, 0, 64, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
-			offsetof(struct testsgvlaflex, array),
-			SIDE_TYPE_SG_ACCESS_ADDRESS,
-			side_length(side_type_sg_unsigned_integer(offsetof(struct testsgvlaflex, len),
-					8, 0, 8, SIDE_TYPE_SG_ACCESS_ADDRESS, side_attr_list())),
+		side_field_gather_vla("vlaflex",
+			side_elem(side_type_gather_unsigned_integer(0, 64, 0, 64, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
+			offsetof(struct testgathervlaflex, array),
+			SIDE_TYPE_GATHER_ACCESS_ADDRESS,
+			side_length(side_type_gather_unsigned_integer(offsetof(struct testgathervlaflex, len),
+					8, 0, 8, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
 			side_attr_list()
 		),
 	),
 	side_attr_list()
 );
 
-side_static_event(my_provider_event_sgvlaflex,
-	"myprovider", "myeventsgvlaflex", SIDE_LOGLEVEL_DEBUG,
+side_static_event(my_provider_event_gathervlaflex,
+	"myprovider", "myeventgathervlaflex", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_sg_struct("structsgvlaflex", &mystructsgvlaflex, 0,
-				sizeof(struct testsgvlaflex), SIDE_TYPE_SG_ACCESS_POINTER),
+		side_field_gather_struct("structgathervlaflex", &mystructgathervlaflex, 0,
+				sizeof(struct testgathervlaflex), SIDE_TYPE_GATHER_ACCESS_POINTER),
 	),
 	side_attr_list()
 );
 
 #define VLAFLEXLEN	6
 static
-void test_sg_vla_flex(void)
+void test_gather_vla_flex(void)
 {
-	side_event_cond(my_provider_event_sgvlaflex) {
-		struct testsgvlaflex *mystruct = malloc(sizeof(*mystruct) + VLAFLEXLEN + sizeof(uint64_t));
+	side_event_cond(my_provider_event_gathervlaflex) {
+		struct testgathervlaflex *mystruct = malloc(sizeof(*mystruct) + VLAFLEXLEN + sizeof(uint64_t));
 
 		mystruct->len = VLAFLEXLEN;
 		mystruct->otherfield = 0;
@@ -1964,9 +1964,9 @@ void test_sg_vla_flex(void)
 		mystruct->array[3] = 4;
 		mystruct->array[4] = 5;
 		mystruct->array[5] = 6;
-		side_event_call(my_provider_event_sgvlaflex,
+		side_event_call(my_provider_event_gathervlaflex,
 			side_arg_list(
-				side_arg_sg_struct(mystruct),
+				side_arg_gather_struct(mystruct),
 			)
 		);
 		free(mystruct);
@@ -2013,12 +2013,12 @@ int main()
 	test_fmt_string();
 	test_endian();
 	test_base();
-	test_struct_sg();
-	test_struct_sg_nest_ptr();
-	test_struct_sg_float();
-	test_array_sg();
-	test_sg_structnest();
-	test_sg_vla();
-	test_sg_vla_flex();
+	test_struct_gather();
+	test_struct_gather_nest_ptr();
+	test_struct_gather_float();
+	test_array_gather();
+	test_gather_structnest();
+	test_gather_vla();
+	test_gather_vla_flex();
 	return 0;
 }
