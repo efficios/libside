@@ -242,8 +242,8 @@ enum side_type_label_byte_order {
 #endif
 
 enum side_type_gather_access_mode {
-	SIDE_TYPE_GATHER_ACCESS_ADDRESS,
-	SIDE_TYPE_GATHER_ACCESS_POINTER,
+	SIDE_TYPE_GATHER_ACCESS_DIRECT,
+	SIDE_TYPE_GATHER_ACCESS_POINTER,	/* Pointer dereference */
 };
 
 typedef enum side_visitor_status (*side_visitor_func)(

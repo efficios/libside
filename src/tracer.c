@@ -1065,7 +1065,7 @@ static
 const char *tracer_gather_access(enum side_type_gather_access_mode access_mode, const char *ptr)
 {
 	switch (access_mode) {
-	case SIDE_TYPE_GATHER_ACCESS_ADDRESS:
+	case SIDE_TYPE_GATHER_ACCESS_DIRECT:
 		return ptr;
 	case SIDE_TYPE_GATHER_ACCESS_POINTER:
 		/* Dereference pointer */
@@ -1080,7 +1080,7 @@ static
 uint32_t tracer_gather_size(enum side_type_gather_access_mode access_mode, uint32_t len)
 {
 	switch (access_mode) {
-	case SIDE_TYPE_GATHER_ACCESS_ADDRESS:
+	case SIDE_TYPE_GATHER_ACCESS_DIRECT:
 		return len;
 	case SIDE_TYPE_GATHER_ACCESS_POINTER:
 		return sizeof(void *);
