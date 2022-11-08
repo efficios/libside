@@ -876,8 +876,7 @@ struct side_event_description {
 #define side_type_s16_be(_attr)				_side_type_integer(SIDE_TYPE_S16, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int16_t), 0, SIDE_PARAM(_attr))
 #define side_type_s32_be(_attr)				_side_type_integer(SIDE_TYPE_S32, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int32_t), 0, SIDE_PARAM(_attr))
 #define side_type_s64_be(_attr)				_side_type_integer(SIDE_TYPE_S64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int64_t), 0, SIDE_PARAM(_attr))
-#define side_type_pointer_be(_attr)			_side_type_integer(SIDE_TYPE_POINTER_HOST, false, SIDE_TYPE_BYTE_ORDER_BE, SIDE_BITS_PER_LONG, \
-									SIDE_BITS_PER_LONG, SIDE_PARAM(_attr))
+#define side_type_pointer_be(_attr)			_side_type_integer(SIDE_TYPE_POINTER_HOST, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
 #define side_type_float_binary16_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float16), SIDE_PARAM(_attr))
 #define side_type_float_binary32_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float32), SIDE_PARAM(_attr))
 #define side_type_float_binary64_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float64), SIDE_PARAM(_attr))
