@@ -519,18 +519,22 @@ void tracer_print_type_bool(const char *separator,
 		const union side_bool_value *value,
 		uint16_t offset_bits)
 {
+	uint32_t len_bits;
 	bool reverse_bo;
 	uint64_t v;
 
-	if (!type_bool->len_bits ||
-			type_bool->len_bits + offset_bits > type_bool->bool_size_bits)
+	if (!type_bool->len_bits)
+		len_bits = type_bool->bool_size * CHAR_BIT;
+	else
+		len_bits = type_bool->len_bits;
+	if (len_bits + offset_bits > type_bool->bool_size * CHAR_BIT)
 		abort();
 	reverse_bo = type_bool->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
-	switch (type_bool->bool_size_bits) {
-	case 8:
+	switch (type_bool->bool_size) {
+	case 1:
 		v = value->side_bool8;
 		break;
-	case 16:
+	case 2:
 	{
 		uint16_t side_u16;
 
@@ -540,7 +544,7 @@ void tracer_print_type_bool(const char *separator,
 		v = side_u16;
 		break;
 	}
-	case 32:
+	case 4:
 	{
 		uint32_t side_u32;
 
@@ -550,7 +554,7 @@ void tracer_print_type_bool(const char *separator,
 		v = side_u32;
 		break;
 	}
-	case 64:
+	case 8:
 	{
 		uint64_t side_u64;
 
@@ -564,8 +568,8 @@ void tracer_print_type_bool(const char *separator,
 		abort();
 	}
 	v >>= offset_bits;
-	if (type_bool->len_bits < 64)
-		v &= (1ULL << type_bool->len_bits) - 1;
+	if (len_bits < 64)
+		v &= (1ULL << len_bits) - 1;
 	tracer_print_type_header(separator, type_bool->attr, type_bool->nr_attr);
 	printf("%s", v ? "true" : "false");
 }
@@ -578,27 +582,31 @@ void tracer_print_type_integer(const char *separator,
 		enum tracer_display_base default_base)
 {
 	enum tracer_display_base base;
+	uint32_t len_bits;
 	bool reverse_bo;
 	union {
 		uint64_t v_unsigned;
 		int64_t v_signed;
 	} v;
 
-	if (!type_integer->len_bits ||
-			type_integer->len_bits + offset_bits > type_integer->integer_size_bits)
+	if (!type_integer->len_bits)
+		len_bits = type_integer->integer_size * CHAR_BIT;
+	else
+		len_bits = type_integer->len_bits;
+	if (len_bits + offset_bits > type_integer->integer_size * CHAR_BIT)
 		abort();
 	reverse_bo = type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
 	base = get_attr_display_base(type_integer->attr,
 			type_integer->nr_attr,
 			default_base);
-	switch (type_integer->integer_size_bits) {
-	case 8:
+	switch (type_integer->integer_size) {
+	case 1:
 		if (type_integer->signedness)
 			v.v_signed = value->side_s8;
 		else
 			v.v_unsigned = value->side_u8;
 		break;
-	case 16:
+	case 2:
 		if (type_integer->signedness) {
 			int16_t side_s16;
 
@@ -615,7 +623,7 @@ void tracer_print_type_integer(const char *separator,
 			v.v_unsigned = side_u16;
 		}
 		break;
-	case 32:
+	case 4:
 		if (type_integer->signedness) {
 			int32_t side_s32;
 
@@ -632,7 +640,7 @@ void tracer_print_type_integer(const char *separator,
 			v.v_unsigned = side_u32;
 		}
 		break;
-	case 64:
+	case 8:
 		if (type_integer->signedness) {
 			int64_t side_s64;
 
@@ -653,12 +661,12 @@ void tracer_print_type_integer(const char *separator,
 		abort();
 	}
 	v.v_unsigned >>= offset_bits;
-	if (type_integer->len_bits < 64)
-		v.v_unsigned &= (1ULL << type_integer->len_bits) - 1;
+	if (len_bits < 64)
+		v.v_unsigned &= (1ULL << len_bits) - 1;
 	tracer_print_type_header(separator, type_integer->attr, type_integer->nr_attr);
 	switch (base) {
 	case TRACER_DISPLAY_BASE_2:
-		print_integer_binary(v.v_unsigned, type_integer->len_bits);
+		print_integer_binary(v.v_unsigned, len_bits);
 		break;
 	case TRACER_DISPLAY_BASE_8:
 		printf("0%" PRIo64, v.v_unsigned);
@@ -666,9 +674,9 @@ void tracer_print_type_integer(const char *separator,
 	case TRACER_DISPLAY_BASE_10:
 		if (type_integer->signedness) {
 			/* Sign-extend. */
-			if (type_integer->len_bits < 64) {
-				if (v.v_unsigned & (1ULL << (type_integer->len_bits - 1)))
-					v.v_unsigned |= ~((1ULL << type_integer->len_bits) - 1);
+			if (len_bits < 64) {
+				if (v.v_unsigned & (1ULL << (len_bits - 1)))
+					v.v_unsigned |= ~((1ULL << len_bits) - 1);
 			}
 			printf("%" PRId64, v.v_signed);
 		} else {
@@ -692,8 +700,8 @@ void tracer_print_type_float(const char *separator,
 
 	reverse_bo = type_float->byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST;
 	tracer_print_type_header(separator, type_float->attr, type_float->nr_attr);
-	switch (type_float->float_size_bits) {
-	case 16:
+	switch (type_float->float_size) {
+	case 2:
 	{
 #if __HAVE_FLOAT16
 		union {
@@ -713,7 +721,7 @@ void tracer_print_type_float(const char *separator,
 		abort();
 #endif
 	}
-	case 32:
+	case 4:
 	{
 #if __HAVE_FLOAT32
 		union {
@@ -732,7 +740,7 @@ void tracer_print_type_float(const char *separator,
 		abort();
 #endif
 	}
-	case 64:
+	case 8:
 	{
 #if __HAVE_FLOAT64
 		union {
@@ -751,7 +759,7 @@ void tracer_print_type_float(const char *separator,
 		abort();
 #endif
 	}
-	case 128:
+	case 16:
 	{
 #if __HAVE_FLOAT128
 		union {
@@ -1080,20 +1088,20 @@ static
 uint64_t tracer_load_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
 	enum side_type_gather_access_mode access_mode = type_gather->u.side_integer.access_mode;
-	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size_bits >> 3;
+	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
 
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_integer.offset);
 	memcpy(&value, ptr, integer_size_bytes);
-	switch (type_gather->u.side_integer.type.integer_size_bits) {
-	case 8:
+	switch (type_gather->u.side_integer.type.integer_size) {
+	case 1:
 		return (uint64_t) value.side_u8;
-	case 16:
+	case 2:
 		return (uint64_t) value.side_u16;
-	case 32:
+	case 4:
 		return (uint64_t) value.side_u32;
-	case 64:
+	case 8:
 		return (uint64_t) value.side_u64;
 	default:
 		abort();
@@ -1104,15 +1112,15 @@ static
 uint32_t tracer_print_gather_bool_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
 	enum side_type_gather_access_mode access_mode = type_gather->u.side_bool.access_mode;
-	uint32_t bool_size_bytes = type_gather->u.side_bool.type.bool_size_bits >> 3;
+	uint32_t bool_size_bytes = type_gather->u.side_bool.type.bool_size;
 	const char *ptr = (const char *) _ptr;
 	union side_bool_value value;
 
-	switch (type_gather->u.side_bool.type.bool_size_bits) {
+	switch (bool_size_bytes) {
+	case 1:
+	case 2:
+	case 4:
 	case 8:
-	case 16:
-	case 32:
-	case 64:
 		break;
 	default:
 		abort();
@@ -1143,15 +1151,15 @@ static
 uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
 	enum side_type_gather_access_mode access_mode = type_gather->u.side_integer.access_mode;
-	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size_bits >> 3;
+	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
 
-	switch (type_gather->u.side_integer.type.integer_size_bits) {
+	switch (integer_size_bytes) {
+	case 1:
+	case 2:
+	case 4:
 	case 8:
-	case 16:
-	case 32:
-	case 64:
 		break;
 	default:
 		abort();
@@ -1167,15 +1175,15 @@ static
 uint32_t tracer_print_gather_float_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
 	enum side_type_gather_access_mode access_mode = type_gather->u.side_float.access_mode;
-	uint32_t float_size_bytes = type_gather->u.side_float.type.float_size_bits >> 3;
+	uint32_t float_size_bytes = type_gather->u.side_float.type.float_size;
 	const char *ptr = (const char *) _ptr;
 	union side_float_value value;
 
-	switch (type_gather->u.side_float.type.float_size_bits) {
+	switch (float_size_bytes) {
+	case 2:
+	case 4:
+	case 8:
 	case 16:
-	case 32:
-	case 64:
-	case 128:
 		break;
 	default:
 		abort();

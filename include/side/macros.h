@@ -44,8 +44,8 @@
 		(type *)((char *)__ptr - offsetof(type, member));	\
 	})
 
-#define side_struct_field_sizeof_bit(_struct, _field) \
-	(sizeof(((_struct * )NULL)->_field) * CHAR_BIT)
+#define side_struct_field_sizeof(_struct, _field) \
+	sizeof(((_struct * )NULL)->_field)
 
 #if defined(__SIZEOF_LONG__)
 #define SIDE_BITS_PER_LONG	(__SIZEOF_LONG__ * 8)
