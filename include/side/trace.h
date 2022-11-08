@@ -96,8 +96,7 @@ enum side_type_label {
 	SIDE_TYPE_S32,
 	SIDE_TYPE_S64,
 	SIDE_TYPE_BYTE,
-	SIDE_TYPE_POINTER32,
-	SIDE_TYPE_POINTER64,
+	SIDE_TYPE_POINTER,
 	SIDE_TYPE_FLOAT_BINARY16,
 	SIDE_TYPE_FLOAT_BINARY32,
 	SIDE_TYPE_FLOAT_BINARY64,
@@ -142,8 +141,7 @@ enum side_type_label {
 	SIDE_TYPE_DYNAMIC_S32,
 	SIDE_TYPE_DYNAMIC_S64,
 	SIDE_TYPE_DYNAMIC_BYTE,
-	SIDE_TYPE_DYNAMIC_POINTER32,
-	SIDE_TYPE_DYNAMIC_POINTER64,
+	SIDE_TYPE_DYNAMIC_POINTER,
 	SIDE_TYPE_DYNAMIC_FLOAT_BINARY16,
 	SIDE_TYPE_DYNAMIC_FLOAT_BINARY32,
 	SIDE_TYPE_DYNAMIC_FLOAT_BINARY64,
@@ -630,17 +628,9 @@ struct side_event_description {
 /* Event and type attributes */
 
 #if SIDE_BITS_PER_LONG == 64
-# define SIDE_TYPE_POINTER_HOST		SIDE_TYPE_POINTER64
-# define SIDE_TYPE_ARRAY_POINTER_HOST	SIDE_TYPE_ARRAY_POINTER64
-# define SIDE_TYPE_VLA_POINTER_HOST	SIDE_TYPE_VLA_POINTER64
-# define SIDE_TYPE_DYNAMIC_POINTER_HOST	SIDE_TYPE_DYNAMIC_POINTER64
 # define SIDE_ATTR_TYPE_POINTER_HOST	SIDE_ATTR_TYPE_POINTER64
 # define SIDE_PTR_HOST			.side_u64
 #else
-# define SIDE_TYPE_POINTER_HOST		SIDE_TYPE_POINTER32
-# define SIDE_TYPE_ARRAY_POINTER_HOST	SIDE_TYPE_ARRAY_POINTER32
-# define SIDE_TYPE_VLA_POINTER_HOST	SIDE_TYPE_VLA_POINTER32
-# define SIDE_TYPE_DYNAMIC_POINTER_HOST	SIDE_TYPE_DYNAMIC_POINTER32
 # define SIDE_ATTR_TYPE_POINTER_HOST	SIDE_ATTR_TYPE_POINTER32
 # define SIDE_PTR_HOST			.side_u32
 #endif
@@ -820,7 +810,7 @@ struct side_event_description {
 #define side_type_s16(_attr)				_side_type_integer(SIDE_TYPE_S16, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int16_t), 0, SIDE_PARAM(_attr))
 #define side_type_s32(_attr)				_side_type_integer(SIDE_TYPE_S32, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int32_t), 0, SIDE_PARAM(_attr))
 #define side_type_s64(_attr)				_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int64_t), 0, SIDE_PARAM(_attr))
-#define side_type_pointer(_attr)			_side_type_integer(SIDE_TYPE_POINTER_HOST, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
+#define side_type_pointer(_attr)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
 #define side_type_float_binary16(_attr)			_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float16), SIDE_PARAM(_attr))
 #define side_type_float_binary32(_attr)			_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float32), SIDE_PARAM(_attr))
 #define side_type_float_binary64(_attr)			_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float64), SIDE_PARAM(_attr))
@@ -852,7 +842,7 @@ struct side_event_description {
 #define side_type_s16_le(_attr)				_side_type_integer(SIDE_TYPE_S16, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int16_t), 0, SIDE_PARAM(_attr))
 #define side_type_s32_le(_attr)				_side_type_integer(SIDE_TYPE_S32, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int32_t), 0, SIDE_PARAM(_attr))
 #define side_type_s64_le(_attr)				_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int64_t), 0, SIDE_PARAM(_attr))
-#define side_type_pointer_le(_attr)			_side_type_integer(SIDE_TYPE_POINTER_HOST, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
+#define side_type_pointer_le(_attr)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
 #define side_type_float_binary16_le(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float16), SIDE_PARAM(_attr))
 #define side_type_float_binary32_le(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float32), SIDE_PARAM(_attr))
 #define side_type_float_binary64_le(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float64), SIDE_PARAM(_attr))
@@ -877,7 +867,7 @@ struct side_event_description {
 #define side_type_s16_be(_attr)				_side_type_integer(SIDE_TYPE_S16, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int16_t), 0, SIDE_PARAM(_attr))
 #define side_type_s32_be(_attr)				_side_type_integer(SIDE_TYPE_S32, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int32_t), 0, SIDE_PARAM(_attr))
 #define side_type_s64_be(_attr)				_side_type_integer(SIDE_TYPE_S64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int64_t), 0, SIDE_PARAM(_attr))
-#define side_type_pointer_be(_attr)			_side_type_integer(SIDE_TYPE_POINTER_HOST, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
+#define side_type_pointer_be(_attr)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
 #define side_type_float_binary16_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float16), SIDE_PARAM(_attr))
 #define side_type_float_binary32_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float32), SIDE_PARAM(_attr))
 #define side_type_float_binary64_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float64), SIDE_PARAM(_attr))
@@ -1252,7 +1242,7 @@ struct side_event_description {
 #define side_arg_s16(_val)		{ .type = SIDE_TYPE_S16, .u = { .side_static = { .integer_value = { .side_s16 = (_val) } } } }
 #define side_arg_s32(_val)		{ .type = SIDE_TYPE_S32, .u = { .side_static = { .integer_value = { .side_s32 = (_val) } } } }
 #define side_arg_s64(_val)		{ .type = SIDE_TYPE_S64, .u = { .side_static = { .integer_value = { .side_s64 = (_val) } } } }
-#define side_arg_pointer(_val)		{ .type = SIDE_TYPE_POINTER_HOST, .u = { .side_static = { .integer_value = { SIDE_PTR_HOST = (uintptr_t) (_val) } } } }
+#define side_arg_pointer(_val)		{ .type = SIDE_TYPE_POINTER, .u = { .side_static = { .integer_value = { SIDE_PTR_HOST = (uintptr_t) (_val) } } } }
 #define side_arg_enum_bitmap8(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP8, .u = { .side_static = { .integer_value = { .side_u8 = (_val) } } } }
 #define side_arg_enum_bitmap16(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP16, .u = { .side_static = { .integer_value = { .side_u16 = (_val) } } } }
 #define side_arg_enum_bitmap32(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP32, .u = { .side_static = { .integer_value = { .side_u32 = (_val) } } } }
@@ -1390,7 +1380,7 @@ struct side_event_description {
 	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_S64, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_pointer(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(SIDE_PTR_HOST, (uintptr_t) (_val), SIDE_TYPE_DYNAMIC_POINTER_HOST, false, _byte_order, \
+	_side_arg_dynamic_integer(SIDE_PTR_HOST, (uintptr_t) (_val), SIDE_TYPE_DYNAMIC_POINTER, false, _byte_order, \
 			sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_float(_field, _val, _type, _byte_order, _float_size, _attr) \

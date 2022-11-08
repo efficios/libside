@@ -131,8 +131,7 @@ bool type_to_host_reverse_bo(const struct side_type *type_desc)
         case SIDE_TYPE_S16:
         case SIDE_TYPE_S32:
         case SIDE_TYPE_S64:
-        case SIDE_TYPE_POINTER32:
-        case SIDE_TYPE_POINTER64:
+        case SIDE_TYPE_POINTER:
 		if (type_desc->u.side_integer.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
 			return true;
 		else
@@ -839,8 +838,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		case SIDE_TYPE_DYNAMIC_S32:
 		case SIDE_TYPE_DYNAMIC_S64:
 		case SIDE_TYPE_DYNAMIC_BYTE:
-		case SIDE_TYPE_DYNAMIC_POINTER32:
-		case SIDE_TYPE_DYNAMIC_POINTER64:
+		case SIDE_TYPE_DYNAMIC_POINTER:
 		case SIDE_TYPE_DYNAMIC_FLOAT_BINARY16:
 		case SIDE_TYPE_DYNAMIC_FLOAT_BINARY32:
 		case SIDE_TYPE_DYNAMIC_FLOAT_BINARY64:
@@ -894,8 +892,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 				TRACER_DISPLAY_BASE_10);
 		break;
 
-	case SIDE_TYPE_POINTER32:
-	case SIDE_TYPE_POINTER64:
+	case SIDE_TYPE_POINTER:
 		tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.side_static.integer_value, 0,
 				TRACER_DISPLAY_BASE_16);
 		break;
@@ -977,8 +974,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_DYNAMIC_S32:
 	case SIDE_TYPE_DYNAMIC_S64:
 	case SIDE_TYPE_DYNAMIC_BYTE:
-	case SIDE_TYPE_DYNAMIC_POINTER32:
-	case SIDE_TYPE_DYNAMIC_POINTER64:
+	case SIDE_TYPE_DYNAMIC_POINTER:
 	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY16:
 	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY32:
 	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY64:
@@ -1537,8 +1533,7 @@ void tracer_print_dynamic(const struct side_arg *item)
 		printf("0x%" PRIx8, item->u.side_dynamic.side_byte.value);
 		break;
 
-	case SIDE_TYPE_DYNAMIC_POINTER32:
-	case SIDE_TYPE_DYNAMIC_POINTER64:
+	case SIDE_TYPE_DYNAMIC_POINTER:
 		tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
 				TRACER_DISPLAY_BASE_16);
 		break;
