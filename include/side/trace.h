@@ -84,7 +84,7 @@ struct side_arg_dynamic_struct;
 struct side_events_register_handle;
 
 enum side_type_label {
-	/* Statically declared types */
+	/* Stack-copy basic types */
 	SIDE_TYPE_NULL,
 	SIDE_TYPE_BOOL,
 	SIDE_TYPE_U8,
@@ -104,7 +104,7 @@ enum side_type_label {
 	SIDE_TYPE_FLOAT_BINARY128,
 	SIDE_TYPE_STRING,
 
-	/* Statically declared compound types */
+	/* Stack-copy compound types */
 	SIDE_TYPE_STRUCT,
 	SIDE_TYPE_ARRAY,
 	SIDE_TYPE_VLA,
@@ -134,22 +134,25 @@ enum side_type_label {
 	SIDE_TYPE_VLA_POINTER32,
 	SIDE_TYPE_VLA_POINTER64,
 
-	/* Statically declared enumeration types */
+	/* Stack-copy enumeration types */
 	SIDE_TYPE_ENUM,
 	SIDE_TYPE_ENUM_BITMAP,
 
+	/* Stack-copy place holder for dynamic types */
 	SIDE_TYPE_DYNAMIC,
 
-	/* Gather types */
+	/* Gather basic types */
 	SIDE_TYPE_GATHER_UNSIGNED_INT,
 	SIDE_TYPE_GATHER_SIGNED_INT,
 	SIDE_TYPE_GATHER_BYTE,
 	SIDE_TYPE_GATHER_FLOAT,
+
+	/* Gather compound types */
 	SIDE_TYPE_GATHER_STRUCT,
 	SIDE_TYPE_GATHER_ARRAY,
 	SIDE_TYPE_GATHER_VLA,
 
-	/* Dynamic types */
+	/* Dynamic basic  types */
 	SIDE_TYPE_DYNAMIC_NULL,
 	SIDE_TYPE_DYNAMIC_BOOL,
 	SIDE_TYPE_DYNAMIC_U8,
@@ -443,11 +446,10 @@ struct side_type_gather {
 	} SIDE_PACKED u;
 } SIDE_PACKED;
 
-/* Statically defined types. */
 struct side_type {
 	uint32_t type;	/* enum side_type_label */
 	union {
-		/* Basic types */
+		/* Stack-copy basic types */
 		struct side_type_null side_null;
 		struct side_type_bool side_bool;
 		struct side_type_byte side_byte;
@@ -455,13 +457,13 @@ struct side_type {
 		struct side_type_integer side_integer;
 		struct side_type_float side_float;
 
-		/* Compound types */
+		/* Stack-copy compound types */
 		struct side_type_array side_array;
 		struct side_type_vla side_vla;
 		struct side_type_vla_visitor side_vla_visitor;
 		const struct side_type_struct *side_struct;
 
-		/* Enumeration types */
+		/* Stack-copy enumeration types */
 		struct side_type_enum side_enum;
 		struct side_type_enum_bitmap side_enum_bitmap;
 
@@ -493,14 +495,14 @@ struct side_callback {
 } SIDE_PACKED;
 
 struct side_arg_static {
-	/* Basic types */
+	/* Stack-copy basic types */
 	uint8_t bool_value;
 	uint8_t byte_value;
 	uint64_t string_value;	/* const char * */
 	union side_integer_value integer_value;
 	union side_float_value float_value;
 
-	/* Compound types */
+	/* Stack-copy compound types */
 	const struct side_arg_vec *side_struct;
 	const struct side_arg_vec *side_array;
 	const struct side_arg_vec *side_vla;
@@ -511,10 +513,12 @@ struct side_arg_static {
 		uint32_t length;
 	} SIDE_PACKED side_vla_fixint;
 
-	/* Gather types */
+	/* Gather basic types */
 	void *side_byte_gather_ptr;
 	void *side_integer_gather_ptr;
 	void *side_float_gather_ptr;
+
+	/* Gather compound types */
 	void *side_array_gather_ptr;
 	void *side_struct_gather_ptr;
 	struct {
@@ -552,35 +556,30 @@ struct side_dynamic_vla_visitor {
 } SIDE_PACKED;
 
 struct side_arg_dynamic {
-	/* Basic types */
+	/* Dynamic basic types */
 	struct side_type_null side_null;
 	struct {
 		struct side_type_bool type;
 		uint8_t value;
 	} SIDE_PACKED side_bool;
-
 	struct {
 		struct side_type_byte type;
 		uint8_t value;
 	} SIDE_PACKED side_byte;
-
 	struct {
 		struct side_type_string type;
 		uint64_t value;	/* const char * */
 	} SIDE_PACKED side_string;
-
-	/* Integer type */
 	struct {
 		struct side_type_integer type;
 		union side_integer_value value;
 	} SIDE_PACKED side_integer;
-
 	struct {
 		struct side_type_float type;
 		union side_float_value value;
 	} SIDE_PACKED side_float;
 
-	/* Compound types */
+	/* Dynamic compound types */
 	const struct side_arg_dynamic_struct *side_dynamic_struct;
 	const struct side_arg_dynamic_vla *side_dynamic_vla;
 
@@ -680,7 +679,59 @@ struct side_event_description {
 #define side_attr_float_binary128(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY128, .u = { .float_value = { .side_float_binary128 = (_val) } } }
 #define side_attr_string(_val)		{ .type = SIDE_ATTR_TYPE_STRING, .u = { .string_value = (uintptr_t) (_val) } }
 
-/* Static field definition */
+/* Stack-copy enumeration type definitions */
+
+#define side_define_enum(_identifier, _mappings, _attr) \
+	const struct side_enum_mappings _identifier = { \
+		.mappings = _mappings, \
+		.attr = _attr, \
+		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+	}
+
+#define side_enum_mapping_list(...) \
+	SIDE_COMPOUND_LITERAL(const struct side_enum_mapping, __VA_ARGS__)
+
+#define side_enum_mapping_range(_label, _begin, _end) \
+	{ \
+		.range_begin = _begin, \
+		.range_end = _end, \
+		.label = _label, \
+	}
+
+#define side_enum_mapping_value(_label, _value) \
+	{ \
+		.range_begin = _value, \
+		.range_end = _value, \
+		.label = _label, \
+	}
+
+#define side_define_enum_bitmap(_identifier, _mappings, _attr) \
+	const struct side_enum_bitmap_mappings _identifier = { \
+		.mappings = _mappings, \
+		.attr = _attr, \
+		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+	}
+
+#define side_enum_bitmap_mapping_list(...) \
+	SIDE_COMPOUND_LITERAL(const struct side_enum_bitmap_mapping, __VA_ARGS__)
+
+#define side_enum_bitmap_mapping_range(_label, _begin, _end) \
+	{ \
+		.range_begin = _begin, \
+		.range_end = _end, \
+		.label = _label, \
+	}
+
+#define side_enum_bitmap_mapping_value(_label, _value) \
+	{ \
+		.range_begin = _value, \
+		.range_end = _value, \
+		.label = _label, \
+	}
+
+/* Stack-copy field and type definitions */
 
 #define side_type_null(_attr) \
 	{ \
@@ -947,7 +998,7 @@ struct side_event_description {
 #define side_field_vla_visitor(_name, _elem_type, _visitor, _attr) \
 	_side_field(_name, side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)))
 
-/* Gather fields */
+/* Gather field and type definitions */
 
 #define side_type_gather_byte(_offset, _access_mode, _attr) \
 	{ \
@@ -1140,7 +1191,7 @@ struct side_event_description {
 #define side_field_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)
 
-/* Static field arguments */
+/* Stack-copy field arguments */
 
 #define side_arg_null(_val)		{ .type = SIDE_TYPE_NULL }
 #define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_static = { .bool_value = !!(_val) } } }
@@ -1195,6 +1246,7 @@ struct side_event_description {
 #define side_arg_vla_pointer(_ptr, _length) { .type = SIDE_TYPE_VLA_POINTER_HOST, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
 
 /* Gather field arguments */
+
 #define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = (_ptr) } } }
 #define side_arg_gather_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_UNSIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_signed_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_SIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
@@ -1459,57 +1511,12 @@ struct side_event_description {
 		.elem = _elem, \
 	}
 
+/*
+ * Event instrumentation description registration, runtime enabled state
+ * check, and instrumentation invocation.
+ */
+
 #define side_arg_list(...)	__VA_ARGS__
-
-#define side_define_enum(_identifier, _mappings, _attr) \
-	const struct side_enum_mappings _identifier = { \
-		.mappings = _mappings, \
-		.attr = _attr, \
-		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-	}
-
-#define side_enum_mapping_list(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_enum_mapping, __VA_ARGS__)
-
-#define side_enum_mapping_range(_label, _begin, _end) \
-	{ \
-		.range_begin = _begin, \
-		.range_end = _end, \
-		.label = _label, \
-	}
-
-#define side_enum_mapping_value(_label, _value) \
-	{ \
-		.range_begin = _value, \
-		.range_end = _value, \
-		.label = _label, \
-	}
-
-#define side_define_enum_bitmap(_identifier, _mappings, _attr) \
-	const struct side_enum_bitmap_mappings _identifier = { \
-		.mappings = _mappings, \
-		.attr = _attr, \
-		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
-	}
-
-#define side_enum_bitmap_mapping_list(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_enum_bitmap_mapping, __VA_ARGS__)
-
-#define side_enum_bitmap_mapping_range(_label, _begin, _end) \
-	{ \
-		.range_begin = _begin, \
-		.range_end = _end, \
-		.label = _label, \
-	}
-
-#define side_enum_bitmap_mapping_value(_label, _value) \
-	{ \
-		.range_begin = _value, \
-		.range_end = _value, \
-		.label = _label, \
-	}
 
 #define side_event_cond(_identifier) \
 	if (side_unlikely(__atomic_load_n(&side_event_enable__##_identifier, \
@@ -1606,6 +1613,16 @@ void side_call_variadic(const struct side_event_description *desc,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct);
 
+struct side_events_register_handle *side_events_register(struct side_event_description **events,
+		uint32_t nr_events);
+void side_events_unregister(struct side_events_register_handle *handle);
+
+/*
+ * Userspace tracer registration API. This allows userspace tracers to
+ * register event notification callbacks to be notified of the currently
+ * registered instrumentation, and to register their callbacks to
+ * specific events.
+ */
 typedef void (*side_tracer_callback_func)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
 			void *priv);
@@ -1627,10 +1644,6 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 		side_tracer_callback_variadic_func call_variadic,
 		void *priv);
 
-struct side_events_register_handle *side_events_register(struct side_event_description **events,
-		uint32_t nr_events);
-void side_events_unregister(struct side_events_register_handle *handle);
-
 enum side_tracer_notification {
 	SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
 	SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
@@ -1643,8 +1656,18 @@ struct side_tracer_handle *side_tracer_event_notification_register(
 		void *priv);
 void side_tracer_event_notification_unregister(struct side_tracer_handle *handle);
 
+/*
+ * Explicit hooks to initialize/finalize the side instrumentation
+ * library. Those are also library constructor/destructor.
+ */
 void side_init(void);
 void side_exit(void);
+
+/*
+ * The following constructors/destructors perform automatic registration
+ * of the declared side events. Those may have to be called explicitly
+ * in a statically linked library.
+ */
 
 /*
  * These weak symbols, the constructor, and destructor take care of
