@@ -184,12 +184,6 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 	case SIDE_ATTR_TYPE_S64:
 		printf("%" PRId64, attr->value.u.integer_value.side_s64);
 		break;
-	case SIDE_ATTR_TYPE_POINTER32:
-		printf("0x%" PRIx32, attr->value.u.integer_value.side_u32);
-		break;
-	case SIDE_ATTR_TYPE_POINTER64:
-		printf("0x%" PRIx64, attr->value.u.integer_value.side_u64);
-		break;
 	case SIDE_ATTR_TYPE_FLOAT_BINARY16:
 #if __HAVE_FLOAT16
 		printf("%g", (double) attr->value.u.float_value.side_float_binary16);

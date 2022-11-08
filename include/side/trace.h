@@ -166,8 +166,6 @@ enum side_attr_type {
 	SIDE_ATTR_TYPE_S16,
 	SIDE_ATTR_TYPE_S32,
 	SIDE_ATTR_TYPE_S64,
-	SIDE_ATTR_TYPE_POINTER32,
-	SIDE_ATTR_TYPE_POINTER64,
 	SIDE_ATTR_TYPE_FLOAT_BINARY16,
 	SIDE_ATTR_TYPE_FLOAT_BINARY32,
 	SIDE_ATTR_TYPE_FLOAT_BINARY64,
@@ -628,10 +626,8 @@ struct side_event_description {
 /* Event and type attributes */
 
 #if SIDE_BITS_PER_LONG == 64
-# define SIDE_ATTR_TYPE_POINTER_HOST	SIDE_ATTR_TYPE_POINTER64
 # define SIDE_PTR_HOST			.side_u64
 #else
-# define SIDE_ATTR_TYPE_POINTER_HOST	SIDE_ATTR_TYPE_POINTER32
 # define SIDE_PTR_HOST			.side_u32
 #endif
 
@@ -654,7 +650,6 @@ struct side_event_description {
 #define side_attr_s16(_val)		{ .type = SIDE_ATTR_TYPE_S16, .u = { .integer_value = { .side_s16 = (_val) } } }
 #define side_attr_s32(_val)		{ .type = SIDE_ATTR_TYPE_S32, .u = { .integer_value = { .side_s32 = (_val) } } }
 #define side_attr_s64(_val)		{ .type = SIDE_ATTR_TYPE_S64, .u = { .integer_value = { .side_s64 = (_val) } } }
-#define side_attr_pointer(_val)		{ .type = SIDE_ATTR_TYPE_POINTER_HOST, .u = { .integer_value = { SIDE_PTR_HOST = (uintptr_t) (_val) } } }
 #define side_attr_float_binary16(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY16, .u = { .float_value = { .side_float_binary16 = (_val) } } }
 #define side_attr_float_binary32(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY32, .u = { .float_value = { .side_float_binary32 = (_val) } } }
 #define side_attr_float_binary64(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY64, .u = { .float_value = { .side_float_binary64 = (_val) } } }
