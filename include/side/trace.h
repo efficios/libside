@@ -241,6 +241,11 @@ enum side_type_label_byte_order {
 # define SIDE_TYPE_FLOAT_WORD_ORDER_HOST	SIDE_TYPE_BYTE_ORDER_BE
 #endif
 
+enum side_type_gather_access_mode {
+	SIDE_TYPE_GATHER_ACCESS_ADDRESS,
+	SIDE_TYPE_GATHER_ACCESS_POINTER,
+};
+
 typedef enum side_visitor_status (*side_visitor_func)(
 		const struct side_tracer_visitor_ctx *tracer_ctx,
 		void *app_ctx);
@@ -429,11 +434,6 @@ struct side_type_gather_vla {
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
 	struct side_type_vla type;
 } SIDE_PACKED;
-
-enum side_type_gather_access_mode {
-	SIDE_TYPE_GATHER_ACCESS_ADDRESS,
-	SIDE_TYPE_GATHER_ACCESS_POINTER,
-};
 
 struct side_type_gather {
 	union {
