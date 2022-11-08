@@ -241,6 +241,13 @@ union side_integer_value {
 	int64_t side_s64;
 } SIDE_PACKED;
 
+union side_bool_value {
+	uint8_t side_bool8;
+	uint16_t side_bool16;
+	uint32_t side_bool32;
+	uint64_t side_bool64;
+} SIDE_PACKED;
+
 union side_float_value {
 #if __HAVE_FLOAT16
 	_Float16 side_float_binary16;
@@ -484,7 +491,7 @@ struct side_callback {
 
 struct side_arg_static {
 	/* Stack-copy basic types */
-	uint8_t bool_value;
+	union side_bool_value bool_value;
 	uint8_t byte_value;
 	uint64_t string_value;	/* const char * */
 	union side_integer_value integer_value;
@@ -544,7 +551,7 @@ struct side_arg_dynamic {
 	struct side_type_null side_null;
 	struct {
 		struct side_type_bool type;
-		uint8_t value;
+		union side_bool_value value;
 	} SIDE_PACKED side_bool;
 	struct {
 		struct side_type_byte type;
@@ -1217,7 +1224,7 @@ struct side_event_description {
 /* Stack-copy field arguments */
 
 #define side_arg_null(_val)		{ .type = SIDE_TYPE_NULL }
-#define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_static = { .bool_value = !!(_val) } } }
+#define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_static = { .bool_value.side_bool8 = !!(_val) } } }
 #define side_arg_byte(_val)		{ .type = SIDE_TYPE_BYTE, .u = { .side_static = { .byte_value = (_val) } } }
 #define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING, .u = { .side_static = { .string_value = (uintptr_t) (_val) } } }
 
@@ -1285,7 +1292,9 @@ struct side_event_description {
 						.len_bits = 1, \
 						.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 					}, \
-					.value = !!(_val), \
+					.value = { \
+						.side_bool8 = !!(_val), \
+					}, \
 				}, \
 			}, \
 		}, \
