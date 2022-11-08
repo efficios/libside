@@ -46,7 +46,8 @@ uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, 
 static
 uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, const void *_ptr);
 static
-uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, const void *_ptr);
+uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, const void *_ptr,
+		const void *_length_ptr);
 static
 void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item);
 
@@ -913,6 +914,10 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_GATHER_ARRAY:
 		(void) tracer_print_gather_array(&type_desc->u.side_gather, item->u.side_static.side_array_gather_ptr);
 		break;
+	case SIDE_TYPE_GATHER_VLA:
+		(void) tracer_print_gather_vla(&type_desc->u.side_gather, item->u.side_static.side_vla_gather.ptr,
+				item->u.side_static.side_vla_gather.length_ptr);
+		break;
 	case SIDE_TYPE_GATHER_BYTE:
 		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, item->u.side_static.side_byte_gather_ptr);
 		break;
@@ -984,9 +989,6 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
 		tracer_print_dynamic(item);
 		break;
-	case SIDE_TYPE_GATHER_VLA:
-		fprintf(stderr, "<gather VLA only supported within gather structures>\n");
-		abort();
 	default:
 		fprintf(stderr, "<UNKNOWN TYPE>");
 		abort();
@@ -1197,7 +1199,7 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 		len = tracer_print_gather_array(&type_desc->u.side_gather, ptr);
 		break;
 	case SIDE_TYPE_GATHER_VLA:
-		len = tracer_print_gather_vla(&type_desc->u.side_gather, ptr);
+		len = tracer_print_gather_vla(&type_desc->u.side_gather, ptr, ptr);
 		break;
 	default:
 		fprintf(stderr, "<UNKNOWN GATHER TYPE>");
@@ -1262,10 +1264,12 @@ uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, c
 }
 
 static
-uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, const void *_ptr)
+uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, const void *_ptr,
+		const void *_length_ptr)
 {
 	enum side_type_gather_access_mode access_mode = type_gather->u.side_vla.access_mode;
 	const char *ptr = (const char *) _ptr, *orig_ptr;
+	const char *length_ptr = (const char *) _length_ptr;
 	uint32_t i, length;
 
 	/* Access length */
@@ -1277,7 +1281,7 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 		fprintf(stderr, "<gather VLA expects integer gather length type>\n");
 		abort();
 	}
-	length = (uint32_t) tracer_load_gather_integer_type(&type_gather->u.side_vla.length_type->u.side_gather, ptr);
+	length = (uint32_t) tracer_load_gather_integer_type(&type_gather->u.side_vla.length_type->u.side_gather, length_ptr);
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
 	orig_ptr = ptr;
 	print_attributes("attr", ":", type_gather->u.side_vla.type.attr, type_gather->u.side_vla.type.nr_attr);

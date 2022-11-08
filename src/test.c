@@ -1868,6 +1868,7 @@ void test_gather_structnest(void)
 }
 
 uint32_t gathervla[] = { 1, 2, 3, 4 };
+uint32_t gathervla2[] = { 5, 6, 7, 8, 9 };
 
 struct testgathervla {
 	int a;
@@ -1899,6 +1900,12 @@ side_static_event(my_provider_event_gathervla,
 	side_field_list(
 		side_field_gather_struct("structgathervla", &mystructgathervla, 0,
 				sizeof(struct testgathervla), SIDE_TYPE_GATHER_ACCESS_ADDRESS),
+		side_field_gather_vla("vla",
+			side_elem(side_type_gather_unsigned_integer(0, 32, 0, 32, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
+			0, SIDE_TYPE_GATHER_ACCESS_ADDRESS,
+			side_length(side_type_gather_unsigned_integer(0, 16, 0, 16, SIDE_TYPE_GATHER_ACCESS_ADDRESS, side_attr_list())),
+			side_attr_list()
+		),
 	),
 	side_attr_list()
 );
@@ -1912,9 +1919,11 @@ void test_gather_vla(void)
 			.len = SIDE_ARRAY_SIZE(gathervla),
 			.p = gathervla,
 		};
+		uint16_t vla2_len = 5;
 		side_event_call(my_provider_event_gathervla,
 			side_arg_list(
 				side_arg_gather_struct(&mystruct),
+				side_arg_gather_vla(gathervla2, &vla2_len),
 			)
 		);
 	}
