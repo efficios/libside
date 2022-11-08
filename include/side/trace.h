@@ -153,7 +153,7 @@ enum side_type_label {
 	SIDE_TYPE_GATHER_ARRAY,
 	SIDE_TYPE_GATHER_VLA,
 
-	/* Dynamic basic  types */
+	/* Dynamic basic types */
 	SIDE_TYPE_DYNAMIC_NULL,
 	SIDE_TYPE_DYNAMIC_BOOL,
 	SIDE_TYPE_DYNAMIC_U8,
