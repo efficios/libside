@@ -122,6 +122,7 @@ enum side_type_label {
 	SIDE_TYPE_GATHER_UNSIGNED_INT,
 	SIDE_TYPE_GATHER_SIGNED_INT,
 	SIDE_TYPE_GATHER_BYTE,
+	SIDE_TYPE_GATHER_POINTER,
 	SIDE_TYPE_GATHER_FLOAT,
 
 	/* Gather compound types */
@@ -1109,6 +1110,24 @@ struct side_event_description {
 #define side_field_gather_signed_integer_be(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
 	_side_field(_name, side_type_gather_signed_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
 
+#define side_type_gather_pointer(_offset, _access_mode, _attr) \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_POINTER, false, SIDE_TYPE_BYTE_ORDER_HOST, \
+			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM(_attr))
+#define side_field_gather_pointer(_name, _offset, _access_mode, _attr) \
+	_side_field(_name, side_type_gather_pointer(_offset, _access_mode, SIDE_PARAM(_attr)))
+
+#define side_type_gather_pointer_le(_offset, _access_mode, _attr) \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_POINTER, false, SIDE_TYPE_BYTE_ORDER_LE, \
+			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM(_attr))
+#define side_field_gather_pointer_le(_name, _offset, _access_mode, _attr) \
+	_side_field(_name, side_type_gather_pointer_le(_offset, _access_mode, SIDE_PARAM(_attr)))
+
+#define side_type_gather_pointer_be(_offset, _access_mode, _attr) \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_POINTER, false, SIDE_TYPE_BYTE_ORDER_BE, \
+			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM(_attr))
+#define side_field_gather_pointer_be(_name, _offset, _access_mode, _attr) \
+	_side_field(_name, side_type_gather_pointer_be(_offset, _access_mode, SIDE_PARAM(_attr)))
+
 #define _side_type_gather_float(_byte_order, _offset, _float_size, _access_mode, _attr) \
 	{ \
 		.type = SIDE_TYPE_GATHER_FLOAT, \
@@ -1254,6 +1273,7 @@ struct side_event_description {
 
 #define side_arg_gather_bool(_ptr)		{ .type = SIDE_TYPE_GATHER_BOOL, .u = { .side_static = { .side_bool_gather_ptr = (_ptr) } } }
 #define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = (_ptr) } } }
+#define side_arg_gather_pointer(_ptr)		{ .type = SIDE_TYPE_GATHER_POINTER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_UNSIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_signed_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_SIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_float(_ptr)		{ .type = SIDE_TYPE_GATHER_FLOAT, .u = { .side_static = { .side_float_gather_ptr = (_ptr) } } }

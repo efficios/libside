@@ -2010,6 +2010,33 @@ void test_gather_bool(void)
 	}
 }
 
+side_static_event(my_provider_event_gatherpointer,
+	"myprovider", "myeventgatherpointer", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_gather_pointer("ptr", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_array("array",
+			side_elem(side_type_gather_pointer(0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+		),
+	),
+	side_attr_list()
+);
+
+static
+void test_gather_pointer(void)
+{
+	side_event_cond(my_provider_event_structgatherarray) {
+		void *v = (void *)0x44;
+		void *array[3] = { (void *)0x1, (void *)0x2, (void *)0x3 };
+
+		side_event_call(my_provider_event_gatherpointer,
+			side_arg_list(
+				side_arg_gather_pointer(&v),
+				side_arg_gather_array(array),
+			)
+		);
+	}
+}
 int main()
 {
 	test_fields();
@@ -2057,5 +2084,6 @@ int main()
 	test_gather_vla_flex();
 	test_gather_byte();
 	test_gather_bool();
+	test_gather_pointer();
 	return 0;
 }
