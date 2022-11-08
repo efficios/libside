@@ -1784,7 +1784,6 @@ struct testgatherstructnest0 {
 	int a;
 };
 
-
 static side_define_struct(mystructgatherstructnest1,
 	side_field_list(
 		side_field_gather_signed_integer("b", offsetof(struct testgatherstructnest1, b),
