@@ -110,30 +110,6 @@ enum side_type_label {
 	SIDE_TYPE_VLA,
 	SIDE_TYPE_VLA_VISITOR,
 
-	SIDE_TYPE_ARRAY_U8,
-	SIDE_TYPE_ARRAY_U16,
-	SIDE_TYPE_ARRAY_U32,
-	SIDE_TYPE_ARRAY_U64,
-	SIDE_TYPE_ARRAY_S8,
-	SIDE_TYPE_ARRAY_S16,
-	SIDE_TYPE_ARRAY_S32,
-	SIDE_TYPE_ARRAY_S64,
-	SIDE_TYPE_ARRAY_BYTE,
-	SIDE_TYPE_ARRAY_POINTER32,
-	SIDE_TYPE_ARRAY_POINTER64,
-
-	SIDE_TYPE_VLA_U8,
-	SIDE_TYPE_VLA_U16,
-	SIDE_TYPE_VLA_U32,
-	SIDE_TYPE_VLA_U64,
-	SIDE_TYPE_VLA_S8,
-	SIDE_TYPE_VLA_S16,
-	SIDE_TYPE_VLA_S32,
-	SIDE_TYPE_VLA_S64,
-	SIDE_TYPE_VLA_BYTE,
-	SIDE_TYPE_VLA_POINTER32,
-	SIDE_TYPE_VLA_POINTER64,
-
 	/* Stack-copy enumeration types */
 	SIDE_TYPE_ENUM,
 	SIDE_TYPE_ENUM_BITMAP,
@@ -519,11 +495,6 @@ struct side_arg_static {
 	const struct side_arg_vec *side_array;
 	const struct side_arg_vec *side_vla;
 	void *side_vla_app_visitor_ctx;
-	void *side_array_fixint;
-	struct {
-		void *p;
-		uint32_t length;
-	} SIDE_PACKED side_vla_fixint;
 
 	/* Gather basic types */
 	void *side_bool_gather_ptr;
@@ -1274,28 +1245,6 @@ struct side_event_description {
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_static = { .side_array = (_side_type) } } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_static = { .side_vla = (_side_type) } } }
 #define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_static = { .side_vla_app_visitor_ctx = (_ctx) } } }
-
-#define side_arg_array_u8(_ptr)		{ .type = SIDE_TYPE_ARRAY_U8, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-#define side_arg_array_u16(_ptr)	{ .type = SIDE_TYPE_ARRAY_U16, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-#define side_arg_array_u32(_ptr)	{ .type = SIDE_TYPE_ARRAY_U32, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-#define side_arg_array_u64(_ptr)	{ .type = SIDE_TYPE_ARRAY_U64, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-#define side_arg_array_s8(_ptr)		{ .type = SIDE_TYPE_ARRAY_S8, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-#define side_arg_array_s16(_ptr)	{ .type = SIDE_TYPE_ARRAY_S16, .u = { .side_static = { .side_array_fixint  = (_ptr) } } }
-#define side_arg_array_s32(_ptr)	{ .type = SIDE_TYPE_ARRAY_S32, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-#define side_arg_array_s64(_ptr)	{ .type = SIDE_TYPE_ARRAY_S64, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-#define side_arg_array_byte(_ptr)	{ .type = SIDE_TYPE_ARRAY_BYTE, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-#define side_arg_array_pointer(_ptr)	{ .type = SIDE_TYPE_ARRAY_POINTER_HOST, .u = { .side_static = { .side_array_fixint = (_ptr) } } }
-
-#define side_arg_vla_u8(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U8, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } }
-#define side_arg_vla_u16(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U16, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
-#define side_arg_vla_u32(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U32, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
-#define side_arg_vla_u64(_ptr, _length)	{ .type = SIDE_TYPE_VLA_U64, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
-#define side_arg_vla_s8(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S8, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
-#define side_arg_vla_s16(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S16, .u = { .side_static = { .side_vla_fixint  = { .p = (_ptr), .length = (_length) } } } }
-#define side_arg_vla_s32(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S32, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
-#define side_arg_vla_s64(_ptr, _length)	{ .type = SIDE_TYPE_VLA_S64, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
-#define side_arg_vla_byte(_ptr, _length) { .type = SIDE_TYPE_VLA_BYTE, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
-#define side_arg_vla_pointer(_ptr, _length) { .type = SIDE_TYPE_VLA_POINTER_HOST, .u = { .side_static = { .side_vla_fixint = { .p = (_ptr), .length = (_length) } } } }
 
 /* Gather field arguments */
 

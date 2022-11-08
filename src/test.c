@@ -278,40 +278,6 @@ void test_vla_visitor_2d(void)
 	}
 }
 
-static int64_t array_fixint[] = { -444, 555, 123, 2897432587 };
-
-side_static_event(my_provider_event_array_fixint, "myprovider", "myarrayfixint", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_array("arrfixint", side_elem(side_type_s64(side_attr_list())), SIDE_ARRAY_SIZE(array_fixint), side_attr_list()),
-		side_field_s64("v", side_attr_list()),
-	),
-	side_attr_list()
-);
-
-static
-void test_array_fixint(void)
-{
-	side_event(my_provider_event_array_fixint,
-		side_arg_list(side_arg_array_s64(array_fixint), side_arg_s64(42)));
-}
-
-static int64_t vla_fixint[] = { -444, 555, 123, 2897432587 };
-
-side_static_event(my_provider_event_vla_fixint, "myprovider", "myvlafixint", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_vla("vlafixint", side_elem(side_type_s64(side_attr_list())), side_attr_list()),
-		side_field_s64("v", side_attr_list()),
-	),
-	side_attr_list()
-);
-
-static
-void test_vla_fixint(void)
-{
-	side_event(my_provider_event_vla_fixint,
-		side_arg_list(side_arg_vla_s64(vla_fixint, SIDE_ARRAY_SIZE(vla_fixint)), side_arg_s64(42)));
-}
-
 side_static_event(my_provider_event_dynamic_basic,
 	"myprovider", "mydynamicbasic", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
@@ -1222,14 +1188,10 @@ void test_enum_bitmap(void)
 	}
 }
 
-static uint8_t blob_fixint[] = { 0x55, 0x44, 0x33, 0x22, 0x11 };
-
 side_static_event_variadic(my_provider_event_blob, "myprovider", "myeventblob", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_byte("blobfield", side_attr_list()),
 		side_field_array("arrayblob", side_elem(side_type_byte(side_attr_list())), 3, side_attr_list()),
-		side_field_array("arrayblobfix", side_elem(side_type_byte(side_attr_list())), SIDE_ARRAY_SIZE(blob_fixint), side_attr_list()),
-		side_field_vla("vlablobfix", side_elem(side_type_byte(side_attr_list())), side_attr_list()),
 	),
 	side_attr_list()
 );
@@ -1250,8 +1212,6 @@ void test_blob(void)
 			side_arg_list(
 				side_arg_byte(0x55),
 				side_arg_array(&myarray),
-				side_arg_array_byte(blob_fixint),
-				side_arg_vla_byte(blob_fixint, SIDE_ARRAY_SIZE(blob_fixint)),
 			),
 			side_arg_list(
 				side_arg_dynamic_field("varblobfield",
@@ -2066,8 +2026,6 @@ int main()
 	test_vla();
 	test_vla_visitor();
 	test_vla_visitor_2d();
-	test_array_fixint();
-	test_vla_fixint();
 	test_dynamic_basic_type();
 	test_dynamic_vla();
 	test_dynamic_null();
