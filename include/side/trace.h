@@ -236,6 +236,7 @@ union side_integer_value {
 	int16_t side_s16;
 	int32_t side_s32;
 	int64_t side_s64;
+	uintptr_t side_uptr;
 } SIDE_PACKED;
 
 union side_bool_value {
@@ -624,12 +625,6 @@ struct side_event_description {
 } SIDE_PACKED;
 
 /* Event and type attributes */
-
-#if SIDE_BITS_PER_LONG == 64
-# define SIDE_PTR_HOST			.side_u64
-#else
-# define SIDE_PTR_HOST			.side_u32
-#endif
 
 #define side_attr(_key, _value)	\
 	{ \
@@ -1237,7 +1232,7 @@ struct side_event_description {
 #define side_arg_s16(_val)		{ .type = SIDE_TYPE_S16, .u = { .side_static = { .integer_value = { .side_s16 = (_val) } } } }
 #define side_arg_s32(_val)		{ .type = SIDE_TYPE_S32, .u = { .side_static = { .integer_value = { .side_s32 = (_val) } } } }
 #define side_arg_s64(_val)		{ .type = SIDE_TYPE_S64, .u = { .side_static = { .integer_value = { .side_s64 = (_val) } } } }
-#define side_arg_pointer(_val)		{ .type = SIDE_TYPE_POINTER, .u = { .side_static = { .integer_value = { SIDE_PTR_HOST = (uintptr_t) (_val) } } } }
+#define side_arg_pointer(_val)		{ .type = SIDE_TYPE_POINTER, .u = { .side_static = { .integer_value = { .side_uptr = (uintptr_t) (_val) } } } }
 #define side_arg_enum_bitmap8(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP8, .u = { .side_static = { .integer_value = { .side_u8 = (_val) } } } }
 #define side_arg_enum_bitmap16(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP16, .u = { .side_static = { .integer_value = { .side_u16 = (_val) } } } }
 #define side_arg_enum_bitmap32(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP32, .u = { .side_static = { .integer_value = { .side_u32 = (_val) } } } }
@@ -1375,7 +1370,7 @@ struct side_event_description {
 	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_S64, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_pointer(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(SIDE_PTR_HOST, (uintptr_t) (_val), SIDE_TYPE_DYNAMIC_POINTER, false, _byte_order, \
+	_side_arg_dynamic_integer(.side_uptr, (uintptr_t) (_val), SIDE_TYPE_DYNAMIC_POINTER, false, _byte_order, \
 			sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_float(_field, _val, _type, _byte_order, _float_size, _attr) \
