@@ -36,6 +36,8 @@ void tracer_print_vla_fixint(const struct side_type *type_desc, const struct sid
 static
 void tracer_print_dynamic(const struct side_arg *dynamic_item);
 static
+uint32_t tracer_print_gather_bool_type(const struct side_type_gather *type_gather, const void *_ptr);
+static
 uint32_t tracer_print_gather_byte_type(const struct side_type_gather *type_gather, const void *_ptr);
 static
 uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr);
@@ -516,6 +518,63 @@ void tracer_print_type_header(const char *separator,
 }
 
 static
+void tracer_print_type_bool(const char *separator,
+		const struct side_type_bool *type_bool,
+		const union side_integer_value *value,
+		uint16_t offset_bits)
+{
+	bool reverse_bo;
+	uint64_t v;
+
+	if (!type_bool->len_bits ||
+			type_bool->len_bits + offset_bits > type_bool->bool_size_bits)
+		abort();
+	reverse_bo = type_bool->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
+	switch (type_bool->bool_size_bits) {
+	case 8:
+		v = value->side_u8;
+		break;
+	case 16:
+	{
+		uint16_t side_u16;
+
+		side_u16 = value->side_u16;
+		if (reverse_bo)
+			side_u16 = side_bswap_16(side_u16);
+		v = side_u16;
+		break;
+	}
+	case 32:
+	{
+		uint32_t side_u32;
+
+		side_u32 = value->side_u32;
+		if (reverse_bo)
+			side_u32 = side_bswap_32(side_u32);
+		v = side_u32;
+		break;
+	}
+	case 64:
+	{
+		uint64_t side_u64;
+
+		side_u64 = value->side_u64;
+		if (reverse_bo)
+			side_u64 = side_bswap_64(side_u64);
+		v = side_u64;
+		break;
+	}
+	default:
+		abort();
+	}
+	v >>= offset_bits;
+	if (type_bool->len_bits < 64)
+		v &= (1ULL << type_bool->len_bits) - 1;
+	tracer_print_type_header(separator, type_bool->attr, type_bool->nr_attr);
+	printf("%s", v ? "true" : "false");
+}
+
+static
 void tracer_print_type_integer(const char *separator,
 		const struct side_type_integer *type_integer,
 		const union side_integer_value *value,
@@ -859,9 +918,13 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		break;
 
 	case SIDE_TYPE_BOOL:
-		tracer_print_type_header(":", type_desc->u.side_bool.attr, type_desc->u.side_bool.nr_attr);
-		printf("%s", item->u.side_static.bool_value ? "true" : "false");
+	{
+		union side_integer_value value = {
+			.side_u8 = item->u.side_static.bool_value,
+		};
+		tracer_print_type_bool(":", &type_desc->u.side_bool, &value, 0);
 		break;
+	}
 
 	case SIDE_TYPE_U8:
 	case SIDE_TYPE_U16:
@@ -917,6 +980,9 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_GATHER_VLA:
 		(void) tracer_print_gather_vla(&type_desc->u.side_gather, item->u.side_static.side_vla_gather.ptr,
 				item->u.side_static.side_vla_gather.length_ptr);
+		break;
+	case SIDE_TYPE_GATHER_BOOL:
+		(void) tracer_print_gather_bool_type(&type_desc->u.side_gather, item->u.side_static.side_bool_gather_ptr);
 		break;
 	case SIDE_TYPE_GATHER_BYTE:
 		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, item->u.side_static.side_byte_gather_ptr);
@@ -1114,6 +1180,30 @@ uint64_t tracer_load_gather_integer_type(const struct side_type_gather *type_gat
 }
 
 static
+uint32_t tracer_print_gather_bool_type(const struct side_type_gather *type_gather, const void *_ptr)
+{
+	enum side_type_gather_access_mode access_mode = type_gather->u.side_bool.access_mode;
+	uint32_t bool_size_bytes = type_gather->u.side_bool.type.bool_size_bits >> 3;
+	const char *ptr = (const char *) _ptr;
+	union side_integer_value value;
+
+	switch (type_gather->u.side_bool.type.bool_size_bits) {
+	case 8:
+	case 16:
+	case 32:
+	case 64:
+		break;
+	default:
+		abort();
+	}
+	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_bool.offset);
+	memcpy(&value, ptr, bool_size_bytes);
+	tracer_print_type_bool(":", &type_gather->u.side_bool.type, &value,
+			type_gather->u.side_bool.offset_bits);
+	return tracer_gather_size(access_mode, bool_size_bytes);
+}
+
+static
 uint32_t tracer_print_gather_byte_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
 	enum side_type_gather_access_mode access_mode = type_gather->u.side_byte.access_mode;
@@ -1182,6 +1272,9 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 
 	printf("{ ");
 	switch (type_desc->type) {
+	case SIDE_TYPE_GATHER_BOOL:
+		len = tracer_print_gather_bool_type(&type_desc->u.side_gather, ptr);
+		break;
 	case SIDE_TYPE_GATHER_BYTE:
 		len = tracer_print_gather_byte_type(&type_desc->u.side_gather, ptr);
 		break;
@@ -1715,9 +1808,13 @@ void tracer_print_dynamic(const struct side_arg *item)
 		printf("<NULL TYPE>");
 		break;
 	case SIDE_TYPE_DYNAMIC_BOOL:
-		tracer_print_type_header("::", item->u.side_dynamic.side_bool.type.attr, item->u.side_dynamic.side_bool.type.nr_attr);
-		printf("%s", item->u.side_dynamic.side_bool.value ? "true" : "false");
+	{
+		union side_integer_value value = {
+			.side_u8 = item->u.side_dynamic.side_bool.value,
+		};
+		tracer_print_type_bool("::", &item->u.side_dynamic.side_bool.type, &value, 0);
 		break;
+	}
 	case SIDE_TYPE_DYNAMIC_U8:
 	case SIDE_TYPE_DYNAMIC_U16:
 	case SIDE_TYPE_DYNAMIC_U32:

@@ -142,6 +142,7 @@ enum side_type_label {
 	SIDE_TYPE_DYNAMIC,
 
 	/* Gather basic types */
+	SIDE_TYPE_GATHER_BOOL,
 	SIDE_TYPE_GATHER_UNSIGNED_INT,
 	SIDE_TYPE_GATHER_SIGNED_INT,
 	SIDE_TYPE_GATHER_BYTE,
@@ -304,6 +305,9 @@ struct side_type_null {
 struct side_type_bool {
 	const struct side_attr *attr;
 	uint32_t nr_attr;
+	uint16_t bool_size_bits;	/* bits */
+	uint16_t len_bits;		/* bits */
+	uint8_t byte_order;		/* enum side_type_label_byte_order */
 } SIDE_PACKED;
 
 struct side_type_byte {
@@ -395,6 +399,13 @@ struct side_type_enum_bitmap {
 	const struct side_type *elem_type;
 } SIDE_PACKED;
 
+struct side_type_gather_bool {
+	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	struct side_type_bool type;
+	uint16_t offset_bits;	/* bits */
+} SIDE_PACKED;
+
 struct side_type_gather_byte {
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
@@ -437,6 +448,7 @@ struct side_type_gather_vla {
 
 struct side_type_gather {
 	union {
+		struct side_type_gather_bool side_bool;
 		struct side_type_gather_byte side_byte;
 		struct side_type_gather_integer side_integer;
 		struct side_type_gather_float side_float;
@@ -514,6 +526,7 @@ struct side_arg_static {
 	} SIDE_PACKED side_vla_fixint;
 
 	/* Gather basic types */
+	void *side_bool_gather_ptr;
 	void *side_byte_gather_ptr;
 	void *side_integer_gather_ptr;
 	void *side_float_gather_ptr;
@@ -751,6 +764,9 @@ struct side_event_description {
 			.side_bool = { \
 				.attr = _attr, \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.bool_size_bits = 8, \
+				.len_bits = 1, \
+				.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 			}, \
 		}, \
 	}
@@ -1021,6 +1037,42 @@ struct side_event_description {
 #define side_field_gather_byte(_name, _offset, _access_mode, _attr) \
 	_side_field(_name, side_type_gather_byte(_offset, _access_mode, SIDE_PARAM(_attr)))
 
+#define _side_type_gather_bool(_byte_order, _offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	{ \
+		.type = SIDE_TYPE_GATHER_BOOL, \
+		.u = { \
+			.side_gather = { \
+				.u = { \
+					.side_bool = { \
+						.offset = _offset, \
+						.access_mode = _access_mode, \
+						.type = { \
+							.attr = _attr, \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.bool_size_bits = _bool_size_bits, \
+							.len_bits = _len_bits, \
+							.byte_order = _byte_order, \
+						}, \
+						.offset_bits = _offset_bits, \
+					}, \
+				}, \
+			}, \
+		}, \
+	}
+#define side_type_gather_bool(_offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_HOST, _offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr)
+#define side_type_gather_bool_le(_offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_LE, _offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr)
+#define side_type_gather_bool_be(_offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_BE, _offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr)
+
+#define side_field_gather_bool(_name, _offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_gather_bool(_offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_bool_le(_name, _offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_gather_bool_le(_offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_bool_be(_name, _offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
+	_side_field(_name, side_type_gather_bool_be(_offset, _bool_size_bits, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+
 #define _side_type_gather_integer(_type, _signedness, _byte_order, _offset, \
 		_integer_size_bits, _offset_bits, _len_bits, _access_mode, _attr) \
 	{ \
@@ -1247,6 +1299,7 @@ struct side_event_description {
 
 /* Gather field arguments */
 
+#define side_arg_gather_bool(_ptr)		{ .type = SIDE_TYPE_GATHER_BOOL, .u = { .side_static = { .side_bool_gather_ptr = (_ptr) } } }
 #define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = (_ptr) } } }
 #define side_arg_gather_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_UNSIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_signed_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_SIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
@@ -1279,6 +1332,9 @@ struct side_event_description {
 					.type = { \
 						.attr = _attr, \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						.bool_size_bits = sizeof(uint8_t) * CHAR_BIT, \
+						.len_bits = 1, \
+						.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 					}, \
 					.value = !!(_val), \
 				}, \

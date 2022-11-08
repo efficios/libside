@@ -2009,6 +2009,52 @@ void test_gather_byte(void)
 	}
 }
 
+#define ARRAYBOOLLEN 4
+static bool arraybool[ARRAYBOOLLEN] = { false, true, false, true };
+
+side_static_event(my_provider_event_gatherbool,
+	"myprovider", "myeventgatherbool", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_gather_bool("v1_true", 0, sizeof(bool) * CHAR_BIT,
+				0, sizeof(bool) * CHAR_BIT,
+				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_bool("v2_false", 0, sizeof(bool) * CHAR_BIT,
+				0, sizeof(bool) * CHAR_BIT,
+				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_bool("v3_true", 0, sizeof(uint16_t) * CHAR_BIT,
+				1, 1, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_bool("v4_false", 0, sizeof(uint16_t) * CHAR_BIT,
+				1, 1, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_array("arraybool",
+			side_elem(side_type_gather_bool(0, sizeof(bool) * CHAR_BIT,
+				0, sizeof(bool) * CHAR_BIT, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+			ARRAYBOOLLEN, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+		),
+	),
+	side_attr_list()
+);
+
+static
+void test_gather_bool(void)
+{
+	side_event_cond(my_provider_event_structgatherarray) {
+		bool v1 = true;
+		bool v2 = false;
+		uint16_t v3 = 1U << 1;
+		uint16_t v4 = 1U << 2;
+
+		side_event_call(my_provider_event_gatherbool,
+			side_arg_list(
+				side_arg_gather_bool(&v1),
+				side_arg_gather_bool(&v2),
+				side_arg_gather_bool(&v3),
+				side_arg_gather_bool(&v4),
+				side_arg_gather_array(arraybool),
+			)
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -2057,5 +2103,6 @@ int main()
 	test_gather_vla();
 	test_gather_vla_flex();
 	test_gather_byte();
+	test_gather_bool();
 	return 0;
 }
