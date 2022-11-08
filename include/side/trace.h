@@ -14,7 +14,57 @@
 #include <side/macros.h>
 #include <side/endian.h>
 
-/* SIDE stands for "Static Instrumentation Dynamically Enabled" */
+/*
+ * SIDE stands for "Static Instrumentation Dynamically Enabled"
+ *
+ * This is an instrumentation API for Linux user-space, which exposes an
+ * instrumentation type system and facilities allowing a kernel or
+ * user-space tracer to consume user-space instrumentation.
+ *
+ * This instrumentation API exposes 3 type systems:
+ *
+ * * Stack-copy type system: This is the core type system which can
+ *   represent all supported types and into which all other type systems
+ *   can be nested. This type system requires that every type is
+ *   statically or dynamically declared and then registered, thus giving
+ *   tracers a complete description of the events and their associated
+ *   fields before the associated instrumentation is invoked. The
+ *   application needs to copy each argument (side_arg_...()) onto the
+ *   stack when calling the instrumentation.
+ *
+ *   This is the most expressive of the 3 type systems, althrough not the
+ *   fastest due to the extra copy of the arguments.
+ *
+ * * Data-gathering type system: This type system requires every type to
+ *   be statically or dynamically declared and registered, but does not
+ *   require the application to copy its arguments onto the stack.
+ *   Instead, the type description contains all the required information
+ *   to fetch the data from the application memory. The only argument
+ *   required from the instrumentation is the base pointer from which
+ *   the data should be fetched.
+ *
+ *   This type system can be used as an event field, or nested within
+ *   the stack-copy type system. Nesting of gather-vla within
+ *   gather-array and gather-vla types is not allowed.
+ *
+ *   This type system is has the least overhead of the 3 type systems.
+ *
+ * * Dynamic type system: This type system receives both type
+ *   description and actual data onto the stack at runtime. It has more
+ *   overhead that the 2 other type systems, but does not require a
+ *   prior registration of event field description. This makes it useful
+ *   for seldom used types which are not performance critical, but for
+ *   which registering each individual events would needlessly grow the
+ *   number of events to declare and register.
+ *
+ *   Another use-case for this type system is for use by dynamically
+ *   typed language runtimes, where the field type is only known when
+ *   the instrumentation is called.
+ *
+ *   Those dynamic types can be either used as arguments to a variadic
+ *   field list, or as on-stack instrumentation argument for a static
+ *   type SIDE_TYPE_DYNAMIC place holder in the stack-copy type system.
+ */
 
 //TODO: as those structures will be ABI, we need to either consider them
 //fixed forever, or think of a scheme that would allow their binary
