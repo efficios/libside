@@ -990,7 +990,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_dynamic(item);
 		break;
 	default:
-		fprintf(stderr, "<UNKNOWN TYPE>");
+		fprintf(stderr, "<UNKNOWN TYPE>\n");
 		abort();
 	}
 	printf(" }");
@@ -1765,7 +1765,7 @@ void tracer_print_dynamic(const struct side_arg *item)
 		tracer_print_dynamic_vla_visitor(item);
 		break;
 	default:
-		fprintf(stderr, "<UNKNOWN TYPE>");
+		fprintf(stderr, "<UNKNOWN TYPE>\n");
 		abort();
 	}
 	printf(" }");
