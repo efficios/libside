@@ -1181,6 +1181,7 @@ struct side_event_description {
 			.side_gather = { \
 				.u = { \
 					.side_vla = { \
+						.length_type = _length_type_gather, \
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
@@ -1188,7 +1189,6 @@ struct side_event_description {
 							.attr = _attr, \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 						}, \
-						.length_type = _length_type_gather, \
 					}, \
 				}, \
 			}, \
@@ -1209,7 +1209,7 @@ struct side_event_description {
 /* Stack-copy field arguments */
 
 #define side_arg_null(_val)		{ .type = SIDE_TYPE_NULL }
-#define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_static = { .bool_value.side_bool8 = !!(_val) } } }
+#define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_static = { .bool_value = { .side_bool8 = !!(_val) } } } }
 #define side_arg_byte(_val)		{ .type = SIDE_TYPE_BYTE, .u = { .side_static = { .byte_value = (_val) } } }
 #define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING, .u = { .side_static = { .string_value = (uintptr_t) (_val) } } }
 

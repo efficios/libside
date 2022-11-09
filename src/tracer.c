@@ -1062,7 +1062,8 @@ uint32_t tracer_gather_size(enum side_type_gather_access_mode access_mode, uint3
 static
 uint64_t tracer_load_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
-	enum side_type_gather_access_mode access_mode = type_gather->u.side_integer.access_mode;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_integer.access_mode;
 	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
@@ -1086,7 +1087,8 @@ uint64_t tracer_load_gather_integer_type(const struct side_type_gather *type_gat
 static
 uint32_t tracer_print_gather_bool_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
-	enum side_type_gather_access_mode access_mode = type_gather->u.side_bool.access_mode;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_bool.access_mode;
 	uint32_t bool_size_bytes = type_gather->u.side_bool.type.bool_size;
 	const char *ptr = (const char *) _ptr;
 	union side_bool_value value;
@@ -1110,7 +1112,8 @@ uint32_t tracer_print_gather_bool_type(const struct side_type_gather *type_gathe
 static
 uint32_t tracer_print_gather_byte_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
-	enum side_type_gather_access_mode access_mode = type_gather->u.side_byte.access_mode;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_byte.access_mode;
 	const char *ptr = (const char *) _ptr;
 	uint8_t value;
 
@@ -1126,7 +1129,8 @@ static
 uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr,
 		enum tracer_display_base default_base)
 {
-	enum side_type_gather_access_mode access_mode = type_gather->u.side_integer.access_mode;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_integer.access_mode;
 	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
@@ -1150,7 +1154,8 @@ uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_ga
 static
 uint32_t tracer_print_gather_float_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
-	enum side_type_gather_access_mode access_mode = type_gather->u.side_float.access_mode;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_float.access_mode;
 	uint32_t float_size_bytes = type_gather->u.side_float.type.float_size;
 	const char *ptr = (const char *) _ptr;
 	union side_float_value value;
@@ -1221,7 +1226,8 @@ void tracer_print_gather_field(const struct side_event_field *field, const void 
 static
 uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, const void *_ptr)
 {
-	enum side_type_gather_access_mode access_mode = type_gather->u.side_struct.access_mode;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_struct.access_mode;
 	const char *ptr = (const char *) _ptr;
 	uint32_t i;
 
@@ -1240,7 +1246,8 @@ uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, 
 static
 uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, const void *_ptr)
 {
-	enum side_type_gather_access_mode access_mode = type_gather->u.side_array.access_mode;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_array.access_mode;
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	uint32_t i;
 
@@ -1269,7 +1276,8 @@ static
 uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, const void *_ptr,
 		const void *_length_ptr)
 {
-	enum side_type_gather_access_mode access_mode = type_gather->u.side_vla.access_mode;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_vla.access_mode;
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	const char *length_ptr = (const char *) _length_ptr;
 	uint32_t i, length;
