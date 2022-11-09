@@ -590,9 +590,6 @@ void tracer_print_type_integer(const char *separator,
 	if (len_bits + offset_bits > type_integer->integer_size * CHAR_BIT)
 		abort();
 	reverse_bo = type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
-	base = get_attr_display_base(type_integer->attr,
-			type_integer->nr_attr,
-			default_base);
 	switch (type_integer->integer_size) {
 	case 1:
 		if (type_integer->signedness)
@@ -658,6 +655,9 @@ void tracer_print_type_integer(const char *separator,
 	if (len_bits < 64)
 		v.v_unsigned &= (1ULL << len_bits) - 1;
 	tracer_print_type_header(separator, type_integer->attr, type_integer->nr_attr);
+	base = get_attr_display_base(type_integer->attr,
+			type_integer->nr_attr,
+			default_base);
 	switch (base) {
 	case TRACER_DISPLAY_BASE_2:
 		print_integer_binary(v.v_unsigned, len_bits);
