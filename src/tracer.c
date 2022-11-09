@@ -46,6 +46,8 @@ uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_ga
 static
 uint32_t tracer_print_gather_float_type(const struct side_type_gather *type_gather, const void *_ptr);
 static
+uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gather, const void *_ptr);
+static
 uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, const void *_ptr);
 static
 uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, const void *_ptr);
@@ -304,9 +306,8 @@ union int64_value tracer_load_integer_value(const struct side_type_integer *type
 }
 
 static
-void print_enum_labels(const struct side_type *type_desc, union int64_value v64)
+void print_enum_labels(const struct side_enum_mappings *mappings, union int64_value v64)
 {
-	const struct side_enum_mappings *mappings = type_desc->u.side_enum.mappings;
 	uint32_t i, print_count = 0;
 
 	printf(", labels: [ ");
@@ -344,7 +345,7 @@ void tracer_print_enum(const struct side_type *type_desc, const struct side_arg 
 	print_attributes("attr", ":", mappings->attr, mappings->nr_attr);
 	printf("%s", mappings->nr_attr ? ", " : "");
 	tracer_print_type(elem_type, item);
-	print_enum_labels(type_desc, v64);
+	print_enum_labels(mappings, v64);
 }
 
 static
@@ -714,6 +715,17 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		}
 		break;
 
+	case SIDE_TYPE_GATHER_ENUM:
+		switch (item->type) {
+		case SIDE_TYPE_GATHER_INTEGER:
+			break;
+		default:
+			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
+			abort();
+			break;
+		}
+		break;
+
 	case SIDE_TYPE_DYNAMIC:
 		switch (item->type) {
 		case SIDE_TYPE_DYNAMIC_NULL:
@@ -743,7 +755,8 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		break;
 	}
 
-	if (type_desc->type == SIDE_TYPE_ENUM || type_desc->type == SIDE_TYPE_ENUM_BITMAP)
+	if (type_desc->type == SIDE_TYPE_ENUM || type_desc->type == SIDE_TYPE_ENUM_BITMAP ||
+			type_desc->type == SIDE_TYPE_GATHER_ENUM)
 		type = (enum side_type_label) type_desc->type;
 	else
 		type = (enum side_type_label) item->type;
@@ -845,6 +858,11 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_GATHER_VLA:
 		(void) tracer_print_gather_vla(&type_desc->u.side_gather, item->u.side_static.side_vla_gather.ptr,
 				item->u.side_static.side_vla_gather.length_ptr);
+		break;
+
+		/* Gather enumeration types */
+	case SIDE_TYPE_GATHER_ENUM:
+		(void) tracer_print_gather_enum_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr);
 		break;
 
 	/* Dynamic basic types */
@@ -964,18 +982,19 @@ uint32_t tracer_gather_size(enum side_type_gather_access_mode access_mode, uint3
 }
 
 static
-union int64_value tracer_load_gather_integer_value(const struct side_type_gather *type_gather,
-		const void *_ptr, uint16_t offset_bits)
+union int64_value tracer_load_gather_integer_value(const struct side_type_gather_integer *side_integer,
+		const void *_ptr)
 {
 	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_integer.access_mode;
-	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size;
+		(enum side_type_gather_access_mode) side_integer->access_mode;
+	uint32_t integer_size_bytes = side_integer->type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
 
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_integer.offset);
+	ptr = tracer_gather_access(access_mode, ptr + side_integer->offset);
 	memcpy(&value, ptr, integer_size_bytes);
-	return tracer_load_integer_value(&type_gather->u.side_integer.type, &value, offset_bits, NULL);
+	return tracer_load_integer_value(&side_integer->type, &value,
+			side_integer->offset_bits, NULL);
 }
 
 static
@@ -1095,6 +1114,11 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 		len = tracer_print_gather_float_type(&type_desc->u.side_gather, ptr);
 		break;
 
+		/* Gather enum types */
+	case SIDE_TYPE_GATHER_ENUM:
+		len = tracer_print_gather_enum_type(&type_desc->u.side_gather, ptr);
+		break;
+
 		/* Gather compound types */
 	case SIDE_TYPE_GATHER_STRUCT:
 		len = tracer_print_gather_struct(&type_desc->u.side_gather, ptr);
@@ -1111,6 +1135,38 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 	}
 	printf(" }");
 	return len;
+}
+
+static
+uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gather, const void *_ptr)
+{
+	const struct side_enum_mappings *mappings = type_gather->u.side_enum.mappings;
+	const struct side_type *enum_elem_type = type_gather->u.side_enum.elem_type;
+	const struct side_type_gather_integer *side_integer = &enum_elem_type->u.side_gather.u.side_integer;
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) side_integer->access_mode;
+	uint32_t integer_size_bytes = side_integer->type.integer_size;
+	const char *ptr = (const char *) _ptr;
+	union side_integer_value value;
+	union int64_value v64;
+
+	switch (integer_size_bytes) {
+	case 1:
+	case 2:
+	case 4:
+	case 8:
+		break;
+	default:
+		abort();
+	}
+	ptr = tracer_gather_access(access_mode, ptr + side_integer->offset);
+	memcpy(&value, ptr, integer_size_bytes);
+	v64 = tracer_load_gather_integer_value(side_integer, &value);
+	print_attributes("attr", ":", mappings->attr, mappings->nr_attr);
+	printf("%s", mappings->nr_attr ? ", " : "");
+	tracer_print_gather_type(enum_elem_type, ptr);
+	print_enum_labels(mappings, v64);
+	return tracer_gather_size(access_mode, integer_size_bytes);
 }
 
 static
@@ -1188,8 +1244,8 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 		fprintf(stderr, "<gather VLA expects integer gather length type>\n");
 		abort();
 	}
-	v64 = tracer_load_gather_integer_value(&type_gather->u.side_vla.length_type->u.side_gather,
-					length_ptr, 0);
+	v64 = tracer_load_gather_integer_value(&type_gather->u.side_vla.length_type->u.side_gather.u.side_integer,
+					length_ptr);
 	length = (uint32_t) v64.u;
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
 	orig_ptr = ptr;

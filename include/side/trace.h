@@ -128,6 +128,9 @@ enum side_type_label {
 	SIDE_TYPE_GATHER_ARRAY,
 	SIDE_TYPE_GATHER_VLA,
 
+	/* Gather enumeration types */
+	SIDE_TYPE_GATHER_ENUM,
+
 	/* Dynamic basic types */
 	SIDE_TYPE_DYNAMIC_NULL,
 	SIDE_TYPE_DYNAMIC_BOOL,
@@ -395,6 +398,11 @@ struct side_type_gather_float {
 	struct side_type_float type;
 } SIDE_PACKED;
 
+struct side_type_gather_enum {
+	const struct side_enum_mappings *mappings;
+	const struct side_type *elem_type;
+} SIDE_PACKED;
+
 struct side_type_gather_struct {
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
@@ -422,6 +430,7 @@ struct side_type_gather {
 		struct side_type_gather_byte side_byte;
 		struct side_type_gather_integer side_integer;
 		struct side_type_gather_float side_float;
+		struct side_type_gather_enum side_enum;
 		struct side_type_gather_array side_array;
 		struct side_type_gather_vla side_vla;
 		struct side_type_gather_struct side_struct;
@@ -1131,6 +1140,19 @@ struct side_event_description {
 	_side_field(_name, side_type_gather_float_le(_offset, _float_size, _access_mode, _attr))
 #define side_field_gather_float_be(_name, _offset, _float_size, _access_mode, _attr) \
 	_side_field(_name, side_type_gather_float_be(_offset, _float_size, _access_mode, _attr))
+
+#define side_type_gather_enum(_mappings, _elem_type) \
+	{ \
+		.type = SIDE_TYPE_GATHER_ENUM, \
+		.u = { \
+			.side_enum = { \
+				.mappings = _mappings, \
+				.elem_type = _elem_type, \
+			}, \
+		}, \
+	}
+#define side_field_gather_enum(_name, _mappings, _elem_type) \
+	_side_field(_name, side_type_gather_enum(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define side_type_gather_struct(_struct_gather, _offset, _size, _access_mode) \
 	{ \

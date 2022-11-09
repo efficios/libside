@@ -2038,6 +2038,86 @@ void test_gather_pointer(void)
 		);
 	}
 }
+
+static side_define_enum(myenumgather,
+	side_enum_mapping_list(
+		side_enum_mapping_range("one-ten", 1, 10),
+		side_enum_mapping_range("100-200", 100, 200),
+		side_enum_mapping_value("200", 200),
+		side_enum_mapping_value("300", 300),
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_enum_gather, "myprovider", "myeventenumgather", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_gather_enum("5", &myenumgather,
+			side_elem(
+				side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0,
+					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+			)
+		),
+		side_field_gather_enum("400", &myenumgather,
+			side_elem(
+				side_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0,
+					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+			)
+		),
+		side_field_gather_enum("200", &myenumgather,
+			side_elem(
+				side_type_gather_unsigned_integer(0, sizeof(uint8_t), 0, 0,
+					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+			)
+		),
+		side_field_gather_enum("-100", &myenumgather,
+			side_elem(
+				side_type_gather_signed_integer(0, sizeof(int8_t), 0, 0,
+					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+			)
+		),
+		side_field_gather_enum("6_be", &myenumgather,
+			side_elem(
+				side_type_gather_unsigned_integer_be(0, sizeof(uint32_t), 0, 0,
+					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+			)
+		),
+		side_field_gather_enum("6_le", &myenumgather,
+			side_elem(
+				side_type_gather_unsigned_integer_le(0, sizeof(uint32_t), 0, 0,
+					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+			)
+		),
+	),
+	side_attr_list()
+);
+
+static
+void test_gather_enum(void)
+{
+	uint32_t v1 = 5;
+	uint64_t v2 = 400;
+	uint8_t v3 = 200;
+	int8_t v4 = -100;
+#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
+	uint32_t v5 = side_bswap_32(6);
+	uint32_t v6 = 6;
+#else
+	uint32_t v5 = 6;
+	uint32_t v6 = side_bswap_32(6);
+#endif
+
+	side_event(my_provider_event_enum_gather,
+		side_arg_list(
+			side_arg_gather_integer(&v1),
+			side_arg_gather_integer(&v2),
+			side_arg_gather_integer(&v3),
+			side_arg_gather_integer(&v4),
+			side_arg_gather_integer(&v5),
+			side_arg_gather_integer(&v6),
+		)
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -2086,5 +2166,6 @@ int main()
 	test_gather_byte();
 	test_gather_bool();
 	test_gather_pointer();
+	test_gather_enum();
 	return 0;
 }
