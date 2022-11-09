@@ -1222,12 +1222,6 @@ struct side_event_description {
 #define side_arg_s32(_val)		{ .type = SIDE_TYPE_S32, .u = { .side_static = { .integer_value = { .side_s32 = (_val) } } } }
 #define side_arg_s64(_val)		{ .type = SIDE_TYPE_S64, .u = { .side_static = { .integer_value = { .side_s64 = (_val) } } } }
 #define side_arg_pointer(_val)		{ .type = SIDE_TYPE_POINTER, .u = { .side_static = { .integer_value = { .side_uptr = (uintptr_t) (_val) } } } }
-#define side_arg_enum_bitmap8(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP8, .u = { .side_static = { .integer_value = { .side_u8 = (_val) } } } }
-#define side_arg_enum_bitmap16(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP16, .u = { .side_static = { .integer_value = { .side_u16 = (_val) } } } }
-#define side_arg_enum_bitmap32(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP32, .u = { .side_static = { .integer_value = { .side_u32 = (_val) } } } }
-#define side_arg_enum_bitmap64(_val)	{ .type = SIDE_TYPE_ENUM_BITMAP64, .u = { .side_static = { .integer_value = { .side_u64 = (_val) } } } }
-#define side_arg_enum_bitmap_array(_side_type)	{ .type = SIDE_TYPE_ENUM_BITMAP_ARRAY, .u = { .side_static = { .side_array = (_side_type) } } }
-#define side_arg_enum_bitmap_vla(_side_type)	{ .type = SIDE_TYPE_ENUM_BITMAP_VLA, .u = { .side_static = { .side_vla = (_side_type) } } }
 #define side_arg_float_binary16(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .side_static = { .float_value = { .side_float_binary16 = (_val) } } } }
 #define side_arg_float_binary32(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY32, .u = { .side_static = { .float_value = { .side_float_binary32 = (_val) } } } }
 #define side_arg_float_binary64(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .side_static = { .float_value = { .side_float_binary64 = (_val) } } } }
