@@ -248,91 +248,102 @@ void print_attributes(const char *prefix_str, const char *separator,
 }
 
 static
-void print_enum(const struct side_type *type_desc, const struct side_arg *item)
+union int64_value tracer_load_integer_value(const struct side_type_integer *type_integer,
+		const union side_integer_value *value,
+		uint16_t offset_bits, uint16_t *_len_bits)
+{
+	union int64_value v64;
+	uint16_t len_bits;
+	bool reverse_bo;
+
+	if (!type_integer->len_bits)
+		len_bits = type_integer->integer_size * CHAR_BIT;
+	else
+		len_bits = type_integer->len_bits;
+	if (len_bits + offset_bits > type_integer->integer_size * CHAR_BIT)
+		abort();
+	reverse_bo = type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
+	switch (type_integer->integer_size) {
+	case 1:
+		if (type_integer->signedness)
+			v64.s = value->side_s8;
+		else
+			v64.u = value->side_u8;
+		break;
+	case 2:
+		if (type_integer->signedness) {
+			int16_t side_s16;
+
+			side_s16 = value->side_s16;
+			if (reverse_bo)
+				side_s16 = side_bswap_16(side_s16);
+			v64.s = side_s16;
+		} else {
+			uint16_t side_u16;
+
+			side_u16 = value->side_u16;
+			if (reverse_bo)
+				side_u16 = side_bswap_16(side_u16);
+			v64.u = side_u16;
+		}
+		break;
+	case 4:
+		if (type_integer->signedness) {
+			int32_t side_s32;
+
+			side_s32 = value->side_s32;
+			if (reverse_bo)
+				side_s32 = side_bswap_32(side_s32);
+			v64.s = side_s32;
+		} else {
+			uint32_t side_u32;
+
+			side_u32 = value->side_u32;
+			if (reverse_bo)
+				side_u32 = side_bswap_32(side_u32);
+			v64.u = side_u32;
+		}
+		break;
+	case 8:
+		if (type_integer->signedness) {
+			int64_t side_s64;
+
+			side_s64 = value->side_s64;
+			if (reverse_bo)
+				side_s64 = side_bswap_64(side_s64);
+			v64.s = side_s64;
+		} else {
+			uint64_t side_u64;
+
+			side_u64 = value->side_u64;
+			if (reverse_bo)
+				side_u64 = side_bswap_64(side_u64);
+			v64.u = side_u64;
+		}
+		break;
+	default:
+		abort();
+	}
+	v64.u >>= offset_bits;
+	if (len_bits < 64) {
+		v64.u &= (1ULL << len_bits) - 1;
+		if (type_integer->signedness) {
+			/* Sign-extend. */
+			if (v64.u & (1ULL << (len_bits - 1)))
+				v64.u |= ~((1ULL << len_bits) - 1);
+		}
+	}
+	if (_len_bits)
+		*_len_bits = len_bits;
+	return v64;
+}
+
+static
+void print_enum_labels(const struct side_type *type_desc, union int64_value v64)
 {
 	const struct side_enum_mappings *mappings = type_desc->u.side_enum.mappings;
-	const struct side_type *elem_type = type_desc->u.side_enum.elem_type;
 	uint32_t i, print_count = 0;
-	int64_t value;
 
-	if (elem_type->type != item->type) {
-		fprintf(stderr, "ERROR: Unexpected enum element type\n");
-		abort();
-	}
-	switch (item->type) {
-	case SIDE_TYPE_U8:
-		value = (int64_t) item->u.side_static.integer_value.side_u8;
-		break;
-	case SIDE_TYPE_U16:
-	{
-		uint16_t v;
-
-		v = item->u.side_static.integer_value.side_u16;
-		if (type_to_host_reverse_bo(elem_type))
-			v = side_bswap_16(v);
-		value = (int64_t) v;
-		break;
-	}
-	case SIDE_TYPE_U32:
-	{
-		uint32_t v;
-
-		v = item->u.side_static.integer_value.side_u32;
-		if (type_to_host_reverse_bo(elem_type))
-			v = side_bswap_32(v);
-		value = (int64_t) v;
-		break;
-	}
-	case SIDE_TYPE_U64:
-	{
-		uint64_t v;
-
-		v = item->u.side_static.integer_value.side_u64;
-		if (type_to_host_reverse_bo(elem_type))
-			v = side_bswap_64(v);
-		value = (int64_t) v;
-		break;
-	}
-	case SIDE_TYPE_S8:
-		value = (int64_t) item->u.side_static.integer_value.side_s8;
-		break;
-	case SIDE_TYPE_S16:
-	{
-		int16_t v;
-
-		v = item->u.side_static.integer_value.side_s16;
-		if (type_to_host_reverse_bo(elem_type))
-			v = side_bswap_16(v);
-		value = (int64_t) v;
-		break;
-	}
-	case SIDE_TYPE_S32:
-	{
-		int32_t v;
-
-		v = item->u.side_static.integer_value.side_s32;
-		if (type_to_host_reverse_bo(elem_type))
-			v = side_bswap_32(v);
-		value = (int64_t) v;
-		break;
-	}
-	case SIDE_TYPE_S64:
-	{
-		int64_t v;
-
-		v = item->u.side_static.integer_value.side_s64;
-		if (type_to_host_reverse_bo(elem_type))
-			v = side_bswap_64(v);
-		value = v;
-		break;
-	}
-	default:
-		fprintf(stderr, "ERROR: Unexpected enum element type\n");
-		abort();
-	}
-	print_attributes("attr", ":", mappings->attr, mappings->nr_attr);
-	printf("%s", mappings->nr_attr ? ", " : "");
-	tracer_print_type(type_desc->u.side_enum.elem_type, item);
 	printf(", labels: [ ");
 	for (i = 0; i < mappings->nr_mappings; i++) {
 		const struct side_enum_mapping *mapping = &mappings->mappings[i];
@@ -342,7 +353,7 @@ void print_enum(const struct side_type *type_desc, const struct side_arg *item)
 				mapping->range_begin, mapping->range_end);
 			abort();
 		}
-		if (value >= mapping->range_begin && value <= mapping->range_end) {
+		if (v64.s >= mapping->range_begin && v64.s <= mapping->range_end) {
 			printf("%s", print_count++ ? ", " : "");
 			printf("\"%s\"", mapping->label);
 		}
@@ -350,6 +361,25 @@ void print_enum(const struct side_type *type_desc, const struct side_arg *item)
 	if (!print_count)
 		printf("<NO LABEL>");
 	printf(" ]");
+}
+
+static
+void tracer_print_enum(const struct side_type *type_desc, const struct side_arg *item)
+{
+	const struct side_enum_mappings *mappings = type_desc->u.side_enum.mappings;
+	const struct side_type *elem_type = type_desc->u.side_enum.elem_type;
+	union int64_value v64;
+
+	if (elem_type->type != item->type) {
+		fprintf(stderr, "ERROR: Unexpected enum element type\n");
+		abort();
+	}
+	v64 = tracer_load_integer_value(&elem_type->u.side_integer,
+			&item->u.side_static.integer_value, 0, NULL);
+	print_attributes("attr", ":", mappings->attr, mappings->nr_attr);
+	printf("%s", mappings->nr_attr ? ", " : "");
+	tracer_print_type(elem_type, item);
+	print_enum_labels(type_desc, v64);
 }
 
 static
@@ -574,91 +604,6 @@ void tracer_print_type_bool(const char *separator,
 }
 
 static
-union int64_value tracer_load_integer_value(const struct side_type_integer *type_integer,
-		const union side_integer_value *value,
-		uint16_t offset_bits, uint16_t *_len_bits)
-{
-	union int64_value v64;
-	uint16_t len_bits;
-	bool reverse_bo;
-
-	if (!type_integer->len_bits)
-		len_bits = type_integer->integer_size * CHAR_BIT;
-	else
-		len_bits = type_integer->len_bits;
-	if (len_bits + offset_bits > type_integer->integer_size * CHAR_BIT)
-		abort();
-	reverse_bo = type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
-	switch (type_integer->integer_size) {
-	case 1:
-		if (type_integer->signedness)
-			v64.s = value->side_s8;
-		else
-			v64.u = value->side_u8;
-		break;
-	case 2:
-		if (type_integer->signedness) {
-			int16_t side_s16;
-
-			side_s16 = value->side_s16;
-			if (reverse_bo)
-				side_s16 = side_bswap_16(side_s16);
-			v64.s = side_s16;
-		} else {
-			uint16_t side_u16;
-
-			side_u16 = value->side_u16;
-			if (reverse_bo)
-				side_u16 = side_bswap_16(side_u16);
-			v64.u = side_u16;
-		}
-		break;
-	case 4:
-		if (type_integer->signedness) {
-			int32_t side_s32;
-
-			side_s32 = value->side_s32;
-			if (reverse_bo)
-				side_s32 = side_bswap_32(side_s32);
-			v64.s = side_s32;
-		} else {
-			uint32_t side_u32;
-
-			side_u32 = value->side_u32;
-			if (reverse_bo)
-				side_u32 = side_bswap_32(side_u32);
-			v64.u = side_u32;
-		}
-		break;
-	case 8:
-		if (type_integer->signedness) {
-			int64_t side_s64;
-
-			side_s64 = value->side_s64;
-			if (reverse_bo)
-				side_s64 = side_bswap_64(side_s64);
-			v64.s = side_s64;
-		} else {
-			uint64_t side_u64;
-
-			side_u64 = value->side_u64;
-			if (reverse_bo)
-				side_u64 = side_bswap_64(side_u64);
-			v64.u = side_u64;
-		}
-		break;
-	default:
-		abort();
-	}
-	v64.u >>= offset_bits;
-	if (len_bits < 64)
-		v64.u &= (1ULL << len_bits) - 1;
-	if (_len_bits)
-		*_len_bits = len_bits;
-	return v64;
-}
-
-static
 void tracer_print_type_integer(const char *separator,
 		const struct side_type_integer *type_integer,
 		const union side_integer_value *value,
@@ -677,21 +622,21 @@ void tracer_print_type_integer(const char *separator,
 		print_integer_binary(v64.u, len_bits);
 		break;
 	case TRACER_DISPLAY_BASE_8:
+		/* Clear sign bits beyond len_bits */
+		if (len_bits < 64)
+			v64.u &= (1ULL << len_bits) - 1;
 		printf("0%" PRIo64, v64.u);
 		break;
 	case TRACER_DISPLAY_BASE_10:
-		if (type_integer->signedness) {
-			/* Sign-extend. */
-			if (len_bits < 64) {
-				if (v64.u  & (1ULL << (len_bits - 1)))
-					v64.u |= ~((1ULL << len_bits) - 1);
-			}
+		if (type_integer->signedness)
 			printf("%" PRId64, v64.s);
-		} else {
+		else
 			printf("%" PRIu64, v64.u);
-		}
 		break;
 	case TRACER_DISPLAY_BASE_16:
+		/* Clear sign bits beyond len_bits */
+		if (len_bits < 64)
+			v64.u &= (1ULL << len_bits) - 1;
 		printf("0x%" PRIx64, v64.u);
 		break;
 	default:
@@ -928,7 +873,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 
 		/* Stack-copy enumeration types */
 	case SIDE_TYPE_ENUM:
-		print_enum(type_desc, item);
+		tracer_print_enum(type_desc, item);
 		break;
 	case SIDE_TYPE_ENUM_BITMAP:
 		print_enum_bitmap(type_desc, item);
