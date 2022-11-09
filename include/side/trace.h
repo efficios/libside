@@ -1605,6 +1605,10 @@ struct side_event_description {
 	extern uintptr_t side_event_enable_##_identifier; \
 	extern struct side_event_description _identifier
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const struct side_callback side_empty_callback;
 
 void side_call(const struct side_event_description *desc,
@@ -1708,5 +1712,9 @@ side_event_description_ptr_exit(void)
 	side_events_unregister(side_events_handle);
 	side_events_handle = NULL;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SIDE_TRACE_H */

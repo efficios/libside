@@ -67,6 +67,10 @@
 #error "Please add support for your OS."
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __HAVE_FLOAT128
 static inline
 void side_bswap_128p(char *p)
@@ -75,6 +79,10 @@ void side_bswap_128p(char *p)
 
 	for (i = 0; i < 8; i++)
 		p[i] = p[15 - i];
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 
