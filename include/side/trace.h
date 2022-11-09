@@ -566,7 +566,7 @@ struct side_arg_dynamic {
 } SIDE_PACKED;
 
 struct side_arg {
-	enum side_type_label type;
+	uint32_t type;	/* enum side_type_label */
 	union {
 		struct side_arg_static side_static;
 		struct side_arg_dynamic side_dynamic;
