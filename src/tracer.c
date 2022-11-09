@@ -123,41 +123,6 @@ enum tracer_display_base get_attr_display_base(const struct side_attr *_attr, ui
 }
 
 static
-bool type_to_host_reverse_bo(const struct side_type *type_desc)
-{
-	switch (type_desc->type) {
-	case SIDE_TYPE_U8:
-	case SIDE_TYPE_S8:
-	case SIDE_TYPE_BYTE:
-		return false;
-        case SIDE_TYPE_U16:
-        case SIDE_TYPE_U32:
-        case SIDE_TYPE_U64:
-        case SIDE_TYPE_S16:
-        case SIDE_TYPE_S32:
-        case SIDE_TYPE_S64:
-        case SIDE_TYPE_POINTER:
-		if (type_desc->u.side_integer.byte_order != SIDE_TYPE_BYTE_ORDER_HOST)
-			return true;
-		else
-			return false;
-		break;
-        case SIDE_TYPE_FLOAT_BINARY16:
-        case SIDE_TYPE_FLOAT_BINARY32:
-        case SIDE_TYPE_FLOAT_BINARY64:
-        case SIDE_TYPE_FLOAT_BINARY128:
-		if (type_desc->u.side_float.byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST)
-			return true;
-		else
-			return false;
-		break;
-	default:
-		fprintf(stderr, "Unexpected type\n");
-		abort();
-	}
-}
-
-static
 void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 {
 	printf("{ key%s \"%s\", value%s ", separator, attr->key, separator);
@@ -383,7 +348,7 @@ void tracer_print_enum(const struct side_type *type_desc, const struct side_arg 
 }
 
 static
-uint32_t enum_elem_type_to_stride(const struct side_type *elem_type)
+uint32_t elem_type_to_stride(const struct side_type *elem_type)
 {
 	uint32_t stride_bit;
 
@@ -409,35 +374,31 @@ uint32_t enum_elem_type_to_stride(const struct side_type *elem_type)
 }
 
 static
-void print_enum_bitmap(const struct side_type *type_desc,
+void tracer_print_enum_bitmap(const struct side_type *type_desc,
 		const struct side_arg *item)
 {
-	const struct side_type *elem_type = type_desc->u.side_enum_bitmap.elem_type;
 	const struct side_enum_bitmap_mappings *side_enum_mappings = type_desc->u.side_enum_bitmap.mappings;
+	const struct side_type *enum_elem_type = type_desc->u.side_enum_bitmap.elem_type, *elem_type;
 	uint32_t i, print_count = 0, stride_bit, nr_items;
-	bool reverse_byte_order = false;
 	const struct side_arg *array_item;
 
-	switch (elem_type->type) {
+	switch (enum_elem_type->type) {
 	case SIDE_TYPE_U8:		/* Fall-through */
 	case SIDE_TYPE_BYTE:		/* Fall-through */
 	case SIDE_TYPE_U16:		/* Fall-through */
 	case SIDE_TYPE_U32:		/* Fall-through */
 	case SIDE_TYPE_U64:
-		stride_bit = enum_elem_type_to_stride(elem_type);
-		reverse_byte_order = type_to_host_reverse_bo(elem_type);
+		elem_type = enum_elem_type;
 		array_item = item;
 		nr_items = 1;
 		break;
 	case SIDE_TYPE_ARRAY:
-		stride_bit = enum_elem_type_to_stride(elem_type->u.side_array.elem_type);
-		reverse_byte_order = type_to_host_reverse_bo(elem_type->u.side_array.elem_type);
+		elem_type = enum_elem_type->u.side_array.elem_type;
 		array_item = item->u.side_static.side_array->sav;
 		nr_items = type_desc->u.side_array.length;
 		break;
 	case SIDE_TYPE_VLA:
-		stride_bit = enum_elem_type_to_stride(elem_type->u.side_vla.elem_type);
-		reverse_byte_order = type_to_host_reverse_bo(elem_type->u.side_vla.elem_type);
+		elem_type = enum_elem_type->u.side_vla.elem_type;
 		array_item = item->u.side_static.side_vla->sav;
 		nr_items = item->u.side_static.side_vla->len;
 		break;
@@ -445,6 +406,7 @@ void print_enum_bitmap(const struct side_type *type_desc,
 		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
 	}
+	stride_bit = elem_type_to_stride(elem_type);
 
 	print_attributes("attr", ":", side_enum_mappings->attr, side_enum_mappings->nr_attr);
 	printf("%s", side_enum_mappings->nr_attr ? ", " : "");
@@ -462,51 +424,22 @@ void print_enum_bitmap(const struct side_type *type_desc,
 		for (bit = mapping->range_begin; bit <= mapping->range_end; bit++) {
 			if (bit > (nr_items * stride_bit) - 1)
 				break;
-			switch (stride_bit) {
-			case 8:
-			{
-				uint8_t v = array_item[bit / 8].u.side_static.integer_value.side_u8;
+			if (elem_type->type == SIDE_TYPE_BYTE) {
+				uint8_t v = array_item[bit / 8].u.side_static.byte_value;
 				if (v & (1ULL << (bit % 8))) {
 					match = true;
 					goto match;
 				}
-				break;
-			}
-			case 16:
-			{
-				uint16_t v = array_item[bit / 16].u.side_static.integer_value.side_u16;
-				if (reverse_byte_order)
-					v = side_bswap_16(v);
-				if (v & (1ULL << (bit % 16))) {
+			} else {
+				union int64_value v64;
+
+				v64 = tracer_load_integer_value(&elem_type->u.side_integer,
+						&array_item[bit / stride_bit].u.side_static.integer_value,
+						0, NULL);
+				if (v64.u & (1ULL << (bit % stride_bit))) {
 					match = true;
 					goto match;
 				}
-				break;
-			}
-			case 32:
-			{
-				uint32_t v = array_item[bit / 32].u.side_static.integer_value.side_u32;
-				if (reverse_byte_order)
-					v = side_bswap_32(v);
-				if (v & (1ULL << (bit % 32))) {
-					match = true;
-					goto match;
-				}
-				break;
-			}
-			case 64:
-			{
-				uint64_t v = array_item[bit / 64].u.side_static.integer_value.side_u64;
-				if (reverse_byte_order)
-					v = side_bswap_64(v);
-				if (v & (1ULL << (bit % 64))) {
-					match = true;
-					goto match;
-				}
-				break;
-			}
-			default:
-				abort();
 			}
 		}
 match:
@@ -876,7 +809,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_enum(type_desc, item);
 		break;
 	case SIDE_TYPE_ENUM_BITMAP:
-		print_enum_bitmap(type_desc, item);
+		tracer_print_enum_bitmap(type_desc, item);
 		break;
 
 		/* Gather basic types */
