@@ -854,6 +854,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 
 	printf("{ ");
 	switch (type) {
+		/* Stack-copy basic types */
 	case SIDE_TYPE_NULL:
 		tracer_print_type_header(":", type_desc->u.side_null.attr, type_desc->u.side_null.nr_attr);
 		printf("<NULL TYPE>");
@@ -875,22 +876,14 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 				TRACER_DISPLAY_BASE_10);
 		break;
 
-	case SIDE_TYPE_POINTER:
-		tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.side_static.integer_value, 0,
-				TRACER_DISPLAY_BASE_16);
-		break;
-
 	case SIDE_TYPE_BYTE:
 		tracer_print_type_header(":", type_desc->u.side_byte.attr, type_desc->u.side_byte.nr_attr);
 		printf("0x%" PRIx8, item->u.side_static.byte_value);
 		break;
 
-	case SIDE_TYPE_ENUM:
-		print_enum(type_desc, item);
-		break;
-
-	case SIDE_TYPE_ENUM_BITMAP:
-		print_enum_bitmap(type_desc, item);
+	case SIDE_TYPE_POINTER:
+		tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.side_static.integer_value, 0,
+				TRACER_DISPLAY_BASE_16);
 		break;
 
 	case SIDE_TYPE_FLOAT_BINARY16:
@@ -904,35 +897,10 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_type_header(":", type_desc->u.side_string.attr, type_desc->u.side_string.nr_attr);
 		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_static.string_value);
 		break;
+
+		/* Stack-copy compound types */
 	case SIDE_TYPE_STRUCT:
 		tracer_print_struct(type_desc, item->u.side_static.side_struct);
-		break;
-	case SIDE_TYPE_GATHER_STRUCT:
-		(void) tracer_print_gather_struct(&type_desc->u.side_gather, item->u.side_static.side_struct_gather_ptr);
-		break;
-	case SIDE_TYPE_GATHER_ARRAY:
-		(void) tracer_print_gather_array(&type_desc->u.side_gather, item->u.side_static.side_array_gather_ptr);
-		break;
-	case SIDE_TYPE_GATHER_VLA:
-		(void) tracer_print_gather_vla(&type_desc->u.side_gather, item->u.side_static.side_vla_gather.ptr,
-				item->u.side_static.side_vla_gather.length_ptr);
-		break;
-	case SIDE_TYPE_GATHER_BOOL:
-		(void) tracer_print_gather_bool_type(&type_desc->u.side_gather, item->u.side_static.side_bool_gather_ptr);
-		break;
-	case SIDE_TYPE_GATHER_BYTE:
-		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, item->u.side_static.side_byte_gather_ptr);
-		break;
-	case SIDE_TYPE_GATHER_POINTER:
-		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr,
-					TRACER_DISPLAY_BASE_16);
-		break;
-	case SIDE_TYPE_GATHER_INTEGER:
-		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr,
-					TRACER_DISPLAY_BASE_10);
-		break;
-	case SIDE_TYPE_GATHER_FLOAT:
-		(void) tracer_print_gather_float_type(&type_desc->u.side_gather, item->u.side_static.side_float_gather_ptr);
 		break;
 	case SIDE_TYPE_ARRAY:
 		tracer_print_array(type_desc, item->u.side_static.side_array);
@@ -944,7 +912,46 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_vla_visitor(type_desc, item->u.side_static.side_vla_app_visitor_ctx);
 		break;
 
-	/* Dynamic types */
+		/* Stack-copy enumeration types */
+	case SIDE_TYPE_ENUM:
+		print_enum(type_desc, item);
+		break;
+	case SIDE_TYPE_ENUM_BITMAP:
+		print_enum_bitmap(type_desc, item);
+		break;
+
+		/* Gather basic types */
+	case SIDE_TYPE_GATHER_BOOL:
+		(void) tracer_print_gather_bool_type(&type_desc->u.side_gather, item->u.side_static.side_bool_gather_ptr);
+		break;
+	case SIDE_TYPE_GATHER_INTEGER:
+		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr,
+					TRACER_DISPLAY_BASE_10);
+		break;
+	case SIDE_TYPE_GATHER_BYTE:
+		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, item->u.side_static.side_byte_gather_ptr);
+		break;
+	case SIDE_TYPE_GATHER_POINTER:
+		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr,
+					TRACER_DISPLAY_BASE_16);
+		break;
+	case SIDE_TYPE_GATHER_FLOAT:
+		(void) tracer_print_gather_float_type(&type_desc->u.side_gather, item->u.side_static.side_float_gather_ptr);
+		break;
+
+		/* Gather compound type */
+	case SIDE_TYPE_GATHER_STRUCT:
+		(void) tracer_print_gather_struct(&type_desc->u.side_gather, item->u.side_static.side_struct_gather_ptr);
+		break;
+	case SIDE_TYPE_GATHER_ARRAY:
+		(void) tracer_print_gather_array(&type_desc->u.side_gather, item->u.side_static.side_array_gather_ptr);
+		break;
+	case SIDE_TYPE_GATHER_VLA:
+		(void) tracer_print_gather_vla(&type_desc->u.side_gather, item->u.side_static.side_vla_gather.ptr,
+				item->u.side_static.side_vla_gather.length_ptr);
+		break;
+
+	/* Dynamic basic types */
 	case SIDE_TYPE_DYNAMIC_NULL:
 	case SIDE_TYPE_DYNAMIC_BOOL:
 	case SIDE_TYPE_DYNAMIC_INTEGER:
@@ -952,6 +959,8 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_DYNAMIC_POINTER:
 	case SIDE_TYPE_DYNAMIC_FLOAT:
 	case SIDE_TYPE_DYNAMIC_STRING:
+
+	/* Dynamic compound types */
 	case SIDE_TYPE_DYNAMIC_STRUCT:
 	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
 	case SIDE_TYPE_DYNAMIC_VLA:
@@ -1181,8 +1190,13 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 
 	printf("{ ");
 	switch (type_desc->type) {
+		/* Gather basic types */
 	case SIDE_TYPE_GATHER_BOOL:
 		len = tracer_print_gather_bool_type(&type_desc->u.side_gather, ptr);
+		break;
+	case SIDE_TYPE_GATHER_INTEGER:
+		len = tracer_print_gather_integer_type(&type_desc->u.side_gather, ptr,
+				TRACER_DISPLAY_BASE_10);
 		break;
 	case SIDE_TYPE_GATHER_BYTE:
 		len = tracer_print_gather_byte_type(&type_desc->u.side_gather, ptr);
@@ -1191,13 +1205,11 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 		len = tracer_print_gather_integer_type(&type_desc->u.side_gather, ptr,
 				TRACER_DISPLAY_BASE_16);
 		break;
-	case SIDE_TYPE_GATHER_INTEGER:
-		len = tracer_print_gather_integer_type(&type_desc->u.side_gather, ptr,
-				TRACER_DISPLAY_BASE_10);
-		break;
 	case SIDE_TYPE_GATHER_FLOAT:
 		len = tracer_print_gather_float_type(&type_desc->u.side_gather, ptr);
 		break;
+
+		/* Gather compound types */
 	case SIDE_TYPE_GATHER_STRUCT:
 		len = tracer_print_gather_struct(&type_desc->u.side_gather, ptr);
 		break;
@@ -1486,15 +1498,14 @@ void tracer_print_dynamic(const struct side_arg *item)
 {
 	printf("{ ");
 	switch (item->type) {
+		/* Dynamic basic types */
 	case SIDE_TYPE_DYNAMIC_NULL:
 		tracer_print_type_header("::", item->u.side_dynamic.side_null.attr, item->u.side_dynamic.side_null.nr_attr);
 		printf("<NULL TYPE>");
 		break;
-
 	case SIDE_TYPE_DYNAMIC_BOOL:
 		tracer_print_type_bool("::", &item->u.side_dynamic.side_bool.type, &item->u.side_dynamic.side_bool.value, 0);
 		break;
-
 	case SIDE_TYPE_DYNAMIC_INTEGER:
 		tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
 				TRACER_DISPLAY_BASE_10);
@@ -1503,21 +1514,20 @@ void tracer_print_dynamic(const struct side_arg *item)
 		tracer_print_type_header("::", item->u.side_dynamic.side_byte.type.attr, item->u.side_dynamic.side_byte.type.nr_attr);
 		printf("0x%" PRIx8, item->u.side_dynamic.side_byte.value);
 		break;
-
 	case SIDE_TYPE_DYNAMIC_POINTER:
 		tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
 				TRACER_DISPLAY_BASE_16);
 		break;
-
 	case SIDE_TYPE_DYNAMIC_FLOAT:
 		tracer_print_type_float("::", &item->u.side_dynamic.side_float.type,
 					&item->u.side_dynamic.side_float.value);
 		break;
-
 	case SIDE_TYPE_DYNAMIC_STRING:
 		tracer_print_type_header("::", item->u.side_dynamic.side_string.type.attr, item->u.side_dynamic.side_string.type.nr_attr);
 		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_dynamic.side_string.value);
 		break;
+
+		/* Dynamic compound types */
 	case SIDE_TYPE_DYNAMIC_STRUCT:
 		tracer_print_dynamic_struct(item->u.side_dynamic.side_dynamic_struct);
 		break;
