@@ -823,20 +823,11 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		switch (item->type) {
 		case SIDE_TYPE_DYNAMIC_NULL:
 		case SIDE_TYPE_DYNAMIC_BOOL:
-		case SIDE_TYPE_DYNAMIC_U8:
-		case SIDE_TYPE_DYNAMIC_U16:
-		case SIDE_TYPE_DYNAMIC_U32:
-		case SIDE_TYPE_DYNAMIC_U64:
-		case SIDE_TYPE_DYNAMIC_S8:
-		case SIDE_TYPE_DYNAMIC_S16:
-		case SIDE_TYPE_DYNAMIC_S32:
-		case SIDE_TYPE_DYNAMIC_S64:
+		case SIDE_TYPE_DYNAMIC_UNSIGNED_INT:
+		case SIDE_TYPE_DYNAMIC_SIGNED_INT:
 		case SIDE_TYPE_DYNAMIC_BYTE:
 		case SIDE_TYPE_DYNAMIC_POINTER:
-		case SIDE_TYPE_DYNAMIC_FLOAT_BINARY16:
-		case SIDE_TYPE_DYNAMIC_FLOAT_BINARY32:
-		case SIDE_TYPE_DYNAMIC_FLOAT_BINARY64:
-		case SIDE_TYPE_DYNAMIC_FLOAT_BINARY128:
+		case SIDE_TYPE_DYNAMIC_FLOAT:
 		case SIDE_TYPE_DYNAMIC_STRING:
 		case SIDE_TYPE_DYNAMIC_STRUCT:
 		case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
@@ -959,20 +950,11 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	/* Dynamic types */
 	case SIDE_TYPE_DYNAMIC_NULL:
 	case SIDE_TYPE_DYNAMIC_BOOL:
-	case SIDE_TYPE_DYNAMIC_U8:
-	case SIDE_TYPE_DYNAMIC_U16:
-	case SIDE_TYPE_DYNAMIC_U32:
-	case SIDE_TYPE_DYNAMIC_U64:
-	case SIDE_TYPE_DYNAMIC_S8:
-	case SIDE_TYPE_DYNAMIC_S16:
-	case SIDE_TYPE_DYNAMIC_S32:
-	case SIDE_TYPE_DYNAMIC_S64:
+	case SIDE_TYPE_DYNAMIC_UNSIGNED_INT:
+	case SIDE_TYPE_DYNAMIC_SIGNED_INT:
 	case SIDE_TYPE_DYNAMIC_BYTE:
 	case SIDE_TYPE_DYNAMIC_POINTER:
-	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY16:
-	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY32:
-	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY64:
-	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY128:
+	case SIDE_TYPE_DYNAMIC_FLOAT:
 	case SIDE_TYPE_DYNAMIC_STRING:
 	case SIDE_TYPE_DYNAMIC_STRUCT:
 	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
@@ -1511,14 +1493,8 @@ void tracer_print_dynamic(const struct side_arg *item)
 		tracer_print_type_bool("::", &item->u.side_dynamic.side_bool.type, &item->u.side_dynamic.side_bool.value, 0);
 		break;
 
-	case SIDE_TYPE_DYNAMIC_U8:
-	case SIDE_TYPE_DYNAMIC_U16:
-	case SIDE_TYPE_DYNAMIC_U32:
-	case SIDE_TYPE_DYNAMIC_U64:
-	case SIDE_TYPE_DYNAMIC_S8:
-	case SIDE_TYPE_DYNAMIC_S16:
-	case SIDE_TYPE_DYNAMIC_S32:
-	case SIDE_TYPE_DYNAMIC_S64:
+	case SIDE_TYPE_DYNAMIC_UNSIGNED_INT:
+	case SIDE_TYPE_DYNAMIC_SIGNED_INT:
 		tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
 				TRACER_DISPLAY_BASE_10);
 		break;
@@ -1532,10 +1508,7 @@ void tracer_print_dynamic(const struct side_arg *item)
 				TRACER_DISPLAY_BASE_16);
 		break;
 
-	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY16:
-	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY32:
-	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY64:
-	case SIDE_TYPE_DYNAMIC_FLOAT_BINARY128:
+	case SIDE_TYPE_DYNAMIC_FLOAT:
 		tracer_print_type_float("::", &item->u.side_dynamic.side_float.type,
 					&item->u.side_dynamic.side_float.value);
 		break;

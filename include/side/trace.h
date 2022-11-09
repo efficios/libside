@@ -132,20 +132,11 @@ enum side_type_label {
 	/* Dynamic basic types */
 	SIDE_TYPE_DYNAMIC_NULL,
 	SIDE_TYPE_DYNAMIC_BOOL,
-	SIDE_TYPE_DYNAMIC_U8,
-	SIDE_TYPE_DYNAMIC_U16,
-	SIDE_TYPE_DYNAMIC_U32,
-	SIDE_TYPE_DYNAMIC_U64,
-	SIDE_TYPE_DYNAMIC_S8,
-	SIDE_TYPE_DYNAMIC_S16,
-	SIDE_TYPE_DYNAMIC_S32,
-	SIDE_TYPE_DYNAMIC_S64,
+	SIDE_TYPE_DYNAMIC_UNSIGNED_INT,
+	SIDE_TYPE_DYNAMIC_SIGNED_INT,
 	SIDE_TYPE_DYNAMIC_BYTE,
 	SIDE_TYPE_DYNAMIC_POINTER,
-	SIDE_TYPE_DYNAMIC_FLOAT_BINARY16,
-	SIDE_TYPE_DYNAMIC_FLOAT_BINARY32,
-	SIDE_TYPE_DYNAMIC_FLOAT_BINARY64,
-	SIDE_TYPE_DYNAMIC_FLOAT_BINARY128,
+	SIDE_TYPE_DYNAMIC_FLOAT,
 	SIDE_TYPE_DYNAMIC_STRING,
 
 	/* Dynamic compound types */
@@ -1351,23 +1342,23 @@ struct side_event_description {
 	}
 
 #define side_arg_dynamic_u8(_val, _attr) \
-	_side_arg_dynamic_integer(.side_u8, _val, SIDE_TYPE_DYNAMIC_U8, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_u8, _val, SIDE_TYPE_DYNAMIC_UNSIGNED_INT, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM(_attr))
 #define side_arg_dynamic_s8(_val, _attr) \
-	_side_arg_dynamic_integer(.side_s8, _val, SIDE_TYPE_DYNAMIC_S8, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_s8, _val, SIDE_TYPE_DYNAMIC_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_u16(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u16, _val, SIDE_TYPE_DYNAMIC_U16, false, _byte_order, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_u16, _val, SIDE_TYPE_DYNAMIC_UNSIGNED_INT, false, _byte_order, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_u32(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u32, _val, SIDE_TYPE_DYNAMIC_U32, false, _byte_order, sizeof(uint32_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_u32, _val, SIDE_TYPE_DYNAMIC_UNSIGNED_INT, false, _byte_order, sizeof(uint32_t), 0, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_u64(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u64, _val, SIDE_TYPE_DYNAMIC_U64, false, _byte_order, sizeof(uint64_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_u64, _val, SIDE_TYPE_DYNAMIC_UNSIGNED_INT, false, _byte_order, sizeof(uint64_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_s16(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s16, _val, SIDE_TYPE_DYNAMIC_S16, true, _byte_order, sizeof(int16_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_s16, _val, SIDE_TYPE_DYNAMIC_SIGNED_INT, true, _byte_order, sizeof(int16_t), 0, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_s32(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s32, _val, SIDE_TYPE_DYNAMIC_S32, true, _byte_order, sizeof(int32_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_s32, _val, SIDE_TYPE_DYNAMIC_SIGNED_INT, true, _byte_order, sizeof(int32_t), 0, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_s64(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_S64, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_SIGNED_INT, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_pointer(_val, _byte_order, _attr) \
 	_side_arg_dynamic_integer(.side_uptr, (uintptr_t) (_val), SIDE_TYPE_DYNAMIC_POINTER, false, _byte_order, \
@@ -1394,13 +1385,13 @@ struct side_event_description {
 	}
 
 #define _side_arg_dynamic_float_binary16(_val, _byte_order, _attr) \
-	_side_arg_dynamic_float(.side_float_binary16, _val, SIDE_TYPE_DYNAMIC_FLOAT_BINARY16, _byte_order, sizeof(_Float16), SIDE_PARAM(_attr))
+	_side_arg_dynamic_float(.side_float_binary16, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float16), SIDE_PARAM(_attr))
 #define _side_arg_dynamic_float_binary32(_val, _byte_order, _attr) \
-	_side_arg_dynamic_float(.side_float_binary32, _val, SIDE_TYPE_DYNAMIC_FLOAT_BINARY32, _byte_order, sizeof(_Float32), SIDE_PARAM(_attr))
+	_side_arg_dynamic_float(.side_float_binary32, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float32), SIDE_PARAM(_attr))
 #define _side_arg_dynamic_float_binary64(_val, _byte_order, _attr) \
-	_side_arg_dynamic_float(.side_float_binary64, _val, SIDE_TYPE_DYNAMIC_FLOAT_BINARY64, _byte_order, sizeof(_Float64), SIDE_PARAM(_attr))
+	_side_arg_dynamic_float(.side_float_binary64, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float64), SIDE_PARAM(_attr))
 #define _side_arg_dynamic_float_binary128(_val, _byte_order, _attr) \
-	_side_arg_dynamic_float(.side_float_binary128, _val, SIDE_TYPE_DYNAMIC_FLOAT_BINARY128, _byte_order, sizeof(_Float128), SIDE_PARAM(_attr))
+	_side_arg_dynamic_float(.side_float_binary128, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float128), SIDE_PARAM(_attr))
 
 /* Host endian */
 #define side_arg_dynamic_u16(_val, _attr) 		_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM(_attr))
