@@ -1515,7 +1515,7 @@ void test_struct_gather(void)
 		side_event_call(my_provider_event_structgather,
 			side_arg_list(
 				side_arg_gather_struct(&mystruct),
-				side_arg_gather_signed_integer(&val),
+				side_arg_gather_integer(&val),
 #if __HAVE_FLOAT32
 				side_arg_gather_float(&f32),
 #endif

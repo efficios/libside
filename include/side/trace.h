@@ -1243,8 +1243,7 @@ struct side_event_description {
 #define side_arg_gather_bool(_ptr)		{ .type = SIDE_TYPE_GATHER_BOOL, .u = { .side_static = { .side_bool_gather_ptr = (_ptr) } } }
 #define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = (_ptr) } } }
 #define side_arg_gather_pointer(_ptr)		{ .type = SIDE_TYPE_GATHER_POINTER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
-#define side_arg_gather_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
-#define side_arg_gather_signed_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
+#define side_arg_gather_integer(_ptr)		{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_float(_ptr)		{ .type = SIDE_TYPE_GATHER_FLOAT, .u = { .side_static = { .side_float_gather_ptr = (_ptr) } } }
 #define side_arg_gather_struct(_ptr)		{ .type = SIDE_TYPE_GATHER_STRUCT, .u = { .side_static = { .side_struct_gather_ptr = (_ptr) } } }
 #define side_arg_gather_array(_ptr)		{ .type = SIDE_TYPE_GATHER_ARRAY, .u = { .side_static = { .side_array_gather_ptr = (_ptr) } } }
