@@ -19,6 +19,11 @@ enum tracer_display_base {
 	TRACER_DISPLAY_BASE_16,
 };
 
+union int64_value {
+	uint64_t u;
+	int64_t s;
+};
+
 static struct side_tracer_handle *tracer_handle;
 
 static
@@ -569,19 +574,13 @@ void tracer_print_type_bool(const char *separator,
 }
 
 static
-void tracer_print_type_integer(const char *separator,
-		const struct side_type_integer *type_integer,
+union int64_value tracer_load_integer_value(const struct side_type_integer *type_integer,
 		const union side_integer_value *value,
-		uint16_t offset_bits,
-		enum tracer_display_base default_base)
+		uint16_t offset_bits, uint16_t *_len_bits)
 {
-	enum tracer_display_base base;
-	uint32_t len_bits;
+	union int64_value v64;
+	uint16_t len_bits;
 	bool reverse_bo;
-	union {
-		uint64_t v_unsigned;
-		int64_t v_signed;
-	} v;
 
 	if (!type_integer->len_bits)
 		len_bits = type_integer->integer_size * CHAR_BIT;
@@ -593,9 +592,9 @@ void tracer_print_type_integer(const char *separator,
 	switch (type_integer->integer_size) {
 	case 1:
 		if (type_integer->signedness)
-			v.v_signed = value->side_s8;
+			v64.s = value->side_s8;
 		else
-			v.v_unsigned = value->side_u8;
+			v64.u = value->side_u8;
 		break;
 	case 2:
 		if (type_integer->signedness) {
@@ -604,14 +603,14 @@ void tracer_print_type_integer(const char *separator,
 			side_s16 = value->side_s16;
 			if (reverse_bo)
 				side_s16 = side_bswap_16(side_s16);
-			v.v_signed = side_s16;
+			v64.s = side_s16;
 		} else {
 			uint16_t side_u16;
 
 			side_u16 = value->side_u16;
 			if (reverse_bo)
 				side_u16 = side_bswap_16(side_u16);
-			v.v_unsigned = side_u16;
+			v64.u = side_u16;
 		}
 		break;
 	case 4:
@@ -621,14 +620,14 @@ void tracer_print_type_integer(const char *separator,
 			side_s32 = value->side_s32;
 			if (reverse_bo)
 				side_s32 = side_bswap_32(side_s32);
-			v.v_signed = side_s32;
+			v64.s = side_s32;
 		} else {
 			uint32_t side_u32;
 
 			side_u32 = value->side_u32;
 			if (reverse_bo)
 				side_u32 = side_bswap_32(side_u32);
-			v.v_unsigned = side_u32;
+			v64.u = side_u32;
 		}
 		break;
 	case 8:
@@ -638,47 +637,62 @@ void tracer_print_type_integer(const char *separator,
 			side_s64 = value->side_s64;
 			if (reverse_bo)
 				side_s64 = side_bswap_64(side_s64);
-			v.v_signed = side_s64;
+			v64.s = side_s64;
 		} else {
 			uint64_t side_u64;
 
 			side_u64 = value->side_u64;
 			if (reverse_bo)
 				side_u64 = side_bswap_64(side_u64);
-			v.v_unsigned = side_u64;
+			v64.u = side_u64;
 		}
 		break;
 	default:
 		abort();
 	}
-	v.v_unsigned >>= offset_bits;
+	v64.u >>= offset_bits;
 	if (len_bits < 64)
-		v.v_unsigned &= (1ULL << len_bits) - 1;
+		v64.u &= (1ULL << len_bits) - 1;
+	if (_len_bits)
+		*_len_bits = len_bits;
+	return v64;
+}
+
+static
+void tracer_print_type_integer(const char *separator,
+		const struct side_type_integer *type_integer,
+		const union side_integer_value *value,
+		uint16_t offset_bits,
+		enum tracer_display_base default_base)
+{
+	enum tracer_display_base base;
+	union int64_value v64;
+	uint16_t len_bits;
+
+	v64 = tracer_load_integer_value(type_integer, value, offset_bits, &len_bits);
 	tracer_print_type_header(separator, type_integer->attr, type_integer->nr_attr);
-	base = get_attr_display_base(type_integer->attr,
-			type_integer->nr_attr,
-			default_base);
+	base = get_attr_display_base(type_integer->attr, type_integer->nr_attr, default_base);
 	switch (base) {
 	case TRACER_DISPLAY_BASE_2:
-		print_integer_binary(v.v_unsigned, len_bits);
+		print_integer_binary(v64.u, len_bits);
 		break;
 	case TRACER_DISPLAY_BASE_8:
-		printf("0%" PRIo64, v.v_unsigned);
+		printf("0%" PRIo64, v64.u);
 		break;
 	case TRACER_DISPLAY_BASE_10:
 		if (type_integer->signedness) {
 			/* Sign-extend. */
 			if (len_bits < 64) {
-				if (v.v_unsigned & (1ULL << (len_bits - 1)))
-					v.v_unsigned |= ~((1ULL << len_bits) - 1);
+				if (v64.u  & (1ULL << (len_bits - 1)))
+					v64.u |= ~((1ULL << len_bits) - 1);
 			}
-			printf("%" PRId64, v.v_signed);
+			printf("%" PRId64, v64.s);
 		} else {
-			printf("%" PRIu64, v.v_unsigned);
+			printf("%" PRIu64, v64.u);
 		}
 		break;
 	case TRACER_DISPLAY_BASE_16:
-		printf("0x%" PRIx64, v.v_unsigned);
+		printf("0x%" PRIx64, v64.u);
 		break;
 	default:
 		abort();
@@ -1068,7 +1082,8 @@ uint32_t tracer_gather_size(enum side_type_gather_access_mode access_mode, uint3
 }
 
 static
-uint64_t tracer_load_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr)
+union int64_value tracer_load_gather_integer_value(const struct side_type_gather *type_gather,
+		const void *_ptr, uint16_t offset_bits)
 {
 	enum side_type_gather_access_mode access_mode =
 		(enum side_type_gather_access_mode) type_gather->u.side_integer.access_mode;
@@ -1078,18 +1093,7 @@ uint64_t tracer_load_gather_integer_type(const struct side_type_gather *type_gat
 
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_integer.offset);
 	memcpy(&value, ptr, integer_size_bytes);
-	switch (type_gather->u.side_integer.type.integer_size) {
-	case 1:
-		return (uint64_t) value.side_u8;
-	case 2:
-		return (uint64_t) value.side_u16;
-	case 4:
-		return (uint64_t) value.side_u32;
-	case 8:
-		return (uint64_t) value.side_u64;
-	default:
-		abort();
-	}
+	return tracer_load_integer_value(&type_gather->u.side_integer.type, &value, offset_bits, NULL);
 }
 
 static
@@ -1291,6 +1295,7 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 		(enum side_type_gather_access_mode) type_gather->u.side_vla.access_mode;
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	const char *length_ptr = (const char *) _length_ptr;
+	union int64_value v64;
 	uint32_t i, length;
 
 	/* Access length */
@@ -1301,7 +1306,9 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 		fprintf(stderr, "<gather VLA expects integer gather length type>\n");
 		abort();
 	}
-	length = (uint32_t) tracer_load_gather_integer_type(&type_gather->u.side_vla.length_type->u.side_gather, length_ptr);
+	v64 = tracer_load_gather_integer_value(&type_gather->u.side_vla.length_type->u.side_gather,
+					length_ptr, 0);
+	length = (uint32_t) v64.u;
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
 	orig_ptr = ptr;
 	print_attributes("attr", ":", type_gather->u.side_vla.type.attr, type_gather->u.side_vla.type.nr_attr);
