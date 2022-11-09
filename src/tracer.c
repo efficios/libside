@@ -353,21 +353,21 @@ uint32_t elem_type_to_stride(const struct side_type *elem_type)
 	uint32_t stride_bit;
 
 	switch (elem_type->type) {
-	case SIDE_TYPE_U8:	/* Fall-through */
 	case SIDE_TYPE_BYTE:
 		stride_bit = 8;
 		break;
+
+	case SIDE_TYPE_U8:
 	case SIDE_TYPE_U16:
-		stride_bit = 16;
-		break;
 	case SIDE_TYPE_U32:
-		stride_bit = 32;
-		break;
 	case SIDE_TYPE_U64:
-		stride_bit = 64;
-		break;
+	case SIDE_TYPE_S8:
+	case SIDE_TYPE_S16:
+	case SIDE_TYPE_S32:
+	case SIDE_TYPE_S64:
+		return elem_type->u.side_integer.integer_size * CHAR_BIT;
 	default:
-		fprintf(stderr, "ERROR: Unexpected enum element type\n");
+		fprintf(stderr, "ERROR: Unexpected enum bitmap element type\n");
 		abort();
 	}
 	return stride_bit;
@@ -387,7 +387,11 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 	case SIDE_TYPE_BYTE:		/* Fall-through */
 	case SIDE_TYPE_U16:		/* Fall-through */
 	case SIDE_TYPE_U32:		/* Fall-through */
-	case SIDE_TYPE_U64:
+	case SIDE_TYPE_U64:		/* Fall-through */
+	case SIDE_TYPE_S8:		/* Fall-through */
+	case SIDE_TYPE_S16:		/* Fall-through */
+	case SIDE_TYPE_S32:		/* Fall-through */
+	case SIDE_TYPE_S64:
 		elem_type = enum_elem_type;
 		array_item = item;
 		nr_items = 1;
