@@ -1106,8 +1106,8 @@ void test_enum(void)
 			side_arg_u32(side_bswap_32(6)),
 			side_arg_u32(6),
 #else
-			side_arg_u32(side_bswap_32(6)),
 			side_arg_u32(6),
+			side_arg_u32(side_bswap_32(6)),
 #endif
 		)
 	);
@@ -1180,7 +1180,7 @@ void test_enum_bitmap(void)
 				side_arg_u32(side_bswap_32(1U << 2)),
 				side_arg_u32(1U << 2),
 #else
-				side_arg_u32(0x06000000),
+				side_arg_u32(1U << 2),
 				side_arg_u32(side_bswap_32(1U << 2)),
 #endif
 			)
