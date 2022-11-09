@@ -823,8 +823,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		switch (item->type) {
 		case SIDE_TYPE_DYNAMIC_NULL:
 		case SIDE_TYPE_DYNAMIC_BOOL:
-		case SIDE_TYPE_DYNAMIC_UNSIGNED_INT:
-		case SIDE_TYPE_DYNAMIC_SIGNED_INT:
+		case SIDE_TYPE_DYNAMIC_INTEGER:
 		case SIDE_TYPE_DYNAMIC_BYTE:
 		case SIDE_TYPE_DYNAMIC_POINTER:
 		case SIDE_TYPE_DYNAMIC_FLOAT:
@@ -929,8 +928,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr,
 					TRACER_DISPLAY_BASE_16);
 		break;
-	case SIDE_TYPE_GATHER_UNSIGNED_INT:
-	case SIDE_TYPE_GATHER_SIGNED_INT:
+	case SIDE_TYPE_GATHER_INTEGER:
 		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr,
 					TRACER_DISPLAY_BASE_10);
 		break;
@@ -950,8 +948,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	/* Dynamic types */
 	case SIDE_TYPE_DYNAMIC_NULL:
 	case SIDE_TYPE_DYNAMIC_BOOL:
-	case SIDE_TYPE_DYNAMIC_UNSIGNED_INT:
-	case SIDE_TYPE_DYNAMIC_SIGNED_INT:
+	case SIDE_TYPE_DYNAMIC_INTEGER:
 	case SIDE_TYPE_DYNAMIC_BYTE:
 	case SIDE_TYPE_DYNAMIC_POINTER:
 	case SIDE_TYPE_DYNAMIC_FLOAT:
@@ -1190,8 +1187,7 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 		len = tracer_print_gather_integer_type(&type_desc->u.side_gather, ptr,
 				TRACER_DISPLAY_BASE_16);
 		break;
-	case SIDE_TYPE_GATHER_UNSIGNED_INT:
-	case SIDE_TYPE_GATHER_SIGNED_INT:
+	case SIDE_TYPE_GATHER_INTEGER:
 		len = tracer_print_gather_integer_type(&type_desc->u.side_gather, ptr,
 				TRACER_DISPLAY_BASE_10);
 		break;
@@ -1280,8 +1276,7 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 
 	/* Access length */
 	switch (type_gather->u.side_vla.length_type->type) {
-	case SIDE_TYPE_GATHER_UNSIGNED_INT:
-	case SIDE_TYPE_GATHER_SIGNED_INT:
+	case SIDE_TYPE_GATHER_INTEGER:
 		break;
 	default:
 		fprintf(stderr, "<gather VLA expects integer gather length type>\n");
@@ -1493,8 +1488,7 @@ void tracer_print_dynamic(const struct side_arg *item)
 		tracer_print_type_bool("::", &item->u.side_dynamic.side_bool.type, &item->u.side_dynamic.side_bool.value, 0);
 		break;
 
-	case SIDE_TYPE_DYNAMIC_UNSIGNED_INT:
-	case SIDE_TYPE_DYNAMIC_SIGNED_INT:
+	case SIDE_TYPE_DYNAMIC_INTEGER:
 		tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
 				TRACER_DISPLAY_BASE_10);
 		break;

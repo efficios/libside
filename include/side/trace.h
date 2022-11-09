@@ -118,8 +118,7 @@ enum side_type_label {
 
 	/* Gather basic types */
 	SIDE_TYPE_GATHER_BOOL,
-	SIDE_TYPE_GATHER_UNSIGNED_INT,
-	SIDE_TYPE_GATHER_SIGNED_INT,
+	SIDE_TYPE_GATHER_INTEGER,
 	SIDE_TYPE_GATHER_BYTE,
 	SIDE_TYPE_GATHER_POINTER,
 	SIDE_TYPE_GATHER_FLOAT,
@@ -132,8 +131,7 @@ enum side_type_label {
 	/* Dynamic basic types */
 	SIDE_TYPE_DYNAMIC_NULL,
 	SIDE_TYPE_DYNAMIC_BOOL,
-	SIDE_TYPE_DYNAMIC_UNSIGNED_INT,
-	SIDE_TYPE_DYNAMIC_SIGNED_INT,
+	SIDE_TYPE_DYNAMIC_INTEGER,
 	SIDE_TYPE_DYNAMIC_BYTE,
 	SIDE_TYPE_DYNAMIC_POINTER,
 	SIDE_TYPE_DYNAMIC_FLOAT,
@@ -1046,24 +1044,24 @@ struct side_event_description {
 	}
 
 #define side_type_gather_unsigned_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_integer(SIDE_TYPE_GATHER_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_HOST, \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, false,  SIDE_TYPE_BYTE_ORDER_HOST, \
 			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 #define side_type_gather_signed_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_integer(SIDE_TYPE_GATHER_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_HOST, \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, true, SIDE_TYPE_BYTE_ORDER_HOST, \
 			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 
 #define side_type_gather_unsigned_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_integer(SIDE_TYPE_GATHER_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_LE, \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, false,  SIDE_TYPE_BYTE_ORDER_LE, \
 			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 #define side_type_gather_signed_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_integer(SIDE_TYPE_GATHER_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_LE, \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, true, SIDE_TYPE_BYTE_ORDER_LE, \
 			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 
 #define side_type_gather_unsigned_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_integer(SIDE_TYPE_GATHER_UNSIGNED_INT, false,  SIDE_TYPE_BYTE_ORDER_BE, \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, false,  SIDE_TYPE_BYTE_ORDER_BE, \
 			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 #define side_type_gather_signed_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_integer(SIDE_TYPE_GATHER_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_BE, \
+	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, true, SIDE_TYPE_BYTE_ORDER_BE, \
 			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
 
 #define side_field_gather_unsigned_integer(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
@@ -1245,8 +1243,8 @@ struct side_event_description {
 #define side_arg_gather_bool(_ptr)		{ .type = SIDE_TYPE_GATHER_BOOL, .u = { .side_static = { .side_bool_gather_ptr = (_ptr) } } }
 #define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = (_ptr) } } }
 #define side_arg_gather_pointer(_ptr)		{ .type = SIDE_TYPE_GATHER_POINTER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
-#define side_arg_gather_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_UNSIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
-#define side_arg_gather_signed_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_SIGNED_INT, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
+#define side_arg_gather_unsigned_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
+#define side_arg_gather_signed_integer(_ptr)	{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_float(_ptr)		{ .type = SIDE_TYPE_GATHER_FLOAT, .u = { .side_static = { .side_float_gather_ptr = (_ptr) } } }
 #define side_arg_gather_struct(_ptr)		{ .type = SIDE_TYPE_GATHER_STRUCT, .u = { .side_static = { .side_struct_gather_ptr = (_ptr) } } }
 #define side_arg_gather_array(_ptr)		{ .type = SIDE_TYPE_GATHER_ARRAY, .u = { .side_static = { .side_array_gather_ptr = (_ptr) } } }
@@ -1342,23 +1340,23 @@ struct side_event_description {
 	}
 
 #define side_arg_dynamic_u8(_val, _attr) \
-	_side_arg_dynamic_integer(.side_u8, _val, SIDE_TYPE_DYNAMIC_UNSIGNED_INT, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_u8, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM(_attr))
 #define side_arg_dynamic_s8(_val, _attr) \
-	_side_arg_dynamic_integer(.side_s8, _val, SIDE_TYPE_DYNAMIC_SIGNED_INT, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_s8, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_u16(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u16, _val, SIDE_TYPE_DYNAMIC_UNSIGNED_INT, false, _byte_order, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_u16, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_u32(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u32, _val, SIDE_TYPE_DYNAMIC_UNSIGNED_INT, false, _byte_order, sizeof(uint32_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_u32, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint32_t), 0, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_u64(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u64, _val, SIDE_TYPE_DYNAMIC_UNSIGNED_INT, false, _byte_order, sizeof(uint64_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_u64, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint64_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_s16(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s16, _val, SIDE_TYPE_DYNAMIC_SIGNED_INT, true, _byte_order, sizeof(int16_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_s16, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int16_t), 0, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_s32(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s32, _val, SIDE_TYPE_DYNAMIC_SIGNED_INT, true, _byte_order, sizeof(int32_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_s32, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int32_t), 0, SIDE_PARAM(_attr))
 #define _side_arg_dynamic_s64(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_SIGNED_INT, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM(_attr))
+	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM(_attr))
 
 #define _side_arg_dynamic_pointer(_val, _byte_order, _attr) \
 	_side_arg_dynamic_integer(.side_uptr, (uintptr_t) (_val), SIDE_TYPE_DYNAMIC_POINTER, false, _byte_order, \
