@@ -692,8 +692,8 @@ void tracer_print_type_float(const char *separator,
 {
 	bool reverse_bo;
 
-	reverse_bo = type_float->byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST;
 	tracer_print_type_header(separator, type_float->attr, type_float->nr_attr);
+	reverse_bo = type_float->byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST;
 	switch (type_float->float_size) {
 	case 2:
 	{
@@ -707,7 +707,6 @@ void tracer_print_type_float(const char *separator,
 
 		if (reverse_bo)
 			float16.u = side_bswap_16(float16.u);
-		tracer_print_type_header(":", type_desc->u.side_float.attr, type_desc->u.side_float.nr_attr);
 		printf("%g", (double) float16.f);
 		break;
 #else
