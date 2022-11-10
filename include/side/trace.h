@@ -165,9 +165,7 @@ enum side_attr_type {
 	SIDE_ATTR_TYPE_FLOAT_BINARY32,
 	SIDE_ATTR_TYPE_FLOAT_BINARY64,
 	SIDE_ATTR_TYPE_FLOAT_BINARY128,
-	SIDE_ATTR_TYPE_STRING_UTF8,
-	SIDE_ATTR_TYPE_STRING_UTF16,
-	SIDE_ATTR_TYPE_STRING_UTF32,
+	SIDE_ATTR_TYPE_STRING,
 };
 
 enum side_loglevel {
@@ -258,21 +256,21 @@ union side_float_value {
 #endif
 } SIDE_PACKED;
 
-struct side_attr_value {
-	uint32_t type;	/* enum side_attr_type */
-	union {
-		uint8_t bool_value;
-		uint64_t string_value;	/* const { uint8_t, uint16_t, uint32_t } * */
-		union side_integer_value integer_value;
-		union side_float_value float_value;
-	} SIDE_PACKED u;
-};
-
 struct side_type_raw_string {
 	const void *p;			/* pointer to string */
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
 	uint8_t byte_order;		/* enum side_type_label_byte_order */
 } SIDE_PACKED;
+
+struct side_attr_value {
+	uint32_t type;	/* enum side_attr_type */
+	union {
+		uint8_t bool_value;
+		struct side_type_raw_string string_value;
+		union side_integer_value integer_value;
+		union side_float_value float_value;
+	} SIDE_PACKED u;
+};
 
 /* User attributes. */
 struct side_attr {
@@ -672,9 +670,22 @@ struct side_event_description {
 #define side_attr_float_binary32(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY32, .u = { .float_value = { .side_float_binary32 = (_val) } } }
 #define side_attr_float_binary64(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY64, .u = { .float_value = { .side_float_binary64 = (_val) } } }
 #define side_attr_float_binary128(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY128, .u = { .float_value = { .side_float_binary128 = (_val) } } }
-#define side_attr_string(_val)		{ .type = SIDE_ATTR_TYPE_STRING_UTF8, .u = { .string_value = (uintptr_t) (_val) } }
-#define side_attr_string16(_val)	{ .type = SIDE_ATTR_TYPE_STRING_UTF16, .u = { .string_value = (uintptr_t) (_val) } }
-#define side_attr_string32(_val)	{ .type = SIDE_ATTR_TYPE_STRING_UTF32, .u = { .string_value = (uintptr_t) (_val) } }
+
+#define _side_attr_string(_val, _byte_order, _unit_size) \
+	{ \
+		.type = SIDE_ATTR_TYPE_STRING, \
+		.u = { \
+			.string_value = { \
+				.p = (const void *) (_val), \
+				.unit_size = _unit_size, \
+				.byte_order = _byte_order, \
+			}, \
+		}, \
+	}
+
+#define side_attr_string(_val)		_side_attr_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t))
+#define side_attr_string16(_val)	_side_attr_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t))
+#define side_attr_string32(_val)	_side_attr_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t))
 
 /* Stack-copy enumeration type definitions */
 

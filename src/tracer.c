@@ -323,17 +323,10 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
 		abort();
 #endif
-	case SIDE_ATTR_TYPE_STRING_UTF8:
-		tracer_print_string((const void *)(uintptr_t) attr->value.u.string_value,
-				1, SIDE_TYPE_BYTE_ORDER_HOST, NULL);
-		break;
-	case SIDE_ATTR_TYPE_STRING_UTF16:
-		tracer_print_string((const void *)(uintptr_t) attr->value.u.string_value,
-				2, SIDE_TYPE_BYTE_ORDER_HOST, NULL);
-		break;
-	case SIDE_ATTR_TYPE_STRING_UTF32:
-		tracer_print_string((const void *)(uintptr_t) attr->value.u.string_value,
-				4, SIDE_TYPE_BYTE_ORDER_HOST, NULL);
+	case SIDE_ATTR_TYPE_STRING:
+		tracer_print_string(attr->value.u.string_value.p,
+				attr->value.u.string_value.unit_size,
+				attr->value.u.string_value.byte_order, NULL);
 		break;
 	default:
 		fprintf(stderr, "ERROR: <UNKNOWN ATTRIBUTE TYPE>");
