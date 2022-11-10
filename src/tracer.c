@@ -61,8 +61,9 @@ static
 void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item);
 
 static
-void tracer_print_string(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
-		size_t *strlen_with_null)
+void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
+		size_t *strlen_with_null,
+		char **output_str)
 {
 	size_t ret, inbytesleft = 0, outbytesleft, bufsize;
 	const char *str = p, *fromcode;
@@ -71,9 +72,9 @@ void tracer_print_string(const void *p, uint8_t unit_size, enum side_type_label_
 
 	switch (unit_size) {
 	case 1:
-		printf("\"%s\"", str);
 		if (strlen_with_null)
 			*strlen_with_null = strlen(str) + 1;
+		*output_str = (char *) str;
 		return;
 	case 2:
 	{
@@ -157,14 +158,25 @@ void tracer_print_string(const void *p, uint8_t unit_size, enum side_type_label_
 		abort();
 	}
 	(*outbuf++) = '\0';
-	if (strlen_with_null)
-		*strlen_with_null = outbuf - buf;
-	printf("\"%s\"", buf);
-	free(buf);
 	if (iconv_close(cd) == -1) {
 		perror("iconv_close");
 		abort();
 	}
+	if (strlen_with_null)
+		*strlen_with_null = outbuf - buf;
+	*output_str = buf;
+}
+
+static
+void tracer_print_string(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
+		size_t *strlen_with_null)
+{
+	char *output_str = NULL;
+
+	tracer_convert_string_to_utf8(p, unit_size, byte_order, strlen_with_null, &output_str);
+	printf("\"%s\"", output_str);
+	if (output_str != p)
+		free(output_str);
 }
 
 static
@@ -212,8 +224,15 @@ enum tracer_display_base get_attr_display_base(const struct side_attr *_attr, ui
 
 	for (i = 0; i < nr_attr; i++) {
 		const struct side_attr *attr = &_attr[i];
+		char *utf8_str = NULL;
+		bool cmp;
 
-		if (!strcmp(attr->key, "std.integer.base")) {
+		tracer_convert_string_to_utf8(attr->key.p, attr->key.unit_size,
+			attr->key.byte_order, NULL, &utf8_str);
+		cmp = strcmp(utf8_str, "std.integer.base");
+		if (utf8_str != attr->key.p)
+			free(utf8_str);
+		if (!cmp) {
 			int64_t val = get_attr_integer_value(attr);
 
 			switch (val) {
@@ -237,7 +256,13 @@ enum tracer_display_base get_attr_display_base(const struct side_attr *_attr, ui
 static
 void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 {
-	printf("{ key%s \"%s\", value%s ", separator, attr->key, separator);
+	char *utf8_str = NULL;
+
+	tracer_convert_string_to_utf8(attr->key.p, attr->key.unit_size,
+		attr->key.byte_order, NULL, &utf8_str);
+	printf("{ key%s \"%s\", value%s ", separator, utf8_str, separator);
+	if (utf8_str != attr->key.p)
+		free(utf8_str);
 	switch (attr->value.type) {
 	case SIDE_ATTR_TYPE_BOOL:
 		printf("%s", attr->value.u.bool_value ? "true" : "false");
