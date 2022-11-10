@@ -1920,7 +1920,7 @@ void test_gather_vla_flex(void)
 {
 	side_event_cond(my_provider_event_gathervlaflex) {
 		struct testgathervlaflex *mystruct =
-			(struct testgathervlaflex *) malloc(sizeof(*mystruct) + VLAFLEXLEN + sizeof(uint64_t));
+			(struct testgathervlaflex *) malloc(sizeof(*mystruct) + VLAFLEXLEN * sizeof(uint64_t));
 
 		mystruct->len = VLAFLEXLEN;
 		mystruct->otherfield = 0;
