@@ -2156,6 +2156,60 @@ void test_gather_string(void)
 	}
 }
 
+side_static_event(my_provider_event_str_utf, "myprovider", "myevent_str_utf", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_string("utf8", side_attr_list()),
+		side_field_string32("utf32", side_attr_list()),
+		side_field_string16("utf16", side_attr_list()),
+		side_field_string32_le("utf32_le", side_attr_list()),
+		side_field_string16_le("utf16_le", side_attr_list()),
+		side_field_string32_be("utf32_be", side_attr_list()),
+		side_field_string16_be("utf16_be", side_attr_list()),
+		side_field_dynamic("dynamic_utf32"),
+		side_field_gather_string32("gather_utf32", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static
+void test_string_utf(void)
+{
+	/*
+	 * Character '®' is:
+	 * UTF-8: \c2 \ae
+	 * UTF-16: U+00ae
+	 * UTF-32: U+000000ae
+	 */
+	uint8_t str8[] = { 0xc2, 0xae, 'a', 'b', 'c', 0 };
+	uint32_t str32[] = { 0x000000ae, 'a', 'b', 'c', 0 };
+	uint16_t str16[] = { 0x00ae, 'a', 'b', 'c', 0 };
+#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
+	uint32_t str32_le[] = { 0x000000ae, 'a', 'b', 'c', 0 };
+	uint16_t str16_le[] = { 0x00ae, 'a', 'b', 'c', 0 };
+	uint32_t str32_be[] = { side_bswap_32(0x000000ae), side_bswap_32('a'), side_bswap_32('b'), side_bswap_32('c'), 0 };
+	uint16_t str16_be[] = { side_bswap_16(0x00ae), side_bswap_16('a'), side_bswap_16('b'), side_bswap_16('c'), 0 };
+#else
+	uint32_t str32_le[] = { side_bswap_32(0x000000ae), side_bswap_32('a'), side_bswap_32('b'), side_bswap_32('c'), 0 };
+	uint16_t str16_le[] = { side_bswap_16(0x00ae), side_bswap_16('a'), side_bswap_16('b'), side_bswap_16('c'), 0 };
+	uint32_t str32_be[] = { 0x000000ae, 'a', 'b', 'c', 0 };
+	uint16_t str16_be[] = { 0x00ae, 'a', 'b', 'c', 0 };
+#endif
+
+	side_event(my_provider_event_str_utf,
+		side_arg_list(
+			side_arg_string(str8),
+			side_arg_string32(str32),
+			side_arg_string16(str16),
+			side_arg_string32(str32_le),
+			side_arg_string16(str16_le),
+			side_arg_string32(str32_be),
+			side_arg_string16(str16_be),
+			side_arg_dynamic_string32(str32, side_attr_list()),
+			side_arg_gather_string(str32),
+		)
+	);
+}
+
 int main()
 {
 	test_fields();
@@ -2206,5 +2260,6 @@ int main()
 	test_gather_pointer();
 	test_gather_enum();
 	test_gather_string();
+	test_string_utf();
 	return 0;
 }

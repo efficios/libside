@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <iconv.h>
 
 #include <side/trace.h>
 
@@ -58,6 +59,113 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 		const void *_length_ptr);
 static
 void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item);
+
+static
+void tracer_print_string(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
+		size_t *strlen_with_null)
+{
+	size_t ret, inbytesleft = 0, outbytesleft, bufsize;
+	const char *str = p, *fromcode;
+	char *inbuf = (char *) p, *outbuf, *buf;
+	iconv_t cd;
+
+	switch (unit_size) {
+	case 1:
+		printf("\"%s\"", str);
+		if (strlen_with_null)
+			*strlen_with_null = strlen(str) + 1;
+		return;
+	case 2:
+	{
+		const uint16_t *p16 = p;
+
+		switch (byte_order) {
+		case SIDE_TYPE_BYTE_ORDER_LE:
+		{
+			fromcode = "UTF-16LE";
+			break;
+		}
+		case SIDE_TYPE_BYTE_ORDER_BE:
+		{
+			fromcode = "UTF-16BE";
+			break;
+		}
+		default:
+			fprintf(stderr, "Unknown byte order\n");
+			abort();
+		}
+		for (; *p16; p16++)
+			inbytesleft += 2;
+		/*
+		 * Worse case is U+FFFF UTF-16 (2 bytes) converting to
+		 * { ef, bf, bf } UTF-8 (3 bytes).
+		 */
+		bufsize = inbytesleft / 2 * 3 + 1;
+		break;
+	}
+	case 4:
+	{
+		const uint32_t *p32 = p;
+
+		switch (byte_order) {
+		case SIDE_TYPE_BYTE_ORDER_LE:
+		{
+			fromcode = "UTF-32LE";
+			break;
+		}
+		case SIDE_TYPE_BYTE_ORDER_BE:
+		{
+			fromcode = "UTF-32BE";
+			break;
+		}
+		default:
+			fprintf(stderr, "Unknown byte order\n");
+			abort();
+		}
+		for (; *p32; p32++)
+			inbytesleft += 4;
+		/*
+		 * Each 4-byte UTF-32 character converts to at most a
+		 * 4-byte UTF-8 character.
+		 */
+		bufsize = inbytesleft + 1;
+		break;
+	}
+	default:
+		fprintf(stderr, "Unknown string unit size %" PRIu8 "\n", unit_size);
+		abort();
+	}
+
+	cd = iconv_open("UTF8", fromcode);
+	if (cd == (iconv_t) -1) {
+		perror("iconv_open");
+		abort();
+	}
+	buf = malloc(bufsize);
+	if (!buf) {
+		abort();
+	}
+	outbuf = (char *) buf;
+	outbytesleft = bufsize;
+	ret = iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+	if (ret == (size_t) -1) {
+		perror("iconv");
+		abort();
+	}
+	if (inbytesleft) {
+		fprintf(stderr, "Buffer too small to convert string input\n");
+		abort();
+	}
+	(*outbuf++) = '\0';
+	if (strlen_with_null)
+		*strlen_with_null = outbuf - buf;
+	printf("\"%s\"", buf);
+	free(buf);
+	if (iconv_close(cd) == -1) {
+		perror("iconv_close");
+		abort();
+	}
+}
 
 static
 int64_t get_attr_integer_value(const struct side_attr *attr)
@@ -190,8 +298,17 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 		fprintf(stderr, "ERROR: Unsupported binary128 float type\n");
 		abort();
 #endif
-	case SIDE_ATTR_TYPE_STRING:
-		printf("\"%s\"", (const char *)(uintptr_t) attr->value.u.string_value);
+	case SIDE_ATTR_TYPE_STRING_UTF8:
+		tracer_print_string((const void *)(uintptr_t) attr->value.u.string_value,
+				1, SIDE_TYPE_BYTE_ORDER_HOST, NULL);
+		break;
+	case SIDE_ATTR_TYPE_STRING_UTF16:
+		tracer_print_string((const void *)(uintptr_t) attr->value.u.string_value,
+				2, SIDE_TYPE_BYTE_ORDER_HOST, NULL);
+		break;
+	case SIDE_ATTR_TYPE_STRING_UTF32:
+		tracer_print_string((const void *)(uintptr_t) attr->value.u.string_value,
+				4, SIDE_TYPE_BYTE_ORDER_HOST, NULL);
 		break;
 	default:
 		fprintf(stderr, "ERROR: <UNKNOWN ATTRIBUTE TYPE>");
@@ -804,9 +921,12 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_type_float(":", &type_desc->u.side_float, &item->u.side_static.float_value);
 		break;
 
-	case SIDE_TYPE_STRING:
+	case SIDE_TYPE_STRING_UTF8:
+	case SIDE_TYPE_STRING_UTF16:
+	case SIDE_TYPE_STRING_UTF32:
 		tracer_print_type_header(":", type_desc->u.side_string.attr, type_desc->u.side_string.nr_attr);
-		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_static.string_value);
+		tracer_print_string((const void *)(uintptr_t) item->u.side_static.string_value,
+				type_desc->u.side_string.unit_size, type_desc->u.side_string.byte_order, NULL);
 		break;
 
 		/* Stack-copy compound types */
@@ -1105,11 +1225,11 @@ uint32_t tracer_print_gather_string_type(const struct side_type_gather *type_gat
 	tracer_print_type_header(":", type_gather->u.side_string.type.attr,
 			type_gather->u.side_string.type.nr_attr);
 	if (ptr) {
-		printf("\"%s\"", ptr);
-		string_len = strlen(ptr) + 1;
+		tracer_print_string(ptr, type_gather->u.side_string.type.unit_size,
+				type_gather->u.side_string.type.byte_order, &string_len);
 	} else {
 		printf("<NULL>");
-		string_len = 1;
+		string_len = type_gather->u.side_string.type.unit_size;
 	}
 	return tracer_gather_size(access_mode, string_len);
 }
@@ -1498,7 +1618,9 @@ void tracer_print_dynamic(const struct side_arg *item)
 		break;
 	case SIDE_TYPE_DYNAMIC_STRING:
 		tracer_print_type_header("::", item->u.side_dynamic.side_string.type.attr, item->u.side_dynamic.side_string.type.nr_attr);
-		printf("\"%s\"", (const char *)(uintptr_t) item->u.side_dynamic.side_string.value);
+		tracer_print_string((const char *)(uintptr_t) item->u.side_dynamic.side_string.value,
+				item->u.side_dynamic.side_string.type.unit_size,
+				item->u.side_dynamic.side_string.type.byte_order, NULL);
 		break;
 
 		/* Dynamic compound types */
