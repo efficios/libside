@@ -1954,7 +1954,7 @@ side_static_event(my_provider_event_gatherbyte,
 static
 void test_gather_byte(void)
 {
-	side_event_cond(my_provider_event_structgatherarray) {
+	side_event_cond(my_provider_event_structgatherbyte) {
 		uint8_t v = 0x44;
 		uint8_t array[3] = { 0x1, 0x2, 0x3 };
 
