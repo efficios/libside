@@ -465,7 +465,7 @@ void print_enum_labels(const struct side_enum_mappings *mappings, union int64_va
 		}
 		if (v64.s >= mapping->range_begin && v64.s <= mapping->range_end) {
 			printf("%s", print_count++ ? ", " : "");
-			printf("\"%s\"", mapping->label);
+			tracer_print_string(mapping->label.p, mapping->label.unit_size, mapping->label.byte_order, NULL);
 		}
 	}
 	if (!print_count)
@@ -594,7 +594,7 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 match:
 		if (match) {
 			printf("%s", print_count++ ? ", " : "");
-			printf("\"%s\"", mapping->label);
+			tracer_print_string(mapping->label.p, mapping->label.unit_size, mapping->label.byte_order, NULL);
 		}
 	}
 	if (!print_count)

@@ -325,7 +325,7 @@ struct side_type_float {
 struct side_enum_mapping {
 	int64_t range_begin;
 	int64_t range_end;
-	const char *label;
+	struct side_type_raw_string label;
 } SIDE_PACKED;
 
 struct side_enum_mappings {
@@ -338,7 +338,7 @@ struct side_enum_mappings {
 struct side_enum_bitmap_mapping {
 	uint64_t range_begin;
 	uint64_t range_end;
-	const char *label;
+	struct side_type_raw_string label;
 } SIDE_PACKED;
 
 struct side_enum_bitmap_mappings {
@@ -693,14 +693,22 @@ struct side_event_description {
 	{ \
 		.range_begin = _begin, \
 		.range_end = _end, \
-		.label = _label, \
+		.label = { \
+			.p = (_label), \
+			.unit_size = sizeof(uint8_t), \
+			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+		}, \
 	}
 
 #define side_enum_mapping_value(_label, _value) \
 	{ \
 		.range_begin = _value, \
 		.range_end = _value, \
-		.label = _label, \
+		.label = { \
+			.p = (_label), \
+			.unit_size = sizeof(uint8_t), \
+			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+		}, \
 	}
 
 #define side_define_enum_bitmap(_identifier, _mappings, _attr) \
@@ -718,14 +726,22 @@ struct side_event_description {
 	{ \
 		.range_begin = _begin, \
 		.range_end = _end, \
-		.label = _label, \
+		.label = { \
+			.p = (_label), \
+			.unit_size = sizeof(uint8_t), \
+			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+		}, \
 	}
 
 #define side_enum_bitmap_mapping_value(_label, _value) \
 	{ \
 		.range_begin = _value, \
 		.range_end = _value, \
-		.label = _label, \
+		.label = { \
+			.p = (_label), \
+			.unit_size = sizeof(uint8_t), \
+			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+		}, \
 	}
 
 /* Stack-copy field and type definitions */
