@@ -46,6 +46,8 @@ uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_ga
 static
 uint32_t tracer_print_gather_float_type(const struct side_type_gather *type_gather, const void *_ptr);
 static
+uint32_t tracer_print_gather_string_type(const struct side_type_gather *type_gather, const void *_ptr);
+static
 uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gather, const void *_ptr);
 static
 uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, const void *_ptr);
@@ -847,6 +849,9 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_GATHER_FLOAT:
 		(void) tracer_print_gather_float_type(&type_desc->u.side_gather, item->u.side_static.side_float_gather_ptr);
 		break;
+	case SIDE_TYPE_GATHER_STRING:
+		(void) tracer_print_gather_string_type(&type_desc->u.side_gather, item->u.side_static.side_string_gather_ptr);
+		break;
 
 		/* Gather compound type */
 	case SIDE_TYPE_GATHER_STRUCT:
@@ -1089,6 +1094,27 @@ uint32_t tracer_print_gather_float_type(const struct side_type_gather *type_gath
 }
 
 static
+uint32_t tracer_print_gather_string_type(const struct side_type_gather *type_gather, const void *_ptr)
+{
+	enum side_type_gather_access_mode access_mode =
+		(enum side_type_gather_access_mode) type_gather->u.side_string.access_mode;
+	const char *ptr = (const char *) _ptr;
+	size_t string_len;
+
+	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_string.offset);
+	tracer_print_type_header(":", type_gather->u.side_string.type.attr,
+			type_gather->u.side_string.type.nr_attr);
+	if (ptr) {
+		printf("\"%s\"", ptr);
+		string_len = strlen(ptr) + 1;
+	} else {
+		printf("<NULL>");
+		string_len = 1;
+	}
+	return tracer_gather_size(access_mode, string_len);
+}
+
+static
 uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void *ptr)
 {
 	uint32_t len;
@@ -1112,6 +1138,9 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 		break;
 	case SIDE_TYPE_GATHER_FLOAT:
 		len = tracer_print_gather_float_type(&type_desc->u.side_gather, ptr);
+		break;
+	case SIDE_TYPE_GATHER_STRING:
+		len = tracer_print_gather_string_type(&type_desc->u.side_gather, ptr);
 		break;
 
 		/* Gather enum types */

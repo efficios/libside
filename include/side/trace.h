@@ -122,6 +122,7 @@ enum side_type_label {
 	SIDE_TYPE_GATHER_BYTE,
 	SIDE_TYPE_GATHER_POINTER,
 	SIDE_TYPE_GATHER_FLOAT,
+	SIDE_TYPE_GATHER_STRING,
 
 	/* Gather compound types */
 	SIDE_TYPE_GATHER_STRUCT,
@@ -398,6 +399,12 @@ struct side_type_gather_float {
 	struct side_type_float type;
 } SIDE_PACKED;
 
+struct side_type_gather_string {
+	uint64_t offset;	/* bytes */
+	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	struct side_type_string type;
+} SIDE_PACKED;
+
 struct side_type_gather_enum {
 	const struct side_enum_mappings *mappings;
 	const struct side_type *elem_type;
@@ -430,6 +437,7 @@ struct side_type_gather {
 		struct side_type_gather_byte side_byte;
 		struct side_type_gather_integer side_integer;
 		struct side_type_gather_float side_float;
+		struct side_type_gather_string side_string;
 		struct side_type_gather_enum side_enum;
 		struct side_type_gather_array side_array;
 		struct side_type_gather_vla side_vla;
@@ -504,6 +512,7 @@ struct side_arg_static {
 	void *side_byte_gather_ptr;
 	void *side_integer_gather_ptr;
 	void *side_float_gather_ptr;
+	void *side_string_gather_ptr;
 
 	/* Gather compound types */
 	void *side_array_gather_ptr;
@@ -1141,6 +1150,27 @@ struct side_event_description {
 #define side_field_gather_float_be(_name, _offset, _float_size, _access_mode, _attr) \
 	_side_field(_name, side_type_gather_float_be(_offset, _float_size, _access_mode, _attr))
 
+#define side_type_gather_string(_offset, _access_mode, _attr) \
+	{ \
+		.type = SIDE_TYPE_GATHER_STRING, \
+		.u = { \
+			.side_gather = { \
+				.u = { \
+					.side_string = { \
+						.offset = _offset, \
+						.access_mode = _access_mode, \
+						.type = { \
+							.attr = _attr, \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						}, \
+					}, \
+				}, \
+			}, \
+		}, \
+	}
+#define side_field_gather_string(_name, _offset, _access_mode, _attr) \
+	_side_field(_name, side_type_gather_string(_offset, _access_mode, SIDE_PARAM(_attr)))
+
 #define side_type_gather_enum(_mappings, _elem_type) \
 	{ \
 		.type = SIDE_TYPE_GATHER_ENUM, \
@@ -1261,6 +1291,7 @@ struct side_event_description {
 #define side_arg_gather_pointer(_ptr)		{ .type = SIDE_TYPE_GATHER_POINTER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_integer(_ptr)		{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
 #define side_arg_gather_float(_ptr)		{ .type = SIDE_TYPE_GATHER_FLOAT, .u = { .side_static = { .side_float_gather_ptr = (_ptr) } } }
+#define side_arg_gather_string(_ptr)		{ .type = SIDE_TYPE_GATHER_STRING, .u = { .side_static = { .side_string_gather_ptr = (_ptr) } } }
 #define side_arg_gather_struct(_ptr)		{ .type = SIDE_TYPE_GATHER_STRUCT, .u = { .side_static = { .side_struct_gather_ptr = (_ptr) } } }
 #define side_arg_gather_array(_ptr)		{ .type = SIDE_TYPE_GATHER_ARRAY, .u = { .side_static = { .side_array_gather_ptr = (_ptr) } } }
 #define side_arg_gather_vla(_ptr, _length_ptr)	{ .type = SIDE_TYPE_GATHER_VLA, .u = { .side_static = { .side_vla_gather = { .ptr = (_ptr), .length_ptr = (_length_ptr) } } } }

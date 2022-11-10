@@ -2118,6 +2118,44 @@ void test_gather_enum(void)
 	);
 }
 
+side_static_event(my_provider_event_gatherstring,
+	"myprovider", "myeventgatherstring", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_gather_string("string", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_array("arrayptr",
+			side_elem(side_type_gather_string(0, SIDE_TYPE_GATHER_ACCESS_POINTER, side_attr_list())),
+			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+		),
+		side_field_gather_array("array",
+			side_elem(side_type_gather_string(0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+		),
+	),
+	side_attr_list()
+);
+
+static
+void test_gather_string(void)
+{
+	side_event_cond(my_provider_event_gatherstring) {
+		char *str1 = "abcdef";
+		char *ptrarray[3] = {
+			"abc",
+			"def",
+			"ghi",
+		};
+		char flatarray[] = { 'a', 'b', '\0', 'c', 'd', '\0', 'e', 'f', '\0' };
+
+		side_event_call(my_provider_event_gatherstring,
+			side_arg_list(
+				side_arg_gather_string(str1),
+				side_arg_gather_array(ptrarray),
+				side_arg_gather_array(flatarray),
+			)
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -2167,5 +2205,6 @@ int main()
 	test_gather_bool();
 	test_gather_pointer();
 	test_gather_enum();
+	test_gather_string();
 	return 0;
 }
