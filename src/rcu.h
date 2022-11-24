@@ -11,12 +11,12 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <poll.h>
-#include <side/trace.h>
 #include <rseq/rseq.h>
 #include <linux/futex.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <side/macros.h>
 
 #define SIDE_CACHE_LINE_SIZE		256
 

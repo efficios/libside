@@ -1,2 +1,3 @@
 /src/test
+/tests/regression/side-rcu-test
 *.o
