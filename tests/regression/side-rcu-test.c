@@ -24,13 +24,13 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 static struct side_rcu_gp_state test_rcu_gp;
 
-#define POISON_VALUE	0x55
+#define POISON_VALUE	55
 
 struct test_data {
 	int v;
 };
 
-static struct test_data *p;
+static struct test_data *rcu_p;
 
 static
 void *test_reader_thread(void *arg)
@@ -41,10 +41,18 @@ void *test_reader_thread(void *arg)
 	while (!start_test) { }
 
 	while (!stop_test) {
-		int period;
+		struct test_data *p;
+		int v, period;
 
 		period = side_rcu_read_begin(&test_rcu_gp);
-		//TODO
+		p = side_rcu_dereference(rcu_p);
+		if (p) {
+			v = p->v;
+			if (v != 0 && v != 1) {
+				fprintf(stderr, "Unexpected value: %d\n", v);
+				abort();
+			}
+		}
 		side_rcu_read_end(&test_rcu_gp, period);
 		count++;
 	}
@@ -68,10 +76,10 @@ void *test_writer_thread(void *arg)
 			abort();
 
 		pthread_mutex_lock(&lock);
-		old_data = p;
+		old_data = rcu_p;
 		if (old_data)
 			new_data->v = old_data->v ^ 1;	/* 0 or 1 */
-		side_rcu_assign_pointer(p, new_data);
+		side_rcu_assign_pointer(rcu_p, new_data);
 		pthread_mutex_unlock(&lock);
 
 		side_rcu_wait_grace_period(&test_rcu_gp);
