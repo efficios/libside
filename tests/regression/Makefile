@@ -9,7 +9,7 @@ side-rcu-test.o: side-rcu-test.c $(HEADERS)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 side-rcu-test: side-rcu-test.o ../../src/rcu.o ../../src/smp.o
-	$(CC) $(CFLAGS) -o $@ $^ -lrseq
+	$(CC) $(CFLAGS) -pthread -o $@ $^ -lrseq
 
 .PHONY: clean
 
