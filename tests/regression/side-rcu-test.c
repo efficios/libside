@@ -94,17 +94,84 @@ void *test_writer_thread(void *arg)
 	return NULL;
 }
 
-int main(int argc, char **argv)
+static
+void print_help(void)
+{
+	printf("Invoke with command line arguments:\n");
+	printf("	-d <seconds> (test duration in seconds)\n");
+	printf("	-r <nr_readers> (number of reader threads)\n");
+	printf("	-w <nr_writers> (number of writers threads)\n");
+}
+
+static
+int parse_cmd_line(int argc, const char **argv)
+{
+	const char *arg = NULL;
+	int i, ret = 0;
+
+	for (i = 1; i < argc; i++) {
+		arg = argv[i];
+
+		switch (arg[0]) {
+		case '-':
+			switch (arg[1]) {
+			case '\0':
+				goto error;
+			case 'd':
+				if (i == argc - 1)
+					goto error_extra_arg;
+				duration_s = atoi(argv[i + 1]);
+				i++;
+				break;
+			case 'r':
+				if (i == argc - 1)
+					goto error_extra_arg;
+				nr_reader_threads = atoi(argv[i + 1]);
+				i++;
+				break;
+			case 'w':
+				if (i == argc - 1)
+					goto error_extra_arg;
+				nr_writer_threads = atoi(argv[i + 1]);
+				i++;
+				break;
+			case 'h':
+				print_help();
+				ret = 1;
+				break;
+			}
+			break;
+		default:
+			goto error;
+		}
+
+	}
+	return ret;
+
+error:
+	fprintf(stderr, "Unknown command line option '%s'\n", arg);
+	return -1;
+error_extra_arg:
+	fprintf(stderr, "Command line option '%s' requires an extra argument\n", arg);
+	return -1;
+}
+
+int main(int argc, const char **argv)
 {
 	struct thread_ctx *reader_ctx;
 	struct thread_ctx *writer_ctx;
 	int i, ret;
-	int sleep_s = duration_s;
+	int sleep_s;
 	uint64_t read_tot = 0, write_tot = 0;
 
-	side_rcu_gp_init(&test_rcu_gp);
-	//TODO: parse command line args.
+	ret = parse_cmd_line(argc, argv);
+	if (ret < 0)
+		return -1;
+	if (ret > 0)
+		return 0;
 
+	sleep_s = duration_s;
+	side_rcu_gp_init(&test_rcu_gp);
 	reader_ctx = calloc(nr_reader_threads, sizeof(struct thread_ctx));
 	if (!reader_ctx)
 		abort();
@@ -160,7 +227,7 @@ int main(int argc, char **argv)
 		}
 		write_tot += writer_ctx[i].count;
 	}
-	printf("Summary: duration: %d, nr_reader_threads: %d, nr_writer_threads: %d, reads: %" PRIu64 ", writes: %" PRIu64 "\n",
+	printf("Summary: duration: %d s, nr_reader_threads: %d, nr_writer_threads: %d, reads: %" PRIu64 ", writes: %" PRIu64 "\n",
 		duration_s, nr_reader_threads, nr_writer_threads, read_tot, write_tot);
 	free(reader_ctx);
 	free(writer_ctx);
