@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-static int nr_reader_threads = 1;
-static int nr_writer_threads = 1;
+static int nr_reader_threads = 2;
+static int nr_writer_threads = 2;
 static int duration_s = 10;
 
 static volatile int start_test, stop_test;
