@@ -55,7 +55,7 @@ int futex(int32_t *uaddr, int op, int32_t val,
 static inline
 void side_rcu_wake_up_gp(struct side_rcu_gp_state *gp_state)
 {
-	if (side_unlikely(__atomic_load_n(&gp_state->futex, __ATOMIC_RELAXED)) == -1) {
+	if (side_unlikely(__atomic_load_n(&gp_state->futex, __ATOMIC_RELAXED) == -1)) {
 		__atomic_store_n(&gp_state->futex, 0, __ATOMIC_RELAXED);
 		/* TODO: handle futex return values. */
 		(void) futex(&gp_state->futex, FUTEX_WAKE, 1, NULL, NULL, 0);
