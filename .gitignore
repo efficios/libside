@@ -1,3 +1,97 @@
-/src/test
-/tests/regression/side-rcu-test
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2022 EfficiOS Inc.
+
+# Prerequisites
+*.d
+
+# Object files
 *.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+/src/libside.pc
+/src/test
+/tests/regression/.dirstamp
+/tests/regression/side-rcu-test
+
+#automake
+/include/config.h
+.deps/
+.libs/
+Makefile.in
+Makefile
+*.la
+*.bz2
+*.o
+*.lo
+*.loT
+*.log
+*.trs
+/config.log
+/configure
+/config/compile
+/config/config.guess
+/config/config.sub
+/config/depcomp
+/config/install-sh
+/config/ltmain.sh
+/config/missing
+/config/test-driver
+/aclocal.m4
+/m4/libtool.m4
+/m4/lt~obsolete.m4
+/m4/ltoptions.m4
+/m4/ltsugar.m4
+/m4/ltversion.m4
+/libtool
+/include/stamp-h1
+/include/config.h.in
+/include/config.h.in~
+/config.status
+/autom4te.cache/
+/config
