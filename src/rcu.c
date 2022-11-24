@@ -89,9 +89,14 @@ void wait_gp(struct side_rcu_gp_state *gp_state)
 	} else {
 		__atomic_thread_fence(__ATOMIC_SEQ_CST);
 	}
-	if (__atomic_load_n(&gp_state->futex, __ATOMIC_RELAXED) != -1)
-		return;
-	while (futex(&gp_state->futex, FUTEX_WAIT, -1, NULL, NULL, 0)) {
+	while (__atomic_load_n(&gp_state->futex, __ATOMIC_RELAXED) == -1) {
+		if (!futex(&gp_state->futex, FUTEX_WAIT, -1, NULL, NULL, 0)) {
+			/*
+			 * May be awakened by either spurious wake up or
+			 * because the state is now as expected.
+			 */
+			continue;
+		}
 		switch (errno) {
 		case EWOULDBLOCK:
 			/* Value already changed. */
