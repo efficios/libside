@@ -41,10 +41,11 @@ void *test_reader_thread(void *arg)
 	while (!start_test) { }
 
 	while (!stop_test) {
+		struct side_rcu_read_state rcu_read_state;
 		struct test_data *p;
-		int v, period;
+		int v;
 
-		period = side_rcu_read_begin(&test_rcu_gp);
+		side_rcu_read_begin(&test_rcu_gp, &rcu_read_state);
 		p = side_rcu_dereference(rcu_p);
 		if (p) {
 			v = p->v;
@@ -53,7 +54,7 @@ void *test_reader_thread(void *arg)
 				abort();
 			}
 		}
-		side_rcu_read_end(&test_rcu_gp, period);
+		side_rcu_read_end(&test_rcu_gp, &rcu_read_state);
 		count++;
 	}
 	thread_ctx->count = count;

@@ -39,6 +39,11 @@ struct side_rcu_gp_state {
 	pthread_mutex_t gp_lock;
 };
 
+struct side_rcu_read_state {
+	struct side_rcu_percpu_count *percpu_count;
+	int cpu;
+};
+
 extern unsigned int side_rcu_rseq_membarrier_available __attribute__((visibility("hidden")));
 
 static inline
@@ -63,16 +68,19 @@ void side_rcu_wake_up_gp(struct side_rcu_gp_state *gp_state)
 }
 
 static inline
-unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
+void side_rcu_read_begin(struct side_rcu_gp_state *gp_state, struct side_rcu_read_state *read_state)
 {
 	unsigned int period = __atomic_load_n(&gp_state->period, __ATOMIC_RELAXED);
+	struct side_rcu_percpu_count *begin_cpu_count;
 	struct side_rcu_cpu_gp_state *cpu_gp_state;
 	int cpu;
 
 	if (side_likely(side_rcu_rseq_membarrier_available)) {
 		cpu = rseq_cpu_start();
 		cpu_gp_state = &gp_state->percpu_state[cpu];
-		if (side_likely(!rseq_addv((intptr_t *)&cpu_gp_state->count[period].rseq_begin, 1, cpu))) {
+		read_state->percpu_count = begin_cpu_count = &cpu_gp_state->count[period];
+		read_state->cpu = cpu;
+		if (side_likely(!rseq_addv((intptr_t *)&begin_cpu_count->rseq_begin, 1, cpu))) {
 			/*
 			 * This compiler barrier (A) is paired with membarrier() at (C),
 			 * (D), (E). It effectively upgrades this compiler barrier to a
@@ -87,23 +95,24 @@ unsigned int side_rcu_read_begin(struct side_rcu_gp_state *gp_state)
 			 * It is redundant with barrier (B) for that purpose.
 			 */
 			rseq_barrier();
-			return period;
+			return;
 		}
 	}
 	/* Fallback to atomic increment and SEQ_CST. */
 	cpu = sched_getcpu();
 	if (side_unlikely(cpu < 0))
 		cpu = 0;
+	read_state->cpu = cpu;
 	cpu_gp_state = &gp_state->percpu_state[cpu];
-	(void) __atomic_add_fetch(&cpu_gp_state->count[period].begin, 1, __ATOMIC_SEQ_CST);
-	return period;
+	read_state->percpu_count = begin_cpu_count = &cpu_gp_state->count[period];
+	(void) __atomic_add_fetch(&begin_cpu_count->begin, 1, __ATOMIC_SEQ_CST);
 }
 
 static inline
-void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
+void side_rcu_read_end(struct side_rcu_gp_state *gp_state, struct side_rcu_read_state *read_state)
 {
-	struct side_rcu_cpu_gp_state *cpu_gp_state;
-	int cpu;
+	struct side_rcu_percpu_count *begin_cpu_count = read_state->percpu_count;
+	int cpu = read_state->cpu;
 
 	if (side_likely(side_rcu_rseq_membarrier_available)) {
 		/*
@@ -120,9 +129,7 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 		 * It is redundant with barrier (A) for that purpose.
 		 */
 		rseq_barrier();
-		cpu = rseq_cpu_start();
-		cpu_gp_state = &gp_state->percpu_state[cpu];
-		if (side_likely(!rseq_addv((intptr_t *)&cpu_gp_state->count[period].rseq_end, 1, cpu))) {
+		if (side_likely(!rseq_addv((intptr_t *)&begin_cpu_count->rseq_end, 1, cpu))) {
 			/*
 			 * This barrier (F) is paired with membarrier()
 			 * at (G). It orders increment of the begin/end
@@ -133,11 +140,7 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, unsigned int period)
 		}
 	}
 	/* Fallback to atomic increment and SEQ_CST. */
-	cpu = sched_getcpu();
-	if (side_unlikely(cpu < 0))
-		cpu = 0;
-	cpu_gp_state = &gp_state->percpu_state[cpu];
-	(void) __atomic_add_fetch(&cpu_gp_state->count[period].end, 1, __ATOMIC_SEQ_CST);
+	(void) __atomic_add_fetch(&begin_cpu_count->end, 1, __ATOMIC_SEQ_CST);
 	/*
 	 * This barrier (F) is paired with SEQ_CST barrier or
 	 * membarrier() at (G). It orders increment of the begin/end
