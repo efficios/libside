@@ -25,11 +25,11 @@ struct side_rcu_percpu_count {
 	uintptr_t rseq_begin;
 	uintptr_t end;
 	uintptr_t rseq_end;
-}  __attribute__((__aligned__(SIDE_CACHE_LINE_SIZE)));
+};
 
 struct side_rcu_cpu_gp_state {
 	struct side_rcu_percpu_count count[2];
-};
+} __attribute__((__aligned__(SIDE_CACHE_LINE_SIZE)));
 
 struct side_rcu_gp_state {
 	struct side_rcu_cpu_gp_state *percpu_state;
