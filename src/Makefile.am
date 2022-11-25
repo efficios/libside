@@ -28,13 +28,5 @@ libside_la_LIBADD = \
 	libsmp.la \
 	$(RSEQ_LIBS)
 
-noinst_PROGRAMS = test
-
-test_SOURCES = \
-	test.c
-
-test_LDADD = \
-	libside.la
-
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libside.pc

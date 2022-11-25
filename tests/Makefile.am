@@ -13,12 +13,18 @@ TAP_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' \
 	$(SHELL) $(srcdir)/utils/tap-driver.sh
 
 noinst_PROGRAMS = \
-	regression/side-rcu-test
+	regression/side-rcu-test \
+	unit/test
 
 regression_side_rcu_test_SOURCES = regression/side-rcu-test.c
 regression_side_rcu_test_LDADD = \
 	$(top_builddir)/src/librcu.la \
 	$(top_builddir)/src/libsmp.la \
+	$(top_builddir)/tests/utils/libtap.la \
+	$(RSEQ_LIBS)
+
+unit_test_SOURCES = unit/test.c
+unit_test_LDADD = \
 	$(top_builddir)/src/libside.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
