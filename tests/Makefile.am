@@ -20,7 +20,8 @@ regression_side_rcu_test_LDADD = \
 	$(top_builddir)/src/librcu.la \
 	$(top_builddir)/src/libsmp.la \
 	$(top_builddir)/src/libside.la \
-	$(top_builddir)/tests/utils/libtap.la
+	$(top_builddir)/tests/utils/libtap.la \
+	$(RSEQ_LIBS)
 
 # Currently no tap tests to run
 TESTS =

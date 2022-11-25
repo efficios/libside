@@ -20,8 +20,7 @@ lib_LTLIBRARIES = libside.la
 libside_la_SOURCES = \
 	list.h \
 	side.c \
-	tracer.c \
-	tracer.h
+	tracer.c
 
 libside_la_LDFLAGS = -no-undefined -version-info $(SIDE_LIBRARY_VERSION)
 libside_la_LIBADD = \

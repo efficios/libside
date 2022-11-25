@@ -518,18 +518,18 @@ struct side_arg_static {
 	void *side_vla_app_visitor_ctx;
 
 	/* Gather basic types */
-	void *side_bool_gather_ptr;
-	void *side_byte_gather_ptr;
-	void *side_integer_gather_ptr;
-	void *side_float_gather_ptr;
-	void *side_string_gather_ptr;
+	const void *side_bool_gather_ptr;
+	const void *side_byte_gather_ptr;
+	const void *side_integer_gather_ptr;
+	const void *side_float_gather_ptr;
+	const void *side_string_gather_ptr;
 
 	/* Gather compound types */
-	void *side_array_gather_ptr;
-	void *side_struct_gather_ptr;
+	const void *side_array_gather_ptr;
+	const void *side_struct_gather_ptr;
 	struct {
-		void *ptr;
-		void *length_ptr;
+		const void *ptr;
+		const void *length_ptr;
 	} SIDE_PACKED side_vla_gather;
 } SIDE_PACKED;
 
@@ -1820,8 +1820,8 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *handle
  * Explicit hooks to initialize/finalize the side instrumentation
  * library. Those are also library constructor/destructor.
  */
-void side_init(void);
-void side_exit(void);
+void side_init(void) __attribute__((constructor));
+void side_exit(void) __attribute__((destructor));
 
 /*
  * The following constructors/destructors perform automatic registration

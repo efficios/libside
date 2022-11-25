@@ -6,7 +6,6 @@
 #include <side/trace.h>
 #include <string.h>
 
-#include "tracer.h"
 #include "rcu.h"
 #include "list.h"
 
@@ -62,9 +61,6 @@ static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
  * iteration on the array of callbacks immediately.
  */
 const struct side_callback side_empty_callback = { };
-
-void side_init(void) __attribute__((constructor));
-void side_exit(void) __attribute__((destructor));
 
 void side_call(const struct side_event_description *desc, const struct side_arg_vec *side_arg_vec)
 {
@@ -201,7 +197,7 @@ int side_tracer_callback_variadic_register(struct side_event_description *desc,
 	return _side_tracer_callback_register(desc, (void *) call_variadic, priv);
 }
 
-int _side_tracer_callback_unregister(struct side_event_description *desc,
+static int _side_tracer_callback_unregister(struct side_event_description *desc,
 		void *call, void *priv)
 {
 	struct side_callback *old_cb, *new_cb;

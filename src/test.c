@@ -11,7 +11,6 @@
 #include <stddef.h>
 
 #include <side/trace.h>
-#include "tracer.h"
 
 /* User code example */
 
@@ -2138,8 +2137,8 @@ static
 void test_gather_string(void)
 {
 	side_event_cond(my_provider_event_gatherstring) {
-		char *str1 = "abcdef";
-		char *ptrarray[3] = {
+		const char *str1 = "abcdef";
+		const char *ptrarray[3] = {
 			"abc",
 			"def",
 			"ghi",

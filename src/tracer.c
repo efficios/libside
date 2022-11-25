@@ -1686,6 +1686,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 		printf(" ]");
 }
 
+static
 void tracer_call(const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
 		void *priv __attribute__((unused)))
@@ -1696,6 +1697,7 @@ void tracer_call(const struct side_event_description *desc,
 	printf("\n");
 }
 
+static
 void tracer_call_variadic(const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
 		const struct side_arg_dynamic_struct *var_struct,
@@ -1721,8 +1723,10 @@ void tracer_call_variadic(const struct side_event_description *desc,
 	printf("\n");
 }
 
+static
 void tracer_event_notification(enum side_tracer_notification notif,
-		struct side_event_description **events, uint32_t nr_events, void *priv)
+		struct side_event_description **events, uint32_t nr_events,
+		void *priv __attribute__((unused)))
 {
 	uint32_t i;
 	int ret;
