@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2022 EfficiOS Inc.
 
 # side
-Static Instrumentation Dynamically Enabled
+Software Instrumentation Dynamically Enabled
 
 # dependencies
 librseq: https://github.com/compudj/librseq
