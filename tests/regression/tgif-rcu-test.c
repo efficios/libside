@@ -22,7 +22,7 @@ struct thread_ctx {
 
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-static struct side_rcu_gp_state test_rcu_gp;
+static struct tgif_rcu_gp_state test_rcu_gp;
 
 #define POISON_VALUE	55
 
@@ -41,12 +41,12 @@ void *test_reader_thread(void *arg)
 	while (!start_test) { }
 
 	while (!stop_test) {
-		struct side_rcu_read_state rcu_read_state;
+		struct tgif_rcu_read_state rcu_read_state;
 		struct test_data *p;
 		int v;
 
-		side_rcu_read_begin(&test_rcu_gp, &rcu_read_state);
-		p = side_rcu_dereference(rcu_p);
+		tgif_rcu_read_begin(&test_rcu_gp, &rcu_read_state);
+		p = tgif_rcu_dereference(rcu_p);
 		if (p) {
 			v = p->v;
 			if (v != 0 && v != 1) {
@@ -54,7 +54,7 @@ void *test_reader_thread(void *arg)
 				abort();
 			}
 		}
-		side_rcu_read_end(&test_rcu_gp, &rcu_read_state);
+		tgif_rcu_read_end(&test_rcu_gp, &rcu_read_state);
 		count++;
 	}
 	thread_ctx->count = count;
@@ -80,10 +80,10 @@ void *test_writer_thread(void *arg)
 		old_data = rcu_p;
 		if (old_data)
 			new_data->v = old_data->v ^ 1;	/* 0 or 1 */
-		side_rcu_assign_pointer(rcu_p, new_data);
+		tgif_rcu_assign_pointer(rcu_p, new_data);
 		pthread_mutex_unlock(&lock);
 
-		side_rcu_wait_grace_period(&test_rcu_gp);
+		tgif_rcu_wait_grace_period(&test_rcu_gp);
 
 		if (old_data) {
 			old_data->v = POISON_VALUE;
@@ -172,7 +172,7 @@ int main(int argc, const char **argv)
 		return 0;
 
 	sleep_s = duration_s;
-	side_rcu_gp_init(&test_rcu_gp);
+	tgif_rcu_gp_init(&test_rcu_gp);
 	reader_ctx = calloc(nr_reader_threads, sizeof(struct thread_ctx));
 	if (!reader_ctx)
 		abort();
@@ -232,6 +232,6 @@ int main(int argc, const char **argv)
 		duration_s, nr_reader_threads, nr_writer_threads, read_tot, write_tot);
 	free(reader_ctx);
 	free(writer_ctx);
-	side_rcu_gp_exit(&test_rcu_gp);
+	tgif_rcu_gp_exit(&test_rcu_gp);
 	return 0;
 }

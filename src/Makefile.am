@@ -15,18 +15,18 @@ libsmp_la_SOURCES = \
 	smp.h
 
 # Public libaries
-lib_LTLIBRARIES = libside.la
+lib_LTLIBRARIES = libtgif.la
 
-libside_la_SOURCES = \
+libtgif_la_SOURCES = \
 	list.h \
-	side.c \
+	tgif.c \
 	tracer.c
 
-libside_la_LDFLAGS = -no-undefined -version-info $(SIDE_LIBRARY_VERSION)
-libside_la_LIBADD = \
+libtgif_la_LDFLAGS = -no-undefined -version-info $(TGIF_LIBRARY_VERSION)
+libtgif_la_LIBADD = \
 	librcu.la \
 	libsmp.la \
 	$(RSEQ_LIBS)
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libside.pc
+pkgconfig_DATA = libtgif.pc

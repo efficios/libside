@@ -10,20 +10,20 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <side/trace.h>
+#include <tgif/trace.h>
 
 /* User code example */
 
-side_static_event(my_provider_event, "myprovider", "myevent", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_u32("abc", side_attr_list()),
-		side_field_s64("def", side_attr_list()),
-		side_field_pointer("ptr", side_attr_list()),
-		side_field_dynamic("dynamic"),
-		side_field_dynamic("dynamic_pointer"),
-		side_field_null("null", side_attr_list()),
+tgif_static_event(my_provider_event, "myprovider", "myevent", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_u32("abc", tgif_attr_list()),
+		tgif_field_s64("def", tgif_attr_list()),
+		tgif_field_pointer("ptr", tgif_attr_list()),
+		tgif_field_dynamic("dynamic"),
+		tgif_field_dynamic("dynamic_pointer"),
+		tgif_field_null("null", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
@@ -32,127 +32,127 @@ void test_fields(void)
 	uint32_t uw = 42;
 	int64_t sdw = -500;
 
-	side_event(my_provider_event,
-		side_arg_list(
-			side_arg_u32(uw),
-			side_arg_s64(sdw),
-			side_arg_pointer((void *) 0x1),
-			side_arg_dynamic_string("zzz", side_attr_list()),
-			side_arg_dynamic_pointer((void *) 0x1, side_attr_list()),
-			side_arg_null(),
+	tgif_event(my_provider_event,
+		tgif_arg_list(
+			tgif_arg_u32(uw),
+			tgif_arg_s64(sdw),
+			tgif_arg_pointer((void *) 0x1),
+			tgif_arg_dynamic_string("zzz", tgif_attr_list()),
+			tgif_arg_dynamic_pointer((void *) 0x1, tgif_attr_list()),
+			tgif_arg_null(),
 		)
 	);
 }
 
-side_hidden_event(my_provider_event_hidden, "myprovider", "myeventhidden", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_u32("abc", side_attr_list()),
+tgif_hidden_event(my_provider_event_hidden, "myprovider", "myeventhidden", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_u32("abc", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_event_hidden(void)
 {
-	side_event(my_provider_event_hidden, side_arg_list(side_arg_u32(2)));
+	tgif_event(my_provider_event_hidden, tgif_arg_list(tgif_arg_u32(2)));
 }
 
-side_declare_event(my_provider_event_export);
+tgif_declare_event(my_provider_event_export);
 
-side_export_event(my_provider_event_export, "myprovider", "myeventexport", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_u32("abc", side_attr_list()),
+tgif_export_event(my_provider_event_export, "myprovider", "myeventexport", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_u32("abc", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_event_export(void)
 {
-	side_event(my_provider_event_export, side_arg_list(side_arg_u32(2)));
+	tgif_event(my_provider_event_export, tgif_arg_list(tgif_arg_u32(2)));
 }
 
-side_static_event(my_provider_event_struct_literal, "myprovider", "myeventstructliteral", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_struct("structliteral",
-			side_struct_literal(
-				side_field_list(
-					side_field_u32("x", side_attr_list()),
-					side_field_s64("y", side_attr_list()),
+tgif_static_event(my_provider_event_struct_literal, "myprovider", "myeventstructliteral", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_struct("structliteral",
+			tgif_struct_literal(
+				tgif_field_list(
+					tgif_field_u32("x", tgif_attr_list()),
+					tgif_field_s64("y", tgif_attr_list()),
 				),
-				side_attr_list()
+				tgif_attr_list()
 			)
 		),
-		side_field_u8("z", side_attr_list()),
+		tgif_field_u8("z", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_struct_literal(void)
 {
-	side_event_cond(my_provider_event_struct_literal) {
-		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
-		side_event_call(my_provider_event_struct_literal, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
+	tgif_event_cond(my_provider_event_struct_literal) {
+		tgif_arg_define_vec(mystruct, tgif_arg_list(tgif_arg_u32(21), tgif_arg_s64(22)));
+		tgif_event_call(my_provider_event_struct_literal, tgif_arg_list(tgif_arg_struct(&mystruct), tgif_arg_u8(55)));
 	}
 }
 
-static side_define_struct(mystructdef,
-	side_field_list(
-		side_field_u32("x", side_attr_list()),
-		side_field_s64("y", side_attr_list()),
+static tgif_define_struct(mystructdef,
+	tgif_field_list(
+		tgif_field_u32("x", tgif_attr_list()),
+		tgif_field_s64("y", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_struct, "myprovider", "myeventstruct", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_struct("struct", &mystructdef),
-		side_field_u8("z", side_attr_list()),
+tgif_static_event(my_provider_event_struct, "myprovider", "myeventstruct", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_struct("struct", &mystructdef),
+		tgif_field_u8("z", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_struct(void)
 {
-	side_event_cond(my_provider_event_struct) {
-		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
-		side_event_call(my_provider_event_struct, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
+	tgif_event_cond(my_provider_event_struct) {
+		tgif_arg_define_vec(mystruct, tgif_arg_list(tgif_arg_u32(21), tgif_arg_s64(22)));
+		tgif_event_call(my_provider_event_struct, tgif_arg_list(tgif_arg_struct(&mystruct), tgif_arg_u8(55)));
 	}
 }
 
-side_static_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_array("arr", side_elem(side_type_u32(side_attr_list())), 3, side_attr_list()),
-		side_field_s64("v", side_attr_list()),
+tgif_static_event(my_provider_event_array, "myprovider", "myarray", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_array("arr", tgif_elem(tgif_type_u32(tgif_attr_list())), 3, tgif_attr_list()),
+		tgif_field_s64("v", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_array(void)
 {
-	side_event_cond(my_provider_event_array) {
-		side_arg_define_vec(myarray, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
-		side_event_call(my_provider_event_array, side_arg_list(side_arg_array(&myarray), side_arg_s64(42)));
+	tgif_event_cond(my_provider_event_array) {
+		tgif_arg_define_vec(myarray, tgif_arg_list(tgif_arg_u32(1), tgif_arg_u32(2), tgif_arg_u32(3)));
+		tgif_event_call(my_provider_event_array, tgif_arg_list(tgif_arg_array(&myarray), tgif_arg_s64(42)));
 	}
 }
 
-side_static_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_vla("vla", side_elem(side_type_u32(side_attr_list())), side_attr_list()),
-		side_field_s64("v", side_attr_list()),
+tgif_static_event(my_provider_event_vla, "myprovider", "myvla", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_vla("vla", tgif_elem(tgif_type_u32(tgif_attr_list())), tgif_attr_list()),
+		tgif_field_s64("v", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_vla(void)
 {
-	side_event_cond(my_provider_event_vla) {
-		side_arg_define_vec(myvla, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
-		side_event_call(my_provider_event_vla, side_arg_list(side_arg_vla(&myvla), side_arg_s64(42)));
+	tgif_event_cond(my_provider_event_vla) {
+		tgif_arg_define_vec(myvla, tgif_arg_list(tgif_arg_u32(1), tgif_arg_u32(2), tgif_arg_u32(3)));
+		tgif_event_call(my_provider_event_vla, tgif_arg_list(tgif_arg_vla(&myvla), tgif_arg_s64(42)));
 	}
 }
 
@@ -164,39 +164,39 @@ struct app_visitor_ctx {
 };
 
 static
-enum side_visitor_status test_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+enum tgif_visitor_status test_visitor(const struct tgif_tracer_visitor_ctx *tracer_ctx, void *_ctx)
 {
 	struct app_visitor_ctx *ctx = (struct app_visitor_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_arg_u32(ctx->ptr[i]);
+		const struct tgif_arg elem = tgif_arg_u32(ctx->ptr[i]);
 
-		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
+		if (tracer_ctx->write_elem(tracer_ctx, &elem) != TGIF_VISITOR_STATUS_OK)
+			return TGIF_VISITOR_STATUS_ERROR;
 	}
-	return SIDE_VISITOR_STATUS_OK;
+	return TGIF_VISITOR_STATUS_OK;
 }
 
 static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
-side_static_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_vla_visitor("vlavisit", side_elem(side_type_u32(side_attr_list())), test_visitor, side_attr_list()),
-		side_field_s64("v", side_attr_list()),
+tgif_static_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_vla_visitor("vlavisit", tgif_elem(tgif_type_u32(tgif_attr_list())), test_visitor, tgif_attr_list()),
+		tgif_field_s64("v", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_vla_visitor(void)
 {
-	side_event_cond(my_provider_event_vla_visitor) {
+	tgif_event_cond(my_provider_event_vla_visitor) {
 		struct app_visitor_ctx ctx = {
 			.ptr = testarray,
-			.length = SIDE_ARRAY_SIZE(testarray),
+			.length = TGIF_ARRAY_SIZE(testarray),
 		};
-		side_event_call(my_provider_event_vla_visitor, side_arg_list(side_arg_vla_visitor(&ctx), side_arg_s64(42)));
+		tgif_event_call(my_provider_event_vla_visitor, tgif_arg_list(tgif_arg_vla_visitor(&ctx), tgif_arg_s64(42)));
 	}
 }
 
@@ -208,18 +208,18 @@ struct app_visitor_2d_inner_ctx {
 };
 
 static
-enum side_visitor_status test_inner_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+enum tgif_visitor_status test_inner_visitor(const struct tgif_tracer_visitor_ctx *tracer_ctx, void *_ctx)
 {
 	struct app_visitor_2d_inner_ctx *ctx = (struct app_visitor_2d_inner_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_arg_u32(ctx->ptr[i]);
+		const struct tgif_arg elem = tgif_arg_u32(ctx->ptr[i]);
 
-		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
+		if (tracer_ctx->write_elem(tracer_ctx, &elem) != TGIF_VISITOR_STATUS_OK)
+			return TGIF_VISITOR_STATUS_ERROR;
 	}
-	return SIDE_VISITOR_STATUS_OK;
+	return TGIF_VISITOR_STATUS_OK;
 }
 
 struct app_visitor_2d_outer_ctx {
@@ -228,7 +228,7 @@ struct app_visitor_2d_outer_ctx {
 };
 
 static
-enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+enum tgif_visitor_status test_outer_visitor(const struct tgif_tracer_visitor_ctx *tracer_ctx, void *_ctx)
 {
 	struct app_visitor_2d_outer_ctx *ctx = (struct app_visitor_2d_outer_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
@@ -238,11 +238,11 @@ enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx
 			.ptr = ctx->ptr[i],
 			.length = 2,
 		};
-		const struct side_arg elem = side_arg_vla_visitor(&inner_ctx);
-		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
+		const struct tgif_arg elem = tgif_arg_vla_visitor(&inner_ctx);
+		if (tracer_ctx->write_elem(tracer_ctx, &elem) != TGIF_VISITOR_STATUS_OK)
+			return TGIF_VISITOR_STATUS_ERROR;
 	}
-	return SIDE_VISITOR_STATUS_OK;
+	return TGIF_VISITOR_STATUS_OK;
 }
 
 static uint32_t testarray2d[][2] = {
@@ -251,307 +251,307 @@ static uint32_t testarray2d[][2] = {
 	{ 55, 66 },
 };
 
-side_static_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_vla_visitor("vlavisit2d",
-			side_elem(
-				side_type_vla_visitor(
-					side_elem(side_type_u32(side_attr_list())),
+tgif_static_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_vla_visitor("vlavisit2d",
+			tgif_elem(
+				tgif_type_vla_visitor(
+					tgif_elem(tgif_type_u32(tgif_attr_list())),
 					test_inner_visitor,
-					side_attr_list())
-			), test_outer_visitor, side_attr_list()),
-		side_field_s64("v", side_attr_list()),
+					tgif_attr_list())
+			), test_outer_visitor, tgif_attr_list()),
+		tgif_field_s64("v", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_vla_visitor_2d(void)
 {
-	side_event_cond(my_provider_event_vla_visitor2d) {
+	tgif_event_cond(my_provider_event_vla_visitor2d) {
 		struct app_visitor_2d_outer_ctx ctx = {
 			.ptr = testarray2d,
-			.length = SIDE_ARRAY_SIZE(testarray2d),
+			.length = TGIF_ARRAY_SIZE(testarray2d),
 		};
-		side_event_call(my_provider_event_vla_visitor2d, side_arg_list(side_arg_vla_visitor(&ctx), side_arg_s64(42)));
+		tgif_event_call(my_provider_event_vla_visitor2d, tgif_arg_list(tgif_arg_vla_visitor(&ctx), tgif_arg_s64(42)));
 	}
 }
 
-side_static_event(my_provider_event_dynamic_basic,
-	"myprovider", "mydynamicbasic", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_basic,
+	"myprovider", "mydynamicbasic", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_basic_type(void)
 {
-	side_event(my_provider_event_dynamic_basic,
-		side_arg_list(side_arg_dynamic_s16(-33, side_attr_list())));
+	tgif_event(my_provider_event_dynamic_basic,
+		tgif_arg_list(tgif_arg_dynamic_s16(-33, tgif_attr_list())));
 }
 
-side_static_event(my_provider_event_dynamic_vla,
-	"myprovider", "mydynamicvla", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_vla,
+	"myprovider", "mydynamicvla", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_vla(void)
 {
-	side_arg_dynamic_define_vec(myvla,
-		side_arg_list(
-			side_arg_dynamic_u32(1, side_attr_list()),
-			side_arg_dynamic_u32(2, side_attr_list()),
-			side_arg_dynamic_u32(3, side_attr_list()),
+	tgif_arg_dynamic_define_vec(myvla,
+		tgif_arg_list(
+			tgif_arg_dynamic_u32(1, tgif_attr_list()),
+			tgif_arg_dynamic_u32(2, tgif_attr_list()),
+			tgif_arg_dynamic_u32(3, tgif_attr_list()),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_event(my_provider_event_dynamic_vla,
-		side_arg_list(side_arg_dynamic_vla(&myvla)));
+	tgif_event(my_provider_event_dynamic_vla,
+		tgif_arg_list(tgif_arg_dynamic_vla(&myvla)));
 }
 
-side_static_event(my_provider_event_dynamic_null,
-	"myprovider", "mydynamicnull", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_null,
+	"myprovider", "mydynamicnull", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_null(void)
 {
-	side_event(my_provider_event_dynamic_null,
-		side_arg_list(side_arg_dynamic_null(side_attr_list())));
+	tgif_event(my_provider_event_dynamic_null,
+		tgif_arg_list(tgif_arg_dynamic_null(tgif_attr_list())));
 }
 
-side_static_event(my_provider_event_dynamic_struct,
-	"myprovider", "mydynamicstruct", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_struct,
+	"myprovider", "mydynamicstruct", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_struct(void)
 {
-	side_arg_dynamic_define_struct(mystruct,
-		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_string("zzz", side_attr_list())),
-			side_arg_dynamic_field("c", side_arg_dynamic_null(side_attr_list())),
+	tgif_arg_dynamic_define_struct(mystruct,
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a", tgif_arg_dynamic_u32(43, tgif_attr_list())),
+			tgif_arg_dynamic_field("b", tgif_arg_dynamic_string("zzz", tgif_attr_list())),
+			tgif_arg_dynamic_field("c", tgif_arg_dynamic_null(tgif_attr_list())),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
 
-	side_event(my_provider_event_dynamic_struct,
-		side_arg_list(side_arg_dynamic_struct(&mystruct)));
+	tgif_event(my_provider_event_dynamic_struct,
+		tgif_arg_list(tgif_arg_dynamic_struct(&mystruct)));
 }
 
-side_static_event(my_provider_event_dynamic_nested_struct,
-	"myprovider", "mydynamicnestedstruct", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_nested_struct,
+	"myprovider", "mydynamicnestedstruct", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_nested_struct(void)
 {
-	side_arg_dynamic_define_struct(nested,
-		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
+	tgif_arg_dynamic_define_struct(nested,
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a", tgif_arg_dynamic_u32(43, tgif_attr_list())),
+			tgif_arg_dynamic_field("b", tgif_arg_dynamic_u8(55, tgif_attr_list())),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_arg_dynamic_define_struct(nested2,
-		side_arg_list(
-			side_arg_dynamic_field("aa", side_arg_dynamic_u64(128, side_attr_list())),
-			side_arg_dynamic_field("bb", side_arg_dynamic_u16(1, side_attr_list())),
+	tgif_arg_dynamic_define_struct(nested2,
+		tgif_arg_list(
+			tgif_arg_dynamic_field("aa", tgif_arg_dynamic_u64(128, tgif_attr_list())),
+			tgif_arg_dynamic_field("bb", tgif_arg_dynamic_u16(1, tgif_attr_list())),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_arg_dynamic_define_struct(mystruct,
-		side_arg_list(
-			side_arg_dynamic_field("nested", side_arg_dynamic_struct(&nested)),
-			side_arg_dynamic_field("nested2", side_arg_dynamic_struct(&nested2)),
+	tgif_arg_dynamic_define_struct(mystruct,
+		tgif_arg_list(
+			tgif_arg_dynamic_field("nested", tgif_arg_dynamic_struct(&nested)),
+			tgif_arg_dynamic_field("nested2", tgif_arg_dynamic_struct(&nested2)),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_event(my_provider_event_dynamic_nested_struct,
-		side_arg_list(side_arg_dynamic_struct(&mystruct)));
+	tgif_event(my_provider_event_dynamic_nested_struct,
+		tgif_arg_list(tgif_arg_dynamic_struct(&mystruct)));
 }
 
-side_static_event(my_provider_event_dynamic_vla_struct,
-	"myprovider", "mydynamicvlastruct", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_vla_struct,
+	"myprovider", "mydynamicvlastruct", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_vla_struct(void)
 {
-	side_arg_dynamic_define_struct(nested,
-		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
+	tgif_arg_dynamic_define_struct(nested,
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a", tgif_arg_dynamic_u32(43, tgif_attr_list())),
+			tgif_arg_dynamic_field("b", tgif_arg_dynamic_u8(55, tgif_attr_list())),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_arg_dynamic_define_vec(myvla,
-		side_arg_list(
-			side_arg_dynamic_struct(&nested),
-			side_arg_dynamic_struct(&nested),
-			side_arg_dynamic_struct(&nested),
-			side_arg_dynamic_struct(&nested),
+	tgif_arg_dynamic_define_vec(myvla,
+		tgif_arg_list(
+			tgif_arg_dynamic_struct(&nested),
+			tgif_arg_dynamic_struct(&nested),
+			tgif_arg_dynamic_struct(&nested),
+			tgif_arg_dynamic_struct(&nested),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_event(my_provider_event_dynamic_vla_struct,
-		side_arg_list(side_arg_dynamic_vla(&myvla)));
+	tgif_event(my_provider_event_dynamic_vla_struct,
+		tgif_arg_list(tgif_arg_dynamic_vla(&myvla)));
 }
 
-side_static_event(my_provider_event_dynamic_struct_vla,
-	"myprovider", "mydynamicstructvla", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_struct_vla,
+	"myprovider", "mydynamicstructvla", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_struct_vla(void)
 {
-	side_arg_dynamic_define_vec(myvla,
-		side_arg_list(
-			side_arg_dynamic_u32(1, side_attr_list()),
-			side_arg_dynamic_u32(2, side_attr_list()),
-			side_arg_dynamic_u32(3, side_attr_list()),
+	tgif_arg_dynamic_define_vec(myvla,
+		tgif_arg_list(
+			tgif_arg_dynamic_u32(1, tgif_attr_list()),
+			tgif_arg_dynamic_u32(2, tgif_attr_list()),
+			tgif_arg_dynamic_u32(3, tgif_attr_list()),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_arg_dynamic_define_vec(myvla2,
-		side_arg_list(
-			side_arg_dynamic_u32(4, side_attr_list()),
-			side_arg_dynamic_u64(5, side_attr_list()),
-			side_arg_dynamic_u32(6, side_attr_list()),
+	tgif_arg_dynamic_define_vec(myvla2,
+		tgif_arg_list(
+			tgif_arg_dynamic_u32(4, tgif_attr_list()),
+			tgif_arg_dynamic_u64(5, tgif_attr_list()),
+			tgif_arg_dynamic_u32(6, tgif_attr_list()),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_arg_dynamic_define_struct(mystruct,
-		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
-			side_arg_dynamic_field("b", side_arg_dynamic_vla(&myvla2)),
+	tgif_arg_dynamic_define_struct(mystruct,
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a", tgif_arg_dynamic_vla(&myvla)),
+			tgif_arg_dynamic_field("b", tgif_arg_dynamic_vla(&myvla2)),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_event(my_provider_event_dynamic_struct_vla,
-		side_arg_list(side_arg_dynamic_struct(&mystruct)));
+	tgif_event(my_provider_event_dynamic_struct_vla,
+		tgif_arg_list(tgif_arg_dynamic_struct(&mystruct)));
 }
 
-side_static_event(my_provider_event_dynamic_nested_vla,
-	"myprovider", "mydynamicnestedvla", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_nested_vla,
+	"myprovider", "mydynamicnestedvla", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_nested_vla(void)
 {
-	side_arg_dynamic_define_vec(nestedvla,
-		side_arg_list(
-			side_arg_dynamic_u32(1, side_attr_list()),
-			side_arg_dynamic_u16(2, side_attr_list()),
-			side_arg_dynamic_u32(3, side_attr_list()),
+	tgif_arg_dynamic_define_vec(nestedvla,
+		tgif_arg_list(
+			tgif_arg_dynamic_u32(1, tgif_attr_list()),
+			tgif_arg_dynamic_u16(2, tgif_attr_list()),
+			tgif_arg_dynamic_u32(3, tgif_attr_list()),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_arg_dynamic_define_vec(nestedvla2,
-		side_arg_list(
-			side_arg_dynamic_u8(4, side_attr_list()),
-			side_arg_dynamic_u32(5, side_attr_list()),
-			side_arg_dynamic_u32(6, side_attr_list()),
+	tgif_arg_dynamic_define_vec(nestedvla2,
+		tgif_arg_list(
+			tgif_arg_dynamic_u8(4, tgif_attr_list()),
+			tgif_arg_dynamic_u32(5, tgif_attr_list()),
+			tgif_arg_dynamic_u32(6, tgif_attr_list()),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_arg_dynamic_define_vec(myvla,
-		side_arg_list(
-			side_arg_dynamic_vla(&nestedvla),
-			side_arg_dynamic_vla(&nestedvla2),
+	tgif_arg_dynamic_define_vec(myvla,
+		tgif_arg_list(
+			tgif_arg_dynamic_vla(&nestedvla),
+			tgif_arg_dynamic_vla(&nestedvla2),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
-	side_event(my_provider_event_dynamic_nested_vla,
-		side_arg_list(side_arg_dynamic_vla(&myvla)));
+	tgif_event(my_provider_event_dynamic_nested_vla,
+		tgif_arg_list(tgif_arg_dynamic_vla(&myvla)));
 }
 
-side_static_event_variadic(my_provider_event_variadic,
-	"myprovider", "myvariadicevent", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+tgif_static_event_variadic(my_provider_event_variadic,
+	"myprovider", "myvariadicevent", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(),
+	tgif_attr_list()
 );
 
 static
 void test_variadic(void)
 {
-	side_event_variadic(my_provider_event_variadic,
-		side_arg_list(),
-		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(55, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4, side_attr_list())),
+	tgif_event_variadic(my_provider_event_variadic,
+		tgif_arg_list(),
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a", tgif_arg_dynamic_u32(55, tgif_attr_list())),
+			tgif_arg_dynamic_field("b", tgif_arg_dynamic_s8(-4, tgif_attr_list())),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
 }
 
-side_static_event_variadic(my_provider_event_static_variadic,
-	"myprovider", "mystaticvariadicevent", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_u32("abc", side_attr_list()),
-		side_field_u16("def", side_attr_list()),
+tgif_static_event_variadic(my_provider_event_static_variadic,
+	"myprovider", "mystaticvariadicevent", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_u32("abc", tgif_attr_list()),
+		tgif_field_u16("def", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_static_variadic(void)
 {
-	side_event_variadic(my_provider_event_static_variadic,
-		side_arg_list(
-			side_arg_u32(1),
-			side_arg_u16(2),
+	tgif_event_variadic(my_provider_event_static_variadic,
+		tgif_arg_list(
+			tgif_arg_u32(1),
+			tgif_arg_u16(2),
 		),
-		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(55, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4, side_attr_list())),
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a", tgif_arg_dynamic_u32(55, tgif_attr_list())),
+			tgif_arg_dynamic_field("b", tgif_arg_dynamic_s8(-4, tgif_attr_list())),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
 }
 
-side_static_event(my_provider_event_bool, "myprovider", "myeventbool", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_bool("a_false", side_attr_list()),
-		side_field_bool("b_true", side_attr_list()),
-		side_field_bool("c_true", side_attr_list()),
-		side_field_bool("d_true", side_attr_list()),
-		side_field_bool("e_true", side_attr_list()),
-		side_field_bool("f_false", side_attr_list()),
-		side_field_bool("g_true", side_attr_list()),
+tgif_static_event(my_provider_event_bool, "myprovider", "myeventbool", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_bool("a_false", tgif_attr_list()),
+		tgif_field_bool("b_true", tgif_attr_list()),
+		tgif_field_bool("c_true", tgif_attr_list()),
+		tgif_field_bool("d_true", tgif_attr_list()),
+		tgif_field_bool("e_true", tgif_attr_list()),
+		tgif_field_bool("f_false", tgif_attr_list()),
+		tgif_field_bool("g_true", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
@@ -565,46 +565,46 @@ void test_bool(void)
 	bool f = false;
 	uint32_t g = 256;
 
-	side_event(my_provider_event_bool,
-		side_arg_list(
-			side_arg_bool(a),
-			side_arg_bool(b),
-			side_arg_bool(c),
-			side_arg_bool(d),
-			side_arg_bool(e),
-			side_arg_bool(f),
-			side_arg_bool(g),
+	tgif_event(my_provider_event_bool,
+		tgif_arg_list(
+			tgif_arg_bool(a),
+			tgif_arg_bool(b),
+			tgif_arg_bool(c),
+			tgif_arg_bool(d),
+			tgif_arg_bool(e),
+			tgif_arg_bool(f),
+			tgif_arg_bool(g),
 		)
 	);
 }
 
-side_static_event_variadic(my_provider_event_dynamic_bool,
-	"myprovider", "mydynamicbool", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+tgif_static_event_variadic(my_provider_event_dynamic_bool,
+	"myprovider", "mydynamicbool", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(),
+	tgif_attr_list()
 );
 
 static
 void test_dynamic_bool(void)
 {
-	side_event_variadic(my_provider_event_dynamic_bool,
-		side_arg_list(),
-		side_arg_list(
-			side_arg_dynamic_field("a_true", side_arg_dynamic_bool(55, side_attr_list())),
-			side_arg_dynamic_field("b_true", side_arg_dynamic_bool(-4, side_attr_list())),
-			side_arg_dynamic_field("c_false", side_arg_dynamic_bool(0, side_attr_list())),
-			side_arg_dynamic_field("d_true", side_arg_dynamic_bool(256, side_attr_list())),
+	tgif_event_variadic(my_provider_event_dynamic_bool,
+		tgif_arg_list(),
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a_true", tgif_arg_dynamic_bool(55, tgif_attr_list())),
+			tgif_arg_dynamic_field("b_true", tgif_arg_dynamic_bool(-4, tgif_attr_list())),
+			tgif_arg_dynamic_field("c_false", tgif_arg_dynamic_bool(0, tgif_attr_list())),
+			tgif_arg_dynamic_field("d_true", tgif_arg_dynamic_bool(256, tgif_attr_list())),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
 }
 
-side_static_event(my_provider_event_dynamic_vla_visitor,
-	"myprovider", "mydynamicvlavisitor", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_vla_visitor,
+	"myprovider", "mydynamicvlavisitor", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 struct app_dynamic_vla_visitor_ctx {
@@ -613,17 +613,17 @@ struct app_dynamic_vla_visitor_ctx {
 };
 
 static
-enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+enum tgif_visitor_status test_dynamic_vla_visitor(const struct tgif_tracer_visitor_ctx *tracer_ctx, void *_ctx)
 {
 	struct app_dynamic_vla_visitor_ctx *ctx = (struct app_dynamic_vla_visitor_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_arg_dynamic_u32(ctx->ptr[i], side_attr_list());
-		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
+		const struct tgif_arg elem = tgif_arg_dynamic_u32(ctx->ptr[i], tgif_attr_list());
+		if (tracer_ctx->write_elem(tracer_ctx, &elem) != TGIF_VISITOR_STATUS_OK)
+			return TGIF_VISITOR_STATUS_ERROR;
 	}
-	return SIDE_VISITOR_STATUS_OK;
+	return TGIF_VISITOR_STATUS_OK;
 }
 
 static uint32_t testarray_dynamic_vla[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
@@ -631,25 +631,25 @@ static uint32_t testarray_dynamic_vla[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 static
 void test_dynamic_vla_with_visitor(void)
 {
-	side_event_cond(my_provider_event_dynamic_vla_visitor) {
+	tgif_event_cond(my_provider_event_dynamic_vla_visitor) {
 		struct app_dynamic_vla_visitor_ctx ctx = {
 			.ptr = testarray_dynamic_vla,
-			.length = SIDE_ARRAY_SIZE(testarray_dynamic_vla),
+			.length = TGIF_ARRAY_SIZE(testarray_dynamic_vla),
 		};
-		side_event_call(my_provider_event_dynamic_vla_visitor,
-			side_arg_list(
-				side_arg_dynamic_vla_visitor(test_dynamic_vla_visitor, &ctx, side_attr_list())
+		tgif_event_call(my_provider_event_dynamic_vla_visitor,
+			tgif_arg_list(
+				tgif_arg_dynamic_vla_visitor(test_dynamic_vla_visitor, &ctx, tgif_attr_list())
 			)
 		);
 	}
 }
 
-side_static_event(my_provider_event_dynamic_struct_visitor,
-	"myprovider", "mydynamicstructvisitor", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
+tgif_static_event(my_provider_event_dynamic_struct_visitor,
+	"myprovider", "mydynamicstructvisitor", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_dynamic("dynamic"),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 struct struct_visitor_pair {
@@ -663,20 +663,20 @@ struct app_dynamic_struct_visitor_ctx {
 };
 
 static
-enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx, void *_ctx)
+enum tgif_visitor_status test_dynamic_struct_visitor(const struct tgif_tracer_dynamic_struct_visitor_ctx *tracer_ctx, void *_ctx)
 {
 	struct app_dynamic_struct_visitor_ctx *ctx = (struct app_dynamic_struct_visitor_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		struct side_arg_dynamic_field dynamic_field = {
+		struct tgif_arg_dynamic_field dynamic_field = {
 			.field_name = ctx->ptr[i].name,
-			.elem = side_arg_dynamic_u32(ctx->ptr[i].value, side_attr_list()),
+			.elem = tgif_arg_dynamic_u32(ctx->ptr[i].value, tgif_attr_list()),
 		};
-		if (tracer_ctx->write_field(tracer_ctx, &dynamic_field) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
+		if (tracer_ctx->write_field(tracer_ctx, &dynamic_field) != TGIF_VISITOR_STATUS_OK)
+			return TGIF_VISITOR_STATUS_ERROR;
 	}
-	return SIDE_VISITOR_STATUS_OK;
+	return TGIF_VISITOR_STATUS_OK;
 }
 
 static struct struct_visitor_pair testarray_dynamic_struct[] = {
@@ -689,187 +689,187 @@ static struct struct_visitor_pair testarray_dynamic_struct[] = {
 static
 void test_dynamic_struct_with_visitor(void)
 {
-	side_event_cond(my_provider_event_dynamic_struct_visitor) {
+	tgif_event_cond(my_provider_event_dynamic_struct_visitor) {
 		struct app_dynamic_struct_visitor_ctx ctx = {
 			.ptr = testarray_dynamic_struct,
-			.length = SIDE_ARRAY_SIZE(testarray_dynamic_struct),
+			.length = TGIF_ARRAY_SIZE(testarray_dynamic_struct),
 		};
-		side_event_call(my_provider_event_dynamic_struct_visitor,
-			side_arg_list(
-				side_arg_dynamic_struct_visitor(test_dynamic_struct_visitor, &ctx, side_attr_list())
+		tgif_event_call(my_provider_event_dynamic_struct_visitor,
+			tgif_arg_list(
+				tgif_arg_dynamic_struct_visitor(test_dynamic_struct_visitor, &ctx, tgif_attr_list())
 			)
 		);
 	}
 }
 
-side_static_event(my_provider_event_user_attribute, "myprovider", "myevent_user_attribute", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_u32("abc", side_attr_list()),
-		side_field_s64("def", side_attr_list()),
+tgif_static_event(my_provider_event_user_attribute, "myprovider", "myevent_user_attribute", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_u32("abc", tgif_attr_list()),
+		tgif_field_s64("def", tgif_attr_list()),
 	),
-	side_attr_list(
-		side_attr("user_attribute_a", side_attr_string("val1")),
-		side_attr("user_attribute_b", side_attr_string("val2")),
+	tgif_attr_list(
+		tgif_attr("user_attribute_a", tgif_attr_string("val1")),
+		tgif_attr("user_attribute_b", tgif_attr_string("val2")),
 	)
 );
 
 static
 void test_event_user_attribute(void)
 {
-	side_event(my_provider_event_user_attribute, side_arg_list(side_arg_u32(1), side_arg_s64(2)));
+	tgif_event(my_provider_event_user_attribute, tgif_arg_list(tgif_arg_u32(1), tgif_arg_s64(2)));
 }
 
-side_static_event(my_provider_field_user_attribute, "myprovider", "myevent_field_attribute", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_u32("abc",
-			side_attr_list(
-				side_attr("user_attribute_a", side_attr_string("val1")),
-				side_attr("user_attribute_b", side_attr_u32(2)),
+tgif_static_event(my_provider_field_user_attribute, "myprovider", "myevent_field_attribute", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_u32("abc",
+			tgif_attr_list(
+				tgif_attr("user_attribute_a", tgif_attr_string("val1")),
+				tgif_attr("user_attribute_b", tgif_attr_u32(2)),
 			)
 		),
-		side_field_s64("def",
-			side_attr_list(
-				side_attr("user_attribute_c", side_attr_string("val3")),
-				side_attr("user_attribute_d", side_attr_s64(-5)),
+		tgif_field_s64("def",
+			tgif_attr_list(
+				tgif_attr("user_attribute_c", tgif_attr_string("val3")),
+				tgif_attr("user_attribute_d", tgif_attr_s64(-5)),
 			)
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_field_user_attribute(void)
 {
-	side_event(my_provider_field_user_attribute, side_arg_list(side_arg_u32(1), side_arg_s64(2)));
+	tgif_event(my_provider_field_user_attribute, tgif_arg_list(tgif_arg_u32(1), tgif_arg_s64(2)));
 }
 
-side_static_event_variadic(my_provider_event_variadic_attr,
-	"myprovider", "myvariadiceventattr", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+tgif_static_event_variadic(my_provider_event_variadic_attr,
+	"myprovider", "myvariadiceventattr", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(),
+	tgif_attr_list()
 );
 
 static
 void test_variadic_attr(void)
 {
-	side_event_variadic(my_provider_event_variadic_attr,
-		side_arg_list(),
-		side_arg_list(
-			side_arg_dynamic_field("a",
-				side_arg_dynamic_u32(55,
-					side_attr_list(
-						side_attr("user_attribute_c", side_attr_string("valX")),
-						side_attr("user_attribute_d", side_attr_u8(55)),
+	tgif_event_variadic(my_provider_event_variadic_attr,
+		tgif_arg_list(),
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a",
+				tgif_arg_dynamic_u32(55,
+					tgif_attr_list(
+						tgif_attr("user_attribute_c", tgif_attr_string("valX")),
+						tgif_attr("user_attribute_d", tgif_attr_u8(55)),
 					)
 				)
 			),
-			side_arg_dynamic_field("b",
-				side_arg_dynamic_s8(-4,
-					side_attr_list(
-						side_attr("X", side_attr_u8(1)),
-						side_attr("Y", side_attr_s8(2)),
+			tgif_arg_dynamic_field("b",
+				tgif_arg_dynamic_s8(-4,
+					tgif_attr_list(
+						tgif_attr("X", tgif_attr_u8(1)),
+						tgif_attr("Y", tgif_attr_s8(2)),
 					)
 				)
 			),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
 }
 
-side_static_event_variadic(my_provider_event_variadic_vla_attr,
-	"myprovider", "myvariadiceventvlaattr", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+tgif_static_event_variadic(my_provider_event_variadic_vla_attr,
+	"myprovider", "myvariadiceventvlaattr", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(),
+	tgif_attr_list()
 );
 
 static
 void test_variadic_vla_attr(void)
 {
-	side_arg_dynamic_define_vec(myvla,
-		side_arg_list(
-			side_arg_dynamic_u32(1,
-				side_attr_list(
-					side_attr("Z", side_attr_u8(0)),
-					side_attr("A", side_attr_u8(123)),
+	tgif_arg_dynamic_define_vec(myvla,
+		tgif_arg_list(
+			tgif_arg_dynamic_u32(1,
+				tgif_attr_list(
+					tgif_attr("Z", tgif_attr_u8(0)),
+					tgif_attr("A", tgif_attr_u8(123)),
 				)
 			),
-			side_arg_dynamic_u32(2, side_attr_list()),
-			side_arg_dynamic_u32(3, side_attr_list()),
+			tgif_arg_dynamic_u32(2, tgif_attr_list()),
+			tgif_arg_dynamic_u32(3, tgif_attr_list()),
 		),
-		side_attr_list(
-			side_attr("X", side_attr_u8(1)),
-			side_attr("Y", side_attr_u8(2)),
+		tgif_attr_list(
+			tgif_attr("X", tgif_attr_u8(1)),
+			tgif_attr("Y", tgif_attr_u8(2)),
 		)
 	);
-	side_event_variadic(my_provider_event_variadic_vla_attr,
-		side_arg_list(),
-		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
+	tgif_event_variadic(my_provider_event_variadic_vla_attr,
+		tgif_arg_list(),
+		tgif_arg_list(
+			tgif_arg_dynamic_field("a", tgif_arg_dynamic_vla(&myvla)),
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
 }
 
-side_static_event_variadic(my_provider_event_variadic_struct_attr,
-	"myprovider", "myvariadiceventstructattr", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+tgif_static_event_variadic(my_provider_event_variadic_struct_attr,
+	"myprovider", "myvariadiceventstructattr", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(),
+	tgif_attr_list()
 );
 
 static
 void test_variadic_struct_attr(void)
 {
-	side_event_cond(my_provider_event_variadic_struct_attr) {
-		side_arg_dynamic_define_struct(mystruct,
-			side_arg_list(
-				side_arg_dynamic_field("a",
-					side_arg_dynamic_u32(43,
-						side_attr_list(
-							side_attr("A", side_attr_bool(true)),
+	tgif_event_cond(my_provider_event_variadic_struct_attr) {
+		tgif_arg_dynamic_define_struct(mystruct,
+			tgif_arg_list(
+				tgif_arg_dynamic_field("a",
+					tgif_arg_dynamic_u32(43,
+						tgif_attr_list(
+							tgif_attr("A", tgif_attr_bool(true)),
 						)
 					)
 				),
-				side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
+				tgif_arg_dynamic_field("b", tgif_arg_dynamic_u8(55, tgif_attr_list())),
 			),
-			side_attr_list(
-				side_attr("X", side_attr_u8(1)),
-				side_attr("Y", side_attr_u8(2)),
+			tgif_attr_list(
+				tgif_attr("X", tgif_attr_u8(1)),
+				tgif_attr("Y", tgif_attr_u8(2)),
 			)
 		);
-		side_event_call_variadic(my_provider_event_variadic_struct_attr,
-			side_arg_list(),
-			side_arg_list(
-				side_arg_dynamic_field("a", side_arg_dynamic_struct(&mystruct)),
+		tgif_event_call_variadic(my_provider_event_variadic_struct_attr,
+			tgif_arg_list(),
+			tgif_arg_list(
+				tgif_arg_dynamic_field("a", tgif_arg_dynamic_struct(&mystruct)),
 			),
-			side_attr_list()
+			tgif_attr_list()
 		);
 	}
 }
 
-side_static_event(my_provider_event_float, "myprovider", "myeventfloat", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
+tgif_static_event(my_provider_event_float, "myprovider", "myeventfloat", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
 #if __HAVE_FLOAT16
-		side_field_float_binary16("binary16", side_attr_list()),
-		side_field_float_binary16_le("binary16_le", side_attr_list()),
-		side_field_float_binary16_be("binary16_be", side_attr_list()),
+		tgif_field_float_binary16("binary16", tgif_attr_list()),
+		tgif_field_float_binary16_le("binary16_le", tgif_attr_list()),
+		tgif_field_float_binary16_be("binary16_be", tgif_attr_list()),
 #endif
 #if __HAVE_FLOAT32
-		side_field_float_binary32("binary32", side_attr_list()),
-		side_field_float_binary32_le("binary32_le", side_attr_list()),
-		side_field_float_binary32_be("binary32_be", side_attr_list()),
+		tgif_field_float_binary32("binary32", tgif_attr_list()),
+		tgif_field_float_binary32_le("binary32_le", tgif_attr_list()),
+		tgif_field_float_binary32_be("binary32_be", tgif_attr_list()),
 #endif
 #if __HAVE_FLOAT64
-		side_field_float_binary64("binary64", side_attr_list()),
-		side_field_float_binary64_le("binary64_le", side_attr_list()),
-		side_field_float_binary64_be("binary64_be", side_attr_list()),
+		tgif_field_float_binary64("binary64", tgif_attr_list()),
+		tgif_field_float_binary64_le("binary64_le", tgif_attr_list()),
+		tgif_field_float_binary64_be("binary64_be", tgif_attr_list()),
 #endif
 #if __HAVE_FLOAT128
-		side_field_float_binary128("binary128", side_attr_list()),
-		side_field_float_binary128_le("binary128_le", side_attr_list()),
-		side_field_float_binary128_be("binary128_be", side_attr_list()),
+		tgif_field_float_binary128("binary128", tgif_attr_list()),
+		tgif_field_float_binary128_le("binary128_le", tgif_attr_list()),
+		tgif_field_float_binary128_be("binary128_be", tgif_attr_list()),
 #endif
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
@@ -909,68 +909,68 @@ void test_float(void)
 #endif
 
 #if __HAVE_FLOAT16
-	float16.u = side_bswap_16(float16.u);
+	float16.u = tgif_bswap_16(float16.u);
 #endif
 #if __HAVE_FLOAT32
-	float32.u = side_bswap_32(float32.u);
+	float32.u = tgif_bswap_32(float32.u);
 #endif
 #if __HAVE_FLOAT64
-	float64.u = side_bswap_64(float64.u);
+	float64.u = tgif_bswap_64(float64.u);
 #endif
 #if __HAVE_FLOAT128
-	side_bswap_128p(float128.arr);
+	tgif_bswap_128p(float128.arr);
 #endif
 
-	side_event(my_provider_event_float,
-		side_arg_list(
+	tgif_event(my_provider_event_float,
+		tgif_arg_list(
 #if __HAVE_FLOAT16
-			side_arg_float_binary16(1.1),
-# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_float_binary16(1.1),
-			side_arg_float_binary16(float16.f),
+			tgif_arg_float_binary16(1.1),
+# if TGIF_FLOAT_WORD_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_float_binary16(1.1),
+			tgif_arg_float_binary16(float16.f),
 # else
-			side_arg_float_binary16(float16.f),
-			side_arg_float_binary16(1.1),
+			tgif_arg_float_binary16(float16.f),
+			tgif_arg_float_binary16(1.1),
 # endif
 #endif
 #if __HAVE_FLOAT32
-			side_arg_float_binary32(2.2),
-# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_float_binary32(2.2),
-			side_arg_float_binary32(float32.f),
+			tgif_arg_float_binary32(2.2),
+# if TGIF_FLOAT_WORD_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_float_binary32(2.2),
+			tgif_arg_float_binary32(float32.f),
 # else
-			side_arg_float_binary32(float32.f),
-			side_arg_float_binary32(2.2),
+			tgif_arg_float_binary32(float32.f),
+			tgif_arg_float_binary32(2.2),
 # endif
 #endif
 #if __HAVE_FLOAT64
-			side_arg_float_binary64(3.3),
-# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_float_binary64(3.3),
-			side_arg_float_binary64(float64.f),
+			tgif_arg_float_binary64(3.3),
+# if TGIF_FLOAT_WORD_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_float_binary64(3.3),
+			tgif_arg_float_binary64(float64.f),
 # else
-			side_arg_float_binary64(float64.f),
-			side_arg_float_binary64(3.3),
+			tgif_arg_float_binary64(float64.f),
+			tgif_arg_float_binary64(3.3),
 # endif
 #endif
 #if __HAVE_FLOAT128
-			side_arg_float_binary128(4.4),
-# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_float_binary128(4.4),
-			side_arg_float_binary128(float128.f),
+			tgif_arg_float_binary128(4.4),
+# if TGIF_FLOAT_WORD_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_float_binary128(4.4),
+			tgif_arg_float_binary128(float128.f),
 # else
-			side_arg_float_binary128(float128.f),
-			side_arg_float_binary128(4.4),
+			tgif_arg_float_binary128(float128.f),
+			tgif_arg_float_binary128(4.4),
 # endif
 #endif
 		)
 	);
 }
 
-side_static_event_variadic(my_provider_event_variadic_float,
-	"myprovider", "myvariadicfloat", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+tgif_static_event_variadic(my_provider_event_variadic_float,
+	"myprovider", "myvariadicfloat", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(),
+	tgif_attr_list()
 );
 
 static
@@ -1010,411 +1010,411 @@ void test_variadic_float(void)
 #endif
 
 #if __HAVE_FLOAT16
-	float16.u = side_bswap_16(float16.u);
+	float16.u = tgif_bswap_16(float16.u);
 #endif
 #if __HAVE_FLOAT32
-	float32.u = side_bswap_32(float32.u);
+	float32.u = tgif_bswap_32(float32.u);
 #endif
 #if __HAVE_FLOAT64
-	float64.u = side_bswap_64(float64.u);
+	float64.u = tgif_bswap_64(float64.u);
 #endif
 #if __HAVE_FLOAT128
-	side_bswap_128p(float128.arr);
+	tgif_bswap_128p(float128.arr);
 #endif
 
-	side_event_variadic(my_provider_event_variadic_float,
-		side_arg_list(),
-		side_arg_list(
+	tgif_event_variadic(my_provider_event_variadic_float,
+		tgif_arg_list(),
+		tgif_arg_list(
 #if __HAVE_FLOAT16
-			side_arg_dynamic_field("binary16", side_arg_dynamic_float_binary16(1.1, side_attr_list())),
-# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(1.1, side_attr_list())),
-			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(float16.f, side_attr_list())),
+			tgif_arg_dynamic_field("binary16", tgif_arg_dynamic_float_binary16(1.1, tgif_attr_list())),
+# if TGIF_FLOAT_WORD_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_dynamic_field("binary16_le", tgif_arg_dynamic_float_binary16_le(1.1, tgif_attr_list())),
+			tgif_arg_dynamic_field("binary16_be", tgif_arg_dynamic_float_binary16_be(float16.f, tgif_attr_list())),
 # else
-			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(float16.f, side_attr_list())),
-			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(1.1, side_attr_list())),
+			tgif_arg_dynamic_field("binary16_le", tgif_arg_dynamic_float_binary16_le(float16.f, tgif_attr_list())),
+			tgif_arg_dynamic_field("binary16_be", tgif_arg_dynamic_float_binary16_be(1.1, tgif_attr_list())),
 # endif
 #endif
 #if __HAVE_FLOAT32
-			side_arg_dynamic_field("binary32", side_arg_dynamic_float_binary32(2.2, side_attr_list())),
-# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(2.2, side_attr_list())),
-			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(float32.f, side_attr_list())),
+			tgif_arg_dynamic_field("binary32", tgif_arg_dynamic_float_binary32(2.2, tgif_attr_list())),
+# if TGIF_FLOAT_WORD_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_dynamic_field("binary32_le", tgif_arg_dynamic_float_binary32_le(2.2, tgif_attr_list())),
+			tgif_arg_dynamic_field("binary32_be", tgif_arg_dynamic_float_binary32_be(float32.f, tgif_attr_list())),
 # else
-			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(float32.f, side_attr_list())),
-			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(2.2, side_attr_list())),
+			tgif_arg_dynamic_field("binary32_le", tgif_arg_dynamic_float_binary32_le(float32.f, tgif_attr_list())),
+			tgif_arg_dynamic_field("binary32_be", tgif_arg_dynamic_float_binary32_be(2.2, tgif_attr_list())),
 # endif
 #endif
 #if __HAVE_FLOAT64
-			side_arg_dynamic_field("binary64", side_arg_dynamic_float_binary64(3.3, side_attr_list())),
-# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary64_le", side_arg_dynamic_float_binary64_le(3.3, side_attr_list())),
-			side_arg_dynamic_field("binary64_be", side_arg_dynamic_float_binary64_be(float64.f, side_attr_list())),
+			tgif_arg_dynamic_field("binary64", tgif_arg_dynamic_float_binary64(3.3, tgif_attr_list())),
+# if TGIF_FLOAT_WORD_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_dynamic_field("binary64_le", tgif_arg_dynamic_float_binary64_le(3.3, tgif_attr_list())),
+			tgif_arg_dynamic_field("binary64_be", tgif_arg_dynamic_float_binary64_be(float64.f, tgif_attr_list())),
 # else
-			side_arg_dynamic_field("binary64_le", side_arg_dynamic_float_binary64_le(float64.f, side_attr_list())),
-			side_arg_dynamic_field("binary64_be", side_arg_dynamic_float_binary64_be(3.3, side_attr_list())),
+			tgif_arg_dynamic_field("binary64_le", tgif_arg_dynamic_float_binary64_le(float64.f, tgif_attr_list())),
+			tgif_arg_dynamic_field("binary64_be", tgif_arg_dynamic_float_binary64_be(3.3, tgif_attr_list())),
 # endif
 #endif
 #if __HAVE_FLOAT128
-			side_arg_dynamic_field("binary128", side_arg_dynamic_float_binary128(4.4, side_attr_list())),
-# if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary128_le", side_arg_dynamic_float_binary128_le(4.4, side_attr_list())),
-			side_arg_dynamic_field("binary128_be", side_arg_dynamic_float_binary128_be(float128.f, side_attr_list())),
+			tgif_arg_dynamic_field("binary128", tgif_arg_dynamic_float_binary128(4.4, tgif_attr_list())),
+# if TGIF_FLOAT_WORD_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_dynamic_field("binary128_le", tgif_arg_dynamic_float_binary128_le(4.4, tgif_attr_list())),
+			tgif_arg_dynamic_field("binary128_be", tgif_arg_dynamic_float_binary128_be(float128.f, tgif_attr_list())),
 # else
-			side_arg_dynamic_field("binary128_le", side_arg_dynamic_float_binary128_le(float128.f, side_attr_list())),
-			side_arg_dynamic_field("binary128_be", side_arg_dynamic_float_binary128_be(4.4, side_attr_list())),
+			tgif_arg_dynamic_field("binary128_le", tgif_arg_dynamic_float_binary128_le(float128.f, tgif_attr_list())),
+			tgif_arg_dynamic_field("binary128_be", tgif_arg_dynamic_float_binary128_be(4.4, tgif_attr_list())),
 # endif
 #endif
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
 }
 
-static side_define_enum(myenum,
-	side_enum_mapping_list(
-		side_enum_mapping_range("one-ten", 1, 10),
-		side_enum_mapping_range("100-200", 100, 200),
-		side_enum_mapping_value("200", 200),
-		side_enum_mapping_value("300", 300),
+static tgif_define_enum(myenum,
+	tgif_enum_mapping_list(
+		tgif_enum_mapping_range("one-ten", 1, 10),
+		tgif_enum_mapping_range("100-200", 100, 200),
+		tgif_enum_mapping_value("200", 200),
+		tgif_enum_mapping_value("300", 300),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_enum, "myprovider", "myeventenum", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_enum("5", &myenum, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum("400", &myenum, side_elem(side_type_u64(side_attr_list()))),
-		side_field_enum("200", &myenum, side_elem(side_type_u8(side_attr_list()))),
-		side_field_enum("-100", &myenum, side_elem(side_type_s8(side_attr_list()))),
-		side_field_enum("6_be", &myenum, side_elem(side_type_u32_be(side_attr_list()))),
-		side_field_enum("6_le", &myenum, side_elem(side_type_u32_le(side_attr_list()))),
+tgif_static_event(my_provider_event_enum, "myprovider", "myeventenum", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_enum("5", &myenum, tgif_elem(tgif_type_u32(tgif_attr_list()))),
+		tgif_field_enum("400", &myenum, tgif_elem(tgif_type_u64(tgif_attr_list()))),
+		tgif_field_enum("200", &myenum, tgif_elem(tgif_type_u8(tgif_attr_list()))),
+		tgif_field_enum("-100", &myenum, tgif_elem(tgif_type_s8(tgif_attr_list()))),
+		tgif_field_enum("6_be", &myenum, tgif_elem(tgif_type_u32_be(tgif_attr_list()))),
+		tgif_field_enum("6_le", &myenum, tgif_elem(tgif_type_u32_le(tgif_attr_list()))),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_enum(void)
 {
-	side_event(my_provider_event_enum,
-		side_arg_list(
-			side_arg_u32(5),
-			side_arg_u64(400),
-			side_arg_u8(200),
-			side_arg_s8(-100),
-#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_u32(side_bswap_32(6)),
-			side_arg_u32(6),
+	tgif_event(my_provider_event_enum,
+		tgif_arg_list(
+			tgif_arg_u32(5),
+			tgif_arg_u64(400),
+			tgif_arg_u8(200),
+			tgif_arg_s8(-100),
+#if TGIF_BYTE_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_u32(tgif_bswap_32(6)),
+			tgif_arg_u32(6),
 #else
-			side_arg_u32(6),
-			side_arg_u32(side_bswap_32(6)),
+			tgif_arg_u32(6),
+			tgif_arg_u32(tgif_bswap_32(6)),
 #endif
 		)
 	);
 }
 
 /* A bitmap enum maps bits to labels. */
-static side_define_enum_bitmap(myenum_bitmap,
-	side_enum_bitmap_mapping_list(
-		side_enum_bitmap_mapping_value("0", 0),
-		side_enum_bitmap_mapping_range("1-2", 1, 2),
-		side_enum_bitmap_mapping_range("2-4", 2, 4),
-		side_enum_bitmap_mapping_value("3", 3),
-		side_enum_bitmap_mapping_value("30", 30),
-		side_enum_bitmap_mapping_value("63", 63),
-		side_enum_bitmap_mapping_range("158-160", 158, 160),
-		side_enum_bitmap_mapping_value("159", 159),
-		side_enum_bitmap_mapping_range("500-700", 500, 700),
+static tgif_define_enum_bitmap(myenum_bitmap,
+	tgif_enum_bitmap_mapping_list(
+		tgif_enum_bitmap_mapping_value("0", 0),
+		tgif_enum_bitmap_mapping_range("1-2", 1, 2),
+		tgif_enum_bitmap_mapping_range("2-4", 2, 4),
+		tgif_enum_bitmap_mapping_value("3", 3),
+		tgif_enum_bitmap_mapping_value("30", 30),
+		tgif_enum_bitmap_mapping_value("63", 63),
+		tgif_enum_bitmap_mapping_range("158-160", 158, 160),
+		tgif_enum_bitmap_mapping_value("159", 159),
+		tgif_enum_bitmap_mapping_range("500-700", 500, 700),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitmap", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_enum_bitmap("bit_0", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum_bitmap("bit_1", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum_bitmap("bit_2", &myenum_bitmap, side_elem(side_type_u8(side_attr_list()))),
-		side_field_enum_bitmap("bit_3", &myenum_bitmap, side_elem(side_type_u8(side_attr_list()))),
-		side_field_enum_bitmap("bit_30", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum_bitmap("bit_31", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum_bitmap("bit_63", &myenum_bitmap, side_elem(side_type_u64(side_attr_list()))),
-		side_field_enum_bitmap("bits_1+63", &myenum_bitmap, side_elem(side_type_u64(side_attr_list()))),
-		side_field_enum_bitmap("byte_bit_2", &myenum_bitmap, side_elem(side_type_byte(side_attr_list()))),
-		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_array(side_elem(side_type_u32(side_attr_list())), 5, side_attr_list()))),
-		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_vla(side_elem(side_type_u32(side_attr_list())), side_attr_list()))),
-		side_field_enum_bitmap("bit_2_be", &myenum_bitmap, side_elem(side_type_u32_be(side_attr_list()))),
-		side_field_enum_bitmap("bit_2_le", &myenum_bitmap, side_elem(side_type_u32_le(side_attr_list()))),
+tgif_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitmap", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_enum_bitmap("bit_0", &myenum_bitmap, tgif_elem(tgif_type_u32(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_1", &myenum_bitmap, tgif_elem(tgif_type_u32(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_2", &myenum_bitmap, tgif_elem(tgif_type_u8(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_3", &myenum_bitmap, tgif_elem(tgif_type_u8(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_30", &myenum_bitmap, tgif_elem(tgif_type_u32(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_31", &myenum_bitmap, tgif_elem(tgif_type_u32(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_63", &myenum_bitmap, tgif_elem(tgif_type_u64(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bits_1+63", &myenum_bitmap, tgif_elem(tgif_type_u64(tgif_attr_list()))),
+		tgif_field_enum_bitmap("byte_bit_2", &myenum_bitmap, tgif_elem(tgif_type_byte(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_159", &myenum_bitmap,
+			tgif_elem(tgif_type_array(tgif_elem(tgif_type_u32(tgif_attr_list())), 5, tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_159", &myenum_bitmap,
+			tgif_elem(tgif_type_vla(tgif_elem(tgif_type_u32(tgif_attr_list())), tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_2_be", &myenum_bitmap, tgif_elem(tgif_type_u32_be(tgif_attr_list()))),
+		tgif_field_enum_bitmap("bit_2_le", &myenum_bitmap, tgif_elem(tgif_type_u32_le(tgif_attr_list()))),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_enum_bitmap(void)
 {
-	side_event_cond(my_provider_event_enum_bitmap) {
-		side_arg_define_vec(myarray,
-			side_arg_list(
-				side_arg_u32(0),
-				side_arg_u32(0),
-				side_arg_u32(0),
-				side_arg_u32(0),
-				side_arg_u32(0x80000000),	/* bit 159 */
+	tgif_event_cond(my_provider_event_enum_bitmap) {
+		tgif_arg_define_vec(myarray,
+			tgif_arg_list(
+				tgif_arg_u32(0),
+				tgif_arg_u32(0),
+				tgif_arg_u32(0),
+				tgif_arg_u32(0),
+				tgif_arg_u32(0x80000000),	/* bit 159 */
 			)
 		);
-		side_event_call(my_provider_event_enum_bitmap,
-			side_arg_list(
-				side_arg_u32(1U << 0),
-				side_arg_u32(1U << 1),
-				side_arg_u8(1U << 2),
-				side_arg_u8(1U << 3),
-				side_arg_u32(1U << 30),
-				side_arg_u32(1U << 31),
-				side_arg_u64(1ULL << 63),
-				side_arg_u64((1ULL << 1) | (1ULL << 63)),
-				side_arg_byte(1U << 2),
-				side_arg_array(&myarray),
-				side_arg_vla(&myarray),
-#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
-				side_arg_u32(side_bswap_32(1U << 2)),
-				side_arg_u32(1U << 2),
+		tgif_event_call(my_provider_event_enum_bitmap,
+			tgif_arg_list(
+				tgif_arg_u32(1U << 0),
+				tgif_arg_u32(1U << 1),
+				tgif_arg_u8(1U << 2),
+				tgif_arg_u8(1U << 3),
+				tgif_arg_u32(1U << 30),
+				tgif_arg_u32(1U << 31),
+				tgif_arg_u64(1ULL << 63),
+				tgif_arg_u64((1ULL << 1) | (1ULL << 63)),
+				tgif_arg_byte(1U << 2),
+				tgif_arg_array(&myarray),
+				tgif_arg_vla(&myarray),
+#if TGIF_BYTE_ORDER == TGIF_LITTLE_ENDIAN
+				tgif_arg_u32(tgif_bswap_32(1U << 2)),
+				tgif_arg_u32(1U << 2),
 #else
-				side_arg_u32(1U << 2),
-				side_arg_u32(side_bswap_32(1U << 2)),
+				tgif_arg_u32(1U << 2),
+				tgif_arg_u32(tgif_bswap_32(1U << 2)),
 #endif
 			)
 		);
 	}
 }
 
-side_static_event_variadic(my_provider_event_blob, "myprovider", "myeventblob", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_byte("blobfield", side_attr_list()),
-		side_field_array("arrayblob", side_elem(side_type_byte(side_attr_list())), 3, side_attr_list()),
+tgif_static_event_variadic(my_provider_event_blob, "myprovider", "myeventblob", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_byte("blobfield", tgif_attr_list()),
+		tgif_field_array("arrayblob", tgif_elem(tgif_type_byte(tgif_attr_list())), 3, tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_blob(void)
 {
-	side_event_cond(my_provider_event_blob) {
-		side_arg_define_vec(myarray, side_arg_list(side_arg_byte(1), side_arg_byte(2), side_arg_byte(3)));
-		side_arg_dynamic_define_vec(myvla,
-			side_arg_list(
-				side_arg_dynamic_byte(0x22, side_attr_list()),
-				side_arg_dynamic_byte(0x33, side_attr_list()),
+	tgif_event_cond(my_provider_event_blob) {
+		tgif_arg_define_vec(myarray, tgif_arg_list(tgif_arg_byte(1), tgif_arg_byte(2), tgif_arg_byte(3)));
+		tgif_arg_dynamic_define_vec(myvla,
+			tgif_arg_list(
+				tgif_arg_dynamic_byte(0x22, tgif_attr_list()),
+				tgif_arg_dynamic_byte(0x33, tgif_attr_list()),
 			),
-			side_attr_list()
+			tgif_attr_list()
 		);
-		side_event_call_variadic(my_provider_event_blob,
-			side_arg_list(
-				side_arg_byte(0x55),
-				side_arg_array(&myarray),
+		tgif_event_call_variadic(my_provider_event_blob,
+			tgif_arg_list(
+				tgif_arg_byte(0x55),
+				tgif_arg_array(&myarray),
 			),
-			side_arg_list(
-				side_arg_dynamic_field("varblobfield",
-					side_arg_dynamic_byte(0x55, side_attr_list())
+			tgif_arg_list(
+				tgif_arg_dynamic_field("varblobfield",
+					tgif_arg_dynamic_byte(0x55, tgif_attr_list())
 				),
-				side_arg_dynamic_field("varblobvla", side_arg_dynamic_vla(&myvla)),
+				tgif_arg_dynamic_field("varblobvla", tgif_arg_dynamic_vla(&myvla)),
 			),
-			side_attr_list()
+			tgif_attr_list()
 		);
 	}
 }
 
-side_static_event_variadic(my_provider_event_format_string,
-	"myprovider", "myeventformatstring", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_string("fmt", side_attr_list()),
+tgif_static_event_variadic(my_provider_event_format_string,
+	"myprovider", "myeventformatstring", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_string("fmt", tgif_attr_list()),
 	),
-	side_attr_list(
-		side_attr("lang.c.format_string", side_attr_bool(true)),
+	tgif_attr_list(
+		tgif_attr("lang.c.format_string", tgif_attr_bool(true)),
 	)
 );
 
 static
 void test_fmt_string(void)
 {
-	side_event_cond(my_provider_event_format_string) {
-		side_arg_dynamic_define_vec(args,
-			side_arg_list(
-				side_arg_dynamic_string("blah", side_attr_list()),
-				side_arg_dynamic_s32(123, side_attr_list()),
+	tgif_event_cond(my_provider_event_format_string) {
+		tgif_arg_dynamic_define_vec(args,
+			tgif_arg_list(
+				tgif_arg_dynamic_string("blah", tgif_attr_list()),
+				tgif_arg_dynamic_s32(123, tgif_attr_list()),
 			),
-			side_attr_list()
+			tgif_attr_list()
 		);
-		side_event_call_variadic(my_provider_event_format_string,
-			side_arg_list(
-				side_arg_string("This is a formatted string with str: %s int: %d"),
+		tgif_event_call_variadic(my_provider_event_format_string,
+			tgif_arg_list(
+				tgif_arg_string("This is a formatted string with str: %s int: %d"),
 			),
-			side_arg_list(
-				side_arg_dynamic_field("arguments", side_arg_dynamic_vla(&args)),
+			tgif_arg_list(
+				tgif_arg_dynamic_field("arguments", tgif_arg_dynamic_vla(&args)),
 			),
-			side_attr_list()
+			tgif_attr_list()
 		);
 	}
 }
 
-side_static_event_variadic(my_provider_event_endian, "myprovider", "myevent_endian", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_u16_le("u16_le", side_attr_list()),
-		side_field_u32_le("u32_le", side_attr_list()),
-		side_field_u64_le("u64_le", side_attr_list()),
-		side_field_s16_le("s16_le", side_attr_list()),
-		side_field_s32_le("s32_le", side_attr_list()),
-		side_field_s64_le("s64_le", side_attr_list()),
-		side_field_u16_be("u16_be", side_attr_list()),
-		side_field_u32_be("u32_be", side_attr_list()),
-		side_field_u64_be("u64_be", side_attr_list()),
-		side_field_s16_be("s16_be", side_attr_list()),
-		side_field_s32_be("s32_be", side_attr_list()),
-		side_field_s64_be("s64_be", side_attr_list()),
+tgif_static_event_variadic(my_provider_event_endian, "myprovider", "myevent_endian", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_u16_le("u16_le", tgif_attr_list()),
+		tgif_field_u32_le("u32_le", tgif_attr_list()),
+		tgif_field_u64_le("u64_le", tgif_attr_list()),
+		tgif_field_s16_le("s16_le", tgif_attr_list()),
+		tgif_field_s32_le("s32_le", tgif_attr_list()),
+		tgif_field_s64_le("s64_le", tgif_attr_list()),
+		tgif_field_u16_be("u16_be", tgif_attr_list()),
+		tgif_field_u32_be("u32_be", tgif_attr_list()),
+		tgif_field_u64_be("u64_be", tgif_attr_list()),
+		tgif_field_s16_be("s16_be", tgif_attr_list()),
+		tgif_field_s32_be("s32_be", tgif_attr_list()),
+		tgif_field_s64_be("s64_be", tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_endian(void)
 {
-	side_event_variadic(my_provider_event_endian,
-		side_arg_list(
-#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_u16(1),
-			side_arg_u32(1),
-			side_arg_u64(1),
-			side_arg_s16(1),
-			side_arg_s32(1),
-			side_arg_s64(1),
-			side_arg_u16(side_bswap_16(1)),
-			side_arg_u32(side_bswap_32(1)),
-			side_arg_u64(side_bswap_64(1)),
-			side_arg_s16(side_bswap_16(1)),
-			side_arg_s32(side_bswap_32(1)),
-			side_arg_s64(side_bswap_64(1)),
+	tgif_event_variadic(my_provider_event_endian,
+		tgif_arg_list(
+#if TGIF_BYTE_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_u16(1),
+			tgif_arg_u32(1),
+			tgif_arg_u64(1),
+			tgif_arg_s16(1),
+			tgif_arg_s32(1),
+			tgif_arg_s64(1),
+			tgif_arg_u16(tgif_bswap_16(1)),
+			tgif_arg_u32(tgif_bswap_32(1)),
+			tgif_arg_u64(tgif_bswap_64(1)),
+			tgif_arg_s16(tgif_bswap_16(1)),
+			tgif_arg_s32(tgif_bswap_32(1)),
+			tgif_arg_s64(tgif_bswap_64(1)),
 #else
-			side_arg_u16(side_bswap_16(1)),
-			side_arg_u32(side_bswap_32(1)),
-			side_arg_u64(side_bswap_64(1)),
-			side_arg_s16(side_bswap_16(1)),
-			side_arg_s32(side_bswap_32(1)),
-			side_arg_s64(side_bswap_64(1)),
-			side_arg_u16(1),
-			side_arg_u32(1),
-			side_arg_u64(1),
-			side_arg_s16(1),
-			side_arg_s32(1),
-			side_arg_s64(1),
+			tgif_arg_u16(tgif_bswap_16(1)),
+			tgif_arg_u32(tgif_bswap_32(1)),
+			tgif_arg_u64(tgif_bswap_64(1)),
+			tgif_arg_s16(tgif_bswap_16(1)),
+			tgif_arg_s32(tgif_bswap_32(1)),
+			tgif_arg_s64(tgif_bswap_64(1)),
+			tgif_arg_u16(1),
+			tgif_arg_u32(1),
+			tgif_arg_u64(1),
+			tgif_arg_s16(1),
+			tgif_arg_s32(1),
+			tgif_arg_s64(1),
 #endif
 		),
-		side_arg_list(
-#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("u16_le", side_arg_dynamic_u16_le(1, side_attr_list())),
-			side_arg_dynamic_field("u32_le", side_arg_dynamic_u32_le(1, side_attr_list())),
-			side_arg_dynamic_field("u64_le", side_arg_dynamic_u64_le(1, side_attr_list())),
-			side_arg_dynamic_field("s16_le", side_arg_dynamic_s16_le(1, side_attr_list())),
-			side_arg_dynamic_field("s32_le", side_arg_dynamic_s32_le(1, side_attr_list())),
-			side_arg_dynamic_field("s64_le", side_arg_dynamic_s64_le(1, side_attr_list())),
-			side_arg_dynamic_field("u16_be", side_arg_dynamic_u16_be(side_bswap_16(1), side_attr_list())),
-			side_arg_dynamic_field("u32_be", side_arg_dynamic_u32_be(side_bswap_32(1), side_attr_list())),
-			side_arg_dynamic_field("u64_be", side_arg_dynamic_u64_be(side_bswap_64(1), side_attr_list())),
-			side_arg_dynamic_field("s16_be", side_arg_dynamic_s16_be(side_bswap_16(1), side_attr_list())),
-			side_arg_dynamic_field("s32_be", side_arg_dynamic_s32_be(side_bswap_32(1), side_attr_list())),
-			side_arg_dynamic_field("s64_be", side_arg_dynamic_s64_be(side_bswap_64(1), side_attr_list())),
+		tgif_arg_list(
+#if TGIF_BYTE_ORDER == TGIF_LITTLE_ENDIAN
+			tgif_arg_dynamic_field("u16_le", tgif_arg_dynamic_u16_le(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("u32_le", tgif_arg_dynamic_u32_le(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("u64_le", tgif_arg_dynamic_u64_le(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("s16_le", tgif_arg_dynamic_s16_le(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("s32_le", tgif_arg_dynamic_s32_le(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("s64_le", tgif_arg_dynamic_s64_le(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("u16_be", tgif_arg_dynamic_u16_be(tgif_bswap_16(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("u32_be", tgif_arg_dynamic_u32_be(tgif_bswap_32(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("u64_be", tgif_arg_dynamic_u64_be(tgif_bswap_64(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("s16_be", tgif_arg_dynamic_s16_be(tgif_bswap_16(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("s32_be", tgif_arg_dynamic_s32_be(tgif_bswap_32(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("s64_be", tgif_arg_dynamic_s64_be(tgif_bswap_64(1), tgif_attr_list())),
 #else
-			side_arg_dynamic_field("u16_le", side_arg_dynamic_u16_le(side_bswap_16(1), side_attr_list())),
-			side_arg_dynamic_field("u32_le", side_arg_dynamic_u32_le(side_bswap_32(1), side_attr_list())),
-			side_arg_dynamic_field("u64_le", side_arg_dynamic_u64_le(side_bswap_64(1), side_attr_list())),
-			side_arg_dynamic_field("s16_le", side_arg_dynamic_s16_le(side_bswap_16(1), side_attr_list())),
-			side_arg_dynamic_field("s32_le", side_arg_dynamic_s32_le(side_bswap_32(1), side_attr_list())),
-			side_arg_dynamic_field("s64_le", side_arg_dynamic_s64_le(side_bswap_64(1), side_attr_list())),
-			side_arg_dynamic_field("u16_be", side_arg_dynamic_u16_be(1, side_attr_list())),
-			side_arg_dynamic_field("u32_be", side_arg_dynamic_u32_be(1, side_attr_list())),
-			side_arg_dynamic_field("u64_be", side_arg_dynamic_u64_be(1, side_attr_list())),
-			side_arg_dynamic_field("s16_be", side_arg_dynamic_s16_be(1, side_attr_list())),
-			side_arg_dynamic_field("s32_be", side_arg_dynamic_s32_be(1, side_attr_list())),
-			side_arg_dynamic_field("s64_be", side_arg_dynamic_s64_be(1, side_attr_list())),
+			tgif_arg_dynamic_field("u16_le", tgif_arg_dynamic_u16_le(tgif_bswap_16(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("u32_le", tgif_arg_dynamic_u32_le(tgif_bswap_32(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("u64_le", tgif_arg_dynamic_u64_le(tgif_bswap_64(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("s16_le", tgif_arg_dynamic_s16_le(tgif_bswap_16(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("s32_le", tgif_arg_dynamic_s32_le(tgif_bswap_32(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("s64_le", tgif_arg_dynamic_s64_le(tgif_bswap_64(1), tgif_attr_list())),
+			tgif_arg_dynamic_field("u16_be", tgif_arg_dynamic_u16_be(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("u32_be", tgif_arg_dynamic_u32_be(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("u64_be", tgif_arg_dynamic_u64_be(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("s16_be", tgif_arg_dynamic_s16_be(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("s32_be", tgif_arg_dynamic_s32_be(1, tgif_attr_list())),
+			tgif_arg_dynamic_field("s64_be", tgif_arg_dynamic_s64_be(1, tgif_attr_list())),
 #endif
 		),
-		side_attr_list()
+		tgif_attr_list()
 	);
 }
 
-side_static_event(my_provider_event_base, "myprovider", "myevent_base", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_u8("u8base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
-		side_field_u8("u8base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
-		side_field_u8("u8base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_u8("u8base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_u16("u16base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
-		side_field_u16("u16base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
-		side_field_u16("u16base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_u16("u16base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_u32("u32base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
-		side_field_u32("u32base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
-		side_field_u32("u32base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_u32("u32base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_u64("u64base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
-		side_field_u64("u64base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
-		side_field_u64("u64base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_u64("u64base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_s8("s8base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
-		side_field_s8("s8base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
-		side_field_s8("s8base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_s8("s8base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_s16("s16base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
-		side_field_s16("s16base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
-		side_field_s16("s16base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_s16("s16base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_s32("s32base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
-		side_field_s32("s32base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
-		side_field_s32("s32base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_s32("s32base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_s64("s64base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
-		side_field_s64("s64base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
-		side_field_s64("s64base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_s64("s64base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+tgif_static_event(my_provider_event_base, "myprovider", "myevent_base", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_u8("u8base2", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(2)))),
+		tgif_field_u8("u8base8", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(8)))),
+		tgif_field_u8("u8base10", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_u8("u8base16", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_u16("u16base2", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(2)))),
+		tgif_field_u16("u16base8", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(8)))),
+		tgif_field_u16("u16base10", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_u16("u16base16", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_u32("u32base2", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(2)))),
+		tgif_field_u32("u32base8", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(8)))),
+		tgif_field_u32("u32base10", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_u32("u32base16", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_u64("u64base2", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(2)))),
+		tgif_field_u64("u64base8", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(8)))),
+		tgif_field_u64("u64base10", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_u64("u64base16", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_s8("s8base2", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(2)))),
+		tgif_field_s8("s8base8", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(8)))),
+		tgif_field_s8("s8base10", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_s8("s8base16", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_s16("s16base2", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(2)))),
+		tgif_field_s16("s16base8", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(8)))),
+		tgif_field_s16("s16base10", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_s16("s16base16", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_s32("s32base2", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(2)))),
+		tgif_field_s32("s32base8", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(8)))),
+		tgif_field_s32("s32base10", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_s32("s32base16", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_s64("s64base2", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(2)))),
+		tgif_field_s64("s64base8", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(8)))),
+		tgif_field_s64("s64base10", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_s64("s64base16", tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_base(void)
 {
-	side_event(my_provider_event_base,
-		side_arg_list(
-			side_arg_u8(55),
-			side_arg_u8(55),
-			side_arg_u8(55),
-			side_arg_u8(55),
-			side_arg_u16(55),
-			side_arg_u16(55),
-			side_arg_u16(55),
-			side_arg_u16(55),
-			side_arg_u32(55),
-			side_arg_u32(55),
-			side_arg_u32(55),
-			side_arg_u32(55),
-			side_arg_u64(55),
-			side_arg_u64(55),
-			side_arg_u64(55),
-			side_arg_u64(55),
-			side_arg_s8(-55),
-			side_arg_s8(-55),
-			side_arg_s8(-55),
-			side_arg_s8(-55),
-			side_arg_s16(-55),
-			side_arg_s16(-55),
-			side_arg_s16(-55),
-			side_arg_s16(-55),
-			side_arg_s32(-55),
-			side_arg_s32(-55),
-			side_arg_s32(-55),
-			side_arg_s32(-55),
-			side_arg_s64(-55),
-			side_arg_s64(-55),
-			side_arg_s64(-55),
-			side_arg_s64(-55),
+	tgif_event(my_provider_event_base,
+		tgif_arg_list(
+			tgif_arg_u8(55),
+			tgif_arg_u8(55),
+			tgif_arg_u8(55),
+			tgif_arg_u8(55),
+			tgif_arg_u16(55),
+			tgif_arg_u16(55),
+			tgif_arg_u16(55),
+			tgif_arg_u16(55),
+			tgif_arg_u32(55),
+			tgif_arg_u32(55),
+			tgif_arg_u32(55),
+			tgif_arg_u32(55),
+			tgif_arg_u64(55),
+			tgif_arg_u64(55),
+			tgif_arg_u64(55),
+			tgif_arg_u64(55),
+			tgif_arg_s8(-55),
+			tgif_arg_s8(-55),
+			tgif_arg_s8(-55),
+			tgif_arg_s8(-55),
+			tgif_arg_s16(-55),
+			tgif_arg_s16(-55),
+			tgif_arg_s16(-55),
+			tgif_arg_s16(-55),
+			tgif_arg_s32(-55),
+			tgif_arg_s32(-55),
+			tgif_arg_s32(-55),
+			tgif_arg_s32(-55),
+			tgif_arg_s64(-55),
+			tgif_arg_s64(-55),
+			tgif_arg_s64(-55),
+			tgif_arg_s64(-55),
 		)
 	);
 }
@@ -1434,65 +1434,65 @@ struct test {
 	uint64_t test;
 };
 
-static side_define_struct(mystructgatherdef,
-	side_field_list(
-		side_field_gather_unsigned_integer("a", offsetof(struct test, a),
-			side_struct_field_sizeof(struct test, a), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_signed_integer("d", offsetof(struct test, d),
-			side_struct_field_sizeof(struct test, d), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_unsigned_integer("e", offsetof(struct test, e),
-			side_struct_field_sizeof(struct test, e), 8, 4,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_gather_signed_integer("f", offsetof(struct test, f),
-			side_struct_field_sizeof(struct test, f), 1, 4,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_gather_signed_integer("g", offsetof(struct test, g),
-			side_struct_field_sizeof(struct test, g), 11, 4,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_gather_signed_integer("h", offsetof(struct test, h),
-			side_struct_field_sizeof(struct test, h), 1, 31,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_gather_signed_integer("i", offsetof(struct test, i),
-			side_struct_field_sizeof(struct test, i), 33, 20,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_gather_signed_integer("j", offsetof(struct test, j),
-			side_struct_field_sizeof(struct test, j), 63, 1,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_gather_signed_integer("k", offsetof(struct test, k), 
-			side_struct_field_sizeof(struct test, k), 1, 63,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_gather_unsigned_integer_le("test", offsetof(struct test, test),
-			side_struct_field_sizeof(struct test, test), 0, 64,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_gather_unsigned_integer_le("test_le", offsetof(struct test, test),
-			side_struct_field_sizeof(struct test, test), 0, 64,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-		side_field_gather_unsigned_integer_be("test_be", offsetof(struct test, test),
-			side_struct_field_sizeof(struct test, test), 0, 64,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+static tgif_define_struct(mystructgatherdef,
+	tgif_field_list(
+		tgif_field_gather_unsigned_integer("a", offsetof(struct test, a),
+			tgif_struct_field_sizeof(struct test, a), 0, 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_signed_integer("d", offsetof(struct test, d),
+			tgif_struct_field_sizeof(struct test, d), 0, 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_unsigned_integer("e", offsetof(struct test, e),
+			tgif_struct_field_sizeof(struct test, e), 8, 4,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_gather_signed_integer("f", offsetof(struct test, f),
+			tgif_struct_field_sizeof(struct test, f), 1, 4,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_gather_signed_integer("g", offsetof(struct test, g),
+			tgif_struct_field_sizeof(struct test, g), 11, 4,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_gather_signed_integer("h", offsetof(struct test, h),
+			tgif_struct_field_sizeof(struct test, h), 1, 31,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_gather_signed_integer("i", offsetof(struct test, i),
+			tgif_struct_field_sizeof(struct test, i), 33, 20,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_gather_signed_integer("j", offsetof(struct test, j),
+			tgif_struct_field_sizeof(struct test, j), 63, 1,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_gather_signed_integer("k", offsetof(struct test, k), 
+			tgif_struct_field_sizeof(struct test, k), 1, 63,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
+		tgif_field_gather_unsigned_integer_le("test", offsetof(struct test, test),
+			tgif_struct_field_sizeof(struct test, test), 0, 64,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_gather_unsigned_integer_le("test_le", offsetof(struct test, test),
+			tgif_struct_field_sizeof(struct test, test), 0, 64,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
+		tgif_field_gather_unsigned_integer_be("test_be", offsetof(struct test, test),
+			tgif_struct_field_sizeof(struct test, test), 0, 64,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(16)))),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_structgather, "myprovider", "myeventstructgather", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_struct("structgather", &mystructgatherdef, 0, sizeof(struct test),
-				SIDE_TYPE_GATHER_ACCESS_DIRECT),
-		side_field_gather_signed_integer("intgather", 0, sizeof(int32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+tgif_static_event(my_provider_event_structgather, "myprovider", "myeventstructgather", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_struct("structgather", &mystructgatherdef, 0, sizeof(struct test),
+				TGIF_TYPE_GATHER_ACCESS_DIRECT),
+		tgif_field_gather_signed_integer("intgather", 0, sizeof(int32_t), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_attr_list(tgif_attr("std.integer.base", tgif_attr_u8(10)))),
 #if __HAVE_FLOAT32
-		side_field_gather_float("f32", 0, sizeof(_Float32), SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		tgif_field_gather_float("f32", 0, sizeof(_Float32), TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
 #endif
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_struct_gather(void)
 {
-	side_event_cond(my_provider_event_structgather) {
+	tgif_event_cond(my_provider_event_structgather) {
 		struct test mystruct = {
 			.a = 55,
 			.b = 123,
@@ -1511,12 +1511,12 @@ void test_struct_gather(void)
 #if __HAVE_FLOAT32
 		_Float32 f32 = 1.1;
 #endif
-		side_event_call(my_provider_event_structgather,
-			side_arg_list(
-				side_arg_gather_struct(&mystruct),
-				side_arg_gather_integer(&val),
+		tgif_event_call(my_provider_event_structgather,
+			tgif_arg_list(
+				tgif_arg_gather_struct(&mystruct),
+				tgif_arg_gather_integer(&val),
 #if __HAVE_FLOAT32
-				side_arg_gather_float(&f32),
+				tgif_arg_gather_float(&f32),
 #endif
 			)
 		);
@@ -1537,52 +1537,52 @@ struct testnest0 {
 	struct testnest1 *nest;
 };
 
-static side_define_struct(mystructgathernest2,
-	side_field_list(
-		side_field_gather_unsigned_integer("c", offsetof(struct testnest2, c),
-			side_struct_field_sizeof(struct testnest2, c), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+static tgif_define_struct(mystructgathernest2,
+	tgif_field_list(
+		tgif_field_gather_unsigned_integer("c", offsetof(struct testnest2, c),
+			tgif_struct_field_sizeof(struct testnest2, c), 0, 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-static side_define_struct(mystructgathernest1,
-	side_field_list(
-		side_field_gather_unsigned_integer("b", offsetof(struct testnest1, b),
-			side_struct_field_sizeof(struct testnest1, b), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_struct("nest2", &mystructgathernest2,
+static tgif_define_struct(mystructgathernest1,
+	tgif_field_list(
+		tgif_field_gather_unsigned_integer("b", offsetof(struct testnest1, b),
+			tgif_struct_field_sizeof(struct testnest1, b), 0, 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_struct("nest2", &mystructgathernest2,
 			offsetof(struct testnest1, nest), sizeof(struct testnest2),
-			SIDE_TYPE_GATHER_ACCESS_POINTER),
+			TGIF_TYPE_GATHER_ACCESS_POINTER),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-static side_define_struct(mystructgathernest0,
-	side_field_list(
-		side_field_gather_unsigned_integer("a", offsetof(struct testnest0, a),
-			side_struct_field_sizeof(struct testnest0, a), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_struct("nest1", &mystructgathernest1,
+static tgif_define_struct(mystructgathernest0,
+	tgif_field_list(
+		tgif_field_gather_unsigned_integer("a", offsetof(struct testnest0, a),
+			tgif_struct_field_sizeof(struct testnest0, a), 0, 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_struct("nest1", &mystructgathernest1,
 			offsetof(struct testnest0, nest), sizeof(struct testnest1),
-			SIDE_TYPE_GATHER_ACCESS_POINTER),
+			TGIF_TYPE_GATHER_ACCESS_POINTER),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_structgather_nest,
-	"myprovider", "myeventstructgathernest", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_struct("nest0", &mystructgathernest0, 0,
-			sizeof(struct testnest0), SIDE_TYPE_GATHER_ACCESS_DIRECT),
+tgif_static_event(my_provider_event_structgather_nest,
+	"myprovider", "myeventstructgathernest", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_struct("nest0", &mystructgathernest0, 0,
+			sizeof(struct testnest0), TGIF_TYPE_GATHER_ACCESS_DIRECT),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_struct_gather_nest_ptr(void)
 {
-	side_event_cond(my_provider_event_structgather_nest) {
+	tgif_event_cond(my_provider_event_structgather_nest) {
 		struct testnest2 mystruct2 = {
 			.c = 77,
 		};
@@ -1594,9 +1594,9 @@ void test_struct_gather_nest_ptr(void)
 			.a = 55,
 			.nest = &mystruct1,
 		};
-		side_event_call(my_provider_event_structgather_nest,
-			side_arg_list(
-				side_arg_gather_struct(&mystruct),
+		tgif_event_call(my_provider_event_structgather_nest,
+			tgif_arg_list(
+				tgif_arg_gather_struct(&mystruct),
 			)
 		);
 	}
@@ -1617,45 +1617,45 @@ struct testfloat {
 #endif
 };
 
-static side_define_struct(mystructgatherfloat,
-	side_field_list(
+static tgif_define_struct(mystructgatherfloat,
+	tgif_field_list(
 #if __HAVE_FLOAT16
-		side_field_gather_float("f16", offsetof(struct testfloat, f16), side_struct_field_sizeof(struct testfloat, f16),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+		tgif_field_gather_float("f16", offsetof(struct testfloat, f16), tgif_struct_field_sizeof(struct testfloat, f16),
+			TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_attr_list()),
 #endif
 #if __HAVE_FLOAT32
-		side_field_gather_float("f32", offsetof(struct testfloat, f32), side_struct_field_sizeof(struct testfloat, f32),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+		tgif_field_gather_float("f32", offsetof(struct testfloat, f32), tgif_struct_field_sizeof(struct testfloat, f32),
+			TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_attr_list()),
 #endif
 #if __HAVE_FLOAT64
-		side_field_gather_float("f64", offsetof(struct testfloat, f64), side_struct_field_sizeof(struct testfloat, f64),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+		tgif_field_gather_float("f64", offsetof(struct testfloat, f64), tgif_struct_field_sizeof(struct testfloat, f64),
+			TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_attr_list()),
 #endif
 #if __HAVE_FLOAT128
-		side_field_gather_float("f128", offsetof(struct testfloat, f128), side_struct_field_sizeof(struct testfloat, f128),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+		tgif_field_gather_float("f128", offsetof(struct testfloat, f128), tgif_struct_field_sizeof(struct testfloat, f128),
+			TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_attr_list()),
 #endif
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_structgatherfloat,
-	"myprovider", "myeventstructgatherfloat", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_struct("structgatherfloat", &mystructgatherfloat, 0,
-			sizeof(struct testfloat), SIDE_TYPE_GATHER_ACCESS_DIRECT),
+tgif_static_event(my_provider_event_structgatherfloat,
+	"myprovider", "myeventstructgatherfloat", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_struct("structgatherfloat", &mystructgatherfloat, 0,
+			sizeof(struct testfloat), TGIF_TYPE_GATHER_ACCESS_DIRECT),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_struct_gather_float(void)
 {
-	side_event_cond(my_provider_event_structgatherfloat) {
+	tgif_event_cond(my_provider_event_structgatherfloat) {
 		struct testfloat mystruct = {
 #if __HAVE_FLOAT16
 			.f16 = 1.1,
@@ -1670,9 +1670,9 @@ void test_struct_gather_float(void)
 			.f128 = 4.4,
 #endif
 		};
-		side_event_call(my_provider_event_structgatherfloat,
-			side_arg_list(
-				side_arg_gather_struct(&mystruct),
+		tgif_event_call(my_provider_event_structgatherfloat,
+			tgif_arg_list(
+				tgif_arg_gather_struct(&mystruct),
 			)
 		);
 	}
@@ -1687,45 +1687,45 @@ struct testarray {
 	uint32_t *ptr;
 };
 
-static side_define_struct(mystructgatherarray,
-	side_field_list(
-		side_field_gather_array("array",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			SIDE_ARRAY_SIZE(mygatherarray),
+static tgif_define_struct(mystructgatherarray,
+	tgif_field_list(
+		tgif_field_gather_array("array",
+			tgif_elem(tgif_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			TGIF_ARRAY_SIZE(mygatherarray),
 			offsetof(struct testarray, ptr),
-			SIDE_TYPE_GATHER_ACCESS_POINTER,
-			side_attr_list()),
+			TGIF_TYPE_GATHER_ACCESS_POINTER,
+			tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_structgatherarray,
-	"myprovider", "myeventstructgatherarray", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_struct("structgatherarray", &mystructgatherarray, 0,
-				sizeof(struct testarray), SIDE_TYPE_GATHER_ACCESS_DIRECT),
-		side_field_gather_array("array2",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			SIDE_ARRAY_SIZE(mygatherarray2), 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()
+tgif_static_event(my_provider_event_structgatherarray,
+	"myprovider", "myeventstructgatherarray", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_struct("structgatherarray", &mystructgatherarray, 0,
+				sizeof(struct testarray), TGIF_TYPE_GATHER_ACCESS_DIRECT),
+		tgif_field_gather_array("array2",
+			tgif_elem(tgif_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			TGIF_ARRAY_SIZE(mygatherarray2), 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_attr_list()
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_array_gather(void)
 {
-	side_event_cond(my_provider_event_structgatherarray) {
+	tgif_event_cond(my_provider_event_structgatherarray) {
 		struct testarray mystruct = {
 			.a = 55,
 			.ptr = mygatherarray,
 		};
-		side_event_call(my_provider_event_structgatherarray,
-			side_arg_list(
-				side_arg_gather_struct(&mystruct),
-				side_arg_gather_array(&mygatherarray2),
+		tgif_event_call(my_provider_event_structgatherarray,
+			tgif_arg_list(
+				tgif_arg_gather_struct(&mystruct),
+				tgif_arg_gather_array(&mygatherarray2),
 			)
 		);
 	}
@@ -1743,61 +1743,61 @@ struct testgatherstructnest0 {
 	int a;
 };
 
-static side_define_struct(mystructgatherstructnest1,
-	side_field_list(
-		side_field_gather_signed_integer("b", offsetof(struct testgatherstructnest1, b),
-			side_struct_field_sizeof(struct testgatherstructnest1, b), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_array("c",
-			side_elem(
-				side_type_gather_signed_integer(0, sizeof(uint32_t), 0, 0, 
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+static tgif_define_struct(mystructgatherstructnest1,
+	tgif_field_list(
+		tgif_field_gather_signed_integer("b", offsetof(struct testgatherstructnest1, b),
+			tgif_struct_field_sizeof(struct testgatherstructnest1, b), 0, 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_array("c",
+			tgif_elem(
+				tgif_type_gather_signed_integer(0, sizeof(uint32_t), 0, 0, 
+					TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
 			),
 			TESTSGNESTARRAY_LEN,
 			offsetof(struct testgatherstructnest1, c),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+			TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-static side_define_struct(mystructgatherstructnest0,
-	side_field_list(
-		side_field_gather_signed_integer("a", offsetof(struct testgatherstructnest0, a),
-			side_struct_field_sizeof(struct testgatherstructnest0, a), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_struct("structnest0", &mystructgatherstructnest1,
+static tgif_define_struct(mystructgatherstructnest0,
+	tgif_field_list(
+		tgif_field_gather_signed_integer("a", offsetof(struct testgatherstructnest0, a),
+			tgif_struct_field_sizeof(struct testgatherstructnest0, a), 0, 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_struct("structnest0", &mystructgatherstructnest1,
 			offsetof(struct testgatherstructnest0, nest),
 			sizeof(struct testgatherstructnest1),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT),
-		side_field_gather_array("nestarray",
-			side_elem(
-				side_type_gather_struct(&mystructgatherstructnest1,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT),
+		tgif_field_gather_array("nestarray",
+			tgif_elem(
+				tgif_type_gather_struct(&mystructgatherstructnest1,
 					0,
 					sizeof(struct testgatherstructnest1),
-					SIDE_TYPE_GATHER_ACCESS_DIRECT),
+					TGIF_TYPE_GATHER_ACCESS_DIRECT),
 			),
 			2,
 			offsetof(struct testgatherstructnest0, nestarray),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+			TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_gatherstructnest,
-	"myprovider", "myeventgatherstructnest", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_struct("structgather", &mystructgatherstructnest0, 0,
-				sizeof(struct testgatherstructnest0), SIDE_TYPE_GATHER_ACCESS_DIRECT),
+tgif_static_event(my_provider_event_gatherstructnest,
+	"myprovider", "myeventgatherstructnest", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_struct("structgather", &mystructgatherstructnest0, 0,
+				sizeof(struct testgatherstructnest0), TGIF_TYPE_GATHER_ACCESS_DIRECT),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_gather_structnest(void)
 {
-	side_event_cond(my_provider_event_gatherstructnest) {
+	tgif_event_cond(my_provider_event_gatherstructnest) {
 		struct testgatherstructnest0 mystruct = {
 			.nest = {
 				.b = 66,
@@ -1815,9 +1815,9 @@ void test_gather_structnest(void)
 			},
 			.a = 55,
 		};
-		side_event_call(my_provider_event_gatherstructnest,
-			side_arg_list(
-				side_arg_gather_struct(&mystruct),
+		tgif_event_call(my_provider_event_gatherstructnest,
+			tgif_arg_list(
+				tgif_arg_gather_struct(&mystruct),
 			)
 		);
 	}
@@ -1832,53 +1832,53 @@ struct testgathervla {
 	uint32_t *p;
 };
 
-static side_define_struct(mystructgathervla,
-	side_field_list(
-		side_field_gather_signed_integer("a", offsetof(struct testgathervla, a),
-			side_struct_field_sizeof(struct testgathervla, a), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+static tgif_define_struct(mystructgathervla,
+	tgif_field_list(
+		tgif_field_gather_signed_integer("a", offsetof(struct testgathervla, a),
+			tgif_struct_field_sizeof(struct testgathervla, a), 0, 0,
+			TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()
 		),
-		side_field_gather_vla("nestvla",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+		tgif_field_gather_vla("nestvla",
+			tgif_elem(tgif_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
 			offsetof(struct testgathervla, p),
-			SIDE_TYPE_GATHER_ACCESS_POINTER,
-			side_length(side_type_gather_unsigned_integer(offsetof(struct testgathervla, len),
-					sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			side_attr_list()
+			TGIF_TYPE_GATHER_ACCESS_POINTER,
+			tgif_length(tgif_type_gather_unsigned_integer(offsetof(struct testgathervla, len),
+					sizeof(uint16_t), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			tgif_attr_list()
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_gathervla,
-	"myprovider", "myeventgathervla", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_struct("structgathervla", &mystructgathervla, 0,
-				sizeof(struct testgathervla), SIDE_TYPE_GATHER_ACCESS_DIRECT),
-		side_field_gather_vla("vla",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			0, SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_length(side_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			side_attr_list()
+tgif_static_event(my_provider_event_gathervla,
+	"myprovider", "myeventgathervla", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_struct("structgathervla", &mystructgathervla, 0,
+				sizeof(struct testgathervla), TGIF_TYPE_GATHER_ACCESS_DIRECT),
+		tgif_field_gather_vla("vla",
+			tgif_elem(tgif_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			0, TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_length(tgif_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			tgif_attr_list()
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_gather_vla(void)
 {
-	side_event_cond(my_provider_event_gathervla) {
+	tgif_event_cond(my_provider_event_gathervla) {
 		struct testgathervla mystruct = {
 			.a = 55,
-			.len = SIDE_ARRAY_SIZE(gathervla),
+			.len = TGIF_ARRAY_SIZE(gathervla),
 			.p = gathervla,
 		};
 		uint16_t vla2_len = 5;
-		side_event_call(my_provider_event_gathervla,
-			side_arg_list(
-				side_arg_gather_struct(&mystruct),
-				side_arg_gather_vla(gathervla2, &vla2_len),
+		tgif_event_call(my_provider_event_gathervla,
+			tgif_arg_list(
+				tgif_arg_gather_struct(&mystruct),
+				tgif_arg_gather_vla(gathervla2, &vla2_len),
 			)
 		);
 	}
@@ -1890,34 +1890,34 @@ struct testgathervlaflex {
 	uint64_t array[];
 };
 
-static side_define_struct(mystructgathervlaflex,
-	side_field_list(
-		side_field_gather_vla("vlaflex",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+static tgif_define_struct(mystructgathervlaflex,
+	tgif_field_list(
+		tgif_field_gather_vla("vlaflex",
+			tgif_elem(tgif_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
 			offsetof(struct testgathervlaflex, array),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_length(side_type_gather_unsigned_integer(offsetof(struct testgathervlaflex, len),
-					side_struct_field_sizeof(struct testgathervlaflex, len), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			side_attr_list()
+			TGIF_TYPE_GATHER_ACCESS_DIRECT,
+			tgif_length(tgif_type_gather_unsigned_integer(offsetof(struct testgathervlaflex, len),
+					tgif_struct_field_sizeof(struct testgathervlaflex, len), 0, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			tgif_attr_list()
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_gathervlaflex,
-	"myprovider", "myeventgathervlaflex", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_struct("structgathervlaflex", &mystructgathervlaflex, 0,
-				sizeof(struct testgathervlaflex), SIDE_TYPE_GATHER_ACCESS_DIRECT),
+tgif_static_event(my_provider_event_gathervlaflex,
+	"myprovider", "myeventgathervlaflex", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_struct("structgathervlaflex", &mystructgathervlaflex, 0,
+				sizeof(struct testgathervlaflex), TGIF_TYPE_GATHER_ACCESS_DIRECT),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 #define VLAFLEXLEN	6
 static
 void test_gather_vla_flex(void)
 {
-	side_event_cond(my_provider_event_gathervlaflex) {
+	tgif_event_cond(my_provider_event_gathervlaflex) {
 		struct testgathervlaflex *mystruct =
 			(struct testgathervlaflex *) malloc(sizeof(*mystruct) + VLAFLEXLEN * sizeof(uint64_t));
 
@@ -1929,38 +1929,38 @@ void test_gather_vla_flex(void)
 		mystruct->array[3] = 4;
 		mystruct->array[4] = 5;
 		mystruct->array[5] = 6;
-		side_event_call(my_provider_event_gathervlaflex,
-			side_arg_list(
-				side_arg_gather_struct(mystruct),
+		tgif_event_call(my_provider_event_gathervlaflex,
+			tgif_arg_list(
+				tgif_arg_gather_struct(mystruct),
 			)
 		);
 		free(mystruct);
 	}
 }
 
-side_static_event(my_provider_event_gatherbyte,
-	"myprovider", "myeventgatherbyte", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_byte("byte", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_array("array",
-			side_elem(side_type_gather_byte(0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+tgif_static_event(my_provider_event_gatherbyte,
+	"myprovider", "myeventgatherbyte", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_byte("byte", 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_array("array",
+			tgif_elem(tgif_type_gather_byte(0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			3, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_gather_byte(void)
 {
-	side_event_cond(my_provider_event_gatherbyte) {
+	tgif_event_cond(my_provider_event_gatherbyte) {
 		uint8_t v = 0x44;
 		uint8_t array[3] = { 0x1, 0x2, 0x3 };
 
-		side_event_call(my_provider_event_gatherbyte,
-			side_arg_list(
-				side_arg_gather_byte(&v),
-				side_arg_gather_array(array),
+		tgif_event_call(my_provider_event_gatherbyte,
+			tgif_arg_list(
+				tgif_arg_gather_byte(&v),
+				tgif_arg_gather_array(array),
 			)
 		);
 	}
@@ -1969,125 +1969,125 @@ void test_gather_byte(void)
 #define ARRAYBOOLLEN 4
 static bool arraybool[ARRAYBOOLLEN] = { false, true, false, true };
 
-side_static_event(my_provider_event_gatherbool,
-	"myprovider", "myeventgatherbool", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_bool("v1_true", 0, sizeof(bool), 0, 0,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_bool("v2_false", 0, sizeof(bool), 0, 0,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_bool("v3_true", 0, sizeof(uint16_t), 1, 1,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_bool("v4_false", 0, sizeof(uint16_t), 1, 1,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_array("arraybool",
-			side_elem(side_type_gather_bool(0, sizeof(bool), 0, 0,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			ARRAYBOOLLEN, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+tgif_static_event(my_provider_event_gatherbool,
+	"myprovider", "myeventgatherbool", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_bool("v1_true", 0, sizeof(bool), 0, 0,
+				TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_bool("v2_false", 0, sizeof(bool), 0, 0,
+				TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_bool("v3_true", 0, sizeof(uint16_t), 1, 1,
+				TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_bool("v4_false", 0, sizeof(uint16_t), 1, 1,
+				TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_array("arraybool",
+			tgif_elem(tgif_type_gather_bool(0, sizeof(bool), 0, 0,
+				TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			ARRAYBOOLLEN, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_gather_bool(void)
 {
-	side_event_cond(my_provider_event_structgatherarray) {
+	tgif_event_cond(my_provider_event_structgatherarray) {
 		bool v1 = true;
 		bool v2 = false;
 		uint16_t v3 = 1U << 1;
 		uint16_t v4 = 1U << 2;
 
-		side_event_call(my_provider_event_gatherbool,
-			side_arg_list(
-				side_arg_gather_bool(&v1),
-				side_arg_gather_bool(&v2),
-				side_arg_gather_bool(&v3),
-				side_arg_gather_bool(&v4),
-				side_arg_gather_array(arraybool),
+		tgif_event_call(my_provider_event_gatherbool,
+			tgif_arg_list(
+				tgif_arg_gather_bool(&v1),
+				tgif_arg_gather_bool(&v2),
+				tgif_arg_gather_bool(&v3),
+				tgif_arg_gather_bool(&v4),
+				tgif_arg_gather_array(arraybool),
 			)
 		);
 	}
 }
 
-side_static_event(my_provider_event_gatherpointer,
-	"myprovider", "myeventgatherpointer", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_pointer("ptr", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_array("array",
-			side_elem(side_type_gather_pointer(0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+tgif_static_event(my_provider_event_gatherpointer,
+	"myprovider", "myeventgatherpointer", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_pointer("ptr", 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_array("array",
+			tgif_elem(tgif_type_gather_pointer(0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			3, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_gather_pointer(void)
 {
-	side_event_cond(my_provider_event_structgatherarray) {
+	tgif_event_cond(my_provider_event_structgatherarray) {
 		void *v = (void *)0x44;
 		void *array[3] = { (void *)0x1, (void *)0x2, (void *)0x3 };
 
-		side_event_call(my_provider_event_gatherpointer,
-			side_arg_list(
-				side_arg_gather_pointer(&v),
-				side_arg_gather_array(array),
+		tgif_event_call(my_provider_event_gatherpointer,
+			tgif_arg_list(
+				tgif_arg_gather_pointer(&v),
+				tgif_arg_gather_array(array),
 			)
 		);
 	}
 }
 
-static side_define_enum(myenumgather,
-	side_enum_mapping_list(
-		side_enum_mapping_range("one-ten", 1, 10),
-		side_enum_mapping_range("100-200", 100, 200),
-		side_enum_mapping_value("200", 200),
-		side_enum_mapping_value("300", 300),
+static tgif_define_enum(myenumgather,
+	tgif_enum_mapping_list(
+		tgif_enum_mapping_range("one-ten", 1, 10),
+		tgif_enum_mapping_range("100-200", 100, 200),
+		tgif_enum_mapping_value("200", 200),
+		tgif_enum_mapping_value("300", 300),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
-side_static_event(my_provider_event_enum_gather, "myprovider", "myeventenumgather", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_enum("5", &myenumgather,
-			side_elem(
-				side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+tgif_static_event(my_provider_event_enum_gather, "myprovider", "myeventenumgather", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_enum("5", &myenumgather,
+			tgif_elem(
+				tgif_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0,
+					TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())
 			)
 		),
-		side_field_gather_enum("400", &myenumgather,
-			side_elem(
-				side_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+		tgif_field_gather_enum("400", &myenumgather,
+			tgif_elem(
+				tgif_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0,
+					TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())
 			)
 		),
-		side_field_gather_enum("200", &myenumgather,
-			side_elem(
-				side_type_gather_unsigned_integer(0, sizeof(uint8_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+		tgif_field_gather_enum("200", &myenumgather,
+			tgif_elem(
+				tgif_type_gather_unsigned_integer(0, sizeof(uint8_t), 0, 0,
+					TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())
 			)
 		),
-		side_field_gather_enum("-100", &myenumgather,
-			side_elem(
-				side_type_gather_signed_integer(0, sizeof(int8_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+		tgif_field_gather_enum("-100", &myenumgather,
+			tgif_elem(
+				tgif_type_gather_signed_integer(0, sizeof(int8_t), 0, 0,
+					TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())
 			)
 		),
-		side_field_gather_enum("6_be", &myenumgather,
-			side_elem(
-				side_type_gather_unsigned_integer_be(0, sizeof(uint32_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+		tgif_field_gather_enum("6_be", &myenumgather,
+			tgif_elem(
+				tgif_type_gather_unsigned_integer_be(0, sizeof(uint32_t), 0, 0,
+					TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())
 			)
 		),
-		side_field_gather_enum("6_le", &myenumgather,
-			side_elem(
-				side_type_gather_unsigned_integer_le(0, sizeof(uint32_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+		tgif_field_gather_enum("6_le", &myenumgather,
+			tgif_elem(
+				tgif_type_gather_unsigned_integer_le(0, sizeof(uint32_t), 0, 0,
+					TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())
 			)
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
@@ -2097,46 +2097,46 @@ void test_gather_enum(void)
 	uint64_t v2 = 400;
 	uint8_t v3 = 200;
 	int8_t v4 = -100;
-#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
-	uint32_t v5 = side_bswap_32(6);
+#if TGIF_BYTE_ORDER == TGIF_LITTLE_ENDIAN
+	uint32_t v5 = tgif_bswap_32(6);
 	uint32_t v6 = 6;
 #else
 	uint32_t v5 = 6;
-	uint32_t v6 = side_bswap_32(6);
+	uint32_t v6 = tgif_bswap_32(6);
 #endif
 
-	side_event(my_provider_event_enum_gather,
-		side_arg_list(
-			side_arg_gather_integer(&v1),
-			side_arg_gather_integer(&v2),
-			side_arg_gather_integer(&v3),
-			side_arg_gather_integer(&v4),
-			side_arg_gather_integer(&v5),
-			side_arg_gather_integer(&v6),
+	tgif_event(my_provider_event_enum_gather,
+		tgif_arg_list(
+			tgif_arg_gather_integer(&v1),
+			tgif_arg_gather_integer(&v2),
+			tgif_arg_gather_integer(&v3),
+			tgif_arg_gather_integer(&v4),
+			tgif_arg_gather_integer(&v5),
+			tgif_arg_gather_integer(&v6),
 		)
 	);
 }
 
-side_static_event(my_provider_event_gatherstring,
-	"myprovider", "myeventgatherstring", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_gather_string("string", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-		side_field_gather_array("arrayptr",
-			side_elem(side_type_gather_string(0, SIDE_TYPE_GATHER_ACCESS_POINTER, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+tgif_static_event(my_provider_event_gatherstring,
+	"myprovider", "myeventgatherstring", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_gather_string("string", 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
+		tgif_field_gather_array("arrayptr",
+			tgif_elem(tgif_type_gather_string(0, TGIF_TYPE_GATHER_ACCESS_POINTER, tgif_attr_list())),
+			3, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()
 		),
-		side_field_gather_array("array",
-			side_elem(side_type_gather_string(0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+		tgif_field_gather_array("array",
+			tgif_elem(tgif_type_gather_string(0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list())),
+			3, 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()
 		),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
 void test_gather_string(void)
 {
-	side_event_cond(my_provider_event_gatherstring) {
+	tgif_event_cond(my_provider_event_gatherstring) {
 		const char *str1 = "abcdef";
 		const char *ptrarray[3] = {
 			"abc",
@@ -2145,29 +2145,29 @@ void test_gather_string(void)
 		};
 		char flatarray[] = { 'a', 'b', '\0', 'c', 'd', '\0', 'e', 'f', '\0' };
 
-		side_event_call(my_provider_event_gatherstring,
-			side_arg_list(
-				side_arg_gather_string(str1),
-				side_arg_gather_array(ptrarray),
-				side_arg_gather_array(flatarray),
+		tgif_event_call(my_provider_event_gatherstring,
+			tgif_arg_list(
+				tgif_arg_gather_string(str1),
+				tgif_arg_gather_array(ptrarray),
+				tgif_arg_gather_array(flatarray),
 			)
 		);
 	}
 }
 
-side_static_event(my_provider_event_str_utf, "myprovider", "myevent_str_utf", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_string("utf8", side_attr_list()),
-		side_field_string32("utf32", side_attr_list()),
-		side_field_string16("utf16", side_attr_list()),
-		side_field_string32_le("utf32_le", side_attr_list()),
-		side_field_string16_le("utf16_le", side_attr_list()),
-		side_field_string32_be("utf32_be", side_attr_list()),
-		side_field_string16_be("utf16_be", side_attr_list()),
-		side_field_dynamic("dynamic_utf32"),
-		side_field_gather_string32("gather_utf32", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+tgif_static_event(my_provider_event_str_utf, "myprovider", "myevent_str_utf", TGIF_LOGLEVEL_DEBUG,
+	tgif_field_list(
+		tgif_field_string("utf8", tgif_attr_list()),
+		tgif_field_string32("utf32", tgif_attr_list()),
+		tgif_field_string16("utf16", tgif_attr_list()),
+		tgif_field_string32_le("utf32_le", tgif_attr_list()),
+		tgif_field_string16_le("utf16_le", tgif_attr_list()),
+		tgif_field_string32_be("utf32_be", tgif_attr_list()),
+		tgif_field_string16_be("utf16_be", tgif_attr_list()),
+		tgif_field_dynamic("dynamic_utf32"),
+		tgif_field_gather_string32("gather_utf32", 0, TGIF_TYPE_GATHER_ACCESS_DIRECT, tgif_attr_list()),
 	),
-	side_attr_list()
+	tgif_attr_list()
 );
 
 static
@@ -2182,29 +2182,29 @@ void test_string_utf(void)
 	uint8_t str8[] = { 0xc2, 0xae, 'a', 'b', 'c', 0 };
 	uint32_t str32[] = { 0x000000ae, 'a', 'b', 'c', 0 };
 	uint16_t str16[] = { 0x00ae, 'a', 'b', 'c', 0 };
-#if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
+#if TGIF_BYTE_ORDER == TGIF_LITTLE_ENDIAN
 	uint32_t str32_le[] = { 0x000000ae, 'a', 'b', 'c', 0 };
 	uint16_t str16_le[] = { 0x00ae, 'a', 'b', 'c', 0 };
-	uint32_t str32_be[] = { side_bswap_32(0x000000ae), side_bswap_32('a'), side_bswap_32('b'), side_bswap_32('c'), 0 };
-	uint16_t str16_be[] = { side_bswap_16(0x00ae), side_bswap_16('a'), side_bswap_16('b'), side_bswap_16('c'), 0 };
+	uint32_t str32_be[] = { tgif_bswap_32(0x000000ae), tgif_bswap_32('a'), tgif_bswap_32('b'), tgif_bswap_32('c'), 0 };
+	uint16_t str16_be[] = { tgif_bswap_16(0x00ae), tgif_bswap_16('a'), tgif_bswap_16('b'), tgif_bswap_16('c'), 0 };
 #else
-	uint32_t str32_le[] = { side_bswap_32(0x000000ae), side_bswap_32('a'), side_bswap_32('b'), side_bswap_32('c'), 0 };
-	uint16_t str16_le[] = { side_bswap_16(0x00ae), side_bswap_16('a'), side_bswap_16('b'), side_bswap_16('c'), 0 };
+	uint32_t str32_le[] = { tgif_bswap_32(0x000000ae), tgif_bswap_32('a'), tgif_bswap_32('b'), tgif_bswap_32('c'), 0 };
+	uint16_t str16_le[] = { tgif_bswap_16(0x00ae), tgif_bswap_16('a'), tgif_bswap_16('b'), tgif_bswap_16('c'), 0 };
 	uint32_t str32_be[] = { 0x000000ae, 'a', 'b', 'c', 0 };
 	uint16_t str16_be[] = { 0x00ae, 'a', 'b', 'c', 0 };
 #endif
 
-	side_event(my_provider_event_str_utf,
-		side_arg_list(
-			side_arg_string(str8),
-			side_arg_string32(str32),
-			side_arg_string16(str16),
-			side_arg_string32(str32_le),
-			side_arg_string16(str16_le),
-			side_arg_string32(str32_be),
-			side_arg_string16(str16_be),
-			side_arg_dynamic_string32(str32, side_attr_list()),
-			side_arg_gather_string(str32),
+	tgif_event(my_provider_event_str_utf,
+		tgif_arg_list(
+			tgif_arg_string(str8),
+			tgif_arg_string32(str32),
+			tgif_arg_string16(str16),
+			tgif_arg_string32(str32_le),
+			tgif_arg_string16(str16_le),
+			tgif_arg_string32(str32_be),
+			tgif_arg_string16(str16_be),
+			tgif_arg_dynamic_string32(str32, tgif_attr_list()),
+			tgif_arg_gather_string(str32),
 		)
 	);
 }

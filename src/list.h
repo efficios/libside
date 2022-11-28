@@ -3,20 +3,20 @@
  * Copyright 2022 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef _SIDE_LIST_H
-#define _SIDE_LIST_H
+#ifndef _TGIF_LIST_H
+#define _TGIF_LIST_H
 
-struct side_list_node {
-	struct side_list_node *next;
-	struct side_list_node *prev;
+struct tgif_list_node {
+	struct tgif_list_node *next;
+	struct tgif_list_node *prev;
 };
 
-struct side_list_head {
-	struct side_list_node node;
+struct tgif_list_head {
+	struct tgif_list_node node;
 };
 
-#define DEFINE_SIDE_LIST_HEAD(_identifier) \
-	struct side_list_head _identifier = { \
+#define DEFINE_TGIF_LIST_HEAD(_identifier) \
+	struct tgif_list_head _identifier = { \
 		.node = { \
 			.next = &(_identifier).node, \
 			.prev = &(_identifier).node, \
@@ -24,7 +24,7 @@ struct side_list_head {
 	}
 
 static inline
-void side_list_insert_node_tail(struct side_list_head *head, struct side_list_node *node)
+void tgif_list_insert_node_tail(struct tgif_list_head *head, struct tgif_list_node *node)
 {
 	node->next = &head->node;
 	node->prev = head->node.prev;
@@ -33,7 +33,7 @@ void side_list_insert_node_tail(struct side_list_head *head, struct side_list_no
 }
 
 static inline
-void side_list_insert_node_head(struct side_list_head *head, struct side_list_node *node)
+void tgif_list_insert_node_head(struct tgif_list_head *head, struct tgif_list_node *node)
 {
 	node->next = head->node.next;
 	node->prev = &head->node;
@@ -42,23 +42,23 @@ void side_list_insert_node_head(struct side_list_head *head, struct side_list_no
 }
 
 static inline
-void side_list_remove_node(struct side_list_node *node)
+void tgif_list_remove_node(struct tgif_list_node *node)
 {
 	node->next->prev = node->prev;
 	node->prev->next = node->next;
 }
 
-#define side_list_for_each_entry(_entry, _head, _member) \
-	for ((_entry) = side_container_of((_head)->node.next, __typeof__(*(_entry)), _member); \
+#define tgif_list_for_each_entry(_entry, _head, _member) \
+	for ((_entry) = tgif_container_of((_head)->node.next, __typeof__(*(_entry)), _member); \
 		&(_entry)->_member != &(_head)->node; \
-		(_entry) = side_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member))
+		(_entry) = tgif_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member))
 
 /* List iteration, safe against node reclaim while iterating. */
-#define side_list_for_each_entry_safe(_entry, _next_entry, _head, _member) \
-	for ((_entry) = side_container_of((_head)->node.next, __typeof__(*(_entry)), _member), \
-			(_next_entry) = side_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member); \
+#define tgif_list_for_each_entry_safe(_entry, _next_entry, _head, _member) \
+	for ((_entry) = tgif_container_of((_head)->node.next, __typeof__(*(_entry)), _member), \
+			(_next_entry) = tgif_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member); \
 		&(_entry)->_member != &(_head)->node; \
-		(_entry) = side_container_of((_next_entry)->_member.next, __typeof__(*(_entry)), _member), \
-		(_next_entry) = side_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member))
+		(_entry) = tgif_container_of((_next_entry)->_member.next, __typeof__(*(_entry)), _member), \
+		(_next_entry) = tgif_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member))
 
-#endif /* _SIDE_LIST_H */
+#endif /* _TGIF_LIST_H */

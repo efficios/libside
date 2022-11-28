@@ -54,10 +54,10 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-/src/libside.pc
+/src/libtgif.pc
 /src/test
 /tests/regression/.dirstamp
-/tests/regression/side-rcu-test
+/tests/regression/tgif-rcu-test
 
 #automake
 /include/config.h

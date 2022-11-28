@@ -4,9 +4,9 @@
  * Copyright (C) 2019 Michael Jeanson <mjeanson@efficios.com>
  */
 
-#ifndef _SIDE_SMP_H
-#define _SIDE_SMP_H
+#ifndef _TGIF_SMP_H
+#define _TGIF_SMP_H
 
 int get_possible_cpus_array_len(void) __attribute__((visibility("hidden")));
 
-#endif /* _SIDE_SMP_H */
+#endif /* _TGIF_SMP_H */
