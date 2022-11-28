@@ -10,5 +10,5 @@ Name: Restartable sequence
 Description: Restartable sequence library
 Version: @PACKAGE_VERSION@
 Requires:
-Libs: -L${libdir} -ltgif
+Libs: -L${libdir} -lside
 Cflags: -I${includedir}

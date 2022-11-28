@@ -4,19 +4,19 @@ dnl
 dnl Process this file with autoconf to produce a configure script.
 
 # Project version information
-m4_define([tgif_version_major], [0])
-m4_define([tgif_version_minor], [1])
-m4_define([tgif_version_patch], [0])
-m4_define([tgif_version_dev_stage], [-pre])
-m4_define([tgif_version], tgif_version_major[.]tgif_version_minor[.]tgif_version_patch[]tgif_version_dev_stage)
+m4_define([side_version_major], [0])
+m4_define([side_version_minor], [1])
+m4_define([side_version_patch], [0])
+m4_define([side_version_dev_stage], [-pre])
+m4_define([side_version], side_version_major[.]side_version_minor[.]side_version_patch[]side_version_dev_stage)
 
-# Library version information of "libtgif"
+# Library version information of "libside"
 # Following the numbering scheme proposed by libtool for the library version
 # http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
-m4_define([tgif_lib_version_current], [0])
-m4_define([tgif_lib_version_revision], [0])
-m4_define([tgif_lib_version_age], [0])
-m4_define([tgif_lib_version], tgif_lib_version_current[:]tgif_lib_version_revision[:]tgif_lib_version_age)
+m4_define([side_lib_version_current], [0])
+m4_define([side_lib_version_revision], [0])
+m4_define([side_lib_version_age], [0])
+m4_define([side_lib_version], side_lib_version_current[:]side_lib_version_revision[:]side_lib_version_age)
 
 
 ##                     ##
@@ -24,7 +24,7 @@ m4_define([tgif_lib_version], tgif_lib_version_current[:]tgif_lib_version_revisi
 ##                     ##
 
 AC_PREREQ([2.69])
-AC_INIT([libtgif],[tgif_version],[mathieu dot desnoyers at efficios dot com],[],[https://github.com/compudj/libtgif/])
+AC_INIT([libside],[side_version],[mathieu dot desnoyers at efficios dot com],[],[https://github.com/compudj/libside/])
 
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -183,7 +183,7 @@ AE_FEATURE([Werror], [Treat compiler warnings as errors.])
 ##                                             ##
 
 # Library versions for libtool
-AC_SUBST([TGIF_LIBRARY_VERSION], [tgif_lib_version])
+AC_SUBST([SIDE_LIBRARY_VERSION], [side_lib_version])
 
 # The order in which the include folders are searched is important.
 # The top_builddir should always be searched first in the event that a build
@@ -206,7 +206,7 @@ AC_CONFIG_FILES([
 	Makefile
 	include/Makefile
 	src/Makefile
-	src/libtgif.pc
+	src/libside.pc
 	tests/Makefile
 	tests/utils/Makefile
 ])
@@ -223,7 +223,7 @@ AE_PPRINT_SET_INDENT(1)
 AE_PPRINT_SET_TS(38)
 
 AS_ECHO
-AS_ECHO("${AE_PPRINT_COLOR_BLDBLU}libtgif $PACKAGE_VERSION${AE_PPRINT_COLOR_RST}")
+AS_ECHO("${AE_PPRINT_COLOR_BLDBLU}libside $PACKAGE_VERSION${AE_PPRINT_COLOR_RST}")
 AS_ECHO
 
 AE_PPRINT_SUBTITLE([Features])

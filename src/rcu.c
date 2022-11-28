@@ -22,7 +22,7 @@
  * If both rseq (with glibc support) and membarrier system calls are
  * available, use them to replace barriers and atomics on the fast-path.
  */
-unsigned int tgif_rcu_rseq_membarrier_available;
+unsigned int side_rcu_rseq_membarrier_available;
 
 static int
 membarrier(int cmd, unsigned int flags, int cpu_id)
@@ -34,16 +34,16 @@ membarrier(int cmd, unsigned int flags, int cpu_id)
  * Wait/wakeup scheme with single waiter/many wakers.
  */
 static
-void wait_gp_prepare(struct tgif_rcu_gp_state *gp_state)
+void wait_gp_prepare(struct side_rcu_gp_state *gp_state)
 {
 	__atomic_store_n(&gp_state->futex, -1, __ATOMIC_RELAXED);
 	/*
 	 * This memory barrier (H) pairs with memory barrier (F). It
 	 * orders store to futex before load of RCU reader's counter
 	 * state, thus ensuring that load of RCU reader's counters does
-	 * not leak outtgif of futex state=-1.
+	 * not leak outside of futex state=-1.
 	 */
-	if (tgif_rcu_rseq_membarrier_available) {
+	if (side_rcu_rseq_membarrier_available) {
 		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
 			perror("membarrier");
 			abort();
@@ -54,15 +54,15 @@ void wait_gp_prepare(struct tgif_rcu_gp_state *gp_state)
 }
 
 static
-void wait_gp_end(struct tgif_rcu_gp_state *gp_state)
+void wait_gp_end(struct side_rcu_gp_state *gp_state)
 {
 	/*
 	 * This memory barrier (G) pairs with memory barrier (F). It
 	 * orders load of RCU reader's counter state before storing the
 	 * futex value, thus ensuring that load of RCU reader's counters
-	 * does not leak outtgif of futex state=-1.
+	 * does not leak outside of futex state=-1.
 	 */
-	if (tgif_rcu_rseq_membarrier_available) {
+	if (side_rcu_rseq_membarrier_available) {
 		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
 			perror("membarrier");
 			abort();
@@ -74,14 +74,14 @@ void wait_gp_end(struct tgif_rcu_gp_state *gp_state)
 }
 
 static
-void wait_gp(struct tgif_rcu_gp_state *gp_state)
+void wait_gp(struct side_rcu_gp_state *gp_state)
 {
 	/*
 	 * This memory barrier (G) pairs with memory barrier (F). It
 	 * orders load of RCU reader's counter state before loading the
 	 * futex value.
 	 */
-	if (tgif_rcu_rseq_membarrier_available) {
+	if (side_rcu_rseq_membarrier_available) {
 		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
 			perror("membarrier");
 			abort();
@@ -114,13 +114,13 @@ void wait_gp(struct tgif_rcu_gp_state *gp_state)
 
 /* active_readers is an input/output parameter. */
 static
-void check_active_readers(struct tgif_rcu_gp_state *gp_state, bool *active_readers)
+void check_active_readers(struct side_rcu_gp_state *gp_state, bool *active_readers)
 {
 	uintptr_t sum[2] = { 0, 0 };	/* begin - end */
 	int i;
 
 	for (i = 0; i < gp_state->nr_cpus; i++) {
-		struct tgif_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
+		struct side_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
 
 		if (active_readers[0]) {
 			sum[0] -= __atomic_load_n(&cpu_state->count[0].end, __ATOMIC_RELAXED);
@@ -142,7 +142,7 @@ void check_active_readers(struct tgif_rcu_gp_state *gp_state, bool *active_reade
 	 * incremented before "end", as guaranteed by memory barriers
 	 * (A) or (B).
 	 */
-	if (tgif_rcu_rseq_membarrier_available) {
+	if (side_rcu_rseq_membarrier_available) {
 		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
 			perror("membarrier");
 			abort();
@@ -152,7 +152,7 @@ void check_active_readers(struct tgif_rcu_gp_state *gp_state, bool *active_reade
 	}
 
 	for (i = 0; i < gp_state->nr_cpus; i++) {
-		struct tgif_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
+		struct side_rcu_cpu_gp_state *cpu_state = &gp_state->percpu_state[i];
 
 		if (active_readers[0]) {
 			sum[0] += __atomic_load_n(&cpu_state->count[0].begin, __ATOMIC_RELAXED);
@@ -175,7 +175,7 @@ void check_active_readers(struct tgif_rcu_gp_state *gp_state, bool *active_reade
  * active_readers is an input/output parameter.
  */
 static
-void wait_for_prev_period_readers(struct tgif_rcu_gp_state *gp_state, bool *active_readers)
+void wait_for_prev_period_readers(struct side_rcu_gp_state *gp_state, bool *active_readers)
 {
 	unsigned int prev_period = gp_state->period ^ 1;
 
@@ -209,22 +209,22 @@ void wait_for_prev_period_readers(struct tgif_rcu_gp_state *gp_state, bool *acti
  * grace period observes that no readers are present for each given
  * period, at which point the active_readers state becomes false.
  */
-void tgif_rcu_wait_grace_period(struct tgif_rcu_gp_state *gp_state)
+void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state)
 {
 	bool active_readers[2] = { true, true };
 
 	/*
 	 * This memory barrier (D) pairs with memory barriers (A) and
-	 * (B) on the read-tgif.
+	 * (B) on the read-side.
 	 *
 	 * It orders prior loads and stores before the "end"/"begin"
 	 * reader state loads. In other words, it orders prior loads and
 	 * stores before observation of active readers quiescence,
-	 * effectively ensuring that read-tgif critical sections which
+	 * effectively ensuring that read-side critical sections which
 	 * exist after the grace period completes are ordered after
 	 * loads and stores performed before the grace period.
 	 */
-	if (tgif_rcu_rseq_membarrier_available) {
+	if (side_rcu_rseq_membarrier_available) {
 		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
 			perror("membarrier");
 			abort();
@@ -262,17 +262,17 @@ unlock:
 end:
 	/*
 	 * This memory barrier (E) pairs with memory barriers (A) and
-	 * (B) on the read-tgif.
+	 * (B) on the read-side.
 	 *
 	 * It orders the "end"/"begin" reader state loads before
 	 * following loads and stores. In other words, it orders
 	 * observation of active readers quiescence before following
-	 * loads and stores, effectively ensuring that read-tgif
+	 * loads and stores, effectively ensuring that read-side
 	 * critical sections which existed prior to the grace period
 	 * are ordered before loads and stores performed after the grace
 	 * period.
 	 */
-	if (tgif_rcu_rseq_membarrier_available) {
+	if (side_rcu_rseq_membarrier_available) {
 		if (membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0, 0)) {
 			perror("membarrier");
 			abort();
@@ -282,7 +282,7 @@ end:
 	}
 }
 
-void tgif_rcu_gp_init(struct tgif_rcu_gp_state *rcu_gp)
+void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
 {
 	bool has_membarrier = false, has_rseq = false;
 
@@ -291,8 +291,8 @@ void tgif_rcu_gp_init(struct tgif_rcu_gp_state *rcu_gp)
 	if (!rcu_gp->nr_cpus)
 		abort();
 	pthread_mutex_init(&rcu_gp->gp_lock, NULL);
-	rcu_gp->percpu_state = (struct tgif_rcu_cpu_gp_state *)
-		calloc(rcu_gp->nr_cpus, sizeof(struct tgif_rcu_cpu_gp_state));
+	rcu_gp->percpu_state = (struct side_rcu_cpu_gp_state *)
+		calloc(rcu_gp->nr_cpus, sizeof(struct side_rcu_cpu_gp_state));
 	if (!rcu_gp->percpu_state)
 		abort();
 	if (!membarrier(MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, 0, 0))
@@ -300,10 +300,10 @@ void tgif_rcu_gp_init(struct tgif_rcu_gp_state *rcu_gp)
 	if (rseq_available(RSEQ_AVAILABLE_QUERY_LIBC))
 		has_rseq = true;
 	if (has_membarrier && has_rseq)
-		tgif_rcu_rseq_membarrier_available = 1;
+		side_rcu_rseq_membarrier_available = 1;
 }
 
-void tgif_rcu_gp_exit(struct tgif_rcu_gp_state *rcu_gp)
+void side_rcu_gp_exit(struct side_rcu_gp_state *rcu_gp)
 {
 	rseq_prepare_unload();
 	pthread_mutex_destroy(&rcu_gp->gp_lock);

@@ -2,6 +2,6 @@
 # SPDX-FileCopyrightText: 2022 EfficiOS Inc.
 
 nobase_include_HEADERS = \
-	tgif/endian.h \
-	tgif/macros.h \
-	tgif/trace.h
+	side/endian.h \
+	side/macros.h \
+	side/trace.h
