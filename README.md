@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022 EfficiOS Inc.
 
-# side
-Static Instrumentation Dynamically Enabled
+# tgif
+Trace Generation Instrumentation Framework
 
 # dependencies
 librseq: https://github.com/compudj/librseq
