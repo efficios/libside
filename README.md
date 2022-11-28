@@ -1,8 +1,12 @@
-# SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2022 EfficiOS Inc.
+<!--
+SPDX-License-Identifier: MIT
+SPDX-FileCopyrightText: 2022 EfficiOS Inc.
+-->
 
-# side
+libside
+=======
 Software Instrumentation Dynamically Enabled
 
-# dependencies
-librseq: https://github.com/compudj/librseq
+Dependencies
+------------
+ - [librseq](https://github.com/compudj/librseq)
