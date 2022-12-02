@@ -394,6 +394,7 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *tracer
 	}
 	side_list_remove_node(&tracer_handle->node);
 	pthread_mutex_unlock(&side_lock);
+	free(tracer_handle);
 }
 
 void side_init(void)
