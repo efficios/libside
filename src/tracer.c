@@ -30,6 +30,8 @@ static struct side_tracer_handle *tracer_handle;
 static
 void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
+void tracer_print_variant(const struct side_type *type_desc, const struct side_arg_variant *side_arg_variant);
+static
 void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
 void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
@@ -951,6 +953,9 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_STRUCT:
 		tracer_print_struct(type_desc, item->u.side_static.side_struct);
 		break;
+	case SIDE_TYPE_VARIANT:
+		tracer_print_variant(type_desc, item->u.side_static.side_variant);
+		break;
 	case SIDE_TYPE_ARRAY:
 		tracer_print_array(type_desc, item->u.side_static.side_array);
 		break;
@@ -1056,6 +1061,46 @@ void tracer_print_struct(const struct side_type *type_desc, const struct side_ar
 		tracer_print_field(&type_desc->u.side_struct->fields[i], &sav[i]);
 	}
 	printf(" }");
+}
+
+static
+void tracer_print_variant(const struct side_type *type_desc, const struct side_arg_variant *side_arg_variant)
+{
+	const struct side_type_variant *side_type_variant = type_desc->u.side_variant;
+	const struct side_type *selector_type = &side_type_variant->selector;
+	union int64_value v64;
+	uint32_t i;
+
+	if (selector_type->type != side_arg_variant->selector.type) {
+		fprintf(stderr, "ERROR: Unexpected variant selector type\n");
+		abort();
+	}
+	switch (selector_type->type) {
+	case SIDE_TYPE_U8:
+	case SIDE_TYPE_U16:
+	case SIDE_TYPE_U32:
+	case SIDE_TYPE_U64:
+	case SIDE_TYPE_S8:
+	case SIDE_TYPE_S16:
+	case SIDE_TYPE_S32:
+	case SIDE_TYPE_S64:
+		break;
+	default:
+		fprintf(stderr, "ERROR: Expecting integer variant selector type\n");
+		abort();
+	}
+	v64 = tracer_load_integer_value(&selector_type->u.side_integer,
+			&side_arg_variant->selector.u.side_static.integer_value, 0, NULL);
+	for (i = 0; i < side_type_variant->nr_options; i++) {
+		const struct side_variant_option *option = &side_type_variant->options[i];
+
+		if (v64.s >= option->range_begin && v64.s <= option->range_end) {
+			tracer_print_type(&option->side_type, &side_arg_variant->option);
+			return;
+		}
+	}
+	fprintf(stderr, "ERROR: Variant selector value unknown %" PRId64 "\n", v64.s);
+	abort();
 }
 
 static

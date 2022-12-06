@@ -82,6 +82,7 @@ struct side_tracer_dynamic_struct_visitor_ctx;
 struct side_event_description;
 struct side_arg_dynamic_struct;
 struct side_events_register_handle;
+struct side_arg_variant;
 
 enum side_type_label {
 	/* Stack-copy basic types */
@@ -107,6 +108,7 @@ enum side_type_label {
 
 	/* Stack-copy compound types */
 	SIDE_TYPE_STRUCT,
+	SIDE_TYPE_VARIANT,
 	SIDE_TYPE_ARRAY,
 	SIDE_TYPE_VLA,
 	SIDE_TYPE_VLA_VISITOR,
@@ -471,6 +473,7 @@ struct side_type {
 		struct side_type_vla side_vla;
 		struct side_type_vla_visitor side_vla_visitor;
 		const struct side_type_struct *side_struct;
+		const struct side_type_variant *side_variant;
 
 		/* Stack-copy enumeration types */
 		struct side_type_enum side_enum;
@@ -479,6 +482,20 @@ struct side_type {
 		/* Gather types */
 		struct side_type_gather side_gather;
 	} SIDE_PACKED u;
+} SIDE_PACKED;
+
+struct side_variant_option {
+	int64_t range_begin;
+	int64_t range_end;
+	const struct side_type side_type;
+} SIDE_PACKED;
+
+struct side_type_variant {
+	const struct side_type selector;
+	const struct side_variant_option *options;
+	const struct side_attr *attr;
+	uint32_t nr_options;
+	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_event_field {
@@ -513,6 +530,7 @@ struct side_arg_static {
 
 	/* Stack-copy compound types */
 	const struct side_arg_vec *side_struct;
+	const struct side_arg_variant *side_variant;
 	const struct side_arg_vec *side_array;
 	const struct side_arg_vec *side_vla;
 	void *side_vla_app_visitor_ctx;
@@ -599,6 +617,11 @@ struct side_arg {
 		struct side_arg_static side_static;
 		struct side_arg_dynamic side_dynamic;
 	} SIDE_PACKED u;
+} SIDE_PACKED;
+
+struct side_arg_variant {
+	struct side_arg selector;
+	struct side_arg option;
 } SIDE_PACKED;
 
 struct side_arg_vec {
@@ -845,6 +868,16 @@ struct side_event_description {
 		.side_type = _type, \
 	}
 
+#define side_option_range(_range_begin, _range_end, _type) \
+	{ \
+		.range_begin = _range_begin, \
+		.range_end = _range_end, \
+		.side_type = _type, \
+	}
+
+#define side_option(_value, _type) \
+	side_option_range(_value, _value, SIDE_PARAM(_type))
+
 /* Host endian */
 #define side_type_u8(_attr)				_side_type_integer(SIDE_TYPE_U8, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM(_attr))
 #define side_type_u16(_attr)				_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
@@ -992,6 +1025,33 @@ struct side_event_description {
 #define side_struct_literal(_fields, _attr) \
 	SIDE_COMPOUND_LITERAL(const struct side_type_struct, \
 		_side_type_struct_define(SIDE_PARAM(_fields), SIDE_PARAM(_attr)))
+
+#define side_type_variant(_variant) \
+	{ \
+		.type = SIDE_TYPE_VARIANT, \
+		.u = { \
+			.side_variant = _variant, \
+		}, \
+	}
+#define side_field_variant(_name, _variant) \
+	_side_field(_name, side_type_variant(SIDE_PARAM(_variant)))
+
+#define _side_type_variant_define(_selector, _options, _attr) \
+	{ \
+		.selector = _selector, \
+		.options = _options, \
+		.attr = _attr, \
+		.nr_options = SIDE_ARRAY_SIZE(SIDE_PARAM(_options)), \
+		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+	}
+
+#define side_define_variant(_identifier, _selector, _options, _attr) \
+	const struct side_type_variant _identifier = \
+		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_PARAM(_attr))
+
+#define side_variant_literal(_selector, _options, _attr) \
+	SIDE_COMPOUND_LITERAL(const struct side_type_variant, \
+		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_PARAM(_attr)))
 
 #define side_type_array(_elem_type, _length, _attr) \
 	{ \
@@ -1350,6 +1410,9 @@ struct side_event_description {
 #define side_field_list(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)
 
+#define side_option_list(...) \
+	SIDE_COMPOUND_LITERAL(const struct side_variant_option, __VA_ARGS__)
+
 /* Stack-copy field arguments */
 
 #define side_arg_null(_val)		{ .type = SIDE_TYPE_NULL }
@@ -1374,6 +1437,22 @@ struct side_event_description {
 #define side_arg_float_binary128(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .side_static = { .float_value = { .side_float_binary128 = (_val) } } } }
 
 #define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_static = { .side_struct = (_side_type) } } }
+
+#define side_arg_define_variant(_identifier, _selector_val, _option) \
+	const struct side_arg_variant _identifier = { \
+		.selector = _selector_val, \
+		.option = _option, \
+	}
+#define side_arg_variant(_side_variant) \
+	{ \
+		.type = SIDE_TYPE_VARIANT, \
+		.u = { \
+			.side_static = { \
+				.side_variant = (_side_variant), \
+			}, \
+		}, \
+	}
+
 #define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_static = { .side_array = (_side_type) } } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_static = { .side_vla = (_side_type) } } }
 #define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_static = { .side_vla_app_visitor_ctx = (_ctx) } } }

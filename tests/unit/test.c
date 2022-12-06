@@ -2209,6 +2209,41 @@ void test_string_utf(void)
 	);
 }
 
+static side_define_variant(myvariantdef,
+	side_type_u32(side_attr_list()),
+	side_option_list(
+		side_option_range(1, 3, side_type_u16(side_attr_list())),
+		side_option(5, side_type_string(side_attr_list())),
+	),
+	side_attr_list()
+);
+
+side_static_event(my_provider_event_variant, "myprovider", "myeventvariant", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_variant("variant1", &myvariantdef),
+		side_field_variant("variant2", &myvariantdef),
+		side_field_u8("z", side_attr_list()),
+	),
+	side_attr_list()
+);
+
+static
+void test_variant(void)
+{
+	side_event_cond(my_provider_event_variant) {
+		side_arg_define_variant(myvariant1, side_arg_u32(2), side_arg_u16(4));
+		side_arg_define_variant(myvariant2, side_arg_u32(5), side_arg_string("abc"));
+
+		side_event_call(my_provider_event_variant,
+			side_arg_list(
+				side_arg_variant(&myvariant1),
+				side_arg_variant(&myvariant2),
+				side_arg_u8(55),
+			)
+		);
+	}
+}
+
 int main()
 {
 	test_fields();
@@ -2260,5 +2295,6 @@ int main()
 	test_gather_enum();
 	test_gather_string();
 	test_string_utf();
+	test_variant();
 	return 0;
 }
