@@ -1787,7 +1787,7 @@ void tracer_event_notification(enum side_tracer_notification notif,
 			continue;
 		printf("provider: %s, event: %s\n",
 			event->provider_name, event->event_name);
-		if  (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS) {
+		if (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS) {
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
 				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL);
 				if (ret)
