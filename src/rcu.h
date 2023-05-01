@@ -143,11 +143,10 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, struct side_rcu_read_
 	/* Fallback to atomic increment and SEQ_CST. */
 	(void) __atomic_add_fetch(&begin_cpu_count->end, 1, __ATOMIC_SEQ_CST);
 	/*
-	 * This barrier (F) is paired with SEQ_CST barrier or
-	 * membarrier() at (G). It orders increment of the begin/end
-	 * counters before load/store to the futex.
+	 * This barrier (F) implied by SEQ_CST is paired with SEQ_CST
+	 * barrier or membarrier() at (G). It orders increment of the
+	 * begin/end counters before load/store to the futex.
 	 */
-	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 end:
 	side_rcu_wake_up_gp(gp_state);
 }
