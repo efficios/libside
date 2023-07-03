@@ -1,7 +1,6 @@
-# SPDX-License-Identifier: GPL-2.0-or-later WITH Autoconf-exception-2.0
-#
 # SPDX-FileCopyrightText: 2016 Philippe Proulx <pproulx@efficios.com>
 #
+# SPDX-License-Identifier: GPL-2.0-or-later WITH Autoconf-exception-2.0
 
 #serial 2
 

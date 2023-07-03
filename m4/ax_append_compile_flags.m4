@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: FSFAP
 # ============================================================================
 #  https://www.gnu.org/software/autoconf-archive/ax_append_compile_flags.html
 # ============================================================================
@@ -27,8 +28,6 @@
 #   AX_APPEND_LINK_FLAGS.
 #
 # LICENSE
-#
-#   SPDX-License-Identifier: FSFAP
 #
 #   Copyright (c) 2011 Maarten Bosmans <mkbosmans@gmail.com>
 #

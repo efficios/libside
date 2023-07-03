@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later WITH LicenseRef-Autoconf-exception-macro
 # ===========================================================================
 #    https://www.gnu.org/software/autoconf-archive/ax_c___attribute__.html
 # ===========================================================================
@@ -12,8 +13,6 @@
 #   Defines HAVE___ATTRIBUTE__ if it is found.
 #
 # LICENSE
-#
-#   SPDX-License-Identifier: GPL-2.0-or-later WITH Autoconf-exception-2.0
 #
 #   Copyright (c) 2008 Stepan Kasal <skasal@redhat.com>
 #   Copyright (c) 2008 Christian Haggstrom

@@ -18,4 +18,5 @@ EXTRA_DIST = \
 	LICENSES/FSFAP.txt \
 	LICENSES/GPL-2.0-or-later.txt \
 	LICENSES/GPL-3.0-or-later.txt \
+	LICENSES/LicenseRef-Autoconf-exception-macro.txt \
 	LICENSES/MIT.txt

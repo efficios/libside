@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: FSFAP
 # ===========================================================================
 #      https://www.gnu.org/software/autoconf-archive/ax_append_flag.html
 # ===========================================================================
@@ -19,8 +20,6 @@
 #   NOTE: Implementation based on AX_CFLAGS_GCC_OPTION.
 #
 # LICENSE
-#
-#   SPDX-License-Identifier: FSFAP
 #
 #   Copyright (c) 2008 Guido U. Draheim <guidod@gmx.de>
 #   Copyright (c) 2011 Maarten Bosmans <mkbosmans@gmail.com>
