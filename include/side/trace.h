@@ -72,7 +72,7 @@
 
 struct side_arg;
 struct side_arg_vec;
-struct side_arg_dynamic;
+union side_arg_dynamic;
 struct side_arg_dynamic_field;
 struct side_arg_dynamic_vla;
 struct side_type;
@@ -520,7 +520,7 @@ struct side_callback {
 	void *priv;
 } SIDE_PACKED;
 
-struct side_arg_static {
+union side_arg_static {
 	/* Stack-copy basic types */
 	union side_bool_value bool_value;
 	uint8_t byte_value;
@@ -579,7 +579,7 @@ struct side_dynamic_vla_visitor {
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
-struct side_arg_dynamic {
+union side_arg_dynamic {
 	/* Dynamic basic types */
 	struct side_type_null side_null;
 	struct {
@@ -614,8 +614,8 @@ struct side_arg_dynamic {
 struct side_arg {
 	uint32_t type;	/* enum side_type_label */
 	union {
-		struct side_arg_static side_static;
-		struct side_arg_dynamic side_dynamic;
+		union side_arg_static side_static;
+		union side_arg_dynamic side_dynamic;
 	} SIDE_PACKED u;
 } SIDE_PACKED;
 
