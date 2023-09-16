@@ -59,6 +59,7 @@ dkms.conf
 /tests/regression/.dirstamp
 /tests/regression/side-rcu-test
 /tests/unit/.dirstamp
+/tests/unit/demo
 /tests/unit/test
 
 #automake
