@@ -1,8 +1,7 @@
 #include <side/trace.h>
 
 side_static_event(my_provider_event, "myprovider", "myevent", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(side_field_s32("myfield", side_attr_list())),
-	side_attr_list()
+	side_field_list(side_field_s32("myfield"))
 );
 
 int main()
