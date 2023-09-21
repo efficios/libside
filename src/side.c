@@ -62,9 +62,8 @@ static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
  */
 const struct side_callback side_empty_callback = { };
 
-void side_call(const struct side_event_description *desc, const struct side_arg_vec *side_arg_vec)
+void side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
 {
-	struct side_event_state *event_state;
 	struct side_rcu_read_state rcu_read_state;
 	const struct side_callback *side_cb;
 	uintptr_t enabled;
@@ -73,26 +72,24 @@ void side_call(const struct side_event_description *desc, const struct side_arg_
 		return;
 	if (side_unlikely(!initialized))
 		side_init();
-	if (side_unlikely(desc->flags & SIDE_EVENT_FLAG_VARIADIC)) {
+	if (side_unlikely(event_state->desc->flags & SIDE_EVENT_FLAG_VARIADIC)) {
 		printf("ERROR: unexpected variadic event description\n");
 		abort();
 	}
-	event_state = side_ptr_get(desc->state);
 	enabled = __atomic_load_n(&event_state->enabled, __ATOMIC_RELAXED);
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
 	}
 	side_rcu_read_begin(&rcu_gp, &rcu_read_state);
 	for (side_cb = side_rcu_dereference(event_state->callbacks); side_cb->u.call != NULL; side_cb++)
-		side_cb->u.call(desc, side_arg_vec, side_cb->priv);
+		side_cb->u.call(event_state->desc, side_arg_vec, side_cb->priv);
 	side_rcu_read_end(&rcu_gp, &rcu_read_state);
 }
 
-void side_call_variadic(const struct side_event_description *desc,
+void side_call_variadic(const struct side_event_state *event_state,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct)
 {
-	struct side_event_state *event_state;
 	struct side_rcu_read_state rcu_read_state;
 	const struct side_callback *side_cb;
 	uintptr_t enabled;
@@ -101,18 +98,17 @@ void side_call_variadic(const struct side_event_description *desc,
 		return;
 	if (side_unlikely(!initialized))
 		side_init();
-	if (side_unlikely(!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))) {
+	if (side_unlikely(!(event_state->desc->flags & SIDE_EVENT_FLAG_VARIADIC))) {
 		printf("ERROR: unexpected non-variadic event description\n");
 		abort();
 	}
-	event_state = side_ptr_get(desc->state);
 	enabled = __atomic_load_n(&event_state->enabled, __ATOMIC_RELAXED);
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
 	}
 	side_rcu_read_begin(&rcu_gp, &rcu_read_state);
 	for (side_cb = side_rcu_dereference(event_state->callbacks); side_cb->u.call_variadic != NULL; side_cb++)
-		side_cb->u.call_variadic(desc, side_arg_vec, var_struct, side_cb->priv);
+		side_cb->u.call_variadic(event_state->desc, side_arg_vec, var_struct, side_cb->priv);
 	side_rcu_read_end(&rcu_gp, &rcu_read_state);
 }
 

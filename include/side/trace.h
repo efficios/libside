@@ -84,6 +84,7 @@ struct side_event_description;
 struct side_arg_dynamic_struct;
 struct side_events_register_handle;
 struct side_arg_variant;
+struct side_event_state;
 
 enum side_type_label {
 	/* Stack-copy basic types */
@@ -651,15 +652,6 @@ struct side_tracer_dynamic_struct_visitor_ctx {
 	void *priv;		/* Private tracer context. */
 } SIDE_PACKED;
 
-/*
- * This structure is _not_ packed to allow atomic operations on its
- * fields.
- */
-struct side_event_state {
-	uintptr_t enabled;
-	const struct side_callback *callbacks;
-};
-
 struct side_event_description {
 	side_ptr_t(struct side_event_state) state;
 	side_ptr_t(const char) provider_name;
@@ -673,6 +665,16 @@ struct side_event_description {
 	uint32_t nr_attr;
 	uint32_t nr_callbacks;
 } SIDE_PACKED;
+
+/*
+ * This structure is _not_ packed to allow atomic operations on its
+ * fields.
+ */
+struct side_event_state {
+	uintptr_t enabled;
+	const struct side_callback *callbacks;
+	struct side_event_description *desc;
+};
 
 /* Event and type attributes */
 
@@ -1775,7 +1777,7 @@ struct side_event_description {
 			.sav = SIDE_PTR_INIT(side_sav), \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		side_call(&(_identifier), &side_arg_vec); \
+		side_call(&(side_event_state__##_identifier), &side_arg_vec); \
 	}
 
 #define side_event(_identifier, _sav) \
@@ -1796,7 +1798,7 @@ struct side_event_description {
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		}; \
-		side_call_variadic(&(_identifier), &side_arg_vec, &var_struct); \
+		side_call_variadic(&(side_event_state__##_identifier), &side_arg_vec, &var_struct); \
 	}
 
 #define side_event_variadic(_identifier, _sav, _var, _attr...) \
@@ -1804,10 +1806,13 @@ struct side_event_description {
 		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
+	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
+			_identifier; \
 	_linkage struct side_event_state __attribute__((section("side_event_state"))) \
 			side_event_state__##_identifier = { \
 		.enabled = 0, \
 		.callbacks = &side_empty_callback, \
+		.desc = &_identifier, \
 	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
@@ -1860,9 +1865,9 @@ extern "C" {
 
 extern const struct side_callback side_empty_callback;
 
-void side_call(const struct side_event_description *desc,
+void side_call(const struct side_event_state *state,
 	const struct side_arg_vec *side_arg_vec);
-void side_call_variadic(const struct side_event_description *desc,
+void side_call_variadic(const struct side_event_state *state,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct);
 
