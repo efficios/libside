@@ -260,7 +260,7 @@ union side_float_value {
 } SIDE_PACKED;
 
 struct side_type_raw_string {
-	const void *p;			/* pointer to string */
+	side_ptr_t(const void) p;	/* pointer to string */
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
 	uint8_t byte_order;		/* enum side_type_label_byte_order */
 } SIDE_PACKED;
@@ -678,7 +678,9 @@ struct side_event_description {
 #define side_attr(_key, _value)	\
 	{ \
 		.key = { \
-			.p = (_key), \
+			.p = { \
+				.v = (uintptr_t) (_key), \
+			}, \
 			.unit_size = sizeof(uint8_t), \
 			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 		}, \
@@ -708,7 +710,9 @@ struct side_event_description {
 		.type = SIDE_ATTR_TYPE_STRING, \
 		.u = { \
 			.string_value = { \
-				.p = (const void *) (_val), \
+				.p = { \
+					.v = (uintptr_t) (_val), \
+				}, \
 				.unit_size = _unit_size, \
 				.byte_order = _byte_order, \
 			}, \
@@ -737,7 +741,9 @@ struct side_event_description {
 		.range_begin = _begin, \
 		.range_end = _end, \
 		.label = { \
-			.p = (_label), \
+			.p = { \
+				.v = (uintptr_t) (_label), \
+			}, \
 			.unit_size = sizeof(uint8_t), \
 			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 		}, \
@@ -748,7 +754,9 @@ struct side_event_description {
 		.range_begin = _value, \
 		.range_end = _value, \
 		.label = { \
-			.p = (_label), \
+			.p = { \
+				.v = (uintptr_t) (_label), \
+			}, \
 			.unit_size = sizeof(uint8_t), \
 			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 		}, \
@@ -770,7 +778,9 @@ struct side_event_description {
 		.range_begin = _begin, \
 		.range_end = _end, \
 		.label = { \
-			.p = (_label), \
+			.p = { \
+				.v = (uintptr_t) (_label), \
+			}, \
 			.unit_size = sizeof(uint8_t), \
 			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 		}, \
@@ -781,7 +791,9 @@ struct side_event_description {
 		.range_begin = _value, \
 		.range_end = _value, \
 		.label = { \
-			.p = (_label), \
+			.p = { \
+				.v = (uintptr_t) (_label), \
+			}, \
 			.unit_size = sizeof(uint8_t), \
 			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
 		}, \

@@ -229,10 +229,10 @@ enum tracer_display_base get_attr_display_base(const struct side_attr *_attr, ui
 		char *utf8_str = NULL;
 		bool cmp;
 
-		tracer_convert_string_to_utf8(attr->key.p, attr->key.unit_size,
+		tracer_convert_string_to_utf8(side_ptr_get(attr->key.p), attr->key.unit_size,
 			attr->key.byte_order, NULL, &utf8_str);
 		cmp = strcmp(utf8_str, "std.integer.base");
-		if (utf8_str != attr->key.p)
+		if (utf8_str != side_ptr_get(attr->key.p))
 			free(utf8_str);
 		if (!cmp) {
 			int64_t val = get_attr_integer_value(attr);
@@ -260,10 +260,10 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 {
 	char *utf8_str = NULL;
 
-	tracer_convert_string_to_utf8(attr->key.p, attr->key.unit_size,
+	tracer_convert_string_to_utf8(side_ptr_get(attr->key.p), attr->key.unit_size,
 		attr->key.byte_order, NULL, &utf8_str);
 	printf("{ key%s \"%s\", value%s ", separator, utf8_str, separator);
-	if (utf8_str != attr->key.p)
+	if (utf8_str != side_ptr_get(attr->key.p))
 		free(utf8_str);
 	switch (attr->value.type) {
 	case SIDE_ATTR_TYPE_BOOL:
@@ -326,7 +326,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 		abort();
 #endif
 	case SIDE_ATTR_TYPE_STRING:
-		tracer_print_string(attr->value.u.string_value.p,
+		tracer_print_string(side_ptr_get(attr->value.u.string_value.p),
 				attr->value.u.string_value.unit_size,
 				attr->value.u.string_value.byte_order, NULL);
 		break;
@@ -460,7 +460,7 @@ void print_enum_labels(const struct side_enum_mappings *mappings, union int64_va
 		}
 		if (v64.s >= mapping->range_begin && v64.s <= mapping->range_end) {
 			printf("%s", print_count++ ? ", " : "");
-			tracer_print_string(mapping->label.p, mapping->label.unit_size, mapping->label.byte_order, NULL);
+			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size, mapping->label.byte_order, NULL);
 		}
 	}
 	if (!print_count)
@@ -589,7 +589,7 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 match:
 		if (match) {
 			printf("%s", print_count++ ? ", " : "");
-			tracer_print_string(mapping->label.p, mapping->label.unit_size, mapping->label.byte_order, NULL);
+			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size, mapping->label.byte_order, NULL);
 		}
 	}
 	if (!print_count)
