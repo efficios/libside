@@ -904,7 +904,8 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	switch (type) {
 		/* Stack-copy basic types */
 	case SIDE_TYPE_NULL:
-		tracer_print_type_header(":", type_desc->u.side_null.attr, type_desc->u.side_null.nr_attr);
+		tracer_print_type_header(":", side_ptr_get(type_desc->u.side_null.attr),
+			type_desc->u.side_null.nr_attr);
 		printf("<NULL TYPE>");
 		break;
 
@@ -1657,7 +1658,8 @@ void tracer_print_dynamic(const struct side_arg *item)
 	switch (item->type) {
 		/* Dynamic basic types */
 	case SIDE_TYPE_DYNAMIC_NULL:
-		tracer_print_type_header("::", item->u.side_dynamic.side_null.attr, item->u.side_dynamic.side_null.nr_attr);
+		tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_null.attr),
+			item->u.side_dynamic.side_null.nr_attr);
 		printf("<NULL TYPE>");
 		break;
 	case SIDE_TYPE_DYNAMIC_BOOL:

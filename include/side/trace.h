@@ -283,7 +283,7 @@ struct side_attr {
 
 /* Type descriptions */
 struct side_type_null {
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
@@ -806,7 +806,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_NULL, \
 		.u = { \
 			.side_null = { \
-				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
@@ -1498,7 +1498,7 @@ struct side_event_description {
 		.u = { \
 			.side_dynamic = { \
 				.side_null = { \
-					.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+					.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				}, \
 			}, \
