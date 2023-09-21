@@ -16,14 +16,13 @@
 
 side_static_event(my_provider_event, "myprovider", "myevent", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_u32("abc", side_attr_list()),
-		side_field_s64("def", side_attr_list()),
-		side_field_pointer("ptr", side_attr_list()),
+		side_field_u32("abc"),
+		side_field_s64("def"),
+		side_field_pointer("ptr"),
 		side_field_dynamic("dynamic"),
 		side_field_dynamic("dynamic_pointer"),
-		side_field_null("null", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_null("null"),
+	)
 );
 
 static
@@ -37,8 +36,8 @@ void test_fields(void)
 			side_arg_u32(uw),
 			side_arg_s64(sdw),
 			side_arg_pointer((void *) 0x1),
-			side_arg_dynamic_string("zzz", side_attr_list()),
-			side_arg_dynamic_pointer((void *) 0x1, side_attr_list()),
+			side_arg_dynamic_string("zzz"),
+			side_arg_dynamic_pointer((void *) 0x1),
 			side_arg_null(),
 		)
 	);
@@ -46,9 +45,8 @@ void test_fields(void)
 
 side_hidden_event(my_provider_event_hidden, "myprovider", "myeventhidden", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_u32("abc", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_u32("abc"),
+	)
 );
 
 static
@@ -61,9 +59,8 @@ side_declare_event(my_provider_event_export);
 
 side_export_event(my_provider_event_export, "myprovider", "myeventexport", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_u32("abc", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_u32("abc"),
+	)
 );
 
 static
@@ -77,15 +74,13 @@ side_static_event(my_provider_event_struct_literal, "myprovider", "myeventstruct
 		side_field_struct("structliteral",
 			side_struct_literal(
 				side_field_list(
-					side_field_u32("x", side_attr_list()),
-					side_field_s64("y", side_attr_list()),
-				),
-				side_attr_list()
+					side_field_u32("x"),
+					side_field_s64("y"),
+				)
 			)
 		),
-		side_field_u8("z", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_u8("z"),
+	)
 );
 
 static
@@ -99,18 +94,16 @@ void test_struct_literal(void)
 
 static side_define_struct(mystructdef,
 	side_field_list(
-		side_field_u32("x", side_attr_list()),
-		side_field_s64("y", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_u32("x"),
+		side_field_s64("y"),
+	)
 );
 
 side_static_event(my_provider_event_struct, "myprovider", "myeventstruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_struct("struct", &mystructdef),
-		side_field_u8("z", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_u8("z"),
+	)
 );
 
 static
@@ -124,10 +117,9 @@ void test_struct(void)
 
 side_static_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_array("arr", side_elem(side_type_u32(side_attr_list())), 3, side_attr_list()),
-		side_field_s64("v", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_array("arr", side_elem(side_type_u32()), 3),
+		side_field_s64("v"),
+	)
 );
 
 static
@@ -141,10 +133,9 @@ void test_array(void)
 
 side_static_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vla", side_elem(side_type_u32(side_attr_list())), side_attr_list()),
-		side_field_s64("v", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_vla("vla", side_elem(side_type_u32())),
+		side_field_s64("v"),
+	)
 );
 
 static
@@ -182,10 +173,9 @@ static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
 side_static_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla_visitor("vlavisit", side_elem(side_type_u32(side_attr_list())), test_visitor, side_attr_list()),
-		side_field_s64("v", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_vla_visitor("vlavisit", side_elem(side_type_u32()), test_visitor),
+		side_field_s64("v"),
+	)
 );
 
 static
@@ -256,13 +246,12 @@ side_static_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d",
 		side_field_vla_visitor("vlavisit2d",
 			side_elem(
 				side_type_vla_visitor(
-					side_elem(side_type_u32(side_attr_list())),
-					test_inner_visitor,
-					side_attr_list())
-			), test_outer_visitor, side_attr_list()),
-		side_field_s64("v", side_attr_list()),
-	),
-	side_attr_list()
+					side_elem(side_type_u32()),
+					test_inner_visitor
+				)
+			), test_outer_visitor),
+		side_field_s64("v"),
+	)
 );
 
 static
@@ -281,23 +270,21 @@ side_static_event(my_provider_event_dynamic_basic,
 	"myprovider", "mydynamicbasic", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 static
 void test_dynamic_basic_type(void)
 {
 	side_event(my_provider_event_dynamic_basic,
-		side_arg_list(side_arg_dynamic_s16(-33, side_attr_list())));
+		side_arg_list(side_arg_dynamic_s16(-33)));
 }
 
 side_static_event(my_provider_event_dynamic_vla,
 	"myprovider", "mydynamicvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -305,11 +292,10 @@ void test_dynamic_vla(void)
 {
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
-			side_arg_dynamic_u32(1, side_attr_list()),
-			side_arg_dynamic_u32(2, side_attr_list()),
-			side_arg_dynamic_u32(3, side_attr_list()),
-		),
-		side_attr_list()
+			side_arg_dynamic_u32(1),
+			side_arg_dynamic_u32(2),
+			side_arg_dynamic_u32(3),
+		)
 	);
 	side_event(my_provider_event_dynamic_vla,
 		side_arg_list(side_arg_dynamic_vla(&myvla)));
@@ -319,23 +305,21 @@ side_static_event(my_provider_event_dynamic_null,
 	"myprovider", "mydynamicnull", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 static
 void test_dynamic_null(void)
 {
 	side_event(my_provider_event_dynamic_null,
-		side_arg_list(side_arg_dynamic_null(side_attr_list())));
+		side_arg_list(side_arg_dynamic_null()));
 }
 
 side_static_event(my_provider_event_dynamic_struct,
 	"myprovider", "mydynamicstruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -343,11 +327,10 @@ void test_dynamic_struct(void)
 {
 	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_string("zzz", side_attr_list())),
-			side_arg_dynamic_field("c", side_arg_dynamic_null(side_attr_list())),
-		),
-		side_attr_list()
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
+			side_arg_dynamic_field("b", side_arg_dynamic_string("zzz")),
+			side_arg_dynamic_field("c", side_arg_dynamic_null()),
+		)
 	);
 
 	side_event(my_provider_event_dynamic_struct,
@@ -358,8 +341,7 @@ side_static_event(my_provider_event_dynamic_nested_struct,
 	"myprovider", "mydynamicnestedstruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -367,24 +349,21 @@ void test_dynamic_nested_struct(void)
 {
 	side_arg_dynamic_define_struct(nested,
 		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
-		),
-		side_attr_list()
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
+			side_arg_dynamic_field("b", side_arg_dynamic_u8(55)),
+		)
 	);
 	side_arg_dynamic_define_struct(nested2,
 		side_arg_list(
-			side_arg_dynamic_field("aa", side_arg_dynamic_u64(128, side_attr_list())),
-			side_arg_dynamic_field("bb", side_arg_dynamic_u16(1, side_attr_list())),
-		),
-		side_attr_list()
+			side_arg_dynamic_field("aa", side_arg_dynamic_u64(128)),
+			side_arg_dynamic_field("bb", side_arg_dynamic_u16(1)),
+		)
 	);
 	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
 			side_arg_dynamic_field("nested", side_arg_dynamic_struct(&nested)),
 			side_arg_dynamic_field("nested2", side_arg_dynamic_struct(&nested2)),
-		),
-		side_attr_list()
+		)
 	);
 	side_event(my_provider_event_dynamic_nested_struct,
 		side_arg_list(side_arg_dynamic_struct(&mystruct)));
@@ -394,8 +373,7 @@ side_static_event(my_provider_event_dynamic_vla_struct,
 	"myprovider", "mydynamicvlastruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -403,10 +381,9 @@ void test_dynamic_vla_struct(void)
 {
 	side_arg_dynamic_define_struct(nested,
 		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(43, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
-		),
-		side_attr_list()
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(43)),
+			side_arg_dynamic_field("b", side_arg_dynamic_u8(55)),
+		)
 	);
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
@@ -414,8 +391,7 @@ void test_dynamic_vla_struct(void)
 			side_arg_dynamic_struct(&nested),
 			side_arg_dynamic_struct(&nested),
 			side_arg_dynamic_struct(&nested),
-		),
-		side_attr_list()
+		)
 	);
 	side_event(my_provider_event_dynamic_vla_struct,
 		side_arg_list(side_arg_dynamic_vla(&myvla)));
@@ -425,8 +401,7 @@ side_static_event(my_provider_event_dynamic_struct_vla,
 	"myprovider", "mydynamicstructvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -434,26 +409,23 @@ void test_dynamic_struct_vla(void)
 {
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
-			side_arg_dynamic_u32(1, side_attr_list()),
-			side_arg_dynamic_u32(2, side_attr_list()),
-			side_arg_dynamic_u32(3, side_attr_list()),
-		),
-		side_attr_list()
+			side_arg_dynamic_u32(1),
+			side_arg_dynamic_u32(2),
+			side_arg_dynamic_u32(3),
+		)
 	);
 	side_arg_dynamic_define_vec(myvla2,
 		side_arg_list(
-			side_arg_dynamic_u32(4, side_attr_list()),
-			side_arg_dynamic_u64(5, side_attr_list()),
-			side_arg_dynamic_u32(6, side_attr_list()),
-		),
-		side_attr_list()
+			side_arg_dynamic_u32(4),
+			side_arg_dynamic_u64(5),
+			side_arg_dynamic_u32(6),
+		)
 	);
 	side_arg_dynamic_define_struct(mystruct,
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
 			side_arg_dynamic_field("b", side_arg_dynamic_vla(&myvla2)),
-		),
-		side_attr_list()
+		)
 	);
 	side_event(my_provider_event_dynamic_struct_vla,
 		side_arg_list(side_arg_dynamic_struct(&mystruct)));
@@ -463,8 +435,7 @@ side_static_event(my_provider_event_dynamic_nested_vla,
 	"myprovider", "mydynamicnestedvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -472,26 +443,23 @@ void test_dynamic_nested_vla(void)
 {
 	side_arg_dynamic_define_vec(nestedvla,
 		side_arg_list(
-			side_arg_dynamic_u32(1, side_attr_list()),
-			side_arg_dynamic_u16(2, side_attr_list()),
-			side_arg_dynamic_u32(3, side_attr_list()),
-		),
-		side_attr_list()
+			side_arg_dynamic_u32(1),
+			side_arg_dynamic_u16(2),
+			side_arg_dynamic_u32(3),
+		)
 	);
 	side_arg_dynamic_define_vec(nestedvla2,
 		side_arg_list(
-			side_arg_dynamic_u8(4, side_attr_list()),
-			side_arg_dynamic_u32(5, side_attr_list()),
-			side_arg_dynamic_u32(6, side_attr_list()),
-		),
-		side_attr_list()
+			side_arg_dynamic_u8(4),
+			side_arg_dynamic_u32(5),
+			side_arg_dynamic_u32(6),
+		)
 	);
 	side_arg_dynamic_define_vec(myvla,
 		side_arg_list(
 			side_arg_dynamic_vla(&nestedvla),
 			side_arg_dynamic_vla(&nestedvla2),
-		),
-		side_attr_list()
+		)
 	);
 	side_event(my_provider_event_dynamic_nested_vla,
 		side_arg_list(side_arg_dynamic_vla(&myvla)));
@@ -499,8 +467,7 @@ void test_dynamic_nested_vla(void)
 
 side_static_event_variadic(my_provider_event_variadic,
 	"myprovider", "myvariadicevent", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+	side_field_list()
 );
 
 static
@@ -509,20 +476,18 @@ void test_variadic(void)
 	side_event_variadic(my_provider_event_variadic,
 		side_arg_list(),
 		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(55, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4, side_attr_list())),
-		),
-		side_attr_list()
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(55)),
+			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4)),
+		)
 	);
 }
 
 side_static_event_variadic(my_provider_event_static_variadic,
 	"myprovider", "mystaticvariadicevent", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_u32("abc", side_attr_list()),
-		side_field_u16("def", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_u32("abc"),
+		side_field_u16("def"),
+	)
 );
 
 static
@@ -534,24 +499,22 @@ void test_static_variadic(void)
 			side_arg_u16(2),
 		),
 		side_arg_list(
-			side_arg_dynamic_field("a", side_arg_dynamic_u32(55, side_attr_list())),
-			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4, side_attr_list())),
-		),
-		side_attr_list()
+			side_arg_dynamic_field("a", side_arg_dynamic_u32(55)),
+			side_arg_dynamic_field("b", side_arg_dynamic_s8(-4)),
+		)
 	);
 }
 
 side_static_event(my_provider_event_bool, "myprovider", "myeventbool", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_bool("a_false", side_attr_list()),
-		side_field_bool("b_true", side_attr_list()),
-		side_field_bool("c_true", side_attr_list()),
-		side_field_bool("d_true", side_attr_list()),
-		side_field_bool("e_true", side_attr_list()),
-		side_field_bool("f_false", side_attr_list()),
-		side_field_bool("g_true", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_bool("a_false"),
+		side_field_bool("b_true"),
+		side_field_bool("c_true"),
+		side_field_bool("d_true"),
+		side_field_bool("e_true"),
+		side_field_bool("f_false"),
+		side_field_bool("g_true"),
+	)
 );
 
 static
@@ -580,8 +543,7 @@ void test_bool(void)
 
 side_static_event_variadic(my_provider_event_dynamic_bool,
 	"myprovider", "mydynamicbool", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+	side_field_list()
 );
 
 static
@@ -590,12 +552,11 @@ void test_dynamic_bool(void)
 	side_event_variadic(my_provider_event_dynamic_bool,
 		side_arg_list(),
 		side_arg_list(
-			side_arg_dynamic_field("a_true", side_arg_dynamic_bool(55, side_attr_list())),
-			side_arg_dynamic_field("b_true", side_arg_dynamic_bool(-4, side_attr_list())),
-			side_arg_dynamic_field("c_false", side_arg_dynamic_bool(0, side_attr_list())),
-			side_arg_dynamic_field("d_true", side_arg_dynamic_bool(256, side_attr_list())),
-		),
-		side_attr_list()
+			side_arg_dynamic_field("a_true", side_arg_dynamic_bool(55)),
+			side_arg_dynamic_field("b_true", side_arg_dynamic_bool(-4)),
+			side_arg_dynamic_field("c_false", side_arg_dynamic_bool(0)),
+			side_arg_dynamic_field("d_true", side_arg_dynamic_bool(256)),
+		)
 	);
 }
 
@@ -603,8 +564,7 @@ side_static_event(my_provider_event_dynamic_vla_visitor,
 	"myprovider", "mydynamicvlavisitor", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 struct app_dynamic_vla_visitor_ctx {
@@ -619,7 +579,7 @@ enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_visit
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_arg_dynamic_u32(ctx->ptr[i], side_attr_list());
+		const struct side_arg elem = side_arg_dynamic_u32(ctx->ptr[i]);
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
 	}
@@ -638,7 +598,7 @@ void test_dynamic_vla_with_visitor(void)
 		};
 		side_event_call(my_provider_event_dynamic_vla_visitor,
 			side_arg_list(
-				side_arg_dynamic_vla_visitor(test_dynamic_vla_visitor, &ctx, side_attr_list())
+				side_arg_dynamic_vla_visitor(test_dynamic_vla_visitor, &ctx)
 			)
 		);
 	}
@@ -648,8 +608,7 @@ side_static_event(my_provider_event_dynamic_struct_visitor,
 	"myprovider", "mydynamicstructvisitor", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_dynamic("dynamic"),
-	),
-	side_attr_list()
+	)
 );
 
 struct struct_visitor_pair {
@@ -671,7 +630,7 @@ enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dy
 	for (i = 0; i < length; i++) {
 		struct side_arg_dynamic_field dynamic_field = {
 			.field_name = ctx->ptr[i].name,
-			.elem = side_arg_dynamic_u32(ctx->ptr[i].value, side_attr_list()),
+			.elem = side_arg_dynamic_u32(ctx->ptr[i].value),
 		};
 		if (tracer_ctx->write_field(tracer_ctx, &dynamic_field) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
@@ -696,7 +655,7 @@ void test_dynamic_struct_with_visitor(void)
 		};
 		side_event_call(my_provider_event_dynamic_struct_visitor,
 			side_arg_list(
-				side_arg_dynamic_struct_visitor(test_dynamic_struct_visitor, &ctx, side_attr_list())
+				side_arg_dynamic_struct_visitor(test_dynamic_struct_visitor, &ctx)
 			)
 		);
 	}
@@ -704,8 +663,8 @@ void test_dynamic_struct_with_visitor(void)
 
 side_static_event(my_provider_event_user_attribute, "myprovider", "myevent_user_attribute", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_u32("abc", side_attr_list()),
-		side_field_s64("def", side_attr_list()),
+		side_field_u32("abc"),
+		side_field_s64("def"),
 	),
 	side_attr_list(
 		side_attr("user_attribute_a", side_attr_string("val1")),
@@ -733,8 +692,7 @@ side_static_event(my_provider_field_user_attribute, "myprovider", "myevent_field
 				side_attr("user_attribute_d", side_attr_s64(-5)),
 			)
 		),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -745,8 +703,7 @@ void test_field_user_attribute(void)
 
 side_static_event_variadic(my_provider_event_variadic_attr,
 	"myprovider", "myvariadiceventattr", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+	side_field_list()
 );
 
 static
@@ -771,15 +728,13 @@ void test_variadic_attr(void)
 					)
 				)
 			),
-		),
-		side_attr_list()
+		)
 	);
 }
 
 side_static_event_variadic(my_provider_event_variadic_vla_attr,
 	"myprovider", "myvariadiceventvlaattr", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+	side_field_list()
 );
 
 static
@@ -793,8 +748,8 @@ void test_variadic_vla_attr(void)
 					side_attr("A", side_attr_u8(123)),
 				)
 			),
-			side_arg_dynamic_u32(2, side_attr_list()),
-			side_arg_dynamic_u32(3, side_attr_list()),
+			side_arg_dynamic_u32(2),
+			side_arg_dynamic_u32(3),
 		),
 		side_attr_list(
 			side_attr("X", side_attr_u8(1)),
@@ -805,15 +760,13 @@ void test_variadic_vla_attr(void)
 		side_arg_list(),
 		side_arg_list(
 			side_arg_dynamic_field("a", side_arg_dynamic_vla(&myvla)),
-		),
-		side_attr_list()
+		)
 	);
 }
 
 side_static_event_variadic(my_provider_event_variadic_struct_attr,
 	"myprovider", "myvariadiceventstructattr", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+	side_field_list()
 );
 
 static
@@ -829,7 +782,7 @@ void test_variadic_struct_attr(void)
 						)
 					)
 				),
-				side_arg_dynamic_field("b", side_arg_dynamic_u8(55, side_attr_list())),
+				side_arg_dynamic_field("b", side_arg_dynamic_u8(55)),
 			),
 			side_attr_list(
 				side_attr("X", side_attr_u8(1)),
@@ -840,8 +793,7 @@ void test_variadic_struct_attr(void)
 			side_arg_list(),
 			side_arg_list(
 				side_arg_dynamic_field("a", side_arg_dynamic_struct(&mystruct)),
-			),
-			side_attr_list()
+			)
 		);
 	}
 }
@@ -849,27 +801,26 @@ void test_variadic_struct_attr(void)
 side_static_event(my_provider_event_float, "myprovider", "myeventfloat", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 #if __HAVE_FLOAT16
-		side_field_float_binary16("binary16", side_attr_list()),
-		side_field_float_binary16_le("binary16_le", side_attr_list()),
-		side_field_float_binary16_be("binary16_be", side_attr_list()),
+		side_field_float_binary16("binary16"),
+		side_field_float_binary16_le("binary16_le"),
+		side_field_float_binary16_be("binary16_be"),
 #endif
 #if __HAVE_FLOAT32
-		side_field_float_binary32("binary32", side_attr_list()),
-		side_field_float_binary32_le("binary32_le", side_attr_list()),
-		side_field_float_binary32_be("binary32_be", side_attr_list()),
+		side_field_float_binary32("binary32"),
+		side_field_float_binary32_le("binary32_le"),
+		side_field_float_binary32_be("binary32_be"),
 #endif
 #if __HAVE_FLOAT64
-		side_field_float_binary64("binary64", side_attr_list()),
-		side_field_float_binary64_le("binary64_le", side_attr_list()),
-		side_field_float_binary64_be("binary64_be", side_attr_list()),
+		side_field_float_binary64("binary64"),
+		side_field_float_binary64_le("binary64_le"),
+		side_field_float_binary64_be("binary64_be"),
 #endif
 #if __HAVE_FLOAT128
-		side_field_float_binary128("binary128", side_attr_list()),
-		side_field_float_binary128_le("binary128_le", side_attr_list()),
-		side_field_float_binary128_be("binary128_be", side_attr_list()),
+		side_field_float_binary128("binary128"),
+		side_field_float_binary128_le("binary128_le"),
+		side_field_float_binary128_be("binary128_be"),
 #endif
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -969,8 +920,7 @@ void test_float(void)
 
 side_static_event_variadic(my_provider_event_variadic_float,
 	"myprovider", "myvariadicfloat", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(),
-	side_attr_list()
+	side_field_list()
 );
 
 static
@@ -1026,47 +976,46 @@ void test_variadic_float(void)
 		side_arg_list(),
 		side_arg_list(
 #if __HAVE_FLOAT16
-			side_arg_dynamic_field("binary16", side_arg_dynamic_float_binary16(1.1, side_attr_list())),
+			side_arg_dynamic_field("binary16", side_arg_dynamic_float_binary16(1.1)),
 # if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(1.1, side_attr_list())),
-			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(float16.f, side_attr_list())),
+			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(1.1)),
+			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(float16.f)),
 # else
-			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(float16.f, side_attr_list())),
-			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(1.1, side_attr_list())),
+			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(float16.f)),
+			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(1.1)),
 # endif
 #endif
 #if __HAVE_FLOAT32
-			side_arg_dynamic_field("binary32", side_arg_dynamic_float_binary32(2.2, side_attr_list())),
+			side_arg_dynamic_field("binary32", side_arg_dynamic_float_binary32(2.2)),
 # if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(2.2, side_attr_list())),
-			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(float32.f, side_attr_list())),
+			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(2.2)),
+			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(float32.f)),
 # else
-			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(float32.f, side_attr_list())),
-			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(2.2, side_attr_list())),
+			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(float32.f)),
+			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(2.2)),
 # endif
 #endif
 #if __HAVE_FLOAT64
-			side_arg_dynamic_field("binary64", side_arg_dynamic_float_binary64(3.3, side_attr_list())),
+			side_arg_dynamic_field("binary64", side_arg_dynamic_float_binary64(3.3)),
 # if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary64_le", side_arg_dynamic_float_binary64_le(3.3, side_attr_list())),
-			side_arg_dynamic_field("binary64_be", side_arg_dynamic_float_binary64_be(float64.f, side_attr_list())),
+			side_arg_dynamic_field("binary64_le", side_arg_dynamic_float_binary64_le(3.3)),
+			side_arg_dynamic_field("binary64_be", side_arg_dynamic_float_binary64_be(float64.f)),
 # else
-			side_arg_dynamic_field("binary64_le", side_arg_dynamic_float_binary64_le(float64.f, side_attr_list())),
-			side_arg_dynamic_field("binary64_be", side_arg_dynamic_float_binary64_be(3.3, side_attr_list())),
+			side_arg_dynamic_field("binary64_le", side_arg_dynamic_float_binary64_le(float64.f)),
+			side_arg_dynamic_field("binary64_be", side_arg_dynamic_float_binary64_be(3.3)),
 # endif
 #endif
 #if __HAVE_FLOAT128
-			side_arg_dynamic_field("binary128", side_arg_dynamic_float_binary128(4.4, side_attr_list())),
+			side_arg_dynamic_field("binary128", side_arg_dynamic_float_binary128(4.4)),
 # if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary128_le", side_arg_dynamic_float_binary128_le(4.4, side_attr_list())),
-			side_arg_dynamic_field("binary128_be", side_arg_dynamic_float_binary128_be(float128.f, side_attr_list())),
+			side_arg_dynamic_field("binary128_le", side_arg_dynamic_float_binary128_le(4.4)),
+			side_arg_dynamic_field("binary128_be", side_arg_dynamic_float_binary128_be(float128.f)),
 # else
-			side_arg_dynamic_field("binary128_le", side_arg_dynamic_float_binary128_le(float128.f, side_attr_list())),
-			side_arg_dynamic_field("binary128_be", side_arg_dynamic_float_binary128_be(4.4, side_attr_list())),
+			side_arg_dynamic_field("binary128_le", side_arg_dynamic_float_binary128_le(float128.f)),
+			side_arg_dynamic_field("binary128_be", side_arg_dynamic_float_binary128_be(4.4)),
 # endif
 #endif
-		),
-		side_attr_list()
+		)
 	);
 }
 
@@ -1076,20 +1025,18 @@ static side_define_enum(myenum,
 		side_enum_mapping_range("100-200", 100, 200),
 		side_enum_mapping_value("200", 200),
 		side_enum_mapping_value("300", 300),
-	),
-	side_attr_list()
+	)
 );
 
 side_static_event(my_provider_event_enum, "myprovider", "myeventenum", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_enum("5", &myenum, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum("400", &myenum, side_elem(side_type_u64(side_attr_list()))),
-		side_field_enum("200", &myenum, side_elem(side_type_u8(side_attr_list()))),
-		side_field_enum("-100", &myenum, side_elem(side_type_s8(side_attr_list()))),
-		side_field_enum("6_be", &myenum, side_elem(side_type_u32_be(side_attr_list()))),
-		side_field_enum("6_le", &myenum, side_elem(side_type_u32_le(side_attr_list()))),
-	),
-	side_attr_list()
+		side_field_enum("5", &myenum, side_elem(side_type_u32())),
+		side_field_enum("400", &myenum, side_elem(side_type_u64())),
+		side_field_enum("200", &myenum, side_elem(side_type_u8())),
+		side_field_enum("-100", &myenum, side_elem(side_type_s8())),
+		side_field_enum("6_be", &myenum, side_elem(side_type_u32_be())),
+		side_field_enum("6_le", &myenum, side_elem(side_type_u32_le())),
+	)
 );
 
 static
@@ -1124,29 +1071,27 @@ static side_define_enum_bitmap(myenum_bitmap,
 		side_enum_bitmap_mapping_range("158-160", 158, 160),
 		side_enum_bitmap_mapping_value("159", 159),
 		side_enum_bitmap_mapping_range("500-700", 500, 700),
-	),
-	side_attr_list()
+	)
 );
 
 side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitmap", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_enum_bitmap("bit_0", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum_bitmap("bit_1", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum_bitmap("bit_2", &myenum_bitmap, side_elem(side_type_u8(side_attr_list()))),
-		side_field_enum_bitmap("bit_3", &myenum_bitmap, side_elem(side_type_u8(side_attr_list()))),
-		side_field_enum_bitmap("bit_30", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum_bitmap("bit_31", &myenum_bitmap, side_elem(side_type_u32(side_attr_list()))),
-		side_field_enum_bitmap("bit_63", &myenum_bitmap, side_elem(side_type_u64(side_attr_list()))),
-		side_field_enum_bitmap("bits_1+63", &myenum_bitmap, side_elem(side_type_u64(side_attr_list()))),
-		side_field_enum_bitmap("byte_bit_2", &myenum_bitmap, side_elem(side_type_byte(side_attr_list()))),
+		side_field_enum_bitmap("bit_0", &myenum_bitmap, side_elem(side_type_u32())),
+		side_field_enum_bitmap("bit_1", &myenum_bitmap, side_elem(side_type_u32())),
+		side_field_enum_bitmap("bit_2", &myenum_bitmap, side_elem(side_type_u8())),
+		side_field_enum_bitmap("bit_3", &myenum_bitmap, side_elem(side_type_u8())),
+		side_field_enum_bitmap("bit_30", &myenum_bitmap, side_elem(side_type_u32())),
+		side_field_enum_bitmap("bit_31", &myenum_bitmap, side_elem(side_type_u32())),
+		side_field_enum_bitmap("bit_63", &myenum_bitmap, side_elem(side_type_u64())),
+		side_field_enum_bitmap("bits_1+63", &myenum_bitmap, side_elem(side_type_u64())),
+		side_field_enum_bitmap("byte_bit_2", &myenum_bitmap, side_elem(side_type_byte())),
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_array(side_elem(side_type_u32(side_attr_list())), 5, side_attr_list()))),
+			side_elem(side_type_array(side_elem(side_type_u32()), 5))),
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_vla(side_elem(side_type_u32(side_attr_list())), side_attr_list()))),
-		side_field_enum_bitmap("bit_2_be", &myenum_bitmap, side_elem(side_type_u32_be(side_attr_list()))),
-		side_field_enum_bitmap("bit_2_le", &myenum_bitmap, side_elem(side_type_u32_le(side_attr_list()))),
-	),
-	side_attr_list()
+			side_elem(side_type_vla(side_elem(side_type_u32())))),
+		side_field_enum_bitmap("bit_2_be", &myenum_bitmap, side_elem(side_type_u32_be())),
+		side_field_enum_bitmap("bit_2_le", &myenum_bitmap, side_elem(side_type_u32_le())),
+	)
 );
 
 static
@@ -1189,10 +1134,9 @@ void test_enum_bitmap(void)
 
 side_static_event_variadic(my_provider_event_blob, "myprovider", "myeventblob", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_byte("blobfield", side_attr_list()),
-		side_field_array("arrayblob", side_elem(side_type_byte(side_attr_list())), 3, side_attr_list()),
-	),
-	side_attr_list()
+		side_field_byte("blobfield"),
+		side_field_array("arrayblob", side_elem(side_type_byte()), 3),
+	)
 );
 
 static
@@ -1202,10 +1146,9 @@ void test_blob(void)
 		side_arg_define_vec(myarray, side_arg_list(side_arg_byte(1), side_arg_byte(2), side_arg_byte(3)));
 		side_arg_dynamic_define_vec(myvla,
 			side_arg_list(
-				side_arg_dynamic_byte(0x22, side_attr_list()),
-				side_arg_dynamic_byte(0x33, side_attr_list()),
-			),
-			side_attr_list()
+				side_arg_dynamic_byte(0x22),
+				side_arg_dynamic_byte(0x33),
+			)
 		);
 		side_event_call_variadic(my_provider_event_blob,
 			side_arg_list(
@@ -1214,11 +1157,10 @@ void test_blob(void)
 			),
 			side_arg_list(
 				side_arg_dynamic_field("varblobfield",
-					side_arg_dynamic_byte(0x55, side_attr_list())
+					side_arg_dynamic_byte(0x55)
 				),
 				side_arg_dynamic_field("varblobvla", side_arg_dynamic_vla(&myvla)),
-			),
-			side_attr_list()
+			)
 		);
 	}
 }
@@ -1226,7 +1168,7 @@ void test_blob(void)
 side_static_event_variadic(my_provider_event_format_string,
 	"myprovider", "myeventformatstring", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_string("fmt", side_attr_list()),
+		side_field_string("fmt"),
 	),
 	side_attr_list(
 		side_attr("lang.c.format_string", side_attr_bool(true)),
@@ -1239,10 +1181,9 @@ void test_fmt_string(void)
 	side_event_cond(my_provider_event_format_string) {
 		side_arg_dynamic_define_vec(args,
 			side_arg_list(
-				side_arg_dynamic_string("blah", side_attr_list()),
-				side_arg_dynamic_s32(123, side_attr_list()),
-			),
-			side_attr_list()
+				side_arg_dynamic_string("blah"),
+				side_arg_dynamic_s32(123),
+			)
 		);
 		side_event_call_variadic(my_provider_event_format_string,
 			side_arg_list(
@@ -1250,28 +1191,26 @@ void test_fmt_string(void)
 			),
 			side_arg_list(
 				side_arg_dynamic_field("arguments", side_arg_dynamic_vla(&args)),
-			),
-			side_attr_list()
+			)
 		);
 	}
 }
 
 side_static_event_variadic(my_provider_event_endian, "myprovider", "myevent_endian", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_u16_le("u16_le", side_attr_list()),
-		side_field_u32_le("u32_le", side_attr_list()),
-		side_field_u64_le("u64_le", side_attr_list()),
-		side_field_s16_le("s16_le", side_attr_list()),
-		side_field_s32_le("s32_le", side_attr_list()),
-		side_field_s64_le("s64_le", side_attr_list()),
-		side_field_u16_be("u16_be", side_attr_list()),
-		side_field_u32_be("u32_be", side_attr_list()),
-		side_field_u64_be("u64_be", side_attr_list()),
-		side_field_s16_be("s16_be", side_attr_list()),
-		side_field_s32_be("s32_be", side_attr_list()),
-		side_field_s64_be("s64_be", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_u16_le("u16_le"),
+		side_field_u32_le("u32_le"),
+		side_field_u64_le("u64_le"),
+		side_field_s16_le("s16_le"),
+		side_field_s32_le("s32_le"),
+		side_field_s64_le("s64_le"),
+		side_field_u16_be("u16_be"),
+		side_field_u32_be("u32_be"),
+		side_field_u64_be("u64_be"),
+		side_field_s16_be("s16_be"),
+		side_field_s32_be("s32_be"),
+		side_field_s64_be("s64_be"),
+	)
 );
 
 static
@@ -1309,34 +1248,33 @@ void test_endian(void)
 		),
 		side_arg_list(
 #if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("u16_le", side_arg_dynamic_u16_le(1, side_attr_list())),
-			side_arg_dynamic_field("u32_le", side_arg_dynamic_u32_le(1, side_attr_list())),
-			side_arg_dynamic_field("u64_le", side_arg_dynamic_u64_le(1, side_attr_list())),
-			side_arg_dynamic_field("s16_le", side_arg_dynamic_s16_le(1, side_attr_list())),
-			side_arg_dynamic_field("s32_le", side_arg_dynamic_s32_le(1, side_attr_list())),
-			side_arg_dynamic_field("s64_le", side_arg_dynamic_s64_le(1, side_attr_list())),
-			side_arg_dynamic_field("u16_be", side_arg_dynamic_u16_be(side_bswap_16(1), side_attr_list())),
-			side_arg_dynamic_field("u32_be", side_arg_dynamic_u32_be(side_bswap_32(1), side_attr_list())),
-			side_arg_dynamic_field("u64_be", side_arg_dynamic_u64_be(side_bswap_64(1), side_attr_list())),
-			side_arg_dynamic_field("s16_be", side_arg_dynamic_s16_be(side_bswap_16(1), side_attr_list())),
-			side_arg_dynamic_field("s32_be", side_arg_dynamic_s32_be(side_bswap_32(1), side_attr_list())),
-			side_arg_dynamic_field("s64_be", side_arg_dynamic_s64_be(side_bswap_64(1), side_attr_list())),
+			side_arg_dynamic_field("u16_le", side_arg_dynamic_u16_le(1)),
+			side_arg_dynamic_field("u32_le", side_arg_dynamic_u32_le(1)),
+			side_arg_dynamic_field("u64_le", side_arg_dynamic_u64_le(1)),
+			side_arg_dynamic_field("s16_le", side_arg_dynamic_s16_le(1)),
+			side_arg_dynamic_field("s32_le", side_arg_dynamic_s32_le(1)),
+			side_arg_dynamic_field("s64_le", side_arg_dynamic_s64_le(1)),
+			side_arg_dynamic_field("u16_be", side_arg_dynamic_u16_be(side_bswap_16(1))),
+			side_arg_dynamic_field("u32_be", side_arg_dynamic_u32_be(side_bswap_32(1))),
+			side_arg_dynamic_field("u64_be", side_arg_dynamic_u64_be(side_bswap_64(1))),
+			side_arg_dynamic_field("s16_be", side_arg_dynamic_s16_be(side_bswap_16(1))),
+			side_arg_dynamic_field("s32_be", side_arg_dynamic_s32_be(side_bswap_32(1))),
+			side_arg_dynamic_field("s64_be", side_arg_dynamic_s64_be(side_bswap_64(1))),
 #else
-			side_arg_dynamic_field("u16_le", side_arg_dynamic_u16_le(side_bswap_16(1), side_attr_list())),
-			side_arg_dynamic_field("u32_le", side_arg_dynamic_u32_le(side_bswap_32(1), side_attr_list())),
-			side_arg_dynamic_field("u64_le", side_arg_dynamic_u64_le(side_bswap_64(1), side_attr_list())),
-			side_arg_dynamic_field("s16_le", side_arg_dynamic_s16_le(side_bswap_16(1), side_attr_list())),
-			side_arg_dynamic_field("s32_le", side_arg_dynamic_s32_le(side_bswap_32(1), side_attr_list())),
-			side_arg_dynamic_field("s64_le", side_arg_dynamic_s64_le(side_bswap_64(1), side_attr_list())),
-			side_arg_dynamic_field("u16_be", side_arg_dynamic_u16_be(1, side_attr_list())),
-			side_arg_dynamic_field("u32_be", side_arg_dynamic_u32_be(1, side_attr_list())),
-			side_arg_dynamic_field("u64_be", side_arg_dynamic_u64_be(1, side_attr_list())),
-			side_arg_dynamic_field("s16_be", side_arg_dynamic_s16_be(1, side_attr_list())),
-			side_arg_dynamic_field("s32_be", side_arg_dynamic_s32_be(1, side_attr_list())),
-			side_arg_dynamic_field("s64_be", side_arg_dynamic_s64_be(1, side_attr_list())),
+			side_arg_dynamic_field("u16_le", side_arg_dynamic_u16_le(side_bswap_16(1))),
+			side_arg_dynamic_field("u32_le", side_arg_dynamic_u32_le(side_bswap_32(1))),
+			side_arg_dynamic_field("u64_le", side_arg_dynamic_u64_le(side_bswap_64(1))),
+			side_arg_dynamic_field("s16_le", side_arg_dynamic_s16_le(side_bswap_16(1))),
+			side_arg_dynamic_field("s32_le", side_arg_dynamic_s32_le(side_bswap_32(1))),
+			side_arg_dynamic_field("s64_le", side_arg_dynamic_s64_le(side_bswap_64(1))),
+			side_arg_dynamic_field("u16_be", side_arg_dynamic_u16_be(1)),
+			side_arg_dynamic_field("u32_be", side_arg_dynamic_u32_be(1)),
+			side_arg_dynamic_field("u64_be", side_arg_dynamic_u64_be(1)),
+			side_arg_dynamic_field("s16_be", side_arg_dynamic_s16_be(1)),
+			side_arg_dynamic_field("s32_be", side_arg_dynamic_s32_be(1)),
+			side_arg_dynamic_field("s64_be", side_arg_dynamic_s64_be(1)),
 #endif
-		),
-		side_attr_list()
+		)
 	);
 }
 
@@ -1374,8 +1312,7 @@ side_static_event(my_provider_event_base, "myprovider", "myevent_base", SIDE_LOG
 		side_field_s64("s64base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
 		side_field_s64("s64base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 		side_field_s64("s64base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -1438,10 +1375,10 @@ static side_define_struct(mystructgatherdef,
 	side_field_list(
 		side_field_gather_unsigned_integer("a", offsetof(struct test, a),
 			side_struct_field_sizeof(struct test, a), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_signed_integer("d", offsetof(struct test, d),
 			side_struct_field_sizeof(struct test, d), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_unsigned_integer("e", offsetof(struct test, e),
 			side_struct_field_sizeof(struct test, e), 8, 4,
 			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
@@ -1472,8 +1409,7 @@ static side_define_struct(mystructgatherdef,
 		side_field_gather_unsigned_integer_be("test_be", offsetof(struct test, test),
 			side_struct_field_sizeof(struct test, test), 0, 64,
 			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
-	),
-	side_attr_list()
+	)
 );
 
 side_static_event(my_provider_event_structgather, "myprovider", "myeventstructgather", SIDE_LOGLEVEL_DEBUG,
@@ -1483,10 +1419,9 @@ side_static_event(my_provider_event_structgather, "myprovider", "myeventstructga
 		side_field_gather_signed_integer("intgather", 0, sizeof(int32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 #if __HAVE_FLOAT32
-		side_field_gather_float("f32", 0, sizeof(_Float32), SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_float("f32", 0, sizeof(_Float32), SIDE_TYPE_GATHER_ACCESS_DIRECT),
 #endif
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -1541,33 +1476,30 @@ static side_define_struct(mystructgathernest2,
 	side_field_list(
 		side_field_gather_unsigned_integer("c", offsetof(struct testnest2, c),
 			side_struct_field_sizeof(struct testnest2, c), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-	),
-	side_attr_list()
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
+	)
 );
 
 static side_define_struct(mystructgathernest1,
 	side_field_list(
 		side_field_gather_unsigned_integer("b", offsetof(struct testnest1, b),
 			side_struct_field_sizeof(struct testnest1, b), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_struct("nest2", &mystructgathernest2,
 			offsetof(struct testnest1, nest), sizeof(struct testnest2),
 			SIDE_TYPE_GATHER_ACCESS_POINTER),
-	),
-	side_attr_list()
+	)
 );
 
 static side_define_struct(mystructgathernest0,
 	side_field_list(
 		side_field_gather_unsigned_integer("a", offsetof(struct testnest0, a),
 			side_struct_field_sizeof(struct testnest0, a), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_struct("nest1", &mystructgathernest1,
 			offsetof(struct testnest0, nest), sizeof(struct testnest1),
 			SIDE_TYPE_GATHER_ACCESS_POINTER),
-	),
-	side_attr_list()
+	)
 );
 
 side_static_event(my_provider_event_structgather_nest,
@@ -1575,8 +1507,7 @@ side_static_event(my_provider_event_structgather_nest,
 	side_field_list(
 		side_field_gather_struct("nest0", &mystructgathernest0, 0,
 			sizeof(struct testnest0), SIDE_TYPE_GATHER_ACCESS_DIRECT),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -1621,26 +1552,21 @@ static side_define_struct(mystructgatherfloat,
 	side_field_list(
 #if __HAVE_FLOAT16
 		side_field_gather_float("f16", offsetof(struct testfloat, f16), side_struct_field_sizeof(struct testfloat, f16),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 #endif
 #if __HAVE_FLOAT32
 		side_field_gather_float("f32", offsetof(struct testfloat, f32), side_struct_field_sizeof(struct testfloat, f32),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 #endif
 #if __HAVE_FLOAT64
 		side_field_gather_float("f64", offsetof(struct testfloat, f64), side_struct_field_sizeof(struct testfloat, f64),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 #endif
 #if __HAVE_FLOAT128
 		side_field_gather_float("f128", offsetof(struct testfloat, f128), side_struct_field_sizeof(struct testfloat, f128),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 #endif
-	),
-	side_attr_list()
+	)
 );
 
 side_static_event(my_provider_event_structgatherfloat,
@@ -1648,8 +1574,7 @@ side_static_event(my_provider_event_structgatherfloat,
 	side_field_list(
 		side_field_gather_struct("structgatherfloat", &mystructgatherfloat, 0,
 			sizeof(struct testfloat), SIDE_TYPE_GATHER_ACCESS_DIRECT),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -1690,13 +1615,12 @@ struct testarray {
 static side_define_struct(mystructgatherarray,
 	side_field_list(
 		side_field_gather_array("array",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
 			SIDE_ARRAY_SIZE(mygatherarray),
 			offsetof(struct testarray, ptr),
-			SIDE_TYPE_GATHER_ACCESS_POINTER,
-			side_attr_list()),
-	),
-	side_attr_list()
+			SIDE_TYPE_GATHER_ACCESS_POINTER
+		),
+	)
 );
 
 side_static_event(my_provider_event_structgatherarray,
@@ -1705,13 +1629,11 @@ side_static_event(my_provider_event_structgatherarray,
 		side_field_gather_struct("structgatherarray", &mystructgatherarray, 0,
 				sizeof(struct testarray), SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("array2",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
 			SIDE_ARRAY_SIZE(mygatherarray2), 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()
+			SIDE_TYPE_GATHER_ACCESS_DIRECT
 		),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -1747,25 +1669,23 @@ static side_define_struct(mystructgatherstructnest1,
 	side_field_list(
 		side_field_gather_signed_integer("b", offsetof(struct testgatherstructnest1, b),
 			side_struct_field_sizeof(struct testgatherstructnest1, b), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("c",
 			side_elem(
 				side_type_gather_signed_integer(0, sizeof(uint32_t), 0, 0, 
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			),
 			TESTSGNESTARRAY_LEN,
 			offsetof(struct testgatherstructnest1, c),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
-	),
-	side_attr_list()
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
+	)
 );
 
 static side_define_struct(mystructgatherstructnest0,
 	side_field_list(
 		side_field_gather_signed_integer("a", offsetof(struct testgatherstructnest0, a),
 			side_struct_field_sizeof(struct testgatherstructnest0, a), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_struct("structnest0", &mystructgatherstructnest1,
 			offsetof(struct testgatherstructnest0, nest),
 			sizeof(struct testgatherstructnest1),
@@ -1775,14 +1695,12 @@ static side_define_struct(mystructgatherstructnest0,
 				side_type_gather_struct(&mystructgatherstructnest1,
 					0,
 					sizeof(struct testgatherstructnest1),
-					SIDE_TYPE_GATHER_ACCESS_DIRECT),
+					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			),
 			2,
 			offsetof(struct testgatherstructnest0, nestarray),
-			SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_attr_list()),
-	),
-	side_attr_list()
+			SIDE_TYPE_GATHER_ACCESS_DIRECT),
+	)
 );
 
 side_static_event(my_provider_event_gatherstructnest,
@@ -1790,8 +1708,7 @@ side_static_event(my_provider_event_gatherstructnest,
 	side_field_list(
 		side_field_gather_struct("structgather", &mystructgatherstructnest0, 0,
 				sizeof(struct testgatherstructnest0), SIDE_TYPE_GATHER_ACCESS_DIRECT),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -1836,18 +1753,16 @@ static side_define_struct(mystructgathervla,
 	side_field_list(
 		side_field_gather_signed_integer("a", offsetof(struct testgathervla, a),
 			side_struct_field_sizeof(struct testgathervla, a), 0, 0,
-			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+			SIDE_TYPE_GATHER_ACCESS_DIRECT
 		),
 		side_field_gather_vla("nestvla",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
 			offsetof(struct testgathervla, p),
 			SIDE_TYPE_GATHER_ACCESS_POINTER,
 			side_length(side_type_gather_unsigned_integer(offsetof(struct testgathervla, len),
-					sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			side_attr_list()
+					sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT))
 		),
-	),
-	side_attr_list()
+	)
 );
 
 side_static_event(my_provider_event_gathervla,
@@ -1856,13 +1771,11 @@ side_static_event(my_provider_event_gathervla,
 		side_field_gather_struct("structgathervla", &mystructgathervla, 0,
 				sizeof(struct testgathervla), SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_vla("vla",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
 			0, SIDE_TYPE_GATHER_ACCESS_DIRECT,
-			side_length(side_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			side_attr_list()
+			side_length(side_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT))
 		),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -1893,24 +1806,21 @@ struct testgathervlaflex {
 static side_define_struct(mystructgathervlaflex,
 	side_field_list(
 		side_field_gather_vla("vlaflex",
-			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
+			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
 			offsetof(struct testgathervlaflex, array),
 			SIDE_TYPE_GATHER_ACCESS_DIRECT,
 			side_length(side_type_gather_unsigned_integer(offsetof(struct testgathervlaflex, len),
-					side_struct_field_sizeof(struct testgathervlaflex, len), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			side_attr_list()
+					side_struct_field_sizeof(struct testgathervlaflex, len), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT))
 		),
-	),
-	side_attr_list()
+	)
 );
 
 side_static_event(my_provider_event_gathervlaflex,
 	"myprovider", "myeventgathervlaflex", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_struct("structgathervlaflex", &mystructgathervlaflex, 0,
-				sizeof(struct testgathervlaflex), SIDE_TYPE_GATHER_ACCESS_DIRECT),
-	),
-	side_attr_list()
+				sizeof(struct testgathervlaflex), SIDE_TYPE_GATHER_ACCESS_DIRECT)
+	)
 );
 
 #define VLAFLEXLEN	6
@@ -1941,13 +1851,12 @@ void test_gather_vla_flex(void)
 side_static_event(my_provider_event_gatherbyte,
 	"myprovider", "myeventgatherbyte", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_byte("byte", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_byte("byte", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("array",
-			side_elem(side_type_gather_byte(0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+			side_elem(side_type_gather_byte(0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
+			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT
 		),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -1973,20 +1882,19 @@ side_static_event(my_provider_event_gatherbool,
 	"myprovider", "myeventgatherbool", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_gather_bool("v1_true", 0, sizeof(bool), 0, 0,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+				SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_bool("v2_false", 0, sizeof(bool), 0, 0,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+				SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_bool("v3_true", 0, sizeof(uint16_t), 1, 1,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+				SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_bool("v4_false", 0, sizeof(uint16_t), 1, 1,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+				SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("arraybool",
 			side_elem(side_type_gather_bool(0, sizeof(bool), 0, 0,
-				SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			ARRAYBOOLLEN, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+				SIDE_TYPE_GATHER_ACCESS_DIRECT)),
+			ARRAYBOOLLEN, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT
 		),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -2013,13 +1921,12 @@ void test_gather_bool(void)
 side_static_event(my_provider_event_gatherpointer,
 	"myprovider", "myeventgatherpointer", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_pointer("ptr", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_pointer("ptr", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("array",
-			side_elem(side_type_gather_pointer(0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+			side_elem(side_type_gather_pointer(0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
+			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT
 		),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -2044,8 +1951,7 @@ static side_define_enum(myenumgather,
 		side_enum_mapping_range("100-200", 100, 200),
 		side_enum_mapping_value("200", 200),
 		side_enum_mapping_value("300", 300),
-	),
-	side_attr_list()
+	)
 );
 
 side_static_event(my_provider_event_enum_gather, "myprovider", "myeventenumgather", SIDE_LOGLEVEL_DEBUG,
@@ -2053,41 +1959,40 @@ side_static_event(my_provider_event_enum_gather, "myprovider", "myeventenumgathe
 		side_field_gather_enum("5", &myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
 		side_field_gather_enum("400", &myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
 		side_field_gather_enum("200", &myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer(0, sizeof(uint8_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
 		side_field_gather_enum("-100", &myenumgather,
 			side_elem(
 				side_type_gather_signed_integer(0, sizeof(int8_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
 		side_field_gather_enum("6_be", &myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer_be(0, sizeof(uint32_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
 		side_field_gather_enum("6_le", &myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer_le(0, sizeof(uint32_t), 0, 0,
-					SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())
+					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -2120,17 +2025,16 @@ void test_gather_enum(void)
 side_static_event(my_provider_event_gatherstring,
 	"myprovider", "myeventgatherstring", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_string("string", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
+		side_field_gather_string("string", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("arrayptr",
-			side_elem(side_type_gather_string(0, SIDE_TYPE_GATHER_ACCESS_POINTER, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+			side_elem(side_type_gather_string(0, SIDE_TYPE_GATHER_ACCESS_POINTER)),
+			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT
 		),
 		side_field_gather_array("array",
-			side_elem(side_type_gather_string(0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list())),
-			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()
+			side_elem(side_type_gather_string(0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
+			3, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT
 		),
-	),
-	side_attr_list()
+	)
 );
 
 static
@@ -2157,17 +2061,16 @@ void test_gather_string(void)
 
 side_static_event(my_provider_event_str_utf, "myprovider", "myevent_str_utf", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_string("utf8", side_attr_list()),
-		side_field_string32("utf32", side_attr_list()),
-		side_field_string16("utf16", side_attr_list()),
-		side_field_string32_le("utf32_le", side_attr_list()),
-		side_field_string16_le("utf16_le", side_attr_list()),
-		side_field_string32_be("utf32_be", side_attr_list()),
-		side_field_string16_be("utf16_be", side_attr_list()),
+		side_field_string("utf8"),
+		side_field_string32("utf32"),
+		side_field_string16("utf16"),
+		side_field_string32_le("utf32_le"),
+		side_field_string16_le("utf16_le"),
+		side_field_string32_be("utf32_be"),
+		side_field_string16_be("utf16_be"),
 		side_field_dynamic("dynamic_utf32"),
-		side_field_gather_string32("gather_utf32", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list()),
-	),
-	side_attr_list()
+		side_field_gather_string32("gather_utf32", 0, SIDE_TYPE_GATHER_ACCESS_DIRECT),
+	)
 );
 
 static
@@ -2203,28 +2106,26 @@ void test_string_utf(void)
 			side_arg_string16(str16_le),
 			side_arg_string32(str32_be),
 			side_arg_string16(str16_be),
-			side_arg_dynamic_string32(str32, side_attr_list()),
+			side_arg_dynamic_string32(str32),
 			side_arg_gather_string(str32),
 		)
 	);
 }
 
 static side_define_variant(myvariantdef,
-	side_type_u32(side_attr_list()),
+	side_type_u32(),
 	side_option_list(
-		side_option_range(1, 3, side_type_u16(side_attr_list())),
-		side_option(5, side_type_string(side_attr_list())),
-	),
-	side_attr_list()
+		side_option_range(1, 3, side_type_u16()),
+		side_option(5, side_type_string()),
+	)
 );
 
 side_static_event(my_provider_event_variant, "myprovider", "myeventvariant", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_variant("variant1", &myvariantdef),
 		side_field_variant("variant2", &myvariantdef),
-		side_field_u8("z", side_attr_list()),
-	),
-	side_attr_list()
+		side_field_u8("z"),
+	)
 );
 
 static
