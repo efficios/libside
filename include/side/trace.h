@@ -668,7 +668,7 @@ struct side_event_description {
 	side_ptr_t(const struct side_attr) attr;
 	uint64_t flags;
 	uint32_t version;
-	uint32_t loglevel;	/* enum side_loglevel */
+	side_enum_t(enum side_loglevel, uint32_t) loglevel;
 	uint32_t nr_fields;
 	uint32_t nr_attr;
 } SIDE_PACKED;
@@ -1818,7 +1818,7 @@ struct side_event_description {
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.flags = (_flags), \
 		.version = 0, \
-		.loglevel = _loglevel, \
+		.loglevel = SIDE_ENUM_INIT(_loglevel), \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}; \
