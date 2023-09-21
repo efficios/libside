@@ -350,27 +350,27 @@ struct side_enum_bitmap_mappings {
 } SIDE_PACKED;
 
 struct side_type_struct {
-	const struct side_event_field *fields;
+	side_ptr_t(const struct side_event_field) fields;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_fields;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_array {
-	const struct side_type *elem_type;
+	side_ptr_t(const struct side_type) elem_type;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t length;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_vla {
-	const struct side_type *elem_type;
+	side_ptr_t(const struct side_type) elem_type;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_vla_visitor {
-	const struct side_type *elem_type;
+	side_ptr_t(const struct side_type) elem_type;
 	side_visitor_func visitor;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
@@ -378,12 +378,12 @@ struct side_type_vla_visitor {
 
 struct side_type_enum {
 	side_ptr_t(const struct side_enum_mappings) mappings;
-	const struct side_type *elem_type;
+	side_ptr_t(const struct side_type) elem_type;
 } SIDE_PACKED;
 
 struct side_type_enum_bitmap {
 	side_ptr_t(const struct side_enum_bitmap_mappings) mappings;
-	const struct side_type *elem_type;
+	side_ptr_t(const struct side_type) elem_type;
 } SIDE_PACKED;
 
 struct side_type_gather_bool {
@@ -420,13 +420,13 @@ struct side_type_gather_string {
 
 struct side_type_gather_enum {
 	side_ptr_t(const struct side_enum_mappings) mappings;
-	const struct side_type *elem_type;
+	side_ptr_t(const struct side_type) elem_type;
 } SIDE_PACKED;
 
 struct side_type_gather_struct {
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
-	const struct side_type_struct *type;
+	side_ptr_t(const struct side_type_struct) type;
 	uint32_t size;		/* bytes */
 } SIDE_PACKED;
 
@@ -437,7 +437,7 @@ struct side_type_gather_array {
 } SIDE_PACKED;
 
 struct side_type_gather_vla {
-	const struct side_type *length_type;	/* side_length() */
+	side_ptr_t(const struct side_type) length_type;	/* side_length() */
 
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
@@ -473,8 +473,8 @@ struct side_type {
 		struct side_type_array side_array;
 		struct side_type_vla side_vla;
 		struct side_type_vla_visitor side_vla_visitor;
-		const struct side_type_struct *side_struct;
-		const struct side_type_variant *side_variant;
+		side_ptr_t(const struct side_type_struct) side_struct;
+		side_ptr_t(const struct side_type_variant) side_variant;
 
 		/* Stack-copy enumeration types */
 		struct side_type_enum side_enum;
@@ -493,14 +493,14 @@ struct side_variant_option {
 
 struct side_type_variant {
 	const struct side_type selector;
-	const struct side_variant_option *options;
+	side_ptr_t(const struct side_variant_option) options;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_options;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_event_field {
-	const char *field_name;
+	side_ptr_t(const char) field_name;
 	struct side_type side_type;
 } SIDE_PACKED;
 
@@ -873,7 +873,7 @@ struct side_event_description {
 
 #define _side_field(_name, _type) \
 	{ \
-		.field_name = _name, \
+		.field_name = SIDE_PTR_INIT(_name), \
 		.side_type = _type, \
 	}
 
@@ -990,7 +990,7 @@ struct side_event_description {
 		.u = { \
 			.side_enum = { \
 				.mappings = SIDE_PTR_INIT(_mappings), \
-				.elem_type = _elem_type, \
+				.elem_type = SIDE_PTR_INIT(_elem_type), \
 			}, \
 		}, \
 	}
@@ -1003,7 +1003,7 @@ struct side_event_description {
 		.u = { \
 			.side_enum_bitmap = { \
 				.mappings = SIDE_PTR_INIT(_mappings), \
-				.elem_type = _elem_type, \
+				.elem_type = SIDE_PTR_INIT(_elem_type), \
 			}, \
 		}, \
 	}
@@ -1014,7 +1014,7 @@ struct side_event_description {
 	{ \
 		.type = SIDE_TYPE_STRUCT, \
 		.u = { \
-			.side_struct = _struct, \
+			.side_struct = SIDE_PTR_INIT(_struct), \
 		}, \
 	}
 #define side_field_struct(_name, _struct) \
@@ -1022,7 +1022,7 @@ struct side_event_description {
 
 #define _side_type_struct_define(_fields, _attr) \
 	{ \
-		.fields = _fields, \
+		.fields = SIDE_PTR_INIT(_fields), \
 		.attr = SIDE_PTR_INIT(_attr), \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -1039,7 +1039,7 @@ struct side_event_description {
 	{ \
 		.type = SIDE_TYPE_VARIANT, \
 		.u = { \
-			.side_variant = _variant, \
+			.side_variant = SIDE_PTR_INIT(_variant), \
 		}, \
 	}
 #define side_field_variant(_name, _variant) \
@@ -1048,7 +1048,7 @@ struct side_event_description {
 #define _side_type_variant_define(_selector, _options, _attr) \
 	{ \
 		.selector = _selector, \
-		.options = _options, \
+		.options = SIDE_PTR_INIT(_options), \
 		.attr = SIDE_PTR_INIT(_attr), \
 		.nr_options = SIDE_ARRAY_SIZE(SIDE_PARAM(_options)), \
 		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
@@ -1067,7 +1067,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_ARRAY, \
 		.u = { \
 			.side_array = { \
-				.elem_type = _elem_type, \
+				.elem_type = SIDE_PTR_INIT(_elem_type), \
 				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.length = _length, \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -1082,7 +1082,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_VLA, \
 		.u = { \
 			.side_vla = { \
-				.elem_type = _elem_type, \
+				.elem_type = SIDE_PTR_INIT(_elem_type), \
 				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
@@ -1096,7 +1096,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_VLA_VISITOR, \
 		.u = { \
 			.side_vla_visitor = { \
-				.elem_type = SIDE_PARAM(_elem_type), \
+				.elem_type = SIDE_PTR_INIT(_elem_type), \
 				.visitor = _visitor, \
 				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -1338,7 +1338,7 @@ struct side_event_description {
 		.u = { \
 			.side_enum = { \
 				.mappings = SIDE_PTR_INIT(_mappings), \
-				.elem_type = _elem_type, \
+				.elem_type = SIDE_PTR_INIT(_elem_type), \
 			}, \
 		}, \
 	}
@@ -1354,7 +1354,7 @@ struct side_event_description {
 					.side_struct = { \
 						.offset = _offset, \
 						.access_mode = _access_mode, \
-						.type = _struct_gather, \
+						.type = SIDE_PTR_INIT(_struct_gather), \
 						.size = _size, \
 					}, \
 				}, \
@@ -1374,7 +1374,7 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.elem_type = _elem_type_gather, \
+							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.length = _length, \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -1394,11 +1394,11 @@ struct side_event_description {
 			.side_gather = { \
 				.u = { \
 					.side_vla = { \
-						.length_type = _length_type_gather, \
+						.length_type = SIDE_PTR_INIT(_length_type_gather), \
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.elem_type = _elem_type_gather, \
+							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						}, \

@@ -472,7 +472,7 @@ static
 void tracer_print_enum(const struct side_type *type_desc, const struct side_arg *item)
 {
 	const struct side_enum_mappings *mappings = side_ptr_get(type_desc->u.side_enum.mappings);
-	const struct side_type *elem_type = type_desc->u.side_enum.elem_type;
+	const struct side_type *elem_type = side_ptr_get(type_desc->u.side_enum.elem_type);
 	union int64_value v64;
 
 	if (elem_type->type != item->type) {
@@ -518,7 +518,7 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 		const struct side_arg *item)
 {
 	const struct side_enum_bitmap_mappings *side_enum_mappings = side_ptr_get(type_desc->u.side_enum_bitmap.mappings);
-	const struct side_type *enum_elem_type = type_desc->u.side_enum_bitmap.elem_type, *elem_type;
+	const struct side_type *enum_elem_type = side_ptr_get(type_desc->u.side_enum_bitmap.elem_type), *elem_type;
 	uint32_t i, print_count = 0, stride_bit, nr_items;
 	const struct side_arg *array_item;
 
@@ -537,12 +537,12 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 		nr_items = 1;
 		break;
 	case SIDE_TYPE_ARRAY:
-		elem_type = enum_elem_type->u.side_array.elem_type;
+		elem_type = side_ptr_get(enum_elem_type->u.side_array.elem_type);
 		array_item = item->u.side_static.side_array->sav;
 		nr_items = type_desc->u.side_array.length;
 		break;
 	case SIDE_TYPE_VLA:
-		elem_type = enum_elem_type->u.side_vla.elem_type;
+		elem_type = side_ptr_get(enum_elem_type->u.side_vla.elem_type);
 		array_item = item->u.side_static.side_vla->sav;
 		nr_items = item->u.side_static.side_vla->len;
 		break;
@@ -1040,7 +1040,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 static
 void tracer_print_field(const struct side_event_field *item_desc, const struct side_arg *item)
 {
-	printf("%s: ", item_desc->field_name);
+	printf("%s: ", side_ptr_get(item_desc->field_name));
 	tracer_print_type(&item_desc->side_type, item);
 }
 
@@ -1048,18 +1048,19 @@ static
 void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
 {
 	const struct side_arg *sav = side_arg_vec->sav;
+	const struct side_type_struct *side_struct = side_ptr_get(type_desc->u.side_struct);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	if (type_desc->u.side_struct->nr_fields != side_sav_len) {
+	if (side_struct->nr_fields != side_sav_len) {
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments of structure\n");
 		abort();
 	}
-	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_struct->attr), type_desc->u.side_struct->nr_attr);
-	printf("%s", type_desc->u.side_struct->nr_attr ? ", " : "");
+	print_attributes("attr", ":", side_ptr_get(side_struct->attr), side_struct->nr_attr);
+	printf("%s", side_struct->nr_attr ? ", " : "");
 	printf("fields: { ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_field(&type_desc->u.side_struct->fields[i], &sav[i]);
+		tracer_print_field(&side_ptr_get(side_struct->fields)[i], &sav[i]);
 	}
 	printf(" }");
 }
@@ -1067,7 +1068,7 @@ void tracer_print_struct(const struct side_type *type_desc, const struct side_ar
 static
 void tracer_print_variant(const struct side_type *type_desc, const struct side_arg_variant *side_arg_variant)
 {
-	const struct side_type_variant *side_type_variant = type_desc->u.side_variant;
+	const struct side_type_variant *side_type_variant = side_ptr_get(type_desc->u.side_variant);
 	const struct side_type *selector_type = &side_type_variant->selector;
 	union int64_value v64;
 	uint32_t i;
@@ -1093,7 +1094,7 @@ void tracer_print_variant(const struct side_type *type_desc, const struct side_a
 	v64 = tracer_load_integer_value(&selector_type->u.side_integer,
 			&side_arg_variant->selector.u.side_static.integer_value, 0, NULL);
 	for (i = 0; i < side_type_variant->nr_options; i++) {
-		const struct side_variant_option *option = &side_type_variant->options[i];
+		const struct side_variant_option *option = &side_ptr_get(side_type_variant->options)[i];
 
 		if (v64.s >= option->range_begin && v64.s <= option->range_end) {
 			tracer_print_type(&option->side_type, &side_arg_variant->option);
@@ -1120,7 +1121,7 @@ void tracer_print_array(const struct side_type *type_desc, const struct side_arg
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_type(type_desc->u.side_array.elem_type, &sav[i]);
+		tracer_print_type(side_ptr_get(type_desc->u.side_array.elem_type), &sav[i]);
 	}
 	printf(" ]");
 }
@@ -1137,7 +1138,7 @@ void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_v
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_type(type_desc->u.side_vla.elem_type, &sav[i]);
+		tracer_print_type(side_ptr_get(type_desc->u.side_vla.elem_type), &sav[i]);
 	}
 	printf(" ]");
 }
@@ -1354,7 +1355,7 @@ static
 uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
 	const struct side_enum_mappings *mappings = side_ptr_get(type_gather->u.side_enum.mappings);
-	const struct side_type *enum_elem_type = type_gather->u.side_enum.elem_type;
+	const struct side_type *enum_elem_type = side_ptr_get(type_gather->u.side_enum.elem_type);
 	const struct side_type_gather_integer *side_integer = &enum_elem_type->u.side_gather.u.side_integer;
 	enum side_type_gather_access_mode access_mode =
 		(enum side_type_gather_access_mode) side_integer->access_mode;
@@ -1385,7 +1386,7 @@ uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gathe
 static
 void tracer_print_gather_field(const struct side_event_field *field, const void *ptr)
 {
-	printf("%s: ", field->field_name);
+	printf("%s: ", side_ptr_get(field->field_name));
 	(void) tracer_print_gather_type(&field->side_type, ptr);
 }
 
@@ -1394,16 +1395,17 @@ uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, 
 {
 	enum side_type_gather_access_mode access_mode =
 		(enum side_type_gather_access_mode) type_gather->u.side_struct.access_mode;
+	const struct side_type_struct *side_struct = side_ptr_get(type_gather->u.side_struct.type);
 	const char *ptr = (const char *) _ptr;
 	uint32_t i;
 
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_struct.offset);
-	print_attributes("attr", ":", side_ptr_get(type_gather->u.side_struct.type->attr), type_gather->u.side_struct.type->nr_attr);
-	printf("%s", type_gather->u.side_struct.type->nr_attr ? ", " : "");
+	print_attributes("attr", ":", side_ptr_get(side_struct->attr), side_struct->nr_attr);
+	printf("%s", side_struct->nr_attr ? ", " : "");
 	printf("fields: { ");
-	for (i = 0; i < type_gather->u.side_struct.type->nr_fields; i++) {
+	for (i = 0; i < side_struct->nr_fields; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_gather_field(&type_gather->u.side_struct.type->fields[i], ptr);
+		tracer_print_gather_field(&side_ptr_get(side_struct->fields)[i], ptr);
 	}
 	printf(" }");
 	return tracer_gather_size(access_mode, type_gather->u.side_struct.size);
@@ -1424,7 +1426,9 @@ uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, c
 	printf("elements: ");
 	printf("[ ");
 	for (i = 0; i < type_gather->u.side_array.type.length; i++) {
-		switch (type_gather->u.side_array.type.elem_type->type) {
+		const struct side_type *elem_type = side_ptr_get(type_gather->u.side_array.type.elem_type);
+
+		switch (elem_type->type) {
 		case SIDE_TYPE_GATHER_VLA:
 			fprintf(stderr, "<gather VLA only supported within gather structures>\n");
 			abort();
@@ -1432,7 +1436,7 @@ uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, c
 			break;
 		}
 		printf("%s", i ? ", " : "");
-		ptr += tracer_print_gather_type(type_gather->u.side_array.type.elem_type, ptr);
+		ptr += tracer_print_gather_type(elem_type, ptr);
 	}
 	printf(" ]");
 	return tracer_gather_size(access_mode, ptr - orig_ptr);
@@ -1444,20 +1448,21 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 {
 	enum side_type_gather_access_mode access_mode =
 		(enum side_type_gather_access_mode) type_gather->u.side_vla.access_mode;
+	const struct side_type *length_type = side_ptr_get(type_gather->u.side_vla.length_type);
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	const char *length_ptr = (const char *) _length_ptr;
 	union int64_value v64;
 	uint32_t i, length;
 
 	/* Access length */
-	switch (type_gather->u.side_vla.length_type->type) {
+	switch (length_type->type) {
 	case SIDE_TYPE_GATHER_INTEGER:
 		break;
 	default:
 		fprintf(stderr, "<gather VLA expects integer gather length type>\n");
 		abort();
 	}
-	v64 = tracer_load_gather_integer_value(&type_gather->u.side_vla.length_type->u.side_gather.u.side_integer,
+	v64 = tracer_load_gather_integer_value(&length_type->u.side_gather.u.side_integer,
 					length_ptr);
 	length = (uint32_t) v64.u;
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
@@ -1467,7 +1472,9 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 	printf("elements: ");
 	printf("[ ");
 	for (i = 0; i < length; i++) {
-		switch (type_gather->u.side_vla.type.elem_type->type) {
+		const struct side_type *elem_type = side_ptr_get(type_gather->u.side_vla.type.elem_type);
+
+		switch (elem_type->type) {
 		case SIDE_TYPE_GATHER_VLA:
 			fprintf(stderr, "<gather VLA only supported within gather structures>\n");
 			abort();
@@ -1475,7 +1482,7 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 			break;
 		}
 		printf("%s", i ? ", " : "");
-		ptr += tracer_print_gather_type(type_gather->u.side_vla.type.elem_type, ptr);
+		ptr += tracer_print_gather_type(elem_type, ptr);
 	}
 	printf(" ]");
 	return tracer_gather_size(access_mode, ptr - orig_ptr);
@@ -1502,7 +1509,7 @@ void tracer_print_vla_visitor(const struct side_type *type_desc, void *app_ctx)
 {
 	enum side_visitor_status status;
 	struct tracer_visitor_priv tracer_priv = {
-		.elem_type = type_desc->u.side_vla_visitor.elem_type,
+		.elem_type = side_ptr_get(type_desc->u.side_vla_visitor.elem_type),
 		.i = 0,
 	};
 	const struct side_tracer_visitor_ctx tracer_ctx = {
