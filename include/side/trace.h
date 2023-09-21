@@ -296,19 +296,19 @@ struct side_type_bool {
 } SIDE_PACKED;
 
 struct side_type_byte {
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_string {
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
 	uint8_t byte_order;		/* enum side_type_label_byte_order */
 } SIDE_PACKED;
 
 struct side_type_integer {
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 	uint16_t integer_size;		/* bytes */
 	uint16_t len_bits;		/* bits. 0 for (integer_size * CHAR_BITS) */
@@ -317,7 +317,7 @@ struct side_type_integer {
 } SIDE_PACKED;
 
 struct side_type_float {
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 	uint16_t float_size;		/* bytes */
 	uint8_t byte_order;		/* enum side_type_label_byte_order */
@@ -331,7 +331,7 @@ struct side_enum_mapping {
 
 struct side_enum_mappings {
 	const struct side_enum_mapping *mappings;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_mappings;
 	uint32_t nr_attr;
 } SIDE_PACKED;
@@ -344,35 +344,35 @@ struct side_enum_bitmap_mapping {
 
 struct side_enum_bitmap_mappings {
 	const struct side_enum_bitmap_mapping *mappings;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_mappings;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_struct {
 	const struct side_event_field *fields;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_fields;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_array {
 	const struct side_type *elem_type;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t length;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_vla {
 	const struct side_type *elem_type;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_type_vla_visitor {
 	const struct side_type *elem_type;
 	side_visitor_func visitor;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
@@ -494,7 +494,7 @@ struct side_variant_option {
 struct side_type_variant {
 	const struct side_type selector;
 	const struct side_variant_option *options;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_options;
 	uint32_t nr_attr;
 } SIDE_PACKED;
@@ -554,14 +554,14 @@ union side_arg_static {
 
 struct side_arg_dynamic_vla {
 	const struct side_arg *sav;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t len;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_arg_dynamic_struct {
 	const struct side_arg_dynamic_field *fields;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t len;
 	uint32_t nr_attr;
 } SIDE_PACKED;
@@ -569,14 +569,14 @@ struct side_arg_dynamic_struct {
 struct side_dynamic_struct_visitor {
 	void *app_ctx;
 	side_dynamic_struct_visitor_func visitor;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_dynamic_vla_visitor {
 	void *app_ctx;
 	side_visitor_func visitor;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
@@ -665,7 +665,7 @@ struct side_event_description {
 	const char *provider_name;
 	const char *event_name;
 	const struct side_event_field *fields;
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint64_t flags;
 	uint32_t version;
 	uint32_t loglevel;	/* enum side_loglevel */
@@ -724,7 +724,7 @@ struct side_event_description {
 #define side_define_enum(_identifier, _mappings, _attr...) \
 	const struct side_enum_mappings _identifier = { \
 		.mappings = _mappings, \
-		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
@@ -757,7 +757,7 @@ struct side_event_description {
 #define side_define_enum_bitmap(_identifier, _mappings, _attr...) \
 	const struct side_enum_bitmap_mappings _identifier = { \
 		.mappings = _mappings, \
-		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
@@ -819,7 +819,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_BYTE, \
 		.u = { \
 			.side_byte = { \
-				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
@@ -830,7 +830,7 @@ struct side_event_description {
 		.type = _type, \
 		.u = { \
 			.side_string = { \
-				.attr = _attr, \
+				.attr = SIDE_PTR_INIT(_attr), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.unit_size = _unit_size, \
 				.byte_order = _byte_order, \
@@ -848,7 +848,7 @@ struct side_event_description {
 		.type = _type, \
 		.u = { \
 			.side_integer = { \
-				.attr = _attr, \
+				.attr = SIDE_PTR_INIT(_attr), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.integer_size = _integer_size, \
 				.len_bits = _len_bits, \
@@ -863,7 +863,7 @@ struct side_event_description {
 		.type = _type, \
 		.u = { \
 			.side_float = { \
-				.attr = _attr, \
+				.attr = SIDE_PTR_INIT(_attr), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.float_size = _float_size, \
 				.byte_order = _byte_order, \
@@ -1023,7 +1023,7 @@ struct side_event_description {
 #define _side_type_struct_define(_fields, _attr) \
 	{ \
 		.fields = _fields, \
-		.attr = _attr, \
+		.attr = SIDE_PTR_INIT(_attr), \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 	}
@@ -1049,7 +1049,7 @@ struct side_event_description {
 	{ \
 		.selector = _selector, \
 		.options = _options, \
-		.attr = _attr, \
+		.attr = SIDE_PTR_INIT(_attr), \
 		.nr_options = SIDE_ARRAY_SIZE(SIDE_PARAM(_options)), \
 		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 	}
@@ -1068,7 +1068,7 @@ struct side_event_description {
 		.u = { \
 			.side_array = { \
 				.elem_type = _elem_type, \
-				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.length = _length, \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
@@ -1083,7 +1083,7 @@ struct side_event_description {
 		.u = { \
 			.side_vla = { \
 				.elem_type = _elem_type, \
-				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
@@ -1098,7 +1098,7 @@ struct side_event_description {
 			.side_vla_visitor = { \
 				.elem_type = SIDE_PARAM(_elem_type), \
 				.visitor = _visitor, \
-				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
@@ -1118,7 +1118,7 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						}, \
 					}, \
@@ -1176,7 +1176,7 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.integer_size = _integer_size, \
 							.len_bits = _len_bits, \
@@ -1254,7 +1254,7 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.float_size = _float_size, \
 							.byte_order = _byte_order, \
@@ -1289,7 +1289,7 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.unit_size = _unit_size, \
 							.byte_order = _byte_order, \
@@ -1375,7 +1375,7 @@ struct side_event_description {
 						.access_mode = _access_mode, \
 						.type = { \
 							.elem_type = _elem_type_gather, \
-							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.length = _length, \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						}, \
@@ -1399,7 +1399,7 @@ struct side_event_description {
 						.access_mode = _access_mode, \
 						.type = { \
 							.elem_type = _elem_type_gather, \
-							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						}, \
 					}, \
@@ -1521,7 +1521,7 @@ struct side_event_description {
 			.side_dynamic = { \
 				.side_byte = { \
 					.type = { \
-						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 					}, \
 					.value = (_val), \
@@ -1537,7 +1537,7 @@ struct side_event_description {
 			.side_dynamic = { \
 				.side_string = { \
 					.type = { \
-						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.unit_size = _unit_size, \
 						.byte_order = _byte_order, \
@@ -1569,7 +1569,7 @@ struct side_event_description {
 			.side_dynamic = { \
 				.side_integer = { \
 					.type = { \
-						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.integer_size = _integer_size, \
 						.len_bits = _len_bits, \
@@ -1614,7 +1614,7 @@ struct side_event_description {
 			.side_dynamic = { \
 				.side_float = { \
 					.type = { \
-						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.float_size = _float_size, \
 						.byte_order = _byte_order, \
@@ -1693,7 +1693,7 @@ struct side_event_description {
 				.side_dynamic_vla_visitor = { \
 					.app_ctx = _ctx, \
 					.visitor = _dynamic_vla_visitor, \
-					.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+					.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				}, \
 			}, \
@@ -1718,7 +1718,7 @@ struct side_event_description {
 				.side_dynamic_struct_visitor = { \
 					.app_ctx = _ctx, \
 					.visitor = _dynamic_struct_visitor, \
-					.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+					.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				}, \
 			}, \
@@ -1729,7 +1729,7 @@ struct side_event_description {
 	const struct side_arg _identifier##_vec[] = { _sav }; \
 	const struct side_arg_dynamic_vla _identifier = { \
 		.sav = _identifier##_vec, \
-		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
@@ -1738,7 +1738,7 @@ struct side_event_description {
 	const struct side_arg_dynamic_field _identifier##_fields[] = { _struct_fields }; \
 	const struct side_arg_dynamic_struct _identifier = { \
 		.fields = _identifier##_fields, \
-		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_fields), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
@@ -1791,7 +1791,7 @@ struct side_event_description {
 		const struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
 		const struct side_arg_dynamic_struct var_struct = { \
 			.fields = side_fields, \
-			.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+			.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		}; \
@@ -1815,7 +1815,7 @@ struct side_event_description {
 		.provider_name = _provider, \
 		.event_name = _event, \
 		.fields = _fields, \
-		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.flags = (_flags), \
 		.version = 0, \
 		.loglevel = _loglevel, \

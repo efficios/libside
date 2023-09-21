@@ -481,7 +481,7 @@ void tracer_print_enum(const struct side_type *type_desc, const struct side_arg 
 	}
 	v64 = tracer_load_integer_value(&elem_type->u.side_integer,
 			&item->u.side_static.integer_value, 0, NULL);
-	print_attributes("attr", ":", mappings->attr, mappings->nr_attr);
+	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
 	printf("%s", mappings->nr_attr ? ", " : "");
 	tracer_print_type(elem_type, item);
 	print_enum_labels(mappings, v64);
@@ -552,7 +552,7 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 	}
 	stride_bit = elem_type_to_stride(elem_type);
 
-	print_attributes("attr", ":", side_enum_mappings->attr, side_enum_mappings->nr_attr);
+	print_attributes("attr", ":", side_ptr_get(side_enum_mappings->attr), side_enum_mappings->nr_attr);
 	printf("%s", side_enum_mappings->nr_attr ? ", " : "");
 	printf("labels: [ ");
 	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
@@ -692,8 +692,8 @@ void tracer_print_type_integer(const char *separator,
 	uint16_t len_bits;
 
 	v64 = tracer_load_integer_value(type_integer, value, offset_bits, &len_bits);
-	tracer_print_type_header(separator, type_integer->attr, type_integer->nr_attr);
-	base = get_attr_display_base(type_integer->attr, type_integer->nr_attr, default_base);
+	tracer_print_type_header(separator, side_ptr_get(type_integer->attr), type_integer->nr_attr);
+	base = get_attr_display_base(side_ptr_get(type_integer->attr), type_integer->nr_attr, default_base);
 	switch (base) {
 	case TRACER_DISPLAY_BASE_2:
 		print_integer_binary(v64.u, len_bits);
@@ -728,7 +728,7 @@ void tracer_print_type_float(const char *separator,
 {
 	bool reverse_bo;
 
-	tracer_print_type_header(separator, type_float->attr, type_float->nr_attr);
+	tracer_print_type_header(separator, side_ptr_get(type_float->attr), type_float->nr_attr);
 	reverse_bo = type_float->byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST;
 	switch (type_float->float_size) {
 	case 2:
@@ -926,7 +926,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		break;
 
 	case SIDE_TYPE_BYTE:
-		tracer_print_type_header(":", type_desc->u.side_byte.attr, type_desc->u.side_byte.nr_attr);
+		tracer_print_type_header(":", side_ptr_get(type_desc->u.side_byte.attr), type_desc->u.side_byte.nr_attr);
 		printf("0x%" PRIx8, item->u.side_static.byte_value);
 		break;
 
@@ -945,7 +945,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_STRING_UTF8:
 	case SIDE_TYPE_STRING_UTF16:
 	case SIDE_TYPE_STRING_UTF32:
-		tracer_print_type_header(":", type_desc->u.side_string.attr, type_desc->u.side_string.nr_attr);
+		tracer_print_type_header(":", side_ptr_get(type_desc->u.side_string.attr), type_desc->u.side_string.nr_attr);
 		tracer_print_string((const void *)(uintptr_t) item->u.side_static.string_value,
 				type_desc->u.side_string.unit_size, type_desc->u.side_string.byte_order, NULL);
 		break;
@@ -1054,7 +1054,7 @@ void tracer_print_struct(const struct side_type *type_desc, const struct side_ar
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments of structure\n");
 		abort();
 	}
-	print_attributes("attr", ":", type_desc->u.side_struct->attr, type_desc->u.side_struct->nr_attr);
+	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_struct->attr), type_desc->u.side_struct->nr_attr);
 	printf("%s", type_desc->u.side_struct->nr_attr ? ", " : "");
 	printf("fields: { ");
 	for (i = 0; i < side_sav_len; i++) {
@@ -1114,7 +1114,7 @@ void tracer_print_array(const struct side_type *type_desc, const struct side_arg
 		fprintf(stderr, "ERROR: length mismatch between description and arguments of array\n");
 		abort();
 	}
-	print_attributes("attr", ":", type_desc->u.side_array.attr, type_desc->u.side_array.nr_attr);
+	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_array.attr), type_desc->u.side_array.nr_attr);
 	printf("%s", type_desc->u.side_array.nr_attr ? ", " : "");
 	printf("elements: ");
 	printf("[ ");
@@ -1131,7 +1131,7 @@ void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_v
 	const struct side_arg *sav = side_arg_vec->sav;
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	print_attributes("attr", ":", type_desc->u.side_vla.attr, type_desc->u.side_vla.nr_attr);
+	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_vla.attr), type_desc->u.side_vla.nr_attr);
 	printf("%s", type_desc->u.side_vla.nr_attr ? ", " : "");
 	printf("elements: ");
 	printf("[ ");
@@ -1221,7 +1221,7 @@ uint32_t tracer_print_gather_byte_type(const struct side_type_gather *type_gathe
 
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_byte.offset);
 	memcpy(&value, ptr, 1);
-	tracer_print_type_header(":", type_gather->u.side_byte.type.attr,
+	tracer_print_type_header(":", side_ptr_get(type_gather->u.side_byte.type.attr),
 			type_gather->u.side_byte.type.nr_attr);
 	printf("0x%" PRIx8, value);
 	return tracer_gather_size(access_mode, 1);
@@ -1286,7 +1286,7 @@ uint32_t tracer_print_gather_string_type(const struct side_type_gather *type_gat
 	size_t string_len;
 
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_string.offset);
-	tracer_print_type_header(":", type_gather->u.side_string.type.attr,
+	tracer_print_type_header(":", side_ptr_get(type_gather->u.side_string.type.attr),
 			type_gather->u.side_string.type.nr_attr);
 	if (ptr) {
 		tracer_print_string(ptr, type_gather->u.side_string.type.unit_size,
@@ -1375,7 +1375,7 @@ uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gathe
 	ptr = tracer_gather_access(access_mode, ptr + side_integer->offset);
 	memcpy(&value, ptr, integer_size_bytes);
 	v64 = tracer_load_gather_integer_value(side_integer, &value);
-	print_attributes("attr", ":", mappings->attr, mappings->nr_attr);
+	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
 	printf("%s", mappings->nr_attr ? ", " : "");
 	tracer_print_gather_type(enum_elem_type, ptr);
 	print_enum_labels(mappings, v64);
@@ -1398,7 +1398,7 @@ uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, 
 	uint32_t i;
 
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_struct.offset);
-	print_attributes("attr", ":", type_gather->u.side_struct.type->attr, type_gather->u.side_struct.type->nr_attr);
+	print_attributes("attr", ":", side_ptr_get(type_gather->u.side_struct.type->attr), type_gather->u.side_struct.type->nr_attr);
 	printf("%s", type_gather->u.side_struct.type->nr_attr ? ", " : "");
 	printf("fields: { ");
 	for (i = 0; i < type_gather->u.side_struct.type->nr_fields; i++) {
@@ -1419,7 +1419,7 @@ uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, c
 
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_array.offset);
 	orig_ptr = ptr;
-	print_attributes("attr", ":", type_gather->u.side_array.type.attr, type_gather->u.side_array.type.nr_attr);
+	print_attributes("attr", ":", side_ptr_get(type_gather->u.side_array.type.attr), type_gather->u.side_array.type.nr_attr);
 	printf("%s", type_gather->u.side_array.type.nr_attr ? ", " : "");
 	printf("elements: ");
 	printf("[ ");
@@ -1462,7 +1462,7 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 	length = (uint32_t) v64.u;
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
 	orig_ptr = ptr;
-	print_attributes("attr", ":", type_gather->u.side_vla.type.attr, type_gather->u.side_vla.type.nr_attr);
+	print_attributes("attr", ":", side_ptr_get(type_gather->u.side_vla.type.attr), type_gather->u.side_vla.type.nr_attr);
 	printf("%s", type_gather->u.side_vla.type.nr_attr ? ", " : "");
 	printf("elements: ");
 	printf("[ ");
@@ -1510,7 +1510,7 @@ void tracer_print_vla_visitor(const struct side_type *type_desc, void *app_ctx)
 		.priv = &tracer_priv,
 	};
 
-	print_attributes("attr", ":", type_desc->u.side_vla_visitor.attr, type_desc->u.side_vla_visitor.nr_attr);
+	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_vla_visitor.attr), type_desc->u.side_vla_visitor.nr_attr);
 	printf("%s", type_desc->u.side_vla_visitor.nr_attr ? ", " : "");
 	printf("elements: ");
 	printf("[ ");
@@ -1531,7 +1531,7 @@ void tracer_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_s
 	const struct side_arg_dynamic_field *fields = dynamic_struct->fields;
 	uint32_t i, len = dynamic_struct->len;
 
-	print_attributes("attr", "::", dynamic_struct->attr, dynamic_struct->nr_attr);
+	print_attributes("attr", "::", side_ptr_get(dynamic_struct->attr), dynamic_struct->nr_attr);
 	printf("%s", dynamic_struct->nr_attr ? ", " : "");
 	printf("fields:: ");
 	printf("[ ");
@@ -1574,7 +1574,7 @@ void tracer_print_dynamic_struct_visitor(const struct side_arg *item)
 	};
 	void *app_ctx = item->u.side_dynamic.side_dynamic_struct_visitor.app_ctx;
 
-	print_attributes("attr", "::", item->u.side_dynamic.side_dynamic_struct_visitor.attr, item->u.side_dynamic.side_dynamic_struct_visitor.nr_attr);
+	print_attributes("attr", "::", side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor.attr), item->u.side_dynamic.side_dynamic_struct_visitor.nr_attr);
 	printf("%s", item->u.side_dynamic.side_dynamic_struct_visitor.nr_attr ? ", " : "");
 	printf("fields:: ");
 	printf("[ ");
@@ -1595,7 +1595,7 @@ void tracer_print_dynamic_vla(const struct side_arg_dynamic_vla *vla)
 	const struct side_arg *sav = vla->sav;
 	uint32_t i, side_sav_len = vla->len;
 
-	print_attributes("attr", "::", vla->attr, vla->nr_attr);
+	print_attributes("attr", "::", side_ptr_get(vla->attr), vla->nr_attr);
 	printf("%s", vla->nr_attr ? ", " : "");
 	printf("elements:: ");
 	printf("[ ");
@@ -1636,7 +1636,7 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg *item)
 	};
 	void *app_ctx = item->u.side_dynamic.side_dynamic_vla_visitor.app_ctx;
 
-	print_attributes("attr", "::", item->u.side_dynamic.side_dynamic_vla_visitor.attr, item->u.side_dynamic.side_dynamic_vla_visitor.nr_attr);
+	print_attributes("attr", "::", side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor.attr), item->u.side_dynamic.side_dynamic_vla_visitor.nr_attr);
 	printf("%s", item->u.side_dynamic.side_dynamic_vla_visitor.nr_attr ? ", " : "");
 	printf("elements:: ");
 	printf("[ ");
@@ -1670,7 +1670,7 @@ void tracer_print_dynamic(const struct side_arg *item)
 				TRACER_DISPLAY_BASE_10);
 		break;
 	case SIDE_TYPE_DYNAMIC_BYTE:
-		tracer_print_type_header("::", item->u.side_dynamic.side_byte.type.attr, item->u.side_dynamic.side_byte.type.nr_attr);
+		tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_byte.type.attr), item->u.side_dynamic.side_byte.type.nr_attr);
 		printf("0x%" PRIx8, item->u.side_dynamic.side_byte.value);
 		break;
 	case SIDE_TYPE_DYNAMIC_POINTER:
@@ -1682,7 +1682,7 @@ void tracer_print_dynamic(const struct side_arg *item)
 					&item->u.side_dynamic.side_float.value);
 		break;
 	case SIDE_TYPE_DYNAMIC_STRING:
-		tracer_print_type_header("::", item->u.side_dynamic.side_string.type.attr, item->u.side_dynamic.side_string.type.nr_attr);
+		tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_string.type.attr), item->u.side_dynamic.side_string.type.nr_attr);
 		tracer_print_string((const char *)(uintptr_t) item->u.side_dynamic.side_string.value,
 				item->u.side_dynamic.side_string.type.unit_size,
 				item->u.side_dynamic.side_string.type.byte_order, NULL);
@@ -1721,7 +1721,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments\n");
 		abort();
 	}
-	print_attributes(", attr", ":", desc->attr, desc->nr_attr);
+	print_attributes(", attr", ":", side_ptr_get(desc->attr), desc->nr_attr);
 	printf("%s", side_sav_len ? ", fields: [ " : "");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
@@ -1758,7 +1758,7 @@ void tracer_call_variadic(const struct side_event_description *desc,
 		fprintf(stderr, "ERROR: unexpected non-variadic event description\n");
 		abort();
 	}
-	print_attributes(", attr ", "::", var_struct->attr, var_struct->nr_attr);
+	print_attributes(", attr ", "::", side_ptr_get(var_struct->attr), var_struct->nr_attr);
 	printf("%s", var_struct_len ? ", fields:: [ " : "");
 	for (i = 0; i < var_struct_len; i++, nr_fields++) {
 		printf("%s", i ? ", " : "");
