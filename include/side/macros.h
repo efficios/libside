@@ -72,11 +72,11 @@
 	sizeof(((_struct * )NULL)->_field)
 
 #if defined(__SIZEOF_LONG__)
-#define SIDE_BITS_PER_LONG	(__SIZEOF_LONG__ * 8)
+# define SIDE_BITS_PER_LONG	(__SIZEOF_LONG__ * 8)
 #elif defined(_LP64)
-#define SIDE_BITS_PER_LONG	64
+# define SIDE_BITS_PER_LONG	64
 #else
-#define SIDE_BITS_PER_LONG	32
+# define SIDE_BITS_PER_LONG	32
 #endif
 
 #define SIDE_PACKED	__attribute__((packed))
