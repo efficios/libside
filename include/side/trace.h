@@ -187,6 +187,7 @@ enum side_visitor_status {
 	SIDE_VISITOR_STATUS_ERROR = -1,
 };
 
+//TODO: side_error enum is currently unused.
 enum side_error {
 	SIDE_ERROR_OK = 0,
 	SIDE_ERROR_INVAL = 1,
