@@ -475,7 +475,7 @@ void tracer_print_enum(const struct side_type *type_desc, const struct side_arg 
 	const struct side_type *elem_type = side_ptr_get(type_desc->u.side_enum.elem_type);
 	union int64_value v64;
 
-	if (elem_type->type != item->type) {
+	if (side_enum_get(elem_type->type) != side_enum_get(item->type)) {
 		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
 	}
@@ -492,7 +492,7 @@ uint32_t elem_type_to_stride(const struct side_type *elem_type)
 {
 	uint32_t stride_bit;
 
-	switch (elem_type->type) {
+	switch (side_enum_get(elem_type->type)) {
 	case SIDE_TYPE_BYTE:
 		stride_bit = 8;
 		break;
@@ -522,7 +522,7 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 	uint32_t i, print_count = 0, stride_bit, nr_items;
 	const struct side_arg *array_item;
 
-	switch (enum_elem_type->type) {
+	switch (side_enum_get(enum_elem_type->type)) {
 	case SIDE_TYPE_U8:		/* Fall-through */
 	case SIDE_TYPE_BYTE:		/* Fall-through */
 	case SIDE_TYPE_U16:		/* Fall-through */
@@ -568,7 +568,7 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 		for (bit = mapping->range_begin; bit <= mapping->range_end; bit++) {
 			if (bit > (nr_items * stride_bit) - 1)
 				break;
-			if (elem_type->type == SIDE_TYPE_BYTE) {
+			if (side_enum_get(elem_type->type) == SIDE_TYPE_BYTE) {
 				uint8_t v = array_item[bit / 8].u.side_static.byte_value;
 				if (v & (1ULL << (bit % 8))) {
 					match = true;
@@ -818,9 +818,9 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 {
 	enum side_type_label type;
 
-	switch (type_desc->type) {
+	switch (side_enum_get(type_desc->type)) {
 	case SIDE_TYPE_ENUM:
-		switch (item->type) {
+		switch (side_enum_get(item->type)) {
 		case SIDE_TYPE_U8:
 		case SIDE_TYPE_U16:
 		case SIDE_TYPE_U32:
@@ -838,7 +838,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		break;
 
 	case SIDE_TYPE_ENUM_BITMAP:
-		switch (item->type) {
+		switch (side_enum_get(item->type)) {
 		case SIDE_TYPE_U8:
 		case SIDE_TYPE_BYTE:
 		case SIDE_TYPE_U16:
@@ -855,7 +855,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		break;
 
 	case SIDE_TYPE_GATHER_ENUM:
-		switch (item->type) {
+		switch (side_enum_get(item->type)) {
 		case SIDE_TYPE_GATHER_INTEGER:
 			break;
 		default:
@@ -866,7 +866,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		break;
 
 	case SIDE_TYPE_DYNAMIC:
-		switch (item->type) {
+		switch (side_enum_get(item->type)) {
 		case SIDE_TYPE_DYNAMIC_NULL:
 		case SIDE_TYPE_DYNAMIC_BOOL:
 		case SIDE_TYPE_DYNAMIC_INTEGER:
@@ -887,18 +887,17 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		break;
 
 	default:
-		if (type_desc->type != item->type) {
+		if (side_enum_get(type_desc->type) != side_enum_get(item->type)) {
 			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
 			abort();
 		}
 		break;
 	}
 
-	if (type_desc->type == SIDE_TYPE_ENUM || type_desc->type == SIDE_TYPE_ENUM_BITMAP ||
-			type_desc->type == SIDE_TYPE_GATHER_ENUM)
-		type = (enum side_type_label) type_desc->type;
+	if (side_enum_get(type_desc->type) == SIDE_TYPE_ENUM || side_enum_get(type_desc->type) == SIDE_TYPE_ENUM_BITMAP || side_enum_get(type_desc->type) == SIDE_TYPE_GATHER_ENUM)
+		type = side_enum_get(type_desc->type);
 	else
-		type = (enum side_type_label) item->type;
+		type = side_enum_get(item->type);
 
 	printf("{ ");
 	switch (type) {
@@ -1073,11 +1072,11 @@ void tracer_print_variant(const struct side_type *type_desc, const struct side_a
 	union int64_value v64;
 	uint32_t i;
 
-	if (selector_type->type != side_arg_variant->selector.type) {
+	if (side_enum_get(selector_type->type) != side_enum_get(side_arg_variant->selector.type)) {
 		fprintf(stderr, "ERROR: Unexpected variant selector type\n");
 		abort();
 	}
-	switch (selector_type->type) {
+	switch (side_enum_get(selector_type->type)) {
 	case SIDE_TYPE_U8:
 	case SIDE_TYPE_U16:
 	case SIDE_TYPE_U32:
@@ -1305,7 +1304,7 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 	uint32_t len;
 
 	printf("{ ");
-	switch (type_desc->type) {
+	switch (side_enum_get(type_desc->type)) {
 		/* Gather basic types */
 	case SIDE_TYPE_GATHER_BOOL:
 		len = tracer_print_gather_bool_type(&type_desc->u.side_gather, ptr);
@@ -1428,7 +1427,7 @@ uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, c
 	for (i = 0; i < type_gather->u.side_array.type.length; i++) {
 		const struct side_type *elem_type = side_ptr_get(type_gather->u.side_array.type.elem_type);
 
-		switch (elem_type->type) {
+		switch (side_enum_get(elem_type->type)) {
 		case SIDE_TYPE_GATHER_VLA:
 			fprintf(stderr, "<gather VLA only supported within gather structures>\n");
 			abort();
@@ -1455,7 +1454,7 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 	uint32_t i, length;
 
 	/* Access length */
-	switch (length_type->type) {
+	switch (side_enum_get(length_type->type)) {
 	case SIDE_TYPE_GATHER_INTEGER:
 		break;
 	default:
@@ -1474,7 +1473,7 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 	for (i = 0; i < length; i++) {
 		const struct side_type *elem_type = side_ptr_get(type_gather->u.side_vla.type.elem_type);
 
-		switch (elem_type->type) {
+		switch (side_enum_get(elem_type->type)) {
 		case SIDE_TYPE_GATHER_VLA:
 			fprintf(stderr, "<gather VLA only supported within gather structures>\n");
 			abort();
@@ -1662,7 +1661,7 @@ static
 void tracer_print_dynamic(const struct side_arg *item)
 {
 	printf("{ ");
-	switch (item->type) {
+	switch (side_enum_get(item->type)) {
 		/* Dynamic basic types */
 	case SIDE_TYPE_DYNAMIC_NULL:
 		tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_null.attr),

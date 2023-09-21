@@ -459,7 +459,7 @@ struct side_type_gather {
 } SIDE_PACKED;
 
 struct side_type {
-	uint32_t type;	/* enum side_type_label */
+	side_enum_t(enum side_type_label, uint32_t) type;
 	union {
 		/* Stack-copy basic types */
 		struct side_type_null side_null;
@@ -613,7 +613,7 @@ union side_arg_dynamic {
 } SIDE_PACKED;
 
 struct side_arg {
-	uint32_t type;	/* enum side_type_label */
+	side_enum_t(enum side_type_label, uint32_t) type;
 	union {
 		union side_arg_static side_static;
 		union side_arg_dynamic side_dynamic;
@@ -791,7 +791,7 @@ struct side_event_description {
 
 #define side_type_null(_attr...) \
 	{ \
-		.type = SIDE_TYPE_NULL, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_NULL), \
 		.u = { \
 			.side_null = { \
 				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -802,7 +802,7 @@ struct side_event_description {
 
 #define side_type_bool(_attr...) \
 	{ \
-		.type = SIDE_TYPE_BOOL, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_BOOL), \
 		.u = { \
 			.side_bool = { \
 				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -816,7 +816,7 @@ struct side_event_description {
 
 #define side_type_byte(_attr...) \
 	{ \
-		.type = SIDE_TYPE_BYTE, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_BYTE), \
 		.u = { \
 			.side_byte = { \
 				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -827,7 +827,7 @@ struct side_event_description {
 
 #define _side_type_string(_type, _byte_order, _unit_size, _attr) \
 	{ \
-		.type = _type, \
+		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_string = { \
 				.attr = SIDE_PTR_INIT(_attr), \
@@ -840,12 +840,12 @@ struct side_event_description {
 
 #define side_type_dynamic() \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC), \
 	}
 
 #define _side_type_integer(_type, _signedness, _byte_order, _integer_size, _len_bits, _attr) \
 	{ \
-		.type = _type, \
+		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_integer = { \
 				.attr = SIDE_PTR_INIT(_attr), \
@@ -860,7 +860,7 @@ struct side_event_description {
 
 #define _side_type_float(_type, _byte_order, _float_size, _attr) \
 	{ \
-		.type = _type, \
+		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_float = { \
 				.attr = SIDE_PTR_INIT(_attr), \
@@ -986,7 +986,7 @@ struct side_event_description {
 
 #define side_type_enum(_mappings, _elem_type) \
 	{ \
-		.type = SIDE_TYPE_ENUM, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_ENUM), \
 		.u = { \
 			.side_enum = { \
 				.mappings = SIDE_PTR_INIT(_mappings), \
@@ -999,7 +999,7 @@ struct side_event_description {
 
 #define side_type_enum_bitmap(_mappings, _elem_type) \
 	{ \
-		.type = SIDE_TYPE_ENUM_BITMAP, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_ENUM_BITMAP), \
 		.u = { \
 			.side_enum_bitmap = { \
 				.mappings = SIDE_PTR_INIT(_mappings), \
@@ -1012,7 +1012,7 @@ struct side_event_description {
 
 #define side_type_struct(_struct) \
 	{ \
-		.type = SIDE_TYPE_STRUCT, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_STRUCT), \
 		.u = { \
 			.side_struct = SIDE_PTR_INIT(_struct), \
 		}, \
@@ -1037,7 +1037,7 @@ struct side_event_description {
 
 #define side_type_variant(_variant) \
 	{ \
-		.type = SIDE_TYPE_VARIANT, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_VARIANT), \
 		.u = { \
 			.side_variant = SIDE_PTR_INIT(_variant), \
 		}, \
@@ -1064,7 +1064,7 @@ struct side_event_description {
 
 #define side_type_array(_elem_type, _length, _attr...) \
 	{ \
-		.type = SIDE_TYPE_ARRAY, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_ARRAY), \
 		.u = { \
 			.side_array = { \
 				.elem_type = SIDE_PTR_INIT(_elem_type), \
@@ -1079,7 +1079,7 @@ struct side_event_description {
 
 #define side_type_vla(_elem_type, _attr...) \
 	{ \
-		.type = SIDE_TYPE_VLA, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA), \
 		.u = { \
 			.side_vla = { \
 				.elem_type = SIDE_PTR_INIT(_elem_type), \
@@ -1093,7 +1093,7 @@ struct side_event_description {
 
 #define side_type_vla_visitor(_elem_type, _visitor, _attr...) \
 	{ \
-		.type = SIDE_TYPE_VLA_VISITOR, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA_VISITOR), \
 		.u = { \
 			.side_vla_visitor = { \
 				.elem_type = SIDE_PTR_INIT(_elem_type), \
@@ -1110,7 +1110,7 @@ struct side_event_description {
 
 #define side_type_gather_byte(_offset, _access_mode, _attr...) \
 	{ \
-		.type = SIDE_TYPE_GATHER_BYTE, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_BYTE), \
 		.u = { \
 			.side_gather = { \
 				.u = { \
@@ -1131,7 +1131,7 @@ struct side_event_description {
 
 #define _side_type_gather_bool(_byte_order, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	{ \
-		.type = SIDE_TYPE_GATHER_BOOL, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_BOOL), \
 		.u = { \
 			.side_gather = { \
 				.u = { \
@@ -1168,7 +1168,7 @@ struct side_event_description {
 #define _side_type_gather_integer(_type, _signedness, _byte_order, _offset, \
 		_integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	{ \
-		.type = _type, \
+		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_gather = { \
 				.u = { \
@@ -1246,7 +1246,7 @@ struct side_event_description {
 
 #define _side_type_gather_float(_byte_order, _offset, _float_size, _access_mode, _attr...) \
 	{ \
-		.type = SIDE_TYPE_GATHER_FLOAT, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_FLOAT), \
 		.u = { \
 			.side_gather = { \
 				.u = { \
@@ -1281,7 +1281,7 @@ struct side_event_description {
 
 #define _side_type_gather_string(_offset, _byte_order, _unit_size, _access_mode, _attr...) \
 	{ \
-		.type = SIDE_TYPE_GATHER_STRING, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRING), \
 		.u = { \
 			.side_gather = { \
 				.u = { \
@@ -1334,7 +1334,7 @@ struct side_event_description {
 
 #define side_type_gather_enum(_mappings, _elem_type) \
 	{ \
-		.type = SIDE_TYPE_GATHER_ENUM, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_ENUM), \
 		.u = { \
 			.side_enum = { \
 				.mappings = SIDE_PTR_INIT(_mappings), \
@@ -1347,7 +1347,7 @@ struct side_event_description {
 
 #define side_type_gather_struct(_struct_gather, _offset, _size, _access_mode) \
 	{ \
-		.type = SIDE_TYPE_GATHER_STRUCT, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRUCT), \
 		.u = { \
 			.side_gather = { \
 				.u = { \
@@ -1366,7 +1366,7 @@ struct side_event_description {
 
 #define side_type_gather_array(_elem_type_gather, _length, _offset, _access_mode, _attr...) \
 	{ \
-		.type = SIDE_TYPE_GATHER_ARRAY, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_ARRAY), \
 		.u = { \
 			.side_gather = { \
 				.u = { \
@@ -1389,7 +1389,7 @@ struct side_event_description {
 
 #define side_type_gather_vla(_elem_type_gather, _offset, _access_mode, _length_type_gather, _attr...) \
 	{ \
-		.type = SIDE_TYPE_GATHER_VLA, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_VLA), \
 		.u = { \
 			.side_gather = { \
 				.u = { \
@@ -1424,28 +1424,28 @@ struct side_event_description {
 
 /* Stack-copy field arguments */
 
-#define side_arg_null(_val)		{ .type = SIDE_TYPE_NULL }
-#define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_static = { .bool_value = { .side_bool8 = !!(_val) } } } }
-#define side_arg_byte(_val)		{ .type = SIDE_TYPE_BYTE, .u = { .side_static = { .byte_value = (_val) } } }
-#define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING_UTF8, .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
-#define side_arg_string16(_val)		{ .type = SIDE_TYPE_STRING_UTF16, .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
-#define side_arg_string32(_val)		{ .type = SIDE_TYPE_STRING_UTF32, .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
+#define side_arg_null(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_NULL) }
+#define side_arg_bool(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_BOOL), .u = { .side_static = { .bool_value = { .side_bool8 = !!(_val) } } } }
+#define side_arg_byte(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_BYTE), .u = { .side_static = { .byte_value = (_val) } } }
+#define side_arg_string(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_STRING_UTF8), .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
+#define side_arg_string16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_STRING_UTF16), .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
+#define side_arg_string32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_STRING_UTF32), .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
 
-#define side_arg_u8(_val)		{ .type = SIDE_TYPE_U8, .u = { .side_static = {  .integer_value = { .side_u8 = (_val) } } } }
-#define side_arg_u16(_val)		{ .type = SIDE_TYPE_U16, .u = { .side_static = { .integer_value = { .side_u16 = (_val) } } } }
-#define side_arg_u32(_val)		{ .type = SIDE_TYPE_U32, .u = { .side_static = { .integer_value = { .side_u32 = (_val) } } } }
-#define side_arg_u64(_val)		{ .type = SIDE_TYPE_U64, .u = { .side_static = { .integer_value = { .side_u64 = (_val) } } } }
-#define side_arg_s8(_val)		{ .type = SIDE_TYPE_S8, .u = { .side_static = { .integer_value = { .side_s8 = (_val) } } } }
-#define side_arg_s16(_val)		{ .type = SIDE_TYPE_S16, .u = { .side_static = { .integer_value = { .side_s16 = (_val) } } } }
-#define side_arg_s32(_val)		{ .type = SIDE_TYPE_S32, .u = { .side_static = { .integer_value = { .side_s32 = (_val) } } } }
-#define side_arg_s64(_val)		{ .type = SIDE_TYPE_S64, .u = { .side_static = { .integer_value = { .side_s64 = (_val) } } } }
-#define side_arg_pointer(_val)		{ .type = SIDE_TYPE_POINTER, .u = { .side_static = { .integer_value = { .side_uptr = (uintptr_t) (_val) } } } }
-#define side_arg_float_binary16(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY16, .u = { .side_static = { .float_value = { .side_float_binary16 = (_val) } } } }
-#define side_arg_float_binary32(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY32, .u = { .side_static = { .float_value = { .side_float_binary32 = (_val) } } } }
-#define side_arg_float_binary64(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY64, .u = { .side_static = { .float_value = { .side_float_binary64 = (_val) } } } }
-#define side_arg_float_binary128(_val)	{ .type = SIDE_TYPE_FLOAT_BINARY128, .u = { .side_static = { .float_value = { .side_float_binary128 = (_val) } } } }
+#define side_arg_u8(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_U8), .u = { .side_static = {  .integer_value = { .side_u8 = (_val) } } } }
+#define side_arg_u16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_U16), .u = { .side_static = { .integer_value = { .side_u16 = (_val) } } } }
+#define side_arg_u32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_U32), .u = { .side_static = { .integer_value = { .side_u32 = (_val) } } } }
+#define side_arg_u64(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_U64), .u = { .side_static = { .integer_value = { .side_u64 = (_val) } } } }
+#define side_arg_s8(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S8), .u = { .side_static = { .integer_value = { .side_s8 = (_val) } } } }
+#define side_arg_s16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S16), .u = { .side_static = { .integer_value = { .side_s16 = (_val) } } } }
+#define side_arg_s32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S32), .u = { .side_static = { .integer_value = { .side_s32 = (_val) } } } }
+#define side_arg_s64(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S64), .u = { .side_static = { .integer_value = { .side_s64 = (_val) } } } }
+#define side_arg_pointer(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_POINTER), .u = { .side_static = { .integer_value = { .side_uptr = (uintptr_t) (_val) } } } }
+#define side_arg_float_binary16(_val)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_FLOAT_BINARY16), .u = { .side_static = { .float_value = { .side_float_binary16 = (_val) } } } }
+#define side_arg_float_binary32(_val)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_FLOAT_BINARY32), .u = { .side_static = { .float_value = { .side_float_binary32 = (_val) } } } }
+#define side_arg_float_binary64(_val)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_FLOAT_BINARY64), .u = { .side_static = { .float_value = { .side_float_binary64 = (_val) } } } }
+#define side_arg_float_binary128(_val)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_FLOAT_BINARY128), .u = { .side_static = { .float_value = { .side_float_binary128 = (_val) } } } }
 
-#define side_arg_struct(_side_type)	{ .type = SIDE_TYPE_STRUCT, .u = { .side_static = { .side_struct = SIDE_PTR_INIT(_side_type) } } }
+#define side_arg_struct(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_STRUCT), .u = { .side_static = { .side_struct = SIDE_PTR_INIT(_side_type) } } }
 
 #define side_arg_define_variant(_identifier, _selector_val, _option) \
 	const struct side_arg_variant _identifier = { \
@@ -1454,7 +1454,7 @@ struct side_event_description {
 	}
 #define side_arg_variant(_side_variant) \
 	{ \
-		.type = SIDE_TYPE_VARIANT, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_VARIANT), \
 		.u = { \
 			.side_static = { \
 				.side_variant = SIDE_PTR_INIT(_side_variant), \
@@ -1462,27 +1462,27 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_arg_array(_side_type)	{ .type = SIDE_TYPE_ARRAY, .u = { .side_static = { .side_array = SIDE_PTR_INIT(_side_type) } } }
-#define side_arg_vla(_side_type)	{ .type = SIDE_TYPE_VLA, .u = { .side_static = { .side_vla = SIDE_PTR_INIT(_side_type) } } }
-#define side_arg_vla_visitor(_ctx)	{ .type = SIDE_TYPE_VLA_VISITOR, .u = { .side_static = { .side_vla_app_visitor_ctx = (_ctx) } } }
+#define side_arg_array(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_ARRAY), .u = { .side_static = { .side_array = SIDE_PTR_INIT(_side_type) } } }
+#define side_arg_vla(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_VLA), .u = { .side_static = { .side_vla = SIDE_PTR_INIT(_side_type) } } }
+#define side_arg_vla_visitor(_ctx)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_VLA_VISITOR), .u = { .side_static = { .side_vla_app_visitor_ctx = (_ctx) } } }
 
 /* Gather field arguments */
 
-#define side_arg_gather_bool(_ptr)		{ .type = SIDE_TYPE_GATHER_BOOL, .u = { .side_static = { .side_bool_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
-#define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
-#define side_arg_gather_pointer(_ptr)		{ .type = SIDE_TYPE_GATHER_POINTER, .u = { .side_static = { .side_integer_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
-#define side_arg_gather_integer(_ptr)		{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
-#define side_arg_gather_float(_ptr)		{ .type = SIDE_TYPE_GATHER_FLOAT, .u = { .side_static = { .side_float_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
-#define side_arg_gather_string(_ptr)		{ .type = SIDE_TYPE_GATHER_STRING, .u = { .side_static = { .side_string_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
-#define side_arg_gather_struct(_ptr)		{ .type = SIDE_TYPE_GATHER_STRUCT, .u = { .side_static = { .side_struct_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
-#define side_arg_gather_array(_ptr)		{ .type = SIDE_TYPE_GATHER_ARRAY, .u = { .side_static = { .side_array_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
-#define side_arg_gather_vla(_ptr, _length_ptr)	{ .type = SIDE_TYPE_GATHER_VLA, .u = { .side_static = { .side_vla_gather = { .ptr = SIDE_PTR_INIT(_ptr), .length_ptr = SIDE_PTR_INIT(_length_ptr) } } } }
+#define side_arg_gather_bool(_ptr)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_BOOL), .u = { .side_static = { .side_bool_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_byte(_ptr)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_BYTE), .u = { .side_static = { .side_byte_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_pointer(_ptr)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_POINTER), .u = { .side_static = { .side_integer_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_integer(_ptr)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_INTEGER), .u = { .side_static = { .side_integer_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_float(_ptr)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_FLOAT), .u = { .side_static = { .side_float_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_string(_ptr)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRING), .u = { .side_static = { .side_string_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_struct(_ptr)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRUCT), .u = { .side_static = { .side_struct_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_array(_ptr)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_ARRAY), .u = { .side_static = { .side_array_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_vla(_ptr, _length_ptr)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_VLA), .u = { .side_static = { .side_vla_gather = { .ptr = SIDE_PTR_INIT(_ptr), .length_ptr = SIDE_PTR_INIT(_length_ptr) } } } }
 
 /* Dynamic field arguments */
 
 #define side_arg_dynamic_null(_attr...) \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC_NULL, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_NULL), \
 		.u = { \
 			.side_dynamic = { \
 				.side_null = { \
@@ -1495,7 +1495,7 @@ struct side_event_description {
 
 #define side_arg_dynamic_bool(_val, _attr...) \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC_BOOL, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_BOOL), \
 		.u = { \
 			.side_dynamic = { \
 				.side_bool = { \
@@ -1516,7 +1516,7 @@ struct side_event_description {
 
 #define side_arg_dynamic_byte(_val, _attr...) \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC_BYTE, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_BYTE), \
 		.u = { \
 			.side_dynamic = { \
 				.side_byte = { \
@@ -1532,7 +1532,7 @@ struct side_event_description {
 
 #define _side_arg_dynamic_string(_val, _byte_order, _unit_size, _attr...) \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC_STRING, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_STRING), \
 		.u = { \
 			.side_dynamic = { \
 				.side_string = { \
@@ -1564,7 +1564,7 @@ struct side_event_description {
 
 #define _side_arg_dynamic_integer(_field, _val, _type, _signedness, _byte_order, _integer_size, _len_bits, _attr...) \
 	{ \
-		.type = _type, \
+		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_dynamic = { \
 				.side_integer = { \
@@ -1609,7 +1609,7 @@ struct side_event_description {
 
 #define _side_arg_dynamic_float(_field, _val, _type, _byte_order, _float_size, _attr...) \
 	{ \
-		.type = _type, \
+		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_dynamic = { \
 				.side_float = { \
@@ -1677,7 +1677,7 @@ struct side_event_description {
 
 #define side_arg_dynamic_vla(_vla) \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC_VLA, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_VLA), \
 		.u = { \
 			.side_dynamic = { \
 				.side_dynamic_vla = SIDE_PTR_INIT(_vla), \
@@ -1687,7 +1687,7 @@ struct side_event_description {
 
 #define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx, _attr...) \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC_VLA_VISITOR, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_VLA_VISITOR), \
 		.u = { \
 			.side_dynamic = { \
 				.side_dynamic_vla_visitor = { \
@@ -1702,7 +1702,7 @@ struct side_event_description {
 
 #define side_arg_dynamic_struct(_struct) \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC_STRUCT, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_STRUCT), \
 		.u = { \
 			.side_dynamic = { \
 				.side_dynamic_struct = SIDE_PTR_INIT(_struct), \
@@ -1712,7 +1712,7 @@ struct side_event_description {
 
 #define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor, _ctx, _attr...) \
 	{ \
-		.type = SIDE_TYPE_DYNAMIC_STRUCT_VISITOR, \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_STRUCT_VISITOR), \
 		.u = { \
 			.side_dynamic = { \
 				.side_dynamic_struct_visitor = { \
