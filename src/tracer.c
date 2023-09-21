@@ -676,7 +676,7 @@ void tracer_print_type_bool(const char *separator,
 	v >>= offset_bits;
 	if (len_bits < 64)
 		v &= (1ULL << len_bits) - 1;
-	tracer_print_type_header(separator, type_bool->attr, type_bool->nr_attr);
+	tracer_print_type_header(separator, side_ptr_get(type_bool->attr), type_bool->nr_attr);
 	printf("%s", v ? "true" : "false");
 }
 

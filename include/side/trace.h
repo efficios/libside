@@ -288,7 +288,7 @@ struct side_type_null {
 } SIDE_PACKED;
 
 struct side_type_bool {
-	const struct side_attr *attr;
+	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 	uint16_t bool_size;		/* bytes */
 	uint16_t len_bits;		/* bits. 0 for (bool_size * CHAR_BITS) */
@@ -805,7 +805,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_BOOL, \
 		.u = { \
 			.side_bool = { \
-				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.bool_size = sizeof(uint8_t), \
 				.len_bits = 0, \
@@ -1139,7 +1139,7 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.bool_size = _bool_size, \
 							.len_bits = _len_bits, \
@@ -1500,7 +1500,7 @@ struct side_event_description {
 			.side_dynamic = { \
 				.side_bool = { \
 					.type = { \
-						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.bool_size = sizeof(uint8_t), \
 						.len_bits = 0, \
