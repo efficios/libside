@@ -81,4 +81,44 @@
 
 #define SIDE_PACKED	__attribute__((packed))
 
+/*
+ * The side_ptr macros allow defining a pointer type which is suitable
+ * for use by 32-bit and 64-bit kernels without compatibility code,
+ * while preserving information about the pointer type.
+ *
+ * Those pointers are stored as 64-bit integers, and the type of the
+ * actual pointer is kept alongside with the 64-bit pointer value in a
+ * 0-len array within a union.
+ *
+ * uintptr_t will fit within a uint64_t except on architectures with
+ * 128-bit pointers. This provides fixed-size pointers on architectures
+ * with pointer size of 64-bit or less. Architectures with larger
+ * pointer size will have to handle the ABI offset specifics explicitly.
+ */
+#if (__SIZEOF_POINTER__ <= 8)
+# define side_ptr_t(_type)					\
+	union {							\
+		uint64_t v;					\
+		_type *t[0];					\
+	}
+# define side_ptr_get(_field)					\
+	((__typeof__((_field).t[0]))(uintptr_t)(_field).v)
+# define side_ptr_set(_field, _ptr)				\
+	do {							\
+		(_field).v = (uint64_t)(uintptr_t)(_ptr);	\
+	} while (0)
+#else
+# define side_ptr_t(_type)					\
+	union {							\
+		uintptr_t v;					\
+		_type *t[0];					\
+	}
+# define side_ptr_get(_field)					\
+	((__typeof__((_field).t[0]))(_field).v)
+# define side_ptr_set(_field, _ptr)				\
+	do {							\
+		(_field).v = (uintptr_t)(_ptr);			\
+	} while (0)
+#endif
+
 #endif /* _SIDE_MACROS_H */
