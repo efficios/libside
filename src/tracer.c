@@ -946,7 +946,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_STRING_UTF16:
 	case SIDE_TYPE_STRING_UTF32:
 		tracer_print_type_header(":", side_ptr_get(type_desc->u.side_string.attr), type_desc->u.side_string.nr_attr);
-		tracer_print_string((const void *)(uintptr_t) item->u.side_static.string_value,
+		tracer_print_string(side_ptr_get(item->u.side_static.string_value),
 				type_desc->u.side_string.unit_size, type_desc->u.side_string.byte_order, NULL);
 		break;
 

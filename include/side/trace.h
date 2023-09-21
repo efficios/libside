@@ -525,7 +525,7 @@ union side_arg_static {
 	/* Stack-copy basic types */
 	union side_bool_value bool_value;
 	uint8_t byte_value;
-	uint64_t string_value;	/* const {uint8_t, uint16_t, uint32_t} * */
+	side_ptr_t(const void) string_value;	/* const {uint8_t, uint16_t, uint32_t} * */
 	union side_integer_value integer_value;
 	union side_float_value float_value;
 
@@ -1427,9 +1427,9 @@ struct side_event_description {
 #define side_arg_null(_val)		{ .type = SIDE_TYPE_NULL }
 #define side_arg_bool(_val)		{ .type = SIDE_TYPE_BOOL, .u = { .side_static = { .bool_value = { .side_bool8 = !!(_val) } } } }
 #define side_arg_byte(_val)		{ .type = SIDE_TYPE_BYTE, .u = { .side_static = { .byte_value = (_val) } } }
-#define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING_UTF8, .u = { .side_static = { .string_value = (uintptr_t) (_val) } } }
-#define side_arg_string16(_val)		{ .type = SIDE_TYPE_STRING_UTF16, .u = { .side_static = { .string_value = (uintptr_t) (_val) } } }
-#define side_arg_string32(_val)		{ .type = SIDE_TYPE_STRING_UTF32, .u = { .side_static = { .string_value = (uintptr_t) (_val) } } }
+#define side_arg_string(_val)		{ .type = SIDE_TYPE_STRING_UTF8, .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
+#define side_arg_string16(_val)		{ .type = SIDE_TYPE_STRING_UTF16, .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
+#define side_arg_string32(_val)		{ .type = SIDE_TYPE_STRING_UTF32, .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
 
 #define side_arg_u8(_val)		{ .type = SIDE_TYPE_U8, .u = { .side_static = {  .integer_value = { .side_u8 = (_val) } } } }
 #define side_arg_u16(_val)		{ .type = SIDE_TYPE_U16, .u = { .side_static = { .integer_value = { .side_u16 = (_val) } } } }
