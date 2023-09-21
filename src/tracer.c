@@ -1149,7 +1149,7 @@ const char *tracer_gather_access(enum side_type_gather_access_mode access_mode, 
 		return ptr;
 	case SIDE_TYPE_GATHER_ACCESS_POINTER:
 		/* Dereference pointer */
-		memcpy(&ptr, ptr, sizeof(ptr));
+		memcpy(&ptr, ptr, sizeof(const char *));
 		return ptr;
 	default:
 		abort();
