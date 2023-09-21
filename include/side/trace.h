@@ -266,7 +266,7 @@ struct side_type_raw_string {
 } SIDE_PACKED;
 
 struct side_attr_value {
-	uint32_t type;	/* enum side_attr_type */
+	side_enum_t(enum side_attr_type, uint32_t) type;
 	union {
 		uint8_t bool_value;
 		struct side_type_raw_string string_value;
@@ -689,23 +689,23 @@ struct side_event_description {
 	SIDE_COMPOUND_LITERAL(const struct side_attr, __VA_ARGS__)
 
 #define side_attr_null(_val)		{ .type = SIDE_ATTR_TYPE_NULL }
-#define side_attr_bool(_val)		{ .type = SIDE_ATTR_TYPE_BOOL, .u = { .bool_value = !!(_val) } }
-#define side_attr_u8(_val)		{ .type = SIDE_ATTR_TYPE_U8, .u = { .integer_value = { .side_u8 = (_val) } } }
-#define side_attr_u16(_val)		{ .type = SIDE_ATTR_TYPE_U16, .u = { .integer_value = { .side_u16 = (_val) } } }
-#define side_attr_u32(_val)		{ .type = SIDE_ATTR_TYPE_U32, .u = { .integer_value = { .side_u32 = (_val) } } }
-#define side_attr_u64(_val)		{ .type = SIDE_ATTR_TYPE_U64, .u = { .integer_value = { .side_u64 = (_val) } } }
-#define side_attr_s8(_val)		{ .type = SIDE_ATTR_TYPE_S8, .u = { .integer_value = { .side_s8 = (_val) } } }
-#define side_attr_s16(_val)		{ .type = SIDE_ATTR_TYPE_S16, .u = { .integer_value = { .side_s16 = (_val) } } }
-#define side_attr_s32(_val)		{ .type = SIDE_ATTR_TYPE_S32, .u = { .integer_value = { .side_s32 = (_val) } } }
-#define side_attr_s64(_val)		{ .type = SIDE_ATTR_TYPE_S64, .u = { .integer_value = { .side_s64 = (_val) } } }
-#define side_attr_float_binary16(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY16, .u = { .float_value = { .side_float_binary16 = (_val) } } }
-#define side_attr_float_binary32(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY32, .u = { .float_value = { .side_float_binary32 = (_val) } } }
-#define side_attr_float_binary64(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY64, .u = { .float_value = { .side_float_binary64 = (_val) } } }
-#define side_attr_float_binary128(_val)	{ .type = SIDE_ATTR_TYPE_FLOAT_BINARY128, .u = { .float_value = { .side_float_binary128 = (_val) } } }
+#define side_attr_bool(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_BOOL), .u = { .bool_value = !!(_val) } }
+#define side_attr_u8(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U8), .u = { .integer_value = { .side_u8 = (_val) } } }
+#define side_attr_u16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U16), .u = { .integer_value = { .side_u16 = (_val) } } }
+#define side_attr_u32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U32), .u = { .integer_value = { .side_u32 = (_val) } } }
+#define side_attr_u64(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U64), .u = { .integer_value = { .side_u64 = (_val) } } }
+#define side_attr_s8(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S8), .u = { .integer_value = { .side_s8 = (_val) } } }
+#define side_attr_s16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S16), .u = { .integer_value = { .side_s16 = (_val) } } }
+#define side_attr_s32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S32), .u = { .integer_value = { .side_s32 = (_val) } } }
+#define side_attr_s64(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S64), .u = { .integer_value = { .side_s64 = (_val) } } }
+#define side_attr_float_binary16(_val)	{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_FLOAT_BINARY16), .u = { .float_value = { .side_float_binary16 = (_val) } } }
+#define side_attr_float_binary32(_val)	{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_FLOAT_BINARY32), .u = { .float_value = { .side_float_binary32 = (_val) } } }
+#define side_attr_float_binary64(_val)	{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_FLOAT_BINARY64), .u = { .float_value = { .side_float_binary64 = (_val) } } }
+#define side_attr_float_binary128(_val)	{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_FLOAT_BINARY128), .u = { .float_value = { .side_float_binary128 = (_val) } } }
 
 #define _side_attr_string(_val, _byte_order, _unit_size) \
 	{ \
-		.type = SIDE_ATTR_TYPE_STRING, \
+		.type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_STRING), \
 		.u = { \
 			.string_value = { \
 				.p = SIDE_PTR_INIT(_val), \

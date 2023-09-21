@@ -186,7 +186,7 @@ int64_t get_attr_integer_value(const struct side_attr *attr)
 {
 	int64_t val;
 
-	switch (attr->value.type) {
+	switch (side_enum_get(attr->value.type)) {
 	case SIDE_ATTR_TYPE_U8:
 		val = attr->value.u.integer_value.side_u8;
 		break;
@@ -265,7 +265,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 	printf("{ key%s \"%s\", value%s ", separator, utf8_str, separator);
 	if (utf8_str != side_ptr_get(attr->key.p))
 		free(utf8_str);
-	switch (attr->value.type) {
+	switch (side_enum_get(attr->value.type)) {
 	case SIDE_ATTR_TYPE_BOOL:
 		printf("%s", attr->value.u.bool_value ? "true" : "false");
 		break;
