@@ -713,12 +713,12 @@ struct side_event_description {
 
 /* Stack-copy enumeration type definitions */
 
-#define side_define_enum(_identifier, _mappings, _attr) \
+#define side_define_enum(_identifier, _mappings, _attr...) \
 	const struct side_enum_mappings _identifier = { \
 		.mappings = _mappings, \
-		.attr = _attr, \
+		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
 
 #define side_enum_mapping_list(...) \
@@ -746,12 +746,12 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_define_enum_bitmap(_identifier, _mappings, _attr) \
+#define side_define_enum_bitmap(_identifier, _mappings, _attr...) \
 	const struct side_enum_bitmap_mappings _identifier = { \
 		.mappings = _mappings, \
-		.attr = _attr, \
+		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
 
 #define side_enum_bitmap_mapping_list(...) \
@@ -781,24 +781,24 @@ struct side_event_description {
 
 /* Stack-copy field and type definitions */
 
-#define side_type_null(_attr) \
+#define side_type_null(_attr...) \
 	{ \
 		.type = SIDE_TYPE_NULL, \
 		.u = { \
 			.side_null = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
 	}
 
-#define side_type_bool(_attr) \
+#define side_type_bool(_attr...) \
 	{ \
 		.type = SIDE_TYPE_BOOL, \
 		.u = { \
 			.side_bool = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.bool_size = sizeof(uint8_t), \
 				.len_bits = 0, \
 				.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
@@ -806,13 +806,13 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_type_byte(_attr) \
+#define side_type_byte(_attr...) \
 	{ \
 		.type = SIDE_TYPE_BYTE, \
 		.u = { \
 			.side_byte = { \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
 	}
@@ -880,101 +880,101 @@ struct side_event_description {
 	side_option_range(_value, _value, SIDE_PARAM(_type))
 
 /* Host endian */
-#define side_type_u8(_attr)				_side_type_integer(SIDE_TYPE_U8, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM(_attr))
-#define side_type_u16(_attr)				_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
-#define side_type_u32(_attr)				_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), 0, SIDE_PARAM(_attr))
-#define side_type_u64(_attr)				_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint64_t), 0, SIDE_PARAM(_attr))
-#define side_type_s8(_attr)				_side_type_integer(SIDE_TYPE_S8, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM(_attr))
-#define side_type_s16(_attr)				_side_type_integer(SIDE_TYPE_S16, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int16_t), 0, SIDE_PARAM(_attr))
-#define side_type_s32(_attr)				_side_type_integer(SIDE_TYPE_S32, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int32_t), 0, SIDE_PARAM(_attr))
-#define side_type_s64(_attr)				_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int64_t), 0, SIDE_PARAM(_attr))
-#define side_type_pointer(_attr)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
-#define side_type_float_binary16(_attr)			_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float16), SIDE_PARAM(_attr))
-#define side_type_float_binary32(_attr)			_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float32), SIDE_PARAM(_attr))
-#define side_type_float_binary64(_attr)			_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float64), SIDE_PARAM(_attr))
-#define side_type_float_binary128(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float128), SIDE_PARAM(_attr))
-#define side_type_string(_attr)				_side_type_string(SIDE_TYPE_STRING_UTF8, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), SIDE_PARAM(_attr))
-#define side_type_string16(_attr) 			_side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), SIDE_PARAM(_attr))
-#define side_type_string32(_attr)	 		_side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), SIDE_PARAM(_attr))
+#define side_type_u8(_attr...)				_side_type_integer(SIDE_TYPE_U8, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u16(_attr...)				_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u32(_attr...)				_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u64(_attr...)				_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s8(_attr...)				_side_type_integer(SIDE_TYPE_S8, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s16(_attr...)				_side_type_integer(SIDE_TYPE_S16, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s32(_attr...)				_side_type_integer(SIDE_TYPE_S32, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s64(_attr...)				_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_pointer(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uintptr_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary16(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float16), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary32(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float32), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary64(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float64), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary128(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float128), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_string(_attr...)			_side_type_string(SIDE_TYPE_STRING_UTF8, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_string16(_attr...) 			_side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_string32(_attr...)		 	_side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_field_null(_name, _attr)			_side_field(_name, side_type_null(SIDE_PARAM(_attr)))
-#define side_field_bool(_name, _attr)			_side_field(_name, side_type_bool(SIDE_PARAM(_attr)))
-#define side_field_u8(_name, _attr)			_side_field(_name, side_type_u8(SIDE_PARAM(_attr)))
-#define side_field_u16(_name, _attr)			_side_field(_name, side_type_u16(SIDE_PARAM(_attr)))
-#define side_field_u32(_name, _attr)			_side_field(_name, side_type_u32(SIDE_PARAM(_attr)))
-#define side_field_u64(_name, _attr)			_side_field(_name, side_type_u64(SIDE_PARAM(_attr)))
-#define side_field_s8(_name, _attr)			_side_field(_name, side_type_s8(SIDE_PARAM(_attr)))
-#define side_field_s16(_name, _attr)			_side_field(_name, side_type_s16(SIDE_PARAM(_attr)))
-#define side_field_s32(_name, _attr)			_side_field(_name, side_type_s32(SIDE_PARAM(_attr)))
-#define side_field_s64(_name, _attr)			_side_field(_name, side_type_s64(SIDE_PARAM(_attr)))
-#define side_field_byte(_name, _attr)			_side_field(_name, side_type_byte(SIDE_PARAM(_attr)))
-#define side_field_pointer(_name, _attr)		_side_field(_name, side_type_pointer(SIDE_PARAM(_attr)))
-#define side_field_float_binary16(_name, _attr)		_side_field(_name, side_type_float_binary16(SIDE_PARAM(_attr)))
-#define side_field_float_binary32(_name, _attr)		_side_field(_name, side_type_float_binary32(SIDE_PARAM(_attr)))
-#define side_field_float_binary64(_name, _attr)		_side_field(_name, side_type_float_binary64(SIDE_PARAM(_attr)))
-#define side_field_float_binary128(_name, _attr)	_side_field(_name, side_type_float_binary128(SIDE_PARAM(_attr)))
-#define side_field_string(_name, _attr)			_side_field(_name, side_type_string(SIDE_PARAM(_attr)))
-#define side_field_string16(_name, _attr)		_side_field(_name, side_type_string16(SIDE_PARAM(_attr)))
-#define side_field_string32(_name, _attr)		_side_field(_name, side_type_string32(SIDE_PARAM(_attr)))
+#define side_field_null(_name, _attr...)		_side_field(_name, side_type_null(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_bool(_name, _attr...)		_side_field(_name, side_type_bool(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u8(_name, _attr...)			_side_field(_name, side_type_u8(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u16(_name, _attr...)			_side_field(_name, side_type_u16(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u32(_name, _attr...)			_side_field(_name, side_type_u32(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u64(_name, _attr...)			_side_field(_name, side_type_u64(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s8(_name, _attr...)			_side_field(_name, side_type_s8(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s16(_name, _attr...)			_side_field(_name, side_type_s16(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s32(_name, _attr...)			_side_field(_name, side_type_s32(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s64(_name, _attr...)			_side_field(_name, side_type_s64(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_byte(_name, _attr...)		_side_field(_name, side_type_byte(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_pointer(_name, _attr...)		_side_field(_name, side_type_pointer(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary16(_name, _attr...)	_side_field(_name, side_type_float_binary16(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary32(_name, _attr...)	_side_field(_name, side_type_float_binary32(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary64(_name, _attr...)	_side_field(_name, side_type_float_binary64(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary128(_name, _attr...)	_side_field(_name, side_type_float_binary128(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_string(_name, _attr...)		_side_field(_name, side_type_string(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_string16(_name, _attr...)		_side_field(_name, side_type_string16(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_string32(_name, _attr...)		_side_field(_name, side_type_string32(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_dynamic(_name)			_side_field(_name, side_type_dynamic())
 
 /* Little endian */
-#define side_type_u16_le(_attr)				_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
-#define side_type_u32_le(_attr)				_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), 0, SIDE_PARAM(_attr))
-#define side_type_u64_le(_attr)				_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint64_t), 0, SIDE_PARAM(_attr))
-#define side_type_s16_le(_attr)				_side_type_integer(SIDE_TYPE_S16, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int16_t), 0, SIDE_PARAM(_attr))
-#define side_type_s32_le(_attr)				_side_type_integer(SIDE_TYPE_S32, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int32_t), 0, SIDE_PARAM(_attr))
-#define side_type_s64_le(_attr)				_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int64_t), 0, SIDE_PARAM(_attr))
-#define side_type_pointer_le(_attr)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
-#define side_type_float_binary16_le(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float16), SIDE_PARAM(_attr))
-#define side_type_float_binary32_le(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float32), SIDE_PARAM(_attr))
-#define side_type_float_binary64_le(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float64), SIDE_PARAM(_attr))
-#define side_type_float_binary128_le(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float128), SIDE_PARAM(_attr))
-#define side_type_string16_le(_attr) 			_side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), SIDE_PARAM(_attr))
-#define side_type_string32_le(_attr)		 	_side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), SIDE_PARAM(_attr))
+#define side_type_u16_le(_attr...)			_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u32_le(_attr...)			_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u64_le(_attr...)			_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s16_le(_attr...)			_side_type_integer(SIDE_TYPE_S16, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s32_le(_attr...)			_side_type_integer(SIDE_TYPE_S32, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s64_le(_attr...)			_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_pointer_le(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uintptr_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary16_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float16), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary32_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float32), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary64_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float64), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary128_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float128), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_string16_le(_attr...) 		_side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_string32_le(_attr...)		 	_side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_field_u16_le(_name, _attr)			_side_field(_name, side_type_u16_le(SIDE_PARAM(_attr)))
-#define side_field_u32_le(_name, _attr)			_side_field(_name, side_type_u32_le(SIDE_PARAM(_attr)))
-#define side_field_u64_le(_name, _attr)			_side_field(_name, side_type_u64_le(SIDE_PARAM(_attr)))
-#define side_field_s16_le(_name, _attr)			_side_field(_name, side_type_s16_le(SIDE_PARAM(_attr)))
-#define side_field_s32_le(_name, _attr)			_side_field(_name, side_type_s32_le(SIDE_PARAM(_attr)))
-#define side_field_s64_le(_name, _attr)			_side_field(_name, side_type_s64_le(SIDE_PARAM(_attr)))
-#define side_field_pointer_le(_name, _attr)		_side_field(_name, side_type_pointer_le(SIDE_PARAM(_attr)))
-#define side_field_float_binary16_le(_name, _attr)	_side_field(_name, side_type_float_binary16_le(SIDE_PARAM(_attr)))
-#define side_field_float_binary32_le(_name, _attr)	_side_field(_name, side_type_float_binary32_le(SIDE_PARAM(_attr)))
-#define side_field_float_binary64_le(_name, _attr)	_side_field(_name, side_type_float_binary64_le(SIDE_PARAM(_attr)))
-#define side_field_float_binary128_le(_name, _attr)	_side_field(_name, side_type_float_binary128_le(SIDE_PARAM(_attr)))
-#define side_field_string16_le(_name, _attr)		_side_field(_name, side_type_string16_le(SIDE_PARAM(_attr)))
-#define side_field_string32_le(_name, _attr)		_side_field(_name, side_type_string32_le(SIDE_PARAM(_attr)))
+#define side_field_u16_le(_name, _attr...)		_side_field(_name, side_type_u16_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u32_le(_name, _attr...)		_side_field(_name, side_type_u32_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u64_le(_name, _attr...)		_side_field(_name, side_type_u64_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s16_le(_name, _attr...)		_side_field(_name, side_type_s16_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s32_le(_name, _attr...)		_side_field(_name, side_type_s32_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s64_le(_name, _attr...)		_side_field(_name, side_type_s64_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_pointer_le(_name, _attr...)		_side_field(_name, side_type_pointer_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary16_le(_name, _attr...)	_side_field(_name, side_type_float_binary16_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary32_le(_name, _attr...)	_side_field(_name, side_type_float_binary32_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary64_le(_name, _attr...)	_side_field(_name, side_type_float_binary64_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary128_le(_name, _attr...)	_side_field(_name, side_type_float_binary128_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_string16_le(_name, _attr...)		_side_field(_name, side_type_string16_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_string32_le(_name, _attr...)		_side_field(_name, side_type_string32_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
 /* Big endian */
-#define side_type_u16_be(_attr)				_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
-#define side_type_u32_be(_attr)				_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), 0, SIDE_PARAM(_attr))
-#define side_type_u64_be(_attr)				_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint64_t), 0, SIDE_PARAM(_attr))
-#define side_type_s16_be(_attr)				_side_type_integer(SIDE_TYPE_S16, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int16_t), 0, SIDE_PARAM(_attr))
-#define side_type_s32_be(_attr)				_side_type_integer(SIDE_TYPE_S32, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int32_t), 0, SIDE_PARAM(_attr))
-#define side_type_s64_be(_attr)				_side_type_integer(SIDE_TYPE_S64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int64_t), 0, SIDE_PARAM(_attr))
-#define side_type_pointer_be(_attr)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
-#define side_type_float_binary16_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float16), SIDE_PARAM(_attr))
-#define side_type_float_binary32_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float32), SIDE_PARAM(_attr))
-#define side_type_float_binary64_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float64), SIDE_PARAM(_attr))
-#define side_type_float_binary128_be(_attr)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float128), SIDE_PARAM(_attr))
-#define side_type_string16_be(_attr) 			_side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), SIDE_PARAM(_attr))
-#define side_type_string32_be(_attr)		 	_side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), SIDE_PARAM(_attr))
+#define side_type_u16_be(_attr...)			_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u32_be(_attr...)			_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u64_be(_attr...)			_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s16_be(_attr...)			_side_type_integer(SIDE_TYPE_S16, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s32_be(_attr...)			_side_type_integer(SIDE_TYPE_S32, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s64_be(_attr...)			_side_type_integer(SIDE_TYPE_S64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_pointer_be(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uintptr_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary16_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float16), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary32_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float32), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary64_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float64), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_float_binary128_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float128), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_string16_be(_attr...) 		_side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_string32_be(_attr...)		 	_side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_field_u16_be(_name, _attr)			_side_field(_name, side_type_u16_be(SIDE_PARAM(_attr)))
-#define side_field_u32_be(_name, _attr)			_side_field(_name, side_type_u32_be(SIDE_PARAM(_attr)))
-#define side_field_u64_be(_name, _attr)			_side_field(_name, side_type_u64_be(SIDE_PARAM(_attr)))
-#define side_field_s16_be(_name, _attr)			_side_field(_name, side_type_s16_be(SIDE_PARAM(_attr)))
-#define side_field_s32_be(_name, _attr)			_side_field(_name, side_type_s32_be(SIDE_PARAM(_attr)))
-#define side_field_s64_be(_name, _attr)			_side_field(_name, side_type_s64_be(SIDE_PARAM(_attr)))
-#define side_field_pointer_be(_name, _attr)		_side_field(_name, side_type_pointer_be(SIDE_PARAM(_attr)))
-#define side_field_float_binary16_be(_name, _attr)	_side_field(_name, side_type_float_binary16_be(SIDE_PARAM(_attr)))
-#define side_field_float_binary32_be(_name, _attr)	_side_field(_name, side_type_float_binary32_be(SIDE_PARAM(_attr)))
-#define side_field_float_binary64_be(_name, _attr)	_side_field(_name, side_type_float_binary64_be(SIDE_PARAM(_attr)))
-#define side_field_float_binary128_be(_name, _attr)	_side_field(_name, side_type_float_binary128_be(SIDE_PARAM(_attr)))
-#define side_field_string16_be(_name, _attr)		_side_field(_name, side_type_string16_be(SIDE_PARAM(_attr)))
-#define side_field_string32_be(_name, _attr)		_side_field(_name, side_type_string32_be(SIDE_PARAM(_attr)))
+#define side_field_u16_be(_name, _attr...)		_side_field(_name, side_type_u16_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u32_be(_name, _attr...)		_side_field(_name, side_type_u32_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u64_be(_name, _attr...)		_side_field(_name, side_type_u64_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s16_be(_name, _attr...)		_side_field(_name, side_type_s16_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s32_be(_name, _attr...)		_side_field(_name, side_type_s32_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s64_be(_name, _attr...)		_side_field(_name, side_type_s64_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_pointer_be(_name, _attr...)		_side_field(_name, side_type_pointer_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary16_be(_name, _attr...)	_side_field(_name, side_type_float_binary16_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary32_be(_name, _attr...)	_side_field(_name, side_type_float_binary32_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary64_be(_name, _attr...)	_side_field(_name, side_type_float_binary64_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_float_binary128_be(_name, _attr...)	_side_field(_name, side_type_float_binary128_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_string16_be(_name, _attr...)		_side_field(_name, side_type_string16_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_string32_be(_name, _attr...)		_side_field(_name, side_type_string32_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
 #define side_type_enum(_mappings, _elem_type) \
 	{ \
@@ -1020,12 +1020,12 @@ struct side_event_description {
 		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 	}
 
-#define side_define_struct(_identifier, _fields, _attr) \
-	const struct side_type_struct _identifier = _side_type_struct_define(SIDE_PARAM(_fields), SIDE_PARAM(_attr))
+#define side_define_struct(_identifier, _fields, _attr...) \
+	const struct side_type_struct _identifier = _side_type_struct_define(SIDE_PARAM(_fields), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_struct_literal(_fields, _attr) \
+#define side_struct_literal(_fields, _attr...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type_struct, \
-		_side_type_struct_define(SIDE_PARAM(_fields), SIDE_PARAM(_attr)))
+		_side_type_struct_define(SIDE_PARAM(_fields), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
 #define side_type_variant(_variant) \
 	{ \
@@ -1046,61 +1046,61 @@ struct side_event_description {
 		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 	}
 
-#define side_define_variant(_identifier, _selector, _options, _attr) \
+#define side_define_variant(_identifier, _selector, _options, _attr...) \
 	const struct side_type_variant _identifier = \
-		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_PARAM(_attr))
+		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_variant_literal(_selector, _options, _attr) \
+#define side_variant_literal(_selector, _options, _attr...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type_variant, \
-		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_PARAM(_attr)))
+		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_array(_elem_type, _length, _attr) \
+#define side_type_array(_elem_type, _length, _attr...) \
 	{ \
 		.type = SIDE_TYPE_ARRAY, \
 		.u = { \
 			.side_array = { \
 				.elem_type = _elem_type, \
-				.attr = _attr, \
+				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
 				.length = _length, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
 	}
-#define side_field_array(_name, _elem_type, _length, _attr) \
-	_side_field(_name, side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM(_attr)))
+#define side_field_array(_name, _elem_type, _length, _attr...) \
+	_side_field(_name, side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_vla(_elem_type, _attr) \
+#define side_type_vla(_elem_type, _attr...) \
 	{ \
 		.type = SIDE_TYPE_VLA, \
 		.u = { \
 			.side_vla = { \
 				.elem_type = _elem_type, \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
 	}
-#define side_field_vla(_name, _elem_type, _attr) \
-	_side_field(_name, side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM(_attr)))
+#define side_field_vla(_name, _elem_type, _attr...) \
+	_side_field(_name, side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_vla_visitor(_elem_type, _visitor, _attr) \
+#define side_type_vla_visitor(_elem_type, _visitor, _attr...) \
 	{ \
 		.type = SIDE_TYPE_VLA_VISITOR, \
 		.u = { \
 			.side_vla_visitor = { \
 				.elem_type = SIDE_PARAM(_elem_type), \
 				.visitor = _visitor, \
-				.attr = _attr, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
 	}
-#define side_field_vla_visitor(_name, _elem_type, _visitor, _attr) \
-	_side_field(_name, side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM(_attr)))
+#define side_field_vla_visitor(_name, _elem_type, _visitor, _attr...) \
+	_side_field(_name, side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
 /* Gather field and type definitions */
 
-#define side_type_gather_byte(_offset, _access_mode, _attr) \
+#define side_type_gather_byte(_offset, _access_mode, _attr...) \
 	{ \
 		.type = SIDE_TYPE_GATHER_BYTE, \
 		.u = { \
@@ -1110,18 +1110,18 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = _attr, \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						}, \
 					}, \
 				}, \
 			}, \
 		}, \
 	}
-#define side_field_gather_byte(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_byte(_offset, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_byte(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_byte(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define _side_type_gather_bool(_byte_order, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr) \
+#define _side_type_gather_bool(_byte_order, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	{ \
 		.type = SIDE_TYPE_GATHER_BOOL, \
 		.u = { \
@@ -1131,8 +1131,8 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = _attr, \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.bool_size = _bool_size, \
 							.len_bits = _len_bits, \
 							.byte_order = _byte_order, \
@@ -1143,22 +1143,22 @@ struct side_event_description {
 			}, \
 		}, \
 	}
-#define side_type_gather_bool(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_HOST, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr)
-#define side_type_gather_bool_le(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_LE, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr)
-#define side_type_gather_bool_be(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_BE, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr)
+#define side_type_gather_bool(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_HOST, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_bool_le(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_LE, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_bool_be(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_BE, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_field_gather_bool(_name, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_bool(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_bool_le(_name, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_bool_le(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_bool_be(_name, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_bool_be(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_bool(_name, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_bool(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))))
+#define side_field_gather_bool_le(_name, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_bool_le(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))))
+#define side_field_gather_bool_be(_name, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_bool_be(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))))
 
 #define _side_type_gather_integer(_type, _signedness, _byte_order, _offset, \
-		_integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
+		_integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	{ \
 		.type = _type, \
 		.u = { \
@@ -1168,8 +1168,8 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = _attr, \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.integer_size = _integer_size, \
 							.len_bits = _len_bits, \
 							.signedness = _signedness, \
@@ -1182,61 +1182,61 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_type_gather_unsigned_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
+#define side_type_gather_unsigned_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, false,  SIDE_TYPE_BYTE_ORDER_HOST, \
-			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
-#define side_type_gather_signed_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
+			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_signed_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, true, SIDE_TYPE_BYTE_ORDER_HOST, \
-			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
+			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_type_gather_unsigned_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
+#define side_type_gather_unsigned_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, false,  SIDE_TYPE_BYTE_ORDER_LE, \
-			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
-#define side_type_gather_signed_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
+			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_signed_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, true, SIDE_TYPE_BYTE_ORDER_LE, \
-			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
+			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_type_gather_unsigned_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
+#define side_type_gather_unsigned_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, false,  SIDE_TYPE_BYTE_ORDER_BE, \
-			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
-#define side_type_gather_signed_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
+			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_signed_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, true, SIDE_TYPE_BYTE_ORDER_BE, \
-			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr))
+			_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_field_gather_unsigned_integer(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_unsigned_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_signed_integer(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_signed_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_unsigned_integer(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_unsigned_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_signed_integer(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_signed_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_field_gather_unsigned_integer_le(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_unsigned_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_signed_integer_le(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_signed_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_unsigned_integer_le(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_unsigned_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_signed_integer_le(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_signed_integer_le(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_field_gather_unsigned_integer_be(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_unsigned_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_signed_integer_be(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_signed_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_unsigned_integer_be(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_unsigned_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_signed_integer_be(_name, _integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_signed_integer_be(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_gather_pointer(_offset, _access_mode, _attr) \
+#define side_type_gather_pointer(_offset, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_POINTER, false, SIDE_TYPE_BYTE_ORDER_HOST, \
-			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM(_attr))
-#define side_field_gather_pointer(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_pointer(_offset, _access_mode, SIDE_PARAM(_attr)))
+			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_field_gather_pointer(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_pointer(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_gather_pointer_le(_offset, _access_mode, _attr) \
+#define side_type_gather_pointer_le(_offset, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_POINTER, false, SIDE_TYPE_BYTE_ORDER_LE, \
-			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM(_attr))
-#define side_field_gather_pointer_le(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_pointer_le(_offset, _access_mode, SIDE_PARAM(_attr)))
+			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_field_gather_pointer_le(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_pointer_le(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_gather_pointer_be(_offset, _access_mode, _attr) \
+#define side_type_gather_pointer_be(_offset, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_POINTER, false, SIDE_TYPE_BYTE_ORDER_BE, \
-			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM(_attr))
-#define side_field_gather_pointer_be(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_pointer_be(_offset, _access_mode, SIDE_PARAM(_attr)))
+			_offset, sizeof(uintptr_t), 0, 0, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_field_gather_pointer_be(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_pointer_be(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define _side_type_gather_float(_byte_order, _offset, _float_size, _access_mode, _attr) \
+#define _side_type_gather_float(_byte_order, _offset, _float_size, _access_mode, _attr...) \
 	{ \
 		.type = SIDE_TYPE_GATHER_FLOAT, \
 		.u = { \
@@ -1246,8 +1246,8 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = _attr, \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.float_size = _float_size, \
 							.byte_order = _byte_order, \
 						}, \
@@ -1257,21 +1257,21 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_type_gather_float(_offset, _float_size, _access_mode, _attr) \
-	_side_type_gather_float(SIDE_TYPE_FLOAT_WORD_ORDER_HOST, _offset, _float_size, _access_mode, _attr)
-#define side_type_gather_float_le(_offset, _float_size, _access_mode, _attr) \
-	_side_type_gather_float(SIDE_TYPE_BYTE_ORDER_LE, _offset, _float_size, _access_mode, _attr)
-#define side_type_gather_float_be(_offset, _float_size, _access_mode, _attr) \
-	_side_type_gather_float(SIDE_TYPE_BYTE_ORDER_BE, _offset, _float_size, _access_mode, _attr)
+#define side_type_gather_float(_offset, _float_size, _access_mode, _attr...) \
+	_side_type_gather_float(SIDE_TYPE_FLOAT_WORD_ORDER_HOST, _offset, _float_size, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_float_le(_offset, _float_size, _access_mode, _attr...) \
+	_side_type_gather_float(SIDE_TYPE_BYTE_ORDER_LE, _offset, _float_size, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_float_be(_offset, _float_size, _access_mode, _attr...) \
+	_side_type_gather_float(SIDE_TYPE_BYTE_ORDER_BE, _offset, _float_size, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_field_gather_float(_name, _offset, _float_size, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_float(_offset, _float_size, _access_mode, _attr))
-#define side_field_gather_float_le(_name, _offset, _float_size, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_float_le(_offset, _float_size, _access_mode, _attr))
-#define side_field_gather_float_be(_name, _offset, _float_size, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_float_be(_offset, _float_size, _access_mode, _attr))
+#define side_field_gather_float(_name, _offset, _float_size, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_float(_offset, _float_size, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_float_le(_name, _offset, _float_size, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_float_le(_offset, _float_size, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_float_be(_name, _offset, _float_size, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_float_be(_offset, _float_size, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define _side_type_gather_string(_offset, _byte_order, _unit_size, _access_mode, _attr) \
+#define _side_type_gather_string(_offset, _byte_order, _unit_size, _access_mode, _attr...) \
 	{ \
 		.type = SIDE_TYPE_GATHER_STRING, \
 		.u = { \
@@ -1281,8 +1281,8 @@ struct side_event_description {
 						.offset = _offset, \
 						.access_mode = _access_mode, \
 						.type = { \
-							.attr = _attr, \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.unit_size = _unit_size, \
 							.byte_order = _byte_order, \
 						}, \
@@ -1291,38 +1291,38 @@ struct side_event_description {
 			}, \
 		}, \
 	}
-#define side_type_gather_string(_offset, _access_mode, _attr) \
-	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), _access_mode, SIDE_PARAM(_attr))
-#define side_field_gather_string(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_string(_offset, _access_mode, SIDE_PARAM(_attr)))
+#define side_type_gather_string(_offset, _access_mode, _attr...) \
+	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_field_gather_string(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_string(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_gather_string16(_offset, _access_mode, _attr) \
-	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), _access_mode, SIDE_PARAM(_attr))
-#define side_type_gather_string16_le(_offset, _access_mode, _attr) \
-	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), _access_mode, SIDE_PARAM(_attr))
-#define side_type_gather_string16_be(_offset, _access_mode, _attr) \
-	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), _access_mode, SIDE_PARAM(_attr))
+#define side_type_gather_string16(_offset, _access_mode, _attr...) \
+	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_string16_le(_offset, _access_mode, _attr...) \
+	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_string16_be(_offset, _access_mode, _attr...) \
+	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_field_gather_string16(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_string16(_offset, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_string16_le(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_string16_le(_offset, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_string16_be(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_string16_be(_offset, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_string16(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_string16(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_string16_le(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_string16_le(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_string16_be(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_string16_be(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_gather_string32(_offset, _access_mode, _attr) \
-	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), _access_mode, SIDE_PARAM(_attr))
-#define side_type_gather_string32_le(_offset, _access_mode, _attr) \
-	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), _access_mode, SIDE_PARAM(_attr))
-#define side_type_gather_string32_be(_offset, _access_mode, _attr) \
-	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), _access_mode, SIDE_PARAM(_attr))
+#define side_type_gather_string32(_offset, _access_mode, _attr...) \
+	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_string32_le(_offset, _access_mode, _attr...) \
+	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_gather_string32_be(_offset, _access_mode, _attr...) \
+	_side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_field_gather_string32(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_string32(_offset, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_string32_le(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_string32_le(_offset, _access_mode, SIDE_PARAM(_attr)))
-#define side_field_gather_string32_be(_name, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_string32_be(_offset, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_string32(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_string32(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_string32_le(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_string32_le(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_gather_string32_be(_name, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_string32_be(_offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
 #define side_type_gather_enum(_mappings, _elem_type) \
 	{ \
@@ -1356,7 +1356,7 @@ struct side_event_description {
 #define side_field_gather_struct(_name, _struct_gather, _offset, _size, _access_mode) \
 	_side_field(_name, side_type_gather_struct(SIDE_PARAM(_struct_gather), _offset, _size, _access_mode))
 
-#define side_type_gather_array(_elem_type_gather, _length, _offset, _access_mode, _attr) \
+#define side_type_gather_array(_elem_type_gather, _length, _offset, _access_mode, _attr...) \
 	{ \
 		.type = SIDE_TYPE_GATHER_ARRAY, \
 		.u = { \
@@ -1367,19 +1367,19 @@ struct side_event_description {
 						.access_mode = _access_mode, \
 						.type = { \
 							.elem_type = _elem_type_gather, \
-							.attr = _attr, \
+							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
 							.length = _length, \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						}, \
 					}, \
 				}, \
 			}, \
 		}, \
 	}
-#define side_field_gather_array(_name, _elem_type, _length, _offset, _access_mode, _attr) \
-	_side_field(_name, side_type_gather_array(SIDE_PARAM(_elem_type), _length, _offset, _access_mode, SIDE_PARAM(_attr)))
+#define side_field_gather_array(_name, _elem_type, _length, _offset, _access_mode, _attr...) \
+	_side_field(_name, side_type_gather_array(SIDE_PARAM(_elem_type), _length, _offset, _access_mode, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_gather_vla(_elem_type_gather, _offset, _access_mode, _length_type_gather, _attr) \
+#define side_type_gather_vla(_elem_type_gather, _offset, _access_mode, _length_type_gather, _attr...) \
 	{ \
 		.type = SIDE_TYPE_GATHER_VLA, \
 		.u = { \
@@ -1391,16 +1391,16 @@ struct side_event_description {
 						.access_mode = _access_mode, \
 						.type = { \
 							.elem_type = _elem_type_gather, \
-							.attr = _attr, \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+							.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						}, \
 					}, \
 				}, \
 			}, \
 		}, \
 	}
-#define side_field_gather_vla(_name, _elem_type_gather, _offset, _access_mode, _length_type_gather, _attr) \
-	_side_field(_name, side_type_gather_vla(SIDE_PARAM(_elem_type_gather), _offset, _access_mode, SIDE_PARAM(_length_type_gather), SIDE_PARAM(_attr)))
+#define side_field_gather_vla(_name, _elem_type_gather, _offset, _access_mode, _length_type_gather, _attr...) \
+	_side_field(_name, side_type_gather_vla(SIDE_PARAM(_elem_type_gather), _offset, _access_mode, SIDE_PARAM(_length_type_gather), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
 #define side_elem(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
@@ -1472,28 +1472,28 @@ struct side_event_description {
 
 /* Dynamic field arguments */
 
-#define side_arg_dynamic_null(_attr) \
+#define side_arg_dynamic_null(_attr...) \
 	{ \
 		.type = SIDE_TYPE_DYNAMIC_NULL, \
 		.u = { \
 			.side_dynamic = { \
 				.side_null = { \
-					.attr = _attr, \
-					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+					.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				}, \
 			}, \
 		}, \
 	}
 
-#define side_arg_dynamic_bool(_val, _attr) \
+#define side_arg_dynamic_bool(_val, _attr...) \
 	{ \
 		.type = SIDE_TYPE_DYNAMIC_BOOL, \
 		.u = { \
 			.side_dynamic = { \
 				.side_bool = { \
 					.type = { \
-						.attr = _attr, \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.bool_size = sizeof(uint8_t), \
 						.len_bits = 0, \
 						.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
@@ -1506,30 +1506,31 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_arg_dynamic_byte(_val, _attr) \
+#define side_arg_dynamic_byte(_val, _attr...) \
 	{ \
 		.type = SIDE_TYPE_DYNAMIC_BYTE, \
 		.u = { \
 			.side_dynamic = { \
 				.side_byte = { \
 					.type = { \
-						.attr = _attr, \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 					}, \
 					.value = (_val), \
 				}, \
 			}, \
 		}, \
 	}
-#define _side_arg_dynamic_string(_val, _byte_order, _unit_size, _attr) \
+
+#define _side_arg_dynamic_string(_val, _byte_order, _unit_size, _attr...) \
 	{ \
 		.type = SIDE_TYPE_DYNAMIC_STRING, \
 		.u = { \
 			.side_dynamic = { \
 				.side_string = { \
 					.type = { \
-						.attr = _attr, \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.unit_size = _unit_size, \
 						.byte_order = _byte_order, \
 					}, \
@@ -1538,30 +1539,30 @@ struct side_event_description {
 			}, \
 		}, \
 	}
-#define side_arg_dynamic_string(_val, _attr) \
-	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), SIDE_PARAM(_attr))
-#define side_arg_dynamic_string16(_val, _attr) \
-	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), SIDE_PARAM(_attr))
-#define side_arg_dynamic_string16_le(_val, _attr) \
-	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), SIDE_PARAM(_attr))
-#define side_arg_dynamic_string16_be(_val, _attr) \
-	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), SIDE_PARAM(_attr))
-#define side_arg_dynamic_string32(_val, _attr) \
-	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), SIDE_PARAM(_attr))
-#define side_arg_dynamic_string32_le(_val, _attr) \
-	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), SIDE_PARAM(_attr))
-#define side_arg_dynamic_string32_be(_val, _attr) \
-	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), SIDE_PARAM(_attr))
+#define side_arg_dynamic_string(_val, _attr...) \
+	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_string16(_val, _attr...) \
+	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_string16_le(_val, _attr...) \
+	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_string16_be(_val, _attr...) \
+	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_string32(_val, _attr...) \
+	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_string32_le(_val, _attr...) \
+	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_string32_be(_val, _attr...) \
+	_side_arg_dynamic_string(_val, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define _side_arg_dynamic_integer(_field, _val, _type, _signedness, _byte_order, _integer_size, _len_bits, _attr) \
+#define _side_arg_dynamic_integer(_field, _val, _type, _signedness, _byte_order, _integer_size, _len_bits, _attr...) \
 	{ \
 		.type = _type, \
 		.u = { \
 			.side_dynamic = { \
 				.side_integer = { \
 					.type = { \
-						.attr = _attr, \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.integer_size = _integer_size, \
 						.len_bits = _len_bits, \
 						.signedness = _signedness, \
@@ -1575,38 +1576,38 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_arg_dynamic_u8(_val, _attr) \
-	_side_arg_dynamic_integer(.side_u8, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s8(_val, _attr) \
-	_side_arg_dynamic_integer(.side_s8, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM(_attr))
+#define side_arg_dynamic_u8(_val, _attr...) \
+	_side_arg_dynamic_integer(.side_u8, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s8(_val, _attr...) \
+	_side_arg_dynamic_integer(.side_s8, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define _side_arg_dynamic_u16(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u16, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint16_t), 0, SIDE_PARAM(_attr))
-#define _side_arg_dynamic_u32(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u32, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint32_t), 0, SIDE_PARAM(_attr))
-#define _side_arg_dynamic_u64(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_u64, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint64_t), 0, SIDE_PARAM(_attr))
+#define _side_arg_dynamic_u16(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_integer(.side_u16, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_u32(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_integer(.side_u32, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_u64(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_integer(.side_u64, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define _side_arg_dynamic_s16(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s16, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int16_t), 0, SIDE_PARAM(_attr))
-#define _side_arg_dynamic_s32(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s32, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int32_t), 0, SIDE_PARAM(_attr))
-#define _side_arg_dynamic_s64(_val, _byte_order, _attr) \
-	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM(_attr))
+#define _side_arg_dynamic_s16(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_integer(.side_s16, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_s32(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_integer(.side_s32, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_s64(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define _side_arg_dynamic_pointer(_val, _byte_order, _attr) \
+#define _side_arg_dynamic_pointer(_val, _byte_order, _attr...) \
 	_side_arg_dynamic_integer(.side_uptr, (uintptr_t) (_val), SIDE_TYPE_DYNAMIC_POINTER, false, _byte_order, \
-			sizeof(uintptr_t), 0, SIDE_PARAM(_attr))
+			sizeof(uintptr_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define _side_arg_dynamic_float(_field, _val, _type, _byte_order, _float_size, _attr) \
+#define _side_arg_dynamic_float(_field, _val, _type, _byte_order, _float_size, _attr...) \
 	{ \
 		.type = _type, \
 		.u = { \
 			.side_dynamic = { \
 				.side_float = { \
 					.type = { \
-						.attr = _attr, \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+						.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.float_size = _float_size, \
 						.byte_order = _byte_order, \
 					}, \
@@ -1618,53 +1619,53 @@ struct side_event_description {
 		}, \
 	}
 
-#define _side_arg_dynamic_float_binary16(_val, _byte_order, _attr) \
-	_side_arg_dynamic_float(.side_float_binary16, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float16), SIDE_PARAM(_attr))
-#define _side_arg_dynamic_float_binary32(_val, _byte_order, _attr) \
-	_side_arg_dynamic_float(.side_float_binary32, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float32), SIDE_PARAM(_attr))
-#define _side_arg_dynamic_float_binary64(_val, _byte_order, _attr) \
-	_side_arg_dynamic_float(.side_float_binary64, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float64), SIDE_PARAM(_attr))
-#define _side_arg_dynamic_float_binary128(_val, _byte_order, _attr) \
-	_side_arg_dynamic_float(.side_float_binary128, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float128), SIDE_PARAM(_attr))
+#define _side_arg_dynamic_float_binary16(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_float(.side_float_binary16, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float16), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_float_binary32(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_float(.side_float_binary32, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float32), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_float_binary64(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_float(.side_float_binary64, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float64), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_float_binary128(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_float(.side_float_binary128, _val, SIDE_TYPE_DYNAMIC_FLOAT, _byte_order, sizeof(_Float128), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 /* Host endian */
-#define side_arg_dynamic_u16(_val, _attr) 		_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_u32(_val, _attr) 		_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_u64(_val, _attr) 		_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s16(_val, _attr) 		_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s32(_val, _attr) 		_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s64(_val, _attr) 		_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_pointer(_val, _attr) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary16(_val, _attr)	_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary32(_val, _attr)	_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary64(_val, _attr)	_side_arg_dynamic_float_binary64(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary128(_val, _attr)	_side_arg_dynamic_float_binary128(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM(_attr))
+#define side_arg_dynamic_u16(_val, _attr...) 			_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u32(_val, _attr...) 			_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u64(_val, _attr...) 			_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s16(_val, _attr...) 			_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s32(_val, _attr...) 			_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s64(_val, _attr...) 			_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_pointer(_val, _attr...) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary16(_val, _attr...)		_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary32(_val, _attr...)		_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary64(_val, _attr...)		_side_arg_dynamic_float_binary64(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary128(_val, _attr...)	_side_arg_dynamic_float_binary128(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 /* Little endian */
-#define side_arg_dynamic_u16_le(_val, _attr) 			_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_u32_le(_val, _attr) 			_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_u64_le(_val, _attr) 			_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s16_le(_val, _attr) 			_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s32_le(_val, _attr) 			_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s64_le(_val, _attr) 			_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_pointer_le(_val, _attr) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary16_le(_val, _attr)		_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary32_le(_val, _attr)		_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary64_le(_val, _attr)		_side_arg_dynamic_float_binary64(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary128_le(_val, _attr)	_side_arg_dynamic_float_binary128(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM(_attr))
+#define side_arg_dynamic_u16_le(_val, _attr...) 		_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u32_le(_val, _attr...) 		_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u64_le(_val, _attr...) 		_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s16_le(_val, _attr...) 		_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s32_le(_val, _attr...) 		_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s64_le(_val, _attr...) 		_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_pointer_le(_val, _attr...) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary16_le(_val, _attr...)	_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary32_le(_val, _attr...)	_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary64_le(_val, _attr...)	_side_arg_dynamic_float_binary64(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary128_le(_val, _attr...)	_side_arg_dynamic_float_binary128(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 /* Big endian */
-#define side_arg_dynamic_u16_be(_val, _attr) 			_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_u32_be(_val, _attr) 			_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_u64_be(_val, _attr) 			_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s16_be(_val, _attr) 			_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s32_be(_val, _attr) 			_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_s64_be(_val, _attr) 			_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_pointer_be(_val, _attr) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary16_be(_val, _attr)		_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary32_be(_val, _attr)		_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary64_be(_val, _attr)		_side_arg_dynamic_float_binary64(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
-#define side_arg_dynamic_float_binary128_be(_val, _attr)	_side_arg_dynamic_float_binary128(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM(_attr))
+#define side_arg_dynamic_u16_be(_val, _attr...) 		_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u32_be(_val, _attr...) 		_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u64_be(_val, _attr...) 		_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s16_be(_val, _attr...) 		_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s32_be(_val, _attr...) 		_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s64_be(_val, _attr...) 		_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_pointer_be(_val, _attr...) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary16_be(_val, _attr...)	_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary32_be(_val, _attr...)	_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary64_be(_val, _attr...)	_side_arg_dynamic_float_binary64(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_float_binary128_be(_val, _attr...)	_side_arg_dynamic_float_binary128(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_arg_dynamic_vla(_vla) \
 	{ \
@@ -1676,7 +1677,7 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx, _attr) \
+#define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx, _attr...) \
 	{ \
 		.type = SIDE_TYPE_DYNAMIC_VLA_VISITOR, \
 		.u = { \
@@ -1684,8 +1685,8 @@ struct side_event_description {
 				.side_dynamic_vla_visitor = { \
 					.app_ctx = _ctx, \
 					.visitor = _dynamic_vla_visitor, \
-					.attr = _attr, \
-					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+					.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				}, \
 			}, \
 		}, \
@@ -1701,7 +1702,7 @@ struct side_event_description {
 		}, \
 	}
 
-#define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor, _ctx, _attr) \
+#define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor, _ctx, _attr...) \
 	{ \
 		.type = SIDE_TYPE_DYNAMIC_STRUCT_VISITOR, \
 		.u = { \
@@ -1709,29 +1710,29 @@ struct side_event_description {
 				.side_dynamic_struct_visitor = { \
 					.app_ctx = _ctx, \
 					.visitor = _dynamic_struct_visitor, \
-					.attr = _attr, \
-					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+					.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
+					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				}, \
 			}, \
 		}, \
 	}
 
-#define side_arg_dynamic_define_vec(_identifier, _sav, _attr) \
+#define side_arg_dynamic_define_vec(_identifier, _sav, _attr...) \
 	const struct side_arg _identifier##_vec[] = { _sav }; \
 	const struct side_arg_dynamic_vla _identifier = { \
 		.sav = _identifier##_vec, \
-		.attr = _attr, \
+		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
 
-#define side_arg_dynamic_define_struct(_identifier, _struct_fields, _attr) \
+#define side_arg_dynamic_define_struct(_identifier, _struct_fields, _attr...) \
 	const struct side_arg_dynamic_field _identifier##_fields[] = { _struct_fields }; \
 	const struct side_arg_dynamic_struct _identifier = { \
 		.fields = _identifier##_fields, \
-		.attr = _attr, \
+		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_fields), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
 
 #define side_arg_define_vec(_identifier, _sav) \
@@ -1772,7 +1773,7 @@ struct side_event_description {
 	side_event_cond(_identifier) \
 		side_event_call(_identifier, SIDE_PARAM(_sav))
 
-#define side_event_call_variadic(_identifier, _sav, _var_fields, _attr) \
+#define side_event_call_variadic(_identifier, _sav, _var_fields, _attr...) \
 	{ \
 		const struct side_arg side_sav[] = { _sav }; \
 		const struct side_arg_vec side_arg_vec = { \
@@ -1782,18 +1783,18 @@ struct side_event_description {
 		const struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
 		const struct side_arg_dynamic_struct var_struct = { \
 			.fields = side_fields, \
-			.attr = _attr, \
+			.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
 			.len = SIDE_ARRAY_SIZE(side_fields), \
-			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		}; \
 		side_call_variadic(&(_identifier), &side_arg_vec, &var_struct); \
 	}
 
-#define side_event_variadic(_identifier, _sav, _var, _attr) \
+#define side_event_variadic(_identifier, _sav, _var, _attr...) \
 	side_event_cond(_identifier) \
-		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM(_attr))
+		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _attr, _flags) \
+#define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
 	_linkage uintptr_t side_event_enable__##_identifier __attribute__((section("side_event_enable"))); \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
@@ -1801,41 +1802,41 @@ struct side_event_description {
 		.provider_name = _provider, \
 		.event_name = _event, \
 		.fields = _fields, \
-		.attr = _attr, \
+		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
 		.callbacks = &side_empty_callback, \
 		.flags = (_flags), \
 		.version = 0, \
 		.loglevel = _loglevel, \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.nr_callbacks = 0, \
 	}; \
 	static const struct side_event_description *side_event_ptr__##_identifier \
 		__attribute__((section("side_event_description_ptr"), used)) = &(_identifier);
 
-#define side_static_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+#define side_static_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_define_event(static, _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
-			SIDE_PARAM(_attr), 0)
+			0, ##_attr)
 
-#define side_static_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+#define side_static_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_define_event(static, _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
-			SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
+			SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_hidden_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+#define side_hidden_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, \
-			_loglevel, SIDE_PARAM(_fields), SIDE_PARAM(_attr), 0)
+			_loglevel, SIDE_PARAM(_fields), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_hidden_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+#define side_hidden_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, \
-			_loglevel, SIDE_PARAM(_fields), SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
+			_loglevel, SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_export_event(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+#define side_export_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, \
-			_loglevel, SIDE_PARAM(_fields), SIDE_PARAM(_attr), 0)
+			_loglevel, SIDE_PARAM(_fields), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_export_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr) \
+#define side_export_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, \
-			_loglevel, SIDE_PARAM(_fields), SIDE_PARAM(_attr), SIDE_EVENT_FLAG_VARIADIC)
+			_loglevel, SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_declare_event(_identifier) \
 	extern uintptr_t side_event_enable_##_identifier; \
