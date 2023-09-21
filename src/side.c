@@ -148,7 +148,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		side_init();
 	pthread_mutex_lock(&side_lock);
 	event_state = side_ptr_get(desc->state);
-	old_nr_cb = event_state->nr_callbacks;
+	old_nr_cb = desc->nr_callbacks;
 	if (old_nr_cb == UINT32_MAX) {
 		ret = SIDE_ERROR_INVAL;
 		goto unlock;
@@ -177,7 +177,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	side_rcu_wait_grace_period(&rcu_gp);
 	if (old_nr_cb)
 		free(old_cb);
-	event_state->nr_callbacks++;
+	desc->nr_callbacks++;
 	/* Increment concurrently with kernel setting the top bits. */
 	if (!old_nr_cb)
 		(void) __atomic_add_fetch(&event_state->enabled, 1, __ATOMIC_RELAXED);
@@ -227,7 +227,7 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 		ret = SIDE_ERROR_NOENT;
 		goto unlock;
 	}
-	old_nr_cb = event_state->nr_callbacks;
+	old_nr_cb = desc->nr_callbacks;
 	old_cb = (struct side_callback *) event_state->callbacks;
 	if (old_nr_cb == 1) {
 		new_cb = (struct side_callback *) &side_empty_callback;
@@ -246,7 +246,7 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 	side_rcu_assign_pointer(event_state->callbacks, new_cb);
 	side_rcu_wait_grace_period(&rcu_gp);
 	free(old_cb);
-	event_state->nr_callbacks--;
+	desc->nr_callbacks--;
 	/* Decrement concurrently with kernel setting the top bits. */
 	if (old_nr_cb == 1)
 		(void) __atomic_add_fetch(&event_state->enabled, -1, __ATOMIC_RELAXED);
@@ -304,7 +304,7 @@ static
 void side_event_remove_callbacks(struct side_event_description *desc)
 {
 	struct side_event_state *event_state = side_ptr_get(desc->state);
-	uint32_t nr_cb = event_state->nr_callbacks;
+	uint32_t nr_cb = desc->nr_callbacks;
 	struct side_callback *old_cb;
 
 	if (!nr_cb)
@@ -316,7 +316,7 @@ void side_event_remove_callbacks(struct side_event_description *desc)
 	 * caution. This should not matter because instrumentation is
 	 * unreachable.
 	 */
-	event_state->nr_callbacks = 0;
+	desc->nr_callbacks = 0;
 	side_rcu_assign_pointer(event_state->callbacks, &side_empty_callback);
 	/*
 	 * No need to wait for grace period because instrumentation is

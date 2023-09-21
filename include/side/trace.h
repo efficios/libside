@@ -658,7 +658,6 @@ struct side_tracer_dynamic_struct_visitor_ctx {
 struct side_event_state {
 	uintptr_t enabled;
 	const struct side_callback *callbacks;
-	uint32_t nr_callbacks;
 };
 
 struct side_event_description {
@@ -672,6 +671,7 @@ struct side_event_description {
 	side_enum_t(enum side_loglevel, uint32_t) loglevel;
 	uint32_t nr_fields;
 	uint32_t nr_attr;
+	uint32_t nr_callbacks;
 } SIDE_PACKED;
 
 /* Event and type attributes */
@@ -1808,7 +1808,6 @@ struct side_event_description {
 			side_event_state__##_identifier = { \
 		.enabled = 0, \
 		.callbacks = &side_empty_callback, \
-		.nr_callbacks = 0, \
 	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
@@ -1822,6 +1821,7 @@ struct side_event_description {
 		.loglevel = SIDE_ENUM_INIT(_loglevel), \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+		.nr_callbacks = 0, \
 	}; \
 	static const struct side_event_description *side_event_ptr__##_identifier \
 		__attribute__((section("side_event_description_ptr"), used)) = &(_identifier);
