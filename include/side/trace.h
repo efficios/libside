@@ -330,7 +330,7 @@ struct side_enum_mapping {
 } SIDE_PACKED;
 
 struct side_enum_mappings {
-	const struct side_enum_mapping *mappings;
+	side_ptr_t(const struct side_enum_mapping) mappings;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_mappings;
 	uint32_t nr_attr;
@@ -343,7 +343,7 @@ struct side_enum_bitmap_mapping {
 } SIDE_PACKED;
 
 struct side_enum_bitmap_mappings {
-	const struct side_enum_bitmap_mapping *mappings;
+	side_ptr_t(const struct side_enum_bitmap_mapping) mappings;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_mappings;
 	uint32_t nr_attr;
@@ -377,12 +377,12 @@ struct side_type_vla_visitor {
 } SIDE_PACKED;
 
 struct side_type_enum {
-	const struct side_enum_mappings *mappings;
+	side_ptr_t(const struct side_enum_mappings) mappings;
 	const struct side_type *elem_type;
 } SIDE_PACKED;
 
 struct side_type_enum_bitmap {
-	const struct side_enum_bitmap_mappings *mappings;
+	side_ptr_t(const struct side_enum_bitmap_mappings) mappings;
 	const struct side_type *elem_type;
 } SIDE_PACKED;
 
@@ -419,7 +419,7 @@ struct side_type_gather_string {
 } SIDE_PACKED;
 
 struct side_type_gather_enum {
-	const struct side_enum_mappings *mappings;
+	side_ptr_t(const struct side_enum_mappings) mappings;
 	const struct side_type *elem_type;
 } SIDE_PACKED;
 
@@ -723,7 +723,7 @@ struct side_event_description {
 
 #define side_define_enum(_identifier, _mappings, _attr...) \
 	const struct side_enum_mappings _identifier = { \
-		.mappings = _mappings, \
+		.mappings = SIDE_PTR_INIT(_mappings), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -756,7 +756,7 @@ struct side_event_description {
 
 #define side_define_enum_bitmap(_identifier, _mappings, _attr...) \
 	const struct side_enum_bitmap_mappings _identifier = { \
-		.mappings = _mappings, \
+		.mappings = SIDE_PTR_INIT(_mappings), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -989,7 +989,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_ENUM, \
 		.u = { \
 			.side_enum = { \
-				.mappings = _mappings, \
+				.mappings = SIDE_PTR_INIT(_mappings), \
 				.elem_type = _elem_type, \
 			}, \
 		}, \
@@ -1002,7 +1002,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_ENUM_BITMAP, \
 		.u = { \
 			.side_enum_bitmap = { \
-				.mappings = _mappings, \
+				.mappings = SIDE_PTR_INIT(_mappings), \
 				.elem_type = _elem_type, \
 			}, \
 		}, \
@@ -1337,7 +1337,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_GATHER_ENUM, \
 		.u = { \
 			.side_enum = { \
-				.mappings = _mappings, \
+				.mappings = SIDE_PTR_INIT(_mappings), \
 				.elem_type = _elem_type, \
 			}, \
 		}, \

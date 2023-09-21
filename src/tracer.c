@@ -451,7 +451,7 @@ void print_enum_labels(const struct side_enum_mappings *mappings, union int64_va
 
 	printf(", labels: [ ");
 	for (i = 0; i < mappings->nr_mappings; i++) {
-		const struct side_enum_mapping *mapping = &mappings->mappings[i];
+		const struct side_enum_mapping *mapping = &side_ptr_get(mappings->mappings)[i];
 
 		if (mapping->range_end < mapping->range_begin) {
 			fprintf(stderr, "ERROR: Unexpected enum range: %" PRIu64 "-%" PRIu64 "\n",
@@ -471,7 +471,7 @@ void print_enum_labels(const struct side_enum_mappings *mappings, union int64_va
 static
 void tracer_print_enum(const struct side_type *type_desc, const struct side_arg *item)
 {
-	const struct side_enum_mappings *mappings = type_desc->u.side_enum.mappings;
+	const struct side_enum_mappings *mappings = side_ptr_get(type_desc->u.side_enum.mappings);
 	const struct side_type *elem_type = type_desc->u.side_enum.elem_type;
 	union int64_value v64;
 
@@ -517,7 +517,7 @@ static
 void tracer_print_enum_bitmap(const struct side_type *type_desc,
 		const struct side_arg *item)
 {
-	const struct side_enum_bitmap_mappings *side_enum_mappings = type_desc->u.side_enum_bitmap.mappings;
+	const struct side_enum_bitmap_mappings *side_enum_mappings = side_ptr_get(type_desc->u.side_enum_bitmap.mappings);
 	const struct side_type *enum_elem_type = type_desc->u.side_enum_bitmap.elem_type, *elem_type;
 	uint32_t i, print_count = 0, stride_bit, nr_items;
 	const struct side_arg *array_item;
@@ -556,7 +556,7 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 	printf("%s", side_enum_mappings->nr_attr ? ", " : "");
 	printf("labels: [ ");
 	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
-		const struct side_enum_bitmap_mapping *mapping = &side_enum_mappings->mappings[i];
+		const struct side_enum_bitmap_mapping *mapping = &side_ptr_get(side_enum_mappings->mappings)[i];
 		bool match = false;
 		uint64_t bit;
 
@@ -1353,7 +1353,7 @@ uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void 
 static
 uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gather, const void *_ptr)
 {
-	const struct side_enum_mappings *mappings = type_gather->u.side_enum.mappings;
+	const struct side_enum_mappings *mappings = side_ptr_get(type_gather->u.side_enum.mappings);
 	const struct side_type *enum_elem_type = type_gather->u.side_enum.elem_type;
 	const struct side_type_gather_integer *side_integer = &enum_elem_type->u.side_gather.u.side_integer;
 	enum side_type_gather_access_mode access_mode =
