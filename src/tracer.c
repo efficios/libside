@@ -977,41 +977,41 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 
 		/* Gather basic types */
 	case SIDE_TYPE_GATHER_BOOL:
-		(void) tracer_print_gather_bool_type(&type_desc->u.side_gather, item->u.side_static.side_bool_gather_ptr);
+		(void) tracer_print_gather_bool_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_bool_gather_ptr));
 		break;
 	case SIDE_TYPE_GATHER_INTEGER:
-		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr,
+		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_integer_gather_ptr),
 					TRACER_DISPLAY_BASE_10);
 		break;
 	case SIDE_TYPE_GATHER_BYTE:
-		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, item->u.side_static.side_byte_gather_ptr);
+		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_byte_gather_ptr));
 		break;
 	case SIDE_TYPE_GATHER_POINTER:
-		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr,
+		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_integer_gather_ptr),
 					TRACER_DISPLAY_BASE_16);
 		break;
 	case SIDE_TYPE_GATHER_FLOAT:
-		(void) tracer_print_gather_float_type(&type_desc->u.side_gather, item->u.side_static.side_float_gather_ptr);
+		(void) tracer_print_gather_float_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_float_gather_ptr));
 		break;
 	case SIDE_TYPE_GATHER_STRING:
-		(void) tracer_print_gather_string_type(&type_desc->u.side_gather, item->u.side_static.side_string_gather_ptr);
+		(void) tracer_print_gather_string_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_string_gather_ptr));
 		break;
 
 		/* Gather compound type */
 	case SIDE_TYPE_GATHER_STRUCT:
-		(void) tracer_print_gather_struct(&type_desc->u.side_gather, item->u.side_static.side_struct_gather_ptr);
+		(void) tracer_print_gather_struct(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_struct_gather_ptr));
 		break;
 	case SIDE_TYPE_GATHER_ARRAY:
-		(void) tracer_print_gather_array(&type_desc->u.side_gather, item->u.side_static.side_array_gather_ptr);
+		(void) tracer_print_gather_array(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_array_gather_ptr));
 		break;
 	case SIDE_TYPE_GATHER_VLA:
-		(void) tracer_print_gather_vla(&type_desc->u.side_gather, item->u.side_static.side_vla_gather.ptr,
-				item->u.side_static.side_vla_gather.length_ptr);
+		(void) tracer_print_gather_vla(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_vla_gather.ptr),
+				side_ptr_get(item->u.side_static.side_vla_gather.length_ptr));
 		break;
 
 		/* Gather enumeration types */
 	case SIDE_TYPE_GATHER_ENUM:
-		(void) tracer_print_gather_enum_type(&type_desc->u.side_gather, item->u.side_static.side_integer_gather_ptr);
+		(void) tracer_print_gather_enum_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_integer_gather_ptr));
 		break;
 
 	/* Dynamic basic types */

@@ -537,18 +537,18 @@ union side_arg_static {
 	void *side_vla_app_visitor_ctx;
 
 	/* Gather basic types */
-	const void *side_bool_gather_ptr;
-	const void *side_byte_gather_ptr;
-	const void *side_integer_gather_ptr;
-	const void *side_float_gather_ptr;
-	const void *side_string_gather_ptr;
+	side_ptr_t(const void) side_bool_gather_ptr;
+	side_ptr_t(const void) side_byte_gather_ptr;
+	side_ptr_t(const void) side_integer_gather_ptr;
+	side_ptr_t(const void) side_float_gather_ptr;
+	side_ptr_t(const void) side_string_gather_ptr;
 
 	/* Gather compound types */
-	const void *side_array_gather_ptr;
-	const void *side_struct_gather_ptr;
+	side_ptr_t(const void) side_array_gather_ptr;
+	side_ptr_t(const void) side_struct_gather_ptr;
 	struct {
-		const void *ptr;
-		const void *length_ptr;
+		side_ptr_t(const void) ptr;
+		side_ptr_t(const void) length_ptr;
 	} SIDE_PACKED side_vla_gather;
 } SIDE_PACKED;
 
@@ -1468,15 +1468,15 @@ struct side_event_description {
 
 /* Gather field arguments */
 
-#define side_arg_gather_bool(_ptr)		{ .type = SIDE_TYPE_GATHER_BOOL, .u = { .side_static = { .side_bool_gather_ptr = (_ptr) } } }
-#define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = (_ptr) } } }
-#define side_arg_gather_pointer(_ptr)		{ .type = SIDE_TYPE_GATHER_POINTER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
-#define side_arg_gather_integer(_ptr)		{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = (_ptr) } } }
-#define side_arg_gather_float(_ptr)		{ .type = SIDE_TYPE_GATHER_FLOAT, .u = { .side_static = { .side_float_gather_ptr = (_ptr) } } }
-#define side_arg_gather_string(_ptr)		{ .type = SIDE_TYPE_GATHER_STRING, .u = { .side_static = { .side_string_gather_ptr = (_ptr) } } }
-#define side_arg_gather_struct(_ptr)		{ .type = SIDE_TYPE_GATHER_STRUCT, .u = { .side_static = { .side_struct_gather_ptr = (_ptr) } } }
-#define side_arg_gather_array(_ptr)		{ .type = SIDE_TYPE_GATHER_ARRAY, .u = { .side_static = { .side_array_gather_ptr = (_ptr) } } }
-#define side_arg_gather_vla(_ptr, _length_ptr)	{ .type = SIDE_TYPE_GATHER_VLA, .u = { .side_static = { .side_vla_gather = { .ptr = (_ptr), .length_ptr = (_length_ptr) } } } }
+#define side_arg_gather_bool(_ptr)		{ .type = SIDE_TYPE_GATHER_BOOL, .u = { .side_static = { .side_bool_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_byte(_ptr)		{ .type = SIDE_TYPE_GATHER_BYTE, .u = { .side_static = { .side_byte_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_pointer(_ptr)		{ .type = SIDE_TYPE_GATHER_POINTER, .u = { .side_static = { .side_integer_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_integer(_ptr)		{ .type = SIDE_TYPE_GATHER_INTEGER, .u = { .side_static = { .side_integer_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_float(_ptr)		{ .type = SIDE_TYPE_GATHER_FLOAT, .u = { .side_static = { .side_float_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_string(_ptr)		{ .type = SIDE_TYPE_GATHER_STRING, .u = { .side_static = { .side_string_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_struct(_ptr)		{ .type = SIDE_TYPE_GATHER_STRUCT, .u = { .side_static = { .side_struct_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_array(_ptr)		{ .type = SIDE_TYPE_GATHER_ARRAY, .u = { .side_static = { .side_array_gather_ptr = SIDE_PTR_INIT(_ptr) } } }
+#define side_arg_gather_vla(_ptr, _length_ptr)	{ .type = SIDE_TYPE_GATHER_VLA, .u = { .side_static = { .side_vla_gather = { .ptr = SIDE_PTR_INIT(_ptr), .length_ptr = SIDE_PTR_INIT(_length_ptr) } } } }
 
 /* Dynamic field arguments */
 
