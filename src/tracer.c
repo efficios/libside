@@ -230,7 +230,7 @@ enum tracer_display_base get_attr_display_base(const struct side_attr *_attr, ui
 		bool cmp;
 
 		tracer_convert_string_to_utf8(side_ptr_get(attr->key.p), attr->key.unit_size,
-			attr->key.byte_order, NULL, &utf8_str);
+			side_enum_get(attr->key.byte_order), NULL, &utf8_str);
 		cmp = strcmp(utf8_str, "std.integer.base");
 		if (utf8_str != side_ptr_get(attr->key.p))
 			free(utf8_str);
@@ -261,7 +261,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 	char *utf8_str = NULL;
 
 	tracer_convert_string_to_utf8(side_ptr_get(attr->key.p), attr->key.unit_size,
-		attr->key.byte_order, NULL, &utf8_str);
+		side_enum_get(attr->key.byte_order), NULL, &utf8_str);
 	printf("{ key%s \"%s\", value%s ", separator, utf8_str, separator);
 	if (utf8_str != side_ptr_get(attr->key.p))
 		free(utf8_str);
@@ -328,7 +328,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 	case SIDE_ATTR_TYPE_STRING:
 		tracer_print_string(side_ptr_get(attr->value.u.string_value.p),
 				attr->value.u.string_value.unit_size,
-				attr->value.u.string_value.byte_order, NULL);
+				side_enum_get(attr->value.u.string_value.byte_order), NULL);
 		break;
 	default:
 		fprintf(stderr, "ERROR: <UNKNOWN ATTRIBUTE TYPE>");
@@ -368,7 +368,7 @@ union int64_value tracer_load_integer_value(const struct side_type_integer *type
 		len_bits = type_integer->len_bits;
 	if (len_bits + offset_bits > type_integer->integer_size * CHAR_BIT)
 		abort();
-	reverse_bo = type_integer->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
+	reverse_bo = side_enum_get(type_integer->byte_order) != SIDE_TYPE_BYTE_ORDER_HOST;
 	switch (type_integer->integer_size) {
 	case 1:
 		if (type_integer->signedness)
@@ -460,7 +460,8 @@ void print_enum_labels(const struct side_enum_mappings *mappings, union int64_va
 		}
 		if (v64.s >= mapping->range_begin && v64.s <= mapping->range_end) {
 			printf("%s", print_count++ ? ", " : "");
-			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size, mapping->label.byte_order, NULL);
+			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size,
+				side_enum_get(mapping->label.byte_order), NULL);
 		}
 	}
 	if (!print_count)
@@ -589,7 +590,8 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 match:
 		if (match) {
 			printf("%s", print_count++ ? ", " : "");
-			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size, mapping->label.byte_order, NULL);
+			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size,
+				side_enum_get(mapping->label.byte_order), NULL);
 		}
 	}
 	if (!print_count)
@@ -635,7 +637,7 @@ void tracer_print_type_bool(const char *separator,
 		len_bits = type_bool->len_bits;
 	if (len_bits + offset_bits > type_bool->bool_size * CHAR_BIT)
 		abort();
-	reverse_bo = type_bool->byte_order != SIDE_TYPE_BYTE_ORDER_HOST;
+	reverse_bo = side_enum_get(type_bool->byte_order) != SIDE_TYPE_BYTE_ORDER_HOST;
 	switch (type_bool->bool_size) {
 	case 1:
 		v = value->side_bool8;
@@ -729,7 +731,7 @@ void tracer_print_type_float(const char *separator,
 	bool reverse_bo;
 
 	tracer_print_type_header(separator, side_ptr_get(type_float->attr), type_float->nr_attr);
-	reverse_bo = type_float->byte_order != SIDE_TYPE_FLOAT_WORD_ORDER_HOST;
+	reverse_bo = side_enum_get(type_float->byte_order) != SIDE_TYPE_FLOAT_WORD_ORDER_HOST;
 	switch (type_float->float_size) {
 	case 2:
 	{
@@ -946,7 +948,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_STRING_UTF32:
 		tracer_print_type_header(":", side_ptr_get(type_desc->u.side_string.attr), type_desc->u.side_string.nr_attr);
 		tracer_print_string(side_ptr_get(item->u.side_static.string_value),
-				type_desc->u.side_string.unit_size, type_desc->u.side_string.byte_order, NULL);
+				type_desc->u.side_string.unit_size, side_enum_get(type_desc->u.side_string.byte_order), NULL);
 		break;
 
 		/* Stack-copy compound types */
@@ -1290,7 +1292,7 @@ uint32_t tracer_print_gather_string_type(const struct side_type_gather *type_gat
 			type_gather->u.side_string.type.nr_attr);
 	if (ptr) {
 		tracer_print_string(ptr, type_gather->u.side_string.type.unit_size,
-				type_gather->u.side_string.type.byte_order, &string_len);
+				side_enum_get(type_gather->u.side_string.type.byte_order), &string_len);
 	} else {
 		printf("<NULL>");
 		string_len = type_gather->u.side_string.type.unit_size;
@@ -1691,7 +1693,7 @@ void tracer_print_dynamic(const struct side_arg *item)
 		tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_string.type.attr), item->u.side_dynamic.side_string.type.nr_attr);
 		tracer_print_string((const char *)(uintptr_t) item->u.side_dynamic.side_string.value,
 				item->u.side_dynamic.side_string.type.unit_size,
-				item->u.side_dynamic.side_string.type.byte_order, NULL);
+				side_enum_get(item->u.side_dynamic.side_string.type.byte_order), NULL);
 		break;
 
 		/* Dynamic compound types */

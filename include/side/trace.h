@@ -263,7 +263,7 @@ union side_float_value {
 struct side_type_raw_string {
 	side_ptr_t(const void) p;	/* pointer to string */
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
-	uint8_t byte_order;		/* enum side_type_label_byte_order */
+	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
 
 struct side_attr_value {
@@ -293,7 +293,7 @@ struct side_type_bool {
 	uint32_t nr_attr;
 	uint16_t bool_size;		/* bytes */
 	uint16_t len_bits;		/* bits. 0 for (bool_size * CHAR_BITS) */
-	uint8_t byte_order;		/* enum side_type_label_byte_order */
+	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
 
 struct side_type_byte {
@@ -305,7 +305,7 @@ struct side_type_string {
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
-	uint8_t byte_order;		/* enum side_type_label_byte_order */
+	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
 
 struct side_type_integer {
@@ -314,14 +314,14 @@ struct side_type_integer {
 	uint16_t integer_size;		/* bytes */
 	uint16_t len_bits;		/* bits. 0 for (integer_size * CHAR_BITS) */
 	uint8_t signedness;		/* true/false */
-	uint8_t byte_order;		/* enum side_type_label_byte_order */
+	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
 
 struct side_type_float {
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 	uint16_t float_size;		/* bytes */
-	uint8_t byte_order;		/* enum side_type_label_byte_order */
+	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
 
 struct side_enum_mapping {
@@ -681,7 +681,7 @@ struct side_event_description {
 		.key = { \
 			.p = SIDE_PTR_INIT(_key), \
 			.unit_size = sizeof(uint8_t), \
-			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+			.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 		}, \
 		.value = SIDE_PARAM(_value), \
 	}
@@ -711,7 +711,7 @@ struct side_event_description {
 			.string_value = { \
 				.p = SIDE_PTR_INIT(_val), \
 				.unit_size = _unit_size, \
-				.byte_order = _byte_order, \
+				.byte_order = SIDE_ENUM_INIT(_byte_order), \
 			}, \
 		}, \
 	}
@@ -740,7 +740,7 @@ struct side_event_description {
 		.label = { \
 			.p = SIDE_PTR_INIT(_label), \
 			.unit_size = sizeof(uint8_t), \
-			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+			.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 		}, \
 	}
 
@@ -751,7 +751,7 @@ struct side_event_description {
 		.label = { \
 			.p = SIDE_PTR_INIT(_label), \
 			.unit_size = sizeof(uint8_t), \
-			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+			.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 		}, \
 	}
 
@@ -773,7 +773,7 @@ struct side_event_description {
 		.label = { \
 			.p = SIDE_PTR_INIT(_label), \
 			.unit_size = sizeof(uint8_t), \
-			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+			.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 		}, \
 	}
 
@@ -784,7 +784,7 @@ struct side_event_description {
 		.label = { \
 			.p = SIDE_PTR_INIT(_label), \
 			.unit_size = sizeof(uint8_t), \
-			.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+			.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 		}, \
 	}
 
@@ -810,7 +810,7 @@ struct side_event_description {
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.bool_size = sizeof(uint8_t), \
 				.len_bits = 0, \
-				.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+				.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 			}, \
 		}, \
 	}
@@ -834,7 +834,7 @@ struct side_event_description {
 				.attr = SIDE_PTR_INIT(_attr), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.unit_size = _unit_size, \
-				.byte_order = _byte_order, \
+				.byte_order = SIDE_ENUM_INIT(_byte_order), \
 			}, \
 		}, \
 	}
@@ -854,7 +854,7 @@ struct side_event_description {
 				.integer_size = _integer_size, \
 				.len_bits = _len_bits, \
 				.signedness = _signedness, \
-				.byte_order = _byte_order, \
+				.byte_order = SIDE_ENUM_INIT(_byte_order), \
 			}, \
 		}, \
 	}
@@ -867,7 +867,7 @@ struct side_event_description {
 				.attr = SIDE_PTR_INIT(_attr), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
 				.float_size = _float_size, \
-				.byte_order = _byte_order, \
+				.byte_order = SIDE_ENUM_INIT(_byte_order), \
 			}, \
 		}, \
 	}
@@ -1144,7 +1144,7 @@ struct side_event_description {
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.bool_size = _bool_size, \
 							.len_bits = _len_bits, \
-							.byte_order = _byte_order, \
+							.byte_order = SIDE_ENUM_INIT(_byte_order), \
 						}, \
 						.offset_bits = _offset_bits, \
 					}, \
@@ -1182,7 +1182,7 @@ struct side_event_description {
 							.integer_size = _integer_size, \
 							.len_bits = _len_bits, \
 							.signedness = _signedness, \
-							.byte_order = _byte_order, \
+							.byte_order = SIDE_ENUM_INIT(_byte_order), \
 						}, \
 						.offset_bits = _offset_bits, \
 					}, \
@@ -1258,7 +1258,7 @@ struct side_event_description {
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.float_size = _float_size, \
-							.byte_order = _byte_order, \
+							.byte_order = SIDE_ENUM_INIT(_byte_order), \
 						}, \
 					}, \
 				}, \
@@ -1293,7 +1293,7 @@ struct side_event_description {
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.unit_size = _unit_size, \
-							.byte_order = _byte_order, \
+							.byte_order = SIDE_ENUM_INIT(_byte_order), \
 						}, \
 					}, \
 				}, \
@@ -1505,7 +1505,7 @@ struct side_event_description {
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.bool_size = sizeof(uint8_t), \
 						.len_bits = 0, \
-						.byte_order = SIDE_TYPE_BYTE_ORDER_HOST, \
+						.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 					}, \
 					.value = { \
 						.side_bool8 = !!(_val), \
@@ -1541,7 +1541,7 @@ struct side_event_description {
 						.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.unit_size = _unit_size, \
-						.byte_order = _byte_order, \
+						.byte_order = SIDE_ENUM_INIT(_byte_order), \
 					}, \
 					.value = (uintptr_t) (_val), \
 				}, \
@@ -1575,7 +1575,7 @@ struct side_event_description {
 						.integer_size = _integer_size, \
 						.len_bits = _len_bits, \
 						.signedness = _signedness, \
-						.byte_order = _byte_order, \
+						.byte_order = SIDE_ENUM_INIT(_byte_order), \
 					}, \
 					.value = { \
 						_field = (_val), \
@@ -1618,7 +1618,7 @@ struct side_event_description {
 						.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						.float_size = _float_size, \
-						.byte_order = _byte_order, \
+						.byte_order = SIDE_ENUM_INIT(_byte_order), \
 					}, \
 					.value = { \
 						_field = (_val), \
