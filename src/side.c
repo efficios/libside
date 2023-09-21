@@ -5,6 +5,7 @@
 
 #include <side/trace.h>
 #include <string.h>
+#include <assert.h>
 
 #include "rcu.h"
 #include "list.h"
@@ -72,10 +73,7 @@ void side_call(const struct side_event_state *event_state, const struct side_arg
 		return;
 	if (side_unlikely(!initialized))
 		side_init();
-	if (side_unlikely(event_state->desc->flags & SIDE_EVENT_FLAG_VARIADIC)) {
-		printf("ERROR: unexpected variadic event description\n");
-		abort();
-	}
+	assert(!(event_state->desc->flags & SIDE_EVENT_FLAG_VARIADIC));
 	enabled = __atomic_load_n(&event_state->enabled, __ATOMIC_RELAXED);
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
@@ -98,10 +96,7 @@ void side_call_variadic(const struct side_event_state *event_state,
 		return;
 	if (side_unlikely(!initialized))
 		side_init();
-	if (side_unlikely(!(event_state->desc->flags & SIDE_EVENT_FLAG_VARIADIC))) {
-		printf("ERROR: unexpected non-variadic event description\n");
-		abort();
-	}
+	assert(event_state->desc->flags & SIDE_EVENT_FLAG_VARIADIC);
 	enabled = __atomic_load_n(&event_state->enabled, __ATOMIC_RELAXED);
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
