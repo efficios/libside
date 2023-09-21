@@ -1812,7 +1812,7 @@ struct side_event_state {
 			side_event_state__##_identifier = { \
 		.enabled = 0, \
 		.callbacks = &side_empty_callback, \
-		.desc = &_identifier, \
+		.desc = &(_identifier), \
 	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
