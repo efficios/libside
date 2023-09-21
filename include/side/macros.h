@@ -121,4 +121,6 @@
 	} while (0)
 #endif
 
+#define SIDE_PTR_INIT(x)	{ .v = (uintptr_t) (x) }
+
 #endif /* _SIDE_MACROS_H */
