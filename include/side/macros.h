@@ -123,4 +123,24 @@
 
 #define SIDE_PTR_INIT(...)	{ .v = (uintptr_t) (__VA_ARGS__) }
 
+/*
+ * side_enum_t allows defining fixed-sized enumerations while preserving
+ * typing information.
+ */
+#define side_enum_t(_enum_type, _size_type)			\
+	union {							\
+		_size_type v;					\
+		_enum_type t[0];				\
+	}
+
+#define side_enum_get(_field)					\
+	((__typeof__((_field).t[0]))(_field).v)
+
+#define side_enum_set(_field, _v)				\
+	do {							\
+		(_field).v = (_v);				\
+	} while (0)
+
+#define SIDE_ENUM_INIT(...)	{ .v = (__VA_ARGS__) }
+
 #endif /* _SIDE_MACROS_H */
