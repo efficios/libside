@@ -31,6 +31,30 @@
 #define SIDE_PARAM(...)	__VA_ARGS__
 
 /*
+ * SIDE_PARAM_SELECT_ARG1
+ *
+ * Select second argument. Use inside macros to implement optional last
+ * macro argument, such as:
+ *
+ * #define macro(_a, _b, _c, _optional...) \
+ *     SIDE_PARAM_SELECT_ARG1(_, ##_optional, do_default_macro())
+ *
+ * This macro is far from pretty, but attempts to create a cleaner layer
+ * on top fails for various reasons:
+ *
+ * - The libside API needs to use the default argument selection as an
+ *   argument to itself (recursively), e.g. for fields and for types, so
+ *   using the argument selection within an extra layer of macro fails
+ *   because the extra layer cannot expand recursively.
+ * - Attempts to make the extra layer of macro support recursion through
+ *   another layer of macros which expands all arguments failed because
+ *   the optional argument may contain commas, and is therefore expanded
+ *   into multiple arguments before argument selection, which fails to
+ *   select the optional argument content after its first comma.
+ */
+#define SIDE_PARAM_SELECT_ARG1(_arg0, _arg1, ...) _arg1
+
+/*
  * side_container_of - Get the address of an object containing a field.
  *
  * @ptr: pointer to the field.
