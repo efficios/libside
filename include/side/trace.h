@@ -661,10 +661,10 @@ struct side_event_state {
 };
 
 struct side_event_description {
-	struct side_event_state *state;
-	const char *provider_name;
-	const char *event_name;
-	const struct side_event_field *fields;
+	side_ptr_t(struct side_event_state) state;
+	side_ptr_t(const char) provider_name;
+	side_ptr_t(const char) event_name;
+	side_ptr_t(const struct side_event_field) fields;
 	side_ptr_t(const struct side_attr) attr;
 	uint64_t flags;
 	uint32_t version;
@@ -1811,10 +1811,10 @@ struct side_event_description {
 	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
-		.state = &(side_event_state__##_identifier), \
-		.provider_name = _provider, \
-		.event_name = _event, \
-		.fields = _fields, \
+		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier)), \
+		.provider_name = SIDE_PTR_INIT(_provider), \
+		.event_name = SIDE_PTR_INIT(_event), \
+		.fields = SIDE_PTR_INIT(_fields), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.flags = (_flags), \
 		.version = 0, \

@@ -1723,7 +1723,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	printf("provider: %s, event: %s", desc->provider_name, desc->event_name);
+	printf("provider: %s, event: %s", side_ptr_get(desc->provider_name), side_ptr_get(desc->event_name));
 	if (desc->nr_fields != side_sav_len) {
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments\n");
 		abort();
@@ -1732,7 +1732,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 	printf("%s", side_sav_len ? ", fields: [ " : "");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_field(&desc->fields[i], &sav[i]);
+		tracer_print_field(&side_ptr_get(desc->fields)[i], &sav[i]);
 	}
 	if (nr_items)
 		*nr_items = i;
@@ -1795,7 +1795,7 @@ void tracer_event_notification(enum side_tracer_notification notif,
 		if (!event)
 			continue;
 		printf("provider: %s, event: %s\n",
-			event->provider_name, event->event_name);
+			side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
 		if (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS) {
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
 				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL);
