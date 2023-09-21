@@ -538,12 +538,12 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 		break;
 	case SIDE_TYPE_ARRAY:
 		elem_type = side_ptr_get(enum_elem_type->u.side_array.elem_type);
-		array_item = side_ptr_get(item->u.side_static.side_array)->sav;
+		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_array)->sav);
 		nr_items = type_desc->u.side_array.length;
 		break;
 	case SIDE_TYPE_VLA:
 		elem_type = side_ptr_get(enum_elem_type->u.side_vla.elem_type);
-		array_item = side_ptr_get(item->u.side_static.side_vla)->sav;
+		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_vla)->sav);
 		nr_items = side_ptr_get(item->u.side_static.side_vla)->len;
 		break;
 	default:
@@ -1047,7 +1047,7 @@ void tracer_print_field(const struct side_event_field *item_desc, const struct s
 static
 void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
 {
-	const struct side_arg *sav = side_arg_vec->sav;
+	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	const struct side_type_struct *side_struct = side_ptr_get(type_desc->u.side_struct);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
@@ -1108,7 +1108,7 @@ void tracer_print_variant(const struct side_type *type_desc, const struct side_a
 static
 void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
 {
-	const struct side_arg *sav = side_arg_vec->sav;
+	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
 	if (type_desc->u.side_array.length != side_sav_len) {
@@ -1129,7 +1129,7 @@ void tracer_print_array(const struct side_type *type_desc, const struct side_arg
 static
 void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
 {
-	const struct side_arg *sav = side_arg_vec->sav;
+	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
 	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_vla.attr), type_desc->u.side_vla.nr_attr);
@@ -1535,7 +1535,7 @@ void tracer_print_vla_visitor(const struct side_type *type_desc, void *app_ctx)
 static
 void tracer_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_struct)
 {
-	const struct side_arg_dynamic_field *fields = dynamic_struct->fields;
+	const struct side_arg_dynamic_field *fields = side_ptr_get(dynamic_struct->fields);
 	uint32_t i, len = dynamic_struct->len;
 
 	print_attributes("attr", "::", side_ptr_get(dynamic_struct->attr), dynamic_struct->nr_attr);
@@ -1544,7 +1544,7 @@ void tracer_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_s
 	printf("[ ");
 	for (i = 0; i < len; i++) {
 		printf("%s", i ? ", " : "");
-		printf("%s:: ", fields[i].field_name);
+		printf("%s:: ", side_ptr_get(fields[i].field_name));
 		tracer_print_dynamic(&fields[i].elem);
 	}
 	printf(" ]");
@@ -1563,7 +1563,7 @@ enum side_visitor_status tracer_dynamic_struct_write_elem_cb(
 		(struct tracer_dynamic_struct_visitor_priv *) tracer_ctx->priv;
 
 	printf("%s", tracer_priv->i++ ? ", " : "");
-	printf("%s:: ", dynamic_field->field_name);
+	printf("%s:: ", side_ptr_get(dynamic_field->field_name));
 	tracer_print_dynamic(&dynamic_field->elem);
 	return SIDE_VISITOR_STATUS_OK;
 }
@@ -1599,7 +1599,7 @@ void tracer_print_dynamic_struct_visitor(const struct side_arg *item)
 static
 void tracer_print_dynamic_vla(const struct side_arg_dynamic_vla *vla)
 {
-	const struct side_arg *sav = vla->sav;
+	const struct side_arg *sav = side_ptr_get(vla->sav);
 	uint32_t i, side_sav_len = vla->len;
 
 	print_attributes("attr", "::", side_ptr_get(vla->attr), vla->nr_attr);
@@ -1697,13 +1697,13 @@ void tracer_print_dynamic(const struct side_arg *item)
 
 		/* Dynamic compound types */
 	case SIDE_TYPE_DYNAMIC_STRUCT:
-		tracer_print_dynamic_struct(item->u.side_dynamic.side_dynamic_struct);
+		tracer_print_dynamic_struct(side_ptr_get(item->u.side_dynamic.side_dynamic_struct));
 		break;
 	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
 		tracer_print_dynamic_struct_visitor(item);
 		break;
 	case SIDE_TYPE_DYNAMIC_VLA:
-		tracer_print_dynamic_vla(item->u.side_dynamic.side_dynamic_vla);
+		tracer_print_dynamic_vla(side_ptr_get(item->u.side_dynamic.side_dynamic_vla));
 		break;
 	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
 		tracer_print_dynamic_vla_visitor(item);
@@ -1720,7 +1720,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
 		uint32_t *nr_items)
 {
-	const struct side_arg *sav = side_arg_vec->sav;
+	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
 	printf("provider: %s, event: %s", desc->provider_name, desc->event_name);
@@ -1769,8 +1769,8 @@ void tracer_call_variadic(const struct side_event_description *desc,
 	printf("%s", var_struct_len ? ", fields:: [ " : "");
 	for (i = 0; i < var_struct_len; i++, nr_fields++) {
 		printf("%s", i ? ", " : "");
-		printf("%s:: ", var_struct->fields[i].field_name);
-		tracer_print_dynamic(&var_struct->fields[i].elem);
+		printf("%s:: ", side_ptr_get(side_ptr_get(var_struct->fields)[i].field_name));
+		tracer_print_dynamic(&side_ptr_get(var_struct->fields)[i].elem);
 	}
 	if (i)
 		printf(" ]");

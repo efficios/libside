@@ -553,14 +553,14 @@ union side_arg_static {
 } SIDE_PACKED;
 
 struct side_arg_dynamic_vla {
-	const struct side_arg *sav;
+	side_ptr_t(const struct side_arg) sav;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t len;
 	uint32_t nr_attr;
 } SIDE_PACKED;
 
 struct side_arg_dynamic_struct {
-	const struct side_arg_dynamic_field *fields;
+	side_ptr_t(const struct side_arg_dynamic_field) fields;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t len;
 	uint32_t nr_attr;
@@ -605,8 +605,8 @@ union side_arg_dynamic {
 	} SIDE_PACKED side_float;
 
 	/* Dynamic compound types */
-	const struct side_arg_dynamic_struct *side_dynamic_struct;
-	const struct side_arg_dynamic_vla *side_dynamic_vla;
+	side_ptr_t(const struct side_arg_dynamic_struct) side_dynamic_struct;
+	side_ptr_t(const struct side_arg_dynamic_vla) side_dynamic_vla;
 
 	struct side_dynamic_struct_visitor side_dynamic_struct_visitor;
 	struct side_dynamic_vla_visitor side_dynamic_vla_visitor;
@@ -626,12 +626,12 @@ struct side_arg_variant {
 } SIDE_PACKED;
 
 struct side_arg_vec {
-	const struct side_arg *sav;
+	side_ptr_t(const struct side_arg) sav;
 	uint32_t len;
 } SIDE_PACKED;
 
 struct side_arg_dynamic_field {
-	const char *field_name;
+	side_ptr_t(const char) field_name;
 	const struct side_arg elem;
 } SIDE_PACKED;
 
@@ -1680,7 +1680,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_DYNAMIC_VLA, \
 		.u = { \
 			.side_dynamic = { \
-				.side_dynamic_vla = (_vla), \
+				.side_dynamic_vla = SIDE_PTR_INIT(_vla), \
 			}, \
 		}, \
 	}
@@ -1705,7 +1705,7 @@ struct side_event_description {
 		.type = SIDE_TYPE_DYNAMIC_STRUCT, \
 		.u = { \
 			.side_dynamic = { \
-				.side_dynamic_struct = (_struct), \
+				.side_dynamic_struct = SIDE_PTR_INIT(_struct), \
 			}, \
 		}, \
 	}
@@ -1728,7 +1728,7 @@ struct side_event_description {
 #define side_arg_dynamic_define_vec(_identifier, _sav, _attr...) \
 	const struct side_arg _identifier##_vec[] = { _sav }; \
 	const struct side_arg_dynamic_vla _identifier = { \
-		.sav = _identifier##_vec, \
+		.sav = SIDE_PTR_INIT(_identifier##_vec), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -1737,7 +1737,7 @@ struct side_event_description {
 #define side_arg_dynamic_define_struct(_identifier, _struct_fields, _attr...) \
 	const struct side_arg_dynamic_field _identifier##_fields[] = { _struct_fields }; \
 	const struct side_arg_dynamic_struct _identifier = { \
-		.fields = _identifier##_fields, \
+		.fields = SIDE_PTR_INIT(_identifier##_fields), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_fields), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -1746,13 +1746,13 @@ struct side_event_description {
 #define side_arg_define_vec(_identifier, _sav) \
 	const struct side_arg _identifier##_vec[] = { _sav }; \
 	const struct side_arg_vec _identifier = { \
-		.sav = _identifier##_vec, \
+		.sav = SIDE_PTR_INIT(_identifier##_vec), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
 	}
 
 #define side_arg_dynamic_field(_name, _elem) \
 	{ \
-		.field_name = _name, \
+		.field_name = SIDE_PTR_INIT(_name), \
 		.elem = _elem, \
 	}
 
@@ -1771,7 +1771,7 @@ struct side_event_description {
 	{ \
 		const struct side_arg side_sav[] = { _sav }; \
 		const struct side_arg_vec side_arg_vec = { \
-			.sav = side_sav, \
+			.sav = SIDE_PTR_INIT(side_sav), \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
 		side_call(&(_identifier), &side_arg_vec); \
@@ -1785,12 +1785,12 @@ struct side_event_description {
 	{ \
 		const struct side_arg side_sav[] = { _sav }; \
 		const struct side_arg_vec side_arg_vec = { \
-			.sav = side_sav, \
+			.sav = SIDE_PTR_INIT(side_sav), \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
 		const struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
 		const struct side_arg_dynamic_struct var_struct = { \
-			.fields = side_fields, \
+			.fields = SIDE_PTR_INIT(side_fields), \
 			.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \

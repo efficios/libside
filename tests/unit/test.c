@@ -628,10 +628,9 @@ enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dy
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		struct side_arg_dynamic_field dynamic_field = {
-			.field_name = ctx->ptr[i].name,
-			.elem = side_arg_dynamic_u32(ctx->ptr[i].value),
-		};
+		struct side_arg_dynamic_field dynamic_field =
+			side_arg_dynamic_field(ctx->ptr[i].name,
+				side_arg_dynamic_u32(ctx->ptr[i].value));
 		if (tracer_ctx->write_field(tracer_ctx, &dynamic_field) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
 	}
