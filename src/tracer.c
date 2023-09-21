@@ -538,13 +538,13 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 		break;
 	case SIDE_TYPE_ARRAY:
 		elem_type = side_ptr_get(enum_elem_type->u.side_array.elem_type);
-		array_item = item->u.side_static.side_array->sav;
+		array_item = side_ptr_get(item->u.side_static.side_array)->sav;
 		nr_items = type_desc->u.side_array.length;
 		break;
 	case SIDE_TYPE_VLA:
 		elem_type = side_ptr_get(enum_elem_type->u.side_vla.elem_type);
-		array_item = item->u.side_static.side_vla->sav;
-		nr_items = item->u.side_static.side_vla->len;
+		array_item = side_ptr_get(item->u.side_static.side_vla)->sav;
+		nr_items = side_ptr_get(item->u.side_static.side_vla)->len;
 		break;
 	default:
 		fprintf(stderr, "ERROR: Unexpected enum element type\n");
@@ -952,16 +952,16 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 
 		/* Stack-copy compound types */
 	case SIDE_TYPE_STRUCT:
-		tracer_print_struct(type_desc, item->u.side_static.side_struct);
+		tracer_print_struct(type_desc, side_ptr_get(item->u.side_static.side_struct));
 		break;
 	case SIDE_TYPE_VARIANT:
-		tracer_print_variant(type_desc, item->u.side_static.side_variant);
+		tracer_print_variant(type_desc, side_ptr_get(item->u.side_static.side_variant));
 		break;
 	case SIDE_TYPE_ARRAY:
-		tracer_print_array(type_desc, item->u.side_static.side_array);
+		tracer_print_array(type_desc, side_ptr_get(item->u.side_static.side_array));
 		break;
 	case SIDE_TYPE_VLA:
-		tracer_print_vla(type_desc, item->u.side_static.side_vla);
+		tracer_print_vla(type_desc, side_ptr_get(item->u.side_static.side_vla));
 		break;
 	case SIDE_TYPE_VLA_VISITOR:
 		tracer_print_vla_visitor(type_desc, item->u.side_static.side_vla_app_visitor_ctx);
