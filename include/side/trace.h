@@ -650,19 +650,27 @@ struct side_tracer_dynamic_struct_visitor_ctx {
 	void *priv;		/* Private tracer context. */
 } SIDE_PACKED;
 
+/*
+ * This structure is _not_ packed to allow atomic operations on its
+ * fields.
+ */
+struct side_event_state {
+	uintptr_t enabled;
+	const struct side_callback *callbacks;
+	uint32_t nr_callbacks;
+};
+
 struct side_event_description {
-	uintptr_t *enabled;
+	struct side_event_state *state;
 	const char *provider_name;
 	const char *event_name;
 	const struct side_event_field *fields;
 	const struct side_attr *attr;
-	const struct side_callback *callbacks;
 	uint64_t flags;
 	uint32_t version;
 	uint32_t loglevel;	/* enum side_loglevel */
 	uint32_t nr_fields;
 	uint32_t nr_attr;
-	uint32_t nr_callbacks;
 } SIDE_PACKED;
 
 /* Event and type attributes */
@@ -1756,7 +1764,7 @@ struct side_event_description {
 #define side_arg_list(...)	__VA_ARGS__
 
 #define side_event_cond(_identifier) \
-	if (side_unlikely(__atomic_load_n(&side_event_enable__##_identifier, \
+	if (side_unlikely(__atomic_load_n(&side_event_state__##_identifier.enabled, \
 					__ATOMIC_RELAXED)))
 
 #define side_event_call(_identifier, _sav) \
@@ -1795,21 +1803,24 @@ struct side_event_description {
 		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
-	_linkage uintptr_t side_event_enable__##_identifier __attribute__((section("side_event_enable"))); \
+	_linkage struct side_event_state __attribute__((section("side_event_state"))) \
+			side_event_state__##_identifier = { \
+		.enabled = 0, \
+		.callbacks = &side_empty_callback, \
+		.nr_callbacks = 0, \
+	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
-		.enabled = &(side_event_enable__##_identifier), \
+		.state = &(side_event_state__##_identifier), \
 		.provider_name = _provider, \
 		.event_name = _event, \
 		.fields = _fields, \
 		.attr = SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()), \
-		.callbacks = &side_empty_callback, \
 		.flags = (_flags), \
 		.version = 0, \
 		.loglevel = _loglevel, \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-		.nr_callbacks = 0, \
 	}; \
 	static const struct side_event_description *side_event_ptr__##_identifier \
 		__attribute__((section("side_event_description_ptr"), used)) = &(_identifier);
@@ -1839,7 +1850,7 @@ struct side_event_description {
 			_loglevel, SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_declare_event(_identifier) \
-	extern uintptr_t side_event_enable_##_identifier; \
+	extern struct side_event_state side_event_state_##_identifier; \
 	extern struct side_event_description _identifier
 
 #ifdef __cplusplus
