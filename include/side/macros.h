@@ -32,6 +32,9 @@
 
 #define SIDE_PARAM(...)	__VA_ARGS__
 
+#define side_offsetofend(type, member) \
+	(offsetof(type, member) + sizeof(((type *)0)->member))
+
 /*
  * SIDE_PARAM_SELECT_ARG1
  *

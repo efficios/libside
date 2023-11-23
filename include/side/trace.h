@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <side/macros.h>
 #include <side/endian.h>
 
@@ -86,12 +87,12 @@
  *   over the unknown type, both at event registration and when
  *   receiving the side_call arguments.
  *
- * TODO: extend event description with new fields ?
+ * * Event descriptions can be extended by adding fields at the end of
+ *   the structure. The "struct side_event_description" is therefore a
+ *   structure with flexible size and must not be used within arrays.
  */
 
-//TODO: as those structures will be ABI, we need to either consider them
-//fixed forever, or think of a scheme that would allow their binary
-//representation to be extended if need be.
+#define SIDE_ABI_VERSION	0
 
 struct side_arg;
 struct side_arg_vec;
@@ -712,19 +713,25 @@ struct side_arg_dynamic_field {
 side_check_size(struct side_arg_dynamic_field, 16 + sizeof(const struct side_arg));
 
 struct side_event_description {
+	uint32_t struct_size;	/* Size of this structure. */
+	uint32_t version;	/* ABI version. */
+
 	side_ptr_t(struct side_event_state) state;
 	side_ptr_t(const char) provider_name;
 	side_ptr_t(const char) event_name;
 	side_ptr_t(const struct side_event_field) fields;
 	side_ptr_t(const struct side_attr) attr;
 	uint64_t flags;
-	uint32_t version;
 	uint16_t nr_side_type_label;
 	uint16_t nr_side_attr_type;
 	side_enum_t(enum side_loglevel, uint32_t) loglevel;
 	uint32_t nr_fields;
 	uint32_t nr_attr;
 	uint32_t nr_callbacks;
+#define side_event_description_orig_abi_last	nr_callbacks
+	/* End of fields supported in the original ABI. */
+
+	char end[];	/* End with a flexible array to account for extensibility. */
 } SIDE_PACKED;
 
 /*
@@ -1877,13 +1884,14 @@ struct side_event_state {
 	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
+		.struct_size = offsetof(struct side_event_description, end), \
+		.version = SIDE_ABI_VERSION, \
 		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier)), \
 		.provider_name = SIDE_PTR_INIT(_provider), \
 		.event_name = SIDE_PTR_INIT(_event), \
 		.fields = SIDE_PTR_INIT(_fields), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.flags = (_flags), \
-		.version = 0, \
 		.nr_side_type_label = _NR_SIDE_TYPE_LABEL, \
 		.nr_side_attr_type = _NR_SIDE_ATTR_TYPE, \
 		.loglevel = SIDE_ENUM_INIT(_loglevel), \
