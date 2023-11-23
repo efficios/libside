@@ -138,6 +138,7 @@
 		_type v[16 / __SIZEOF_POINTER__];		\
 	}
 
+/* side_ptr_get() can be used as rvalue or lvalue. */
 #define side_ptr_get(_field)	(_field).v[SIDE_U128_PTR_IDX(0)]
 
 #if (__SIZEOF_POINTER__ == 4)
