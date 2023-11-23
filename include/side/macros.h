@@ -117,12 +117,6 @@
 		"Unexpected size for type: `" #_type "`",	\
 		unexpected_size_for_type_##_type)
 
-#if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
-#define SIDE_ENDIAN_ORDER(_low, _high)		_low, _high
-#else
-#define SIDE_ENDIAN_ORDER(_low, _high)		_high, _low
-#endif
-
 /*
  * The side_ptr macros allow defining a pointer type which is suitable
  * for use by 32-bit, 64-bit and 128-bit kernels without compatibility
@@ -132,23 +126,27 @@
  * actual pointer is kept alongside with the 128-bit pointer value in a
  * 0-len array within a union.
  */
-#if (__SIZEOF_POINTER__ <= 8)
-# define side_raw_ptr_t(_type)					\
+
+#if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
+# define SIDE_U128_PTR_IDX(n)	(n)
+#else
+# define SIDE_U128_PTR_IDX(n)	((16 / __SIZEOF_POINTER__) - (n) - 1)
+#endif
+
+#define side_raw_ptr_t(_type)					\
 	union {							\
-		struct {					\
-			uint64_t SIDE_ENDIAN_ORDER(low, high);	\
-		} v;						\
-		struct {					\
-			_type t[0];				\
-		} SIDE_PACKED s;				\
-		side_padding(16);				\
+		_type v[16 / __SIZEOF_POINTER__];		\
 	}
-# define side_ptr_get(_field)					\
-	((__typeof__((_field).s.t[0]))(uintptr_t)(_field).v.low)
+
+#define side_ptr_get(_field)	(_field).v[SIDE_U128_PTR_IDX(0)]
+
+#if (__SIZEOF_POINTER__ == 4)
 # define side_ptr_set(_field, _ptr)				\
 	do {							\
-		(_field).v.low = (uint64_t)(uintptr_t)(_ptr);	\
-		(_field).v.high = 0;				\
+		(_field).v[SIDE_U128_PTR_IDX(0)] = (_ptr);	\
+		(_field).v[SIDE_U128_PTR_IDX(1)] = 0;		\
+		(_field).v[SIDE_U128_PTR_IDX(2)] = 0;		\
+		(_field).v[SIDE_U128_PTR_IDX(3)] = 0;		\
 	} while (0)
 
 /* Keep the correct field init order to make old g++ happy. */
@@ -156,35 +154,60 @@
 #  define SIDE_PTR_INIT(...)					\
 	{							\
 		.v = {						\
-			.low = (uintptr_t) (__VA_ARGS__),	\
-			.high = 0,				\
+			[0] = (__VA_ARGS__),			\
+			[1] = 0,				\
+			[2] = 0,				\
+			[3] = 0,				\
 		},						\
 	}
 # else
 #  define SIDE_PTR_INIT(...)					\
 	{							\
 		.v = {						\
-			.high = 0,				\
-			.low = (uintptr_t) (__VA_ARGS__),	\
+			[0] = 0,				\
+			[1] = 0,				\
+			[2] = 0,				\
+			[3] = (__VA_ARGS__),			\
+		},						\
+	}
+# endif
+#elif (__SIZEOF_POINTER__ == 8)
+# define side_ptr_set(_field, _ptr)				\
+	do {							\
+		(_field).v[SIDE_U128_PTR_IDX(0)] = (_ptr);	\
+		(_field).v[SIDE_U128_PTR_IDX(1)] = 0;		\
+	} while (0)
+
+/* Keep the correct field init order to make old g++ happy. */
+# if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
+#  define SIDE_PTR_INIT(...)					\
+	{							\
+		.v = {						\
+			[0] = (__VA_ARGS__),			\
+			[1] = 0,				\
+		},						\
+	}
+# else
+#  define SIDE_PTR_INIT(...)					\
+	{							\
+		.v = {						\
+			[0] = 0,				\
+			[1] = (__VA_ARGS__),			\
 		},						\
 	}
 # endif
 #elif (__SIZEOF_POINTER__ == 16)
-# define side_raw_ptr_t(_type)					\
-	union {							\
-		uintptr_t v;					\
-		struct {					\
-			_type t[0];				\
-		} SIDE_PACKED s;				\
-		side_padding(16);				\
-	}
-# define side_ptr_get(_field)					\
-	((__typeof__((_field).s.t[0]))(_field).v)
 # define side_ptr_set(_field, _ptr)				\
 	do {							\
-		(_field).v = (uintptr_t)(_ptr);			\
+		(_field).v[SIDE_U128_PTR_IDX(0)] = (_ptr);	\
 	} while (0)
-# define SIDE_PTR_INIT(...)	{ .v = (uintptr_t) (__VA_ARGS__) }
+
+# define SIDE_PTR_INIT(...)					\
+	{							\
+		.v = {						\
+			[0] = (__VA_ARGS__),			\
+		},						\
+	}
 #else
 # error "Unsupported pointer size"
 #endif
