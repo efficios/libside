@@ -18,11 +18,11 @@
 /*
  * SIDE stands for "Software Instrumentation Dynamically Enabled"
  *
- * This is an instrumentation API for Linux user-space, which exposes an
+ * This is an instrumentation ABI for Linux user-space, which exposes an
  * instrumentation type system and facilities allowing a kernel or
  * user-space tracer to consume user-space instrumentation.
  *
- * This instrumentation API exposes 3 type systems:
+ * This instrumentation ABI exposes 3 type systems:
  *
  * * Stack-copy type system: This is the core type system which can
  *   represent all supported types and into which all other type systems
@@ -65,6 +65,28 @@
  *   Those dynamic types can be either used as arguments to a variadic
  *   field list, or as on-stack instrumentation argument for a static
  *   type SIDE_TYPE_DYNAMIC place holder in the stack-copy type system.
+ *
+ * The extensibility scheme for the SIDE ABI is as follows:
+ *
+ * * Existing field types are never changed nor extended. Field types
+ *   can be added to the ABI by reserving a label within
+ *   enum side_type_label.
+ * * Existing attribute types are never changed nor extended. Attribute
+ *   types can be added to the ABI by reserving a label within
+ *   enum side_attr_type.
+ * * Each union part of the ABI has an explicit side defined by a
+ *   side_padding() member. Each structure and union have a static
+ *   assert validating its size.
+ *
+ * Handling of unknown types by the tracers:
+ *
+ * * A tracer may choose to support only a subset of the types supported
+ *   by libside. When encountering an unknown or unsupported type, the
+ *   tracer has the option to either disallow the entire event or skip
+ *   over the unknown type, both at event registration and when
+ *   receiving the side_call arguments.
+ *
+ * TODO: extend event description with new fields ?
  */
 
 //TODO: as those structures will be ABI, we need to either consider them
@@ -85,6 +107,7 @@ struct side_arg_dynamic_struct;
 struct side_events_register_handle;
 struct side_arg_variant;
 struct side_event_state;
+struct side_callback;
 
 enum side_type_label {
 	/* Stack-copy basic types */
@@ -226,6 +249,12 @@ typedef enum side_visitor_status (*side_visitor_func)(
 typedef enum side_visitor_status (*side_dynamic_struct_visitor_func)(
 		const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
 		void *app_ctx);
+typedef enum side_visitor_status (*side_write_elem_func)(
+		const struct side_tracer_visitor_ctx *tracer_ctx,
+		const struct side_arg *elem);
+typedef enum side_visitor_status (*side_write_field_func)(
+		const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
+		const struct side_arg_dynamic_field *dynamic_field);
 
 union side_integer_value {
 	uint8_t side_u8;
@@ -237,14 +266,18 @@ union side_integer_value {
 	int32_t side_s32;
 	int64_t side_s64;
 	uintptr_t side_uptr;
+	side_padding(32);
 } SIDE_PACKED;
+side_check_size(union side_integer_value, 32);
 
 union side_bool_value {
 	uint8_t side_bool8;
 	uint16_t side_bool16;
 	uint32_t side_bool32;
 	uint64_t side_bool64;
+	side_padding(32);
 } SIDE_PACKED;
+side_check_size(union side_bool_value, 32);
 
 union side_float_value {
 #if __HAVE_FLOAT16
@@ -259,13 +292,16 @@ union side_float_value {
 #if __HAVE_FLOAT128
 	_Float128 side_float_binary128;
 #endif
+	side_padding(32);
 } SIDE_PACKED;
+side_check_size(union side_float_value, 32);
 
 struct side_type_raw_string {
 	side_ptr_t(const void) p;	/* pointer to string */
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
+side_check_size(struct side_type_raw_string, 18);
 
 struct side_attr_value {
 	side_enum_t(enum side_attr_type, uint32_t) type;
@@ -274,20 +310,24 @@ struct side_attr_value {
 		struct side_type_raw_string string_value;
 		union side_integer_value integer_value;
 		union side_float_value float_value;
+		side_padding(32);
 	} SIDE_PACKED u;
 };
+side_check_size(struct side_attr_value, 36);
 
 /* User attributes. */
 struct side_attr {
 	const struct side_type_raw_string key;
 	const struct side_attr_value value;
 } SIDE_PACKED;
+side_check_size(struct side_attr, 54);
 
 /* Type descriptions */
 struct side_type_null {
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_type_null, 20);
 
 struct side_type_bool {
 	side_ptr_t(const struct side_attr) attr;
@@ -296,11 +336,13 @@ struct side_type_bool {
 	uint16_t len_bits;		/* bits. 0 for (bool_size * CHAR_BITS) */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
+side_check_size(struct side_type_bool, 25);
 
 struct side_type_byte {
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_type_byte, 20);
 
 struct side_type_string {
 	side_ptr_t(const struct side_attr) attr;
@@ -308,6 +350,7 @@ struct side_type_string {
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
+side_check_size(struct side_type_string, 22);
 
 struct side_type_integer {
 	side_ptr_t(const struct side_attr) attr;
@@ -317,6 +360,7 @@ struct side_type_integer {
 	uint8_t signedness;		/* true/false */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
+side_check_size(struct side_type_integer, 26);
 
 struct side_type_float {
 	side_ptr_t(const struct side_attr) attr;
@@ -324,12 +368,14 @@ struct side_type_float {
 	uint16_t float_size;		/* bytes */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
+side_check_size(struct side_type_float, 23);
 
 struct side_enum_mapping {
 	int64_t range_begin;
 	int64_t range_end;
 	struct side_type_raw_string label;
 } SIDE_PACKED;
+side_check_size(struct side_enum_mapping, 16 + sizeof(struct side_type_raw_string));
 
 struct side_enum_mappings {
 	side_ptr_t(const struct side_enum_mapping) mappings;
@@ -337,12 +383,14 @@ struct side_enum_mappings {
 	uint32_t nr_mappings;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_enum_mappings, 40);
 
 struct side_enum_bitmap_mapping {
 	uint64_t range_begin;
 	uint64_t range_end;
 	struct side_type_raw_string label;
 } SIDE_PACKED;
+side_check_size(struct side_enum_bitmap_mapping, 16 + sizeof(struct side_type_raw_string));
 
 struct side_enum_bitmap_mappings {
 	side_ptr_t(const struct side_enum_bitmap_mapping) mappings;
@@ -350,6 +398,7 @@ struct side_enum_bitmap_mappings {
 	uint32_t nr_mappings;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_enum_bitmap_mappings, 40);
 
 struct side_type_struct {
 	side_ptr_t(const struct side_event_field) fields;
@@ -357,6 +406,7 @@ struct side_type_struct {
 	uint32_t nr_fields;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_type_struct, 40);
 
 struct side_type_array {
 	side_ptr_t(const struct side_type) elem_type;
@@ -364,87 +414,100 @@ struct side_type_array {
 	uint32_t length;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_type_array, 40);
 
 struct side_type_vla {
 	side_ptr_t(const struct side_type) elem_type;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_type_vla, 36);
 
 struct side_type_vla_visitor {
 	side_ptr_t(const struct side_type) elem_type;
-	side_visitor_func visitor;
+	side_func_ptr_t(side_visitor_func) visitor;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_type_vla_visitor, 52);
 
 struct side_type_enum {
 	side_ptr_t(const struct side_enum_mappings) mappings;
 	side_ptr_t(const struct side_type) elem_type;
 } SIDE_PACKED;
+side_check_size(struct side_type_enum, 32);
 
 struct side_type_enum_bitmap {
 	side_ptr_t(const struct side_enum_bitmap_mappings) mappings;
 	side_ptr_t(const struct side_type) elem_type;
 } SIDE_PACKED;
+side_check_size(struct side_type_enum_bitmap, 32);
 
 struct side_type_gather_bool {
 	uint64_t offset;	/* bytes */
+	uint16_t offset_bits;	/* bits */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
 	struct side_type_bool type;
-	uint16_t offset_bits;	/* bits */
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_bool, 11 + sizeof(struct side_type_bool));
 
 struct side_type_gather_byte {
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
 	struct side_type_byte type;
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_byte, 9 + sizeof(struct side_type_byte));
 
 struct side_type_gather_integer {
 	uint64_t offset;	/* bytes */
+	uint16_t offset_bits;	/* bits */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
 	struct side_type_integer type;
-	uint16_t offset_bits;	/* bits */
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_integer, 11 + sizeof(struct side_type_integer));
 
 struct side_type_gather_float {
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
 	struct side_type_float type;
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_float, 9 + sizeof(struct side_type_float));
 
 struct side_type_gather_string {
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
 	struct side_type_string type;
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_string, 9 + sizeof(struct side_type_string));
 
 struct side_type_gather_enum {
 	side_ptr_t(const struct side_enum_mappings) mappings;
 	side_ptr_t(const struct side_type) elem_type;
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_enum, 32);
 
 struct side_type_gather_struct {
+	side_ptr_t(const struct side_type_struct) type;
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
-	side_ptr_t(const struct side_type_struct) type;
 	uint32_t size;		/* bytes */
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_struct, 29);
 
 struct side_type_gather_array {
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
 	struct side_type_array type;
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_array, 9 + sizeof(struct side_type_array));
 
 struct side_type_gather_vla {
 	side_ptr_t(const struct side_type) length_type;	/* side_length() */
-
 	uint64_t offset;	/* bytes */
 	uint8_t access_mode;	/* enum side_type_gather_access_mode */
 	struct side_type_vla type;
 } SIDE_PACKED;
+side_check_size(struct side_type_gather_vla, 25 + sizeof(struct side_type_vla));
 
 struct side_type_gather {
 	union {
@@ -457,11 +520,13 @@ struct side_type_gather {
 		struct side_type_gather_array side_array;
 		struct side_type_gather_vla side_vla;
 		struct side_type_gather_struct side_struct;
+		side_padding(61);
 	} SIDE_PACKED u;
 } SIDE_PACKED;
+side_check_size(struct side_type_gather, 61);
 
 struct side_type {
-	side_enum_t(enum side_type_label, uint32_t) type;
+	side_enum_t(enum side_type_label, uint16_t) type;
 	union {
 		/* Stack-copy basic types */
 		struct side_type_null side_null;
@@ -484,44 +549,36 @@ struct side_type {
 
 		/* Gather types */
 		struct side_type_gather side_gather;
+		side_padding(62);
 	} SIDE_PACKED u;
 } SIDE_PACKED;
+side_check_size(struct side_type, 64);
 
 struct side_variant_option {
 	int64_t range_begin;
 	int64_t range_end;
 	const struct side_type side_type;
 } SIDE_PACKED;
+side_check_size(struct side_variant_option, 16 + sizeof(const struct side_type));
 
 struct side_type_variant {
-	const struct side_type selector;
 	side_ptr_t(const struct side_variant_option) options;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_options;
 	uint32_t nr_attr;
+	const struct side_type selector;
 } SIDE_PACKED;
+side_check_size(struct side_type_variant, 40 + sizeof(const struct side_type));
 
 struct side_event_field {
 	side_ptr_t(const char) field_name;
 	struct side_type side_type;
 } SIDE_PACKED;
+side_check_size(struct side_event_field, 16 + sizeof(struct side_type));
 
 enum side_event_flags {
 	SIDE_EVENT_FLAG_VARIADIC = (1 << 0),
 };
-
-struct side_callback {
-	union {
-		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			void *priv);
-		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			const struct side_arg_dynamic_struct *var_struct,
-			void *priv);
-	} SIDE_PACKED u;
-	void *priv;
-} SIDE_PACKED;
 
 union side_arg_static {
 	/* Stack-copy basic types */
@@ -552,7 +609,9 @@ union side_arg_static {
 		side_ptr_t(const void) ptr;
 		side_ptr_t(const void) length_ptr;
 	} SIDE_PACKED side_vla_gather;
+	side_padding(32);
 } SIDE_PACKED;
+side_check_size(union side_arg_static, 32);
 
 struct side_arg_dynamic_vla {
 	side_ptr_t(const struct side_arg) sav;
@@ -560,6 +619,7 @@ struct side_arg_dynamic_vla {
 	uint32_t len;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_arg_dynamic_vla, 40);
 
 struct side_arg_dynamic_struct {
 	side_ptr_t(const struct side_arg_dynamic_field) fields;
@@ -567,20 +627,23 @@ struct side_arg_dynamic_struct {
 	uint32_t len;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_arg_dynamic_struct, 40);
 
 struct side_dynamic_struct_visitor {
-	void *app_ctx;
-	side_dynamic_struct_visitor_func visitor;
+	side_func_ptr_t(side_dynamic_struct_visitor_func) visitor;
+	side_ptr_t(void) app_ctx;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_dynamic_struct_visitor, 52);
 
 struct side_dynamic_vla_visitor {
-	void *app_ctx;
-	side_visitor_func visitor;
+	side_func_ptr_t(side_visitor_func) visitor;
+	side_ptr_t(void) app_ctx;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
+side_check_size(struct side_dynamic_vla_visitor, 52);
 
 union side_arg_dynamic {
 	/* Dynamic basic types */
@@ -612,45 +675,38 @@ union side_arg_dynamic {
 
 	struct side_dynamic_struct_visitor side_dynamic_struct_visitor;
 	struct side_dynamic_vla_visitor side_dynamic_vla_visitor;
+
+	side_padding(58);
 } SIDE_PACKED;
+side_check_size(union side_arg_dynamic, 58);
 
 struct side_arg {
-	side_enum_t(enum side_type_label, uint32_t) type;
+	side_enum_t(enum side_type_label, uint16_t) type;
 	union {
 		union side_arg_static side_static;
 		union side_arg_dynamic side_dynamic;
+		side_padding(62);
 	} SIDE_PACKED u;
 } SIDE_PACKED;
+side_check_size(struct side_arg, 64);
 
 struct side_arg_variant {
 	struct side_arg selector;
 	struct side_arg option;
 } SIDE_PACKED;
+side_check_size(struct side_arg_variant, 128);
 
 struct side_arg_vec {
 	side_ptr_t(const struct side_arg) sav;
 	uint32_t len;
 } SIDE_PACKED;
+side_check_size(struct side_arg_vec, 20);
 
 struct side_arg_dynamic_field {
 	side_ptr_t(const char) field_name;
 	const struct side_arg elem;
 } SIDE_PACKED;
-
-/* The visitor pattern is a double-dispatch visitor. */
-struct side_tracer_visitor_ctx {
-	enum side_visitor_status (*write_elem)(
-			const struct side_tracer_visitor_ctx *tracer_ctx,
-			const struct side_arg *elem);
-	void *priv;		/* Private tracer context. */
-} SIDE_PACKED;
-
-struct side_tracer_dynamic_struct_visitor_ctx {
-	enum side_visitor_status (*write_field)(
-			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-			const struct side_arg_dynamic_field *dynamic_field);
-	void *priv;		/* Private tracer context. */
-} SIDE_PACKED;
+side_check_size(struct side_arg_dynamic_field, 16 + sizeof(const struct side_arg));
 
 struct side_event_description {
 	side_ptr_t(struct side_event_state) state;
@@ -1100,7 +1156,7 @@ struct side_event_state {
 		.u = { \
 			.side_vla_visitor = { \
 				.elem_type = SIDE_PTR_INIT(_elem_type), \
-				.visitor = _visitor, \
+				.visitor = SIDE_PTR_INIT(_visitor), \
 				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
@@ -1694,8 +1750,8 @@ struct side_event_state {
 		.u = { \
 			.side_dynamic = { \
 				.side_dynamic_vla_visitor = { \
-					.app_ctx = _ctx, \
-					.visitor = _dynamic_vla_visitor, \
+					.app_ctx = SIDE_PTR_INIT(_ctx), \
+					.visitor = SIDE_PTR_INIT(_dynamic_vla_visitor), \
 					.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				}, \
@@ -1719,8 +1775,8 @@ struct side_event_state {
 		.u = { \
 			.side_dynamic = { \
 				.side_dynamic_struct_visitor = { \
-					.app_ctx = _ctx, \
-					.visitor = _dynamic_struct_visitor, \
+					.app_ctx = SIDE_PTR_INIT(_ctx), \
+					.visitor = SIDE_PTR_INIT(_dynamic_struct_visitor), \
 					.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				}, \
@@ -1862,6 +1918,30 @@ struct side_event_state {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct side_callback {
+	union {
+		void (*call)(const struct side_event_description *desc,
+			const struct side_arg_vec *side_arg_vec,
+			void *priv);
+		void (*call_variadic)(const struct side_event_description *desc,
+			const struct side_arg_vec *side_arg_vec,
+			const struct side_arg_dynamic_struct *var_struct,
+			void *priv);
+	} SIDE_PACKED u;
+	void *priv;
+} SIDE_PACKED;
+
+/* The visitor pattern is a double-dispatch visitor. */
+struct side_tracer_visitor_ctx {
+	side_write_elem_func write_elem;
+	void *priv;		/* Private tracer context. */
+} SIDE_PACKED;
+
+struct side_tracer_dynamic_struct_visitor_ctx {
+	side_write_field_func write_field;
+	void *priv;		/* Private tracer context. */
+} SIDE_PACKED;
 
 extern const struct side_callback side_empty_callback;
 

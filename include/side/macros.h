@@ -8,6 +8,8 @@
 
 #include <stddef.h>
 #include <limits.h>
+#include <stdint.h>
+#include <side/endian.h>
 
 /* Helper macros */
 
@@ -55,6 +57,38 @@
 #define SIDE_PARAM_SELECT_ARG1(_arg0, _arg1, ...) _arg1
 
 /*
+ * Compile time assertion.
+ * - predicate: boolean expression to evaluate,
+ * - msg: string to print to the user on failure when `static_assert()` is
+ *   supported,
+ * - c_identifier_msg: message to be included in the typedef to emulate a
+ *   static assertion. This parameter must be a valid C identifier as it will
+ *   be used as a typedef name.
+ */
+#ifdef __cplusplus
+#define side_static_assert(predicate, msg, c_identifier_msg)  \
+	static_assert(predicate, msg)
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define side_static_assert(predicate, msg, c_identifier_msg)  \
+	_Static_assert(predicate, msg)
+#else
+/*
+ * Evaluates the predicate and emit a compilation error on failure.
+ *
+ * If the predicate evaluates to true, this macro emits a function
+ * prototype with an argument type which is an array of size 0.
+ *
+ * If the predicate evaluates to false, this macro emits a function
+ * prototype with an argument type which is an array of negative size
+ * which is invalid in C and forces a compiler error. The
+ * c_identifier_msg parameter is used as the argument identifier so it
+ * is printed to the user when the error is reported.
+ */
+#define side_static_assert(predicate, msg, c_identifier_msg)  \
+	void side_static_assert_proto(char c_identifier_msg[2*!!(predicate)-1])
+#endif
+
+/*
  * side_container_of - Get the address of an object containing a field.
  *
  * @ptr: pointer to the field.
@@ -71,57 +105,93 @@
 #define side_struct_field_sizeof(_struct, _field) \
 	sizeof(((_struct * )NULL)->_field)
 
-#if defined(__SIZEOF_LONG__)
-# define SIDE_BITS_PER_LONG	(__SIZEOF_LONG__ * 8)
-#elif defined(_LP64)
-# define SIDE_BITS_PER_LONG	64
-#else
-# define SIDE_BITS_PER_LONG	32
-#endif
-
 #define SIDE_PACKED	__attribute__((packed))
+
+#define side_padding(bytes)	char padding[bytes]
+
+#define side_check_size(_type, _len)				\
+	side_static_assert(sizeof(_type) == (_len),		\
+		"Unexpected size for type: `" #_type "`",	\
+		unexpected_size_for_type_##_type)
+
+#if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
+#define SIDE_ENDIAN_ORDER(_low, _high)		_low, _high
+#else
+#define SIDE_ENDIAN_ORDER(_low, _high)		_high, _low
+#endif
 
 /*
  * The side_ptr macros allow defining a pointer type which is suitable
- * for use by 32-bit and 64-bit kernels without compatibility code,
- * while preserving information about the pointer type.
+ * for use by 32-bit, 64-bit and 128-bit kernels without compatibility
+ * code, while preserving information about the pointer type.
  *
- * Those pointers are stored as 64-bit integers, and the type of the
- * actual pointer is kept alongside with the 64-bit pointer value in a
+ * Those pointers are stored as 128-bit integers, and the type of the
+ * actual pointer is kept alongside with the 128-bit pointer value in a
  * 0-len array within a union.
- *
- * uintptr_t will fit within a uint64_t except on architectures with
- * 128-bit pointers. This provides fixed-size pointers on architectures
- * with pointer size of 64-bit or less. Architectures with larger
- * pointer size will have to handle the ABI offset specifics explicitly.
  */
 #if (__SIZEOF_POINTER__ <= 8)
-# define side_ptr_t(_type)					\
+# define side_raw_ptr_t(_type)					\
 	union {							\
-		uint64_t v;					\
-		_type *t[0];					\
+		struct {					\
+			uint64_t SIDE_ENDIAN_ORDER(low, high);	\
+		} v;						\
+		struct {					\
+			_type t[0];				\
+		} SIDE_PACKED s;				\
+		side_padding(16);				\
 	}
 # define side_ptr_get(_field)					\
-	((__typeof__((_field).t[0]))(uintptr_t)(_field).v)
+	((__typeof__((_field).s.t[0]))(uintptr_t)(_field).v.low)
 # define side_ptr_set(_field, _ptr)				\
 	do {							\
-		(_field).v = (uint64_t)(uintptr_t)(_ptr);	\
+		(_field).v.low = (uint64_t)(uintptr_t)(_ptr);	\
+		(_field).v.high = 0;				\
 	} while (0)
-#else
-# define side_ptr_t(_type)					\
+
+/* Keep the correct field init order to make old g++ happy. */
+# if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
+#  define SIDE_PTR_INIT(...)					\
+	{							\
+		.v = {						\
+			.low = (uintptr_t) (__VA_ARGS__),	\
+			.high = 0,				\
+		},						\
+	}
+# else
+#  define SIDE_PTR_INIT(...)					\
+	{							\
+		.v = {						\
+			.high = 0,				\
+			.low = (uintptr_t) (__VA_ARGS__),	\
+		},						\
+	}
+# endif
+#elif (__SIZEOF_POINTER__ == 16)
+# define side_raw_ptr_t(_type)					\
 	union {							\
 		uintptr_t v;					\
-		_type *t[0];					\
+		struct {					\
+			_type t[0];				\
+		} SIDE_PACKED s;				\
+		side_padding(16);				\
 	}
 # define side_ptr_get(_field)					\
-	((__typeof__((_field).t[0]))(_field).v)
+	((__typeof__((_field).s.t[0]))(_field).v)
 # define side_ptr_set(_field, _ptr)				\
 	do {							\
 		(_field).v = (uintptr_t)(_ptr);			\
 	} while (0)
+# define SIDE_PTR_INIT(...)	{ .v = (uintptr_t) (__VA_ARGS__) }
+#else
+# error "Unsupported pointer size"
 #endif
 
-#define SIDE_PTR_INIT(...)	{ .v = (uintptr_t) (__VA_ARGS__) }
+#define side_ptr_t(_type)	side_raw_ptr_t(_type *)
+#define side_func_ptr_t(_type)	side_raw_ptr_t(_type)
+
+side_static_assert(sizeof(side_ptr_t(int)) == 16,
+	"Unexpected size for side_ptr_t",
+	unexpected_size_side_ptr_t);
 
 /*
  * side_enum_t allows defining fixed-sized enumerations while preserving
@@ -130,11 +200,13 @@
 #define side_enum_t(_enum_type, _size_type)			\
 	union {							\
 		_size_type v;					\
-		_enum_type t[0];				\
+		struct {					\
+			_enum_type t[0];			\
+		} SIDE_PACKED s;				\
 	}
 
 #define side_enum_get(_field)					\
-	((__typeof__((_field).t[0]))(_field).v)
+	((__typeof__((_field).s.t[0]))(_field).v)
 
 #define side_enum_set(_field, _v)				\
 	do {							\

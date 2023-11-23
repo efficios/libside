@@ -29,8 +29,15 @@
 #ifndef _SIDE_ENDIAN_H
 #define _SIDE_ENDIAN_H
 
-#include <side/macros.h>
 #include <math.h>
+
+#if defined(__SIZEOF_LONG__)
+# define SIDE_BITS_PER_LONG	(__SIZEOF_LONG__ * 8)
+#elif defined(_LP64)
+# define SIDE_BITS_PER_LONG	64
+#else
+# define SIDE_BITS_PER_LONG	32
+#endif
 
 #if (defined(__linux__) || defined(__CYGWIN__))
 #include <endian.h>
