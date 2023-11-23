@@ -88,8 +88,9 @@
  *   receiving the side_call arguments.
  *
  * * Event descriptions can be extended by adding fields at the end of
- *   the structure. The "struct side_event_description" is therefore a
- *   structure with flexible size and must not be used within arrays.
+ *   the structure. The "struct side_event_description" and "struct
+ *   side_event_state" are therefore structures with flexible size and
+ *   must not be used within arrays.
  */
 
 #define SIDE_ABI_VERSION	0
@@ -739,9 +740,12 @@ struct side_event_description {
  * fields.
  */
 struct side_event_state {
-	uintptr_t enabled;
-	const struct side_callback *callbacks;
-	struct side_event_description *desc;
+	uint32_t struct_size;	/* Size of this structure. */
+	uint32_t enabled;
+	side_ptr_t(const struct side_callback) callbacks;
+	side_ptr_t(struct side_event_description) desc;
+
+	char end[];	/* End with a flexible array to account for extensibility. */
 };
 
 /* Event and type attributes */
@@ -1878,9 +1882,10 @@ struct side_event_state {
 			_identifier; \
 	_linkage struct side_event_state __attribute__((section("side_event_state"))) \
 			side_event_state__##_identifier = { \
+		.struct_size = offsetof(struct side_event_state, end), \
 		.enabled = 0, \
-		.callbacks = &side_empty_callback, \
-		.desc = &(_identifier), \
+		.callbacks = SIDE_PTR_INIT(&side_empty_callback), \
+		.desc = SIDE_PTR_INIT(&(_identifier)), \
 	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
