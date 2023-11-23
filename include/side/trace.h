@@ -175,6 +175,8 @@ enum side_type_label {
 	SIDE_TYPE_DYNAMIC_STRUCT_VISITOR,
 	SIDE_TYPE_DYNAMIC_VLA,
 	SIDE_TYPE_DYNAMIC_VLA_VISITOR,
+
+	_NR_SIDE_TYPE_LABEL,	/* Last entry. */
 };
 
 enum side_attr_type {
@@ -193,6 +195,8 @@ enum side_attr_type {
 	SIDE_ATTR_TYPE_FLOAT_BINARY64,
 	SIDE_ATTR_TYPE_FLOAT_BINARY128,
 	SIDE_ATTR_TYPE_STRING,
+
+	_NR_SIDE_ATTR_TYPE,	/* Last entry. */
 };
 
 enum side_loglevel {
@@ -715,6 +719,8 @@ struct side_event_description {
 	side_ptr_t(const struct side_attr) attr;
 	uint64_t flags;
 	uint32_t version;
+	uint16_t nr_side_type_label;
+	uint16_t nr_side_attr_type;
 	side_enum_t(enum side_loglevel, uint32_t) loglevel;
 	uint32_t nr_fields;
 	uint32_t nr_attr;
@@ -1878,6 +1884,8 @@ struct side_event_state {
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.flags = (_flags), \
 		.version = 0, \
+		.nr_side_type_label = _NR_SIDE_TYPE_LABEL, \
+		.nr_side_attr_type = _NR_SIDE_ATTR_TYPE, \
 		.loglevel = SIDE_ENUM_INIT(_loglevel), \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
