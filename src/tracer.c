@@ -1797,15 +1797,20 @@ void tracer_event_notification(enum side_tracer_notification notif,
 		/* Skip NULL pointers */
 		if (!event)
 			continue;
-		if (event->version != SIDE_ABI_VERSION) {
-			printf("Error: event SIDE ABI version (%u) does not match the SIDE ABI version supported by the tracer (%u)\n",
-				event->version, SIDE_ABI_VERSION);
+		if (event->version != SIDE_EVENT_DESCRIPTION_ABI_VERSION) {
+			printf("Error: event description ABI version (%u) does not match the version supported by the tracer (%u)\n",
+				event->version, SIDE_EVENT_DESCRIPTION_ABI_VERSION);
+				return;
+		}
+		if (side_ptr_get(event->state)->version != SIDE_EVENT_STATE_ABI_VERSION) {
+			printf("Error: event state ABI version (%u) does not match the version supported by the tracer (%u)\n",
+				side_ptr_get(event->state)->version, SIDE_EVENT_STATE_ABI_VERSION);
 				return;
 		}
 		printf("provider: %s, event: %s\n",
 			side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
 		if (event->struct_size != side_offsetofend(struct side_event_description, side_event_description_orig_abi_last)) {
-			printf("Warning: Event %s.%s contains fields unknown to the tracer\n",
+			printf("Warning: Event %s.%s description contains fields unknown to the tracer\n",
 				side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
 		}
 		if (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS) {

@@ -75,9 +75,17 @@
  * * Existing attribute types are never changed nor extended. Attribute
  *   types can be added to the ABI by reserving a label within
  *   enum side_attr_type.
- * * Each union part of the ABI has an explicit side defined by a
+ * * Each union part of the ABI has an explicit size defined by a
  *   side_padding() member. Each structure and union have a static
  *   assert validating its size.
+ * * If the semantic of the existing event description or type fields
+ *   change, the SIDE_EVENT_DESCRIPTION_ABI_VERSION should be increased.
+ * * If the semantic of the "struct side_event_state_N" fields change,
+ *   the SIDE_EVENT_STATE_ABI_VERSION should be increased. The
+ *   "struct side_event_state_N" is not extensible and must have its
+ *   ABI version increased whenever it is changed. Note that increasing
+ *   the version of SIDE_EVENT_DESCRIPTION_ABI_VERSION is not necessary
+ *   when changing the layout of "struct side_event_state_N".
  *
  * Handling of unknown types by the tracers:
  *
@@ -88,12 +96,12 @@
  *   receiving the side_call arguments.
  *
  * * Event descriptions can be extended by adding fields at the end of
- *   the structure. The "struct side_event_description" and "struct
- *   side_event_state" are therefore structures with flexible size and
- *   must not be used within arrays.
+ *   the structure. The "struct side_event_description" is a structure
+ *   with flexible size which must not be used within arrays.
  */
 
-#define SIDE_ABI_VERSION	0
+#define SIDE_EVENT_DESCRIPTION_ABI_VERSION	0
+#define SIDE_EVENT_STATE_ABI_VERSION		0
 
 struct side_arg;
 struct side_arg_vec;
@@ -108,7 +116,7 @@ struct side_event_description;
 struct side_arg_dynamic_struct;
 struct side_events_register_handle;
 struct side_arg_variant;
-struct side_event_state;
+struct side_event_state_0;
 struct side_callback;
 
 enum side_type_label {
@@ -715,7 +723,7 @@ side_check_size(struct side_arg_dynamic_field, 16 + sizeof(const struct side_arg
 
 struct side_event_description {
 	uint32_t struct_size;	/* Size of this structure. */
-	uint32_t version;	/* ABI version. */
+	uint32_t version;	/* Event description ABI version. */
 
 	side_ptr_t(struct side_event_state) state;
 	side_ptr_t(const char) provider_name;
@@ -729,7 +737,7 @@ struct side_event_description {
 	uint32_t nr_fields;
 	uint32_t nr_attr;
 	uint32_t nr_callbacks;
-#define side_event_description_orig_abi_last	nr_callbacks
+#define side_event_description_orig_abi_last nr_callbacks
 	/* End of fields supported in the original ABI. */
 
 	char end[];	/* End with a flexible array to account for extensibility. */
@@ -737,15 +745,20 @@ struct side_event_description {
 
 /*
  * This structure is _not_ packed to allow atomic operations on its
- * fields.
+ * fields. Changes to this structure must bump the "Event state ABI
+ * version" and tracers _must_ learn how to deal with this ABI,
+ * otherwise they should reject the event.
  */
+
 struct side_event_state {
-	uint32_t struct_size;	/* Size of this structure. */
+	uint32_t version;	/* Event state ABI version. */
+};
+
+struct side_event_state_0 {
+	struct side_event_state p;	/* Required first field. */
 	uint32_t enabled;
 	side_ptr_t(const struct side_callback) callbacks;
 	side_ptr_t(struct side_event_description) desc;
-
-	char end[];	/* End with a flexible array to account for extensibility. */
 };
 
 /* Event and type attributes */
@@ -1849,7 +1862,7 @@ struct side_event_state {
 			.sav = SIDE_PTR_INIT(side_sav), \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		side_call(&(side_event_state__##_identifier), &side_arg_vec); \
+		side_call(&(side_event_state__##_identifier).p, &side_arg_vec); \
 	}
 
 #define side_event(_identifier, _sav) \
@@ -1870,7 +1883,7 @@ struct side_event_state {
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		}; \
-		side_call_variadic(&(side_event_state__##_identifier), &side_arg_vec, &var_struct); \
+		side_call_variadic(&(side_event_state__##_identifier.p), &side_arg_vec, &var_struct); \
 	}
 
 #define side_event_variadic(_identifier, _sav, _var, _attr...) \
@@ -1880,9 +1893,11 @@ struct side_event_state {
 #define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier; \
-	_linkage struct side_event_state __attribute__((section("side_event_state"))) \
+	_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
 			side_event_state__##_identifier = { \
-		.struct_size = offsetof(struct side_event_state, end), \
+		.p = { \
+			.version = SIDE_EVENT_STATE_ABI_VERSION, \
+		}, \
 		.enabled = 0, \
 		.callbacks = SIDE_PTR_INIT(&side_empty_callback), \
 		.desc = SIDE_PTR_INIT(&(_identifier)), \
@@ -1890,8 +1905,8 @@ struct side_event_state {
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \
 		.struct_size = offsetof(struct side_event_description, end), \
-		.version = SIDE_ABI_VERSION, \
-		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier)), \
+		.version = SIDE_EVENT_DESCRIPTION_ABI_VERSION, \
+		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier.p)), \
 		.provider_name = SIDE_PTR_INIT(_provider), \
 		.event_name = SIDE_PTR_INIT(_event), \
 		.fields = SIDE_PTR_INIT(_fields), \
@@ -1932,7 +1947,7 @@ struct side_event_state {
 			_loglevel, SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_declare_event(_identifier) \
-	extern struct side_event_state side_event_state_##_identifier; \
+	extern struct side_event_state_0 side_event_state_##_identifier; \
 	extern struct side_event_description _identifier
 
 #ifdef __cplusplus
