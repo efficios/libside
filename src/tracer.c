@@ -1800,6 +1800,16 @@ void tracer_event_notification(enum side_tracer_notification notif,
 		printf("provider: %s, event: %s\n",
 			side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
 		if (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS) {
+			if (event->nr_side_type_label > _NR_SIDE_TYPE_LABEL) {
+				printf("Warning: event %s:%s may contain unknown field types (%u unknown types)\n",
+					side_ptr_get(event->provider_name), side_ptr_get(event->event_name),
+					event->nr_side_type_label - _NR_SIDE_TYPE_LABEL);
+			}
+			if (event->nr_side_attr_type > _NR_SIDE_ATTR_TYPE) {
+				printf("Warning: event %s:%s may contain unknown attribute types (%u unknown types)\n",
+					side_ptr_get(event->provider_name), side_ptr_get(event->event_name),
+					event->nr_side_attr_type - _NR_SIDE_ATTR_TYPE);
+			}
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
 				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL);
 				if (ret)
