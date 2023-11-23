@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022 EfficiOS Inc.
 
+# Editor files
+*.swp
+
 # Prerequisites
 *.d
 
