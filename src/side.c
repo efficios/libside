@@ -76,7 +76,7 @@ void side_call(const struct side_event_state *event_state, const struct side_arg
 		side_init();
 	if (side_unlikely(event_state->version != 0))
 		abort();
-	es0 = side_container_of(event_state, const struct side_event_state_0, p);
+	es0 = side_container_of(event_state, const struct side_event_state_0, parent);
 	assert(!(es0->desc->flags & SIDE_EVENT_FLAG_VARIADIC));
 	enabled = __atomic_load_n(&es0->enabled, __ATOMIC_RELAXED);
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
@@ -103,7 +103,7 @@ void side_call_variadic(const struct side_event_state *event_state,
 		side_init();
 	if (side_unlikely(event_state->version != 0))
 		abort();
-	es0 = side_container_of(event_state, const struct side_event_state_0, p);
+	es0 = side_container_of(event_state, const struct side_event_state_0, parent);
 	assert(es0->desc->flags & SIDE_EVENT_FLAG_VARIADIC);
 	enabled = __atomic_load_n(&es0->enabled, __ATOMIC_RELAXED);
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
@@ -126,7 +126,7 @@ const struct side_callback *side_tracer_callback_lookup(
 
 	if (side_unlikely(event_state->version != 0))
 		abort();
-	es0 = side_container_of(event_state, const struct side_event_state_0, p);
+	es0 = side_container_of(event_state, const struct side_event_state_0, parent);
 	for (cb = es0->callbacks; cb->u.call != NULL; cb++) {
 		if ((void *) cb->u.call == call && cb->priv == priv)
 			return cb;
@@ -154,7 +154,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	event_state = side_ptr_get(desc->state);
 	if (side_unlikely(event_state->version != 0))
 		abort();
-	es0 = side_container_of(event_state, struct side_event_state_0, p);
+	es0 = side_container_of(event_state, struct side_event_state_0, parent);
 	old_nr_cb = es0->nr_callbacks;
 	if (old_nr_cb == UINT32_MAX) {
 		ret = SIDE_ERROR_INVAL;
@@ -233,7 +233,7 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 	event_state = side_ptr_get(desc->state);
 	if (side_unlikely(event_state->version != 0))
 		abort();
-	es0 = side_container_of(event_state, struct side_event_state_0, p);
+	es0 = side_container_of(event_state, struct side_event_state_0, parent);
 	cb_pos = side_tracer_callback_lookup(desc, call, priv);
 	if (!cb_pos) {
 		ret = SIDE_ERROR_NOENT;
@@ -323,7 +323,7 @@ void side_event_remove_callbacks(struct side_event_description *desc)
 
 	if (side_unlikely(event_state->version != 0))
 		abort();
-	es0 = side_container_of(event_state, struct side_event_state_0, p);
+	es0 = side_container_of(event_state, struct side_event_state_0, parent);
 	nr_cb = es0->nr_callbacks;
 	if (!nr_cb)
 		return;

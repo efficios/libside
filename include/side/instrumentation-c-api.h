@@ -1127,7 +1127,7 @@
 			.sav = SIDE_PTR_INIT(side_sav), \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		side_call(&(side_event_state__##_identifier).p, &side_arg_vec); \
+		side_call(&(side_event_state__##_identifier).parent, &side_arg_vec); \
 	}
 
 #define side_event(_identifier, _sav) \
@@ -1148,7 +1148,7 @@
 			.len = SIDE_ARRAY_SIZE(side_fields), \
 			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		}; \
-		side_call_variadic(&(side_event_state__##_identifier.p), &side_arg_vec, &var_struct); \
+		side_call_variadic(&(side_event_state__##_identifier.parent), &side_arg_vec, &var_struct); \
 	}
 
 #define side_event_variadic(_identifier, _sav, _var, _attr...) \
@@ -1160,7 +1160,7 @@
 			_identifier; \
 	_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
 			side_event_state__##_identifier = { \
-		.p = { \
+		.parent = { \
 			.version = SIDE_EVENT_STATE_ABI_VERSION, \
 		}, \
 		.nr_callbacks = 0, \
@@ -1172,7 +1172,7 @@
 			_identifier = { \
 		.struct_size = offsetof(struct side_event_description, end), \
 		.version = SIDE_EVENT_DESCRIPTION_ABI_VERSION, \
-		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier.p)), \
+		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier.parent)), \
 		.provider_name = SIDE_PTR_INIT(_provider), \
 		.event_name = SIDE_PTR_INIT(_event), \
 		.fields = SIDE_PTR_INIT(_fields), \

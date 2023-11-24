@@ -61,7 +61,7 @@ struct side_event_state {
 };
 
 struct side_event_state_0 {
-	struct side_event_state p;	/* Required first field. */
+	struct side_event_state parent;		/* Required first field. */
 	uint32_t nr_callbacks;
 	uintptr_t enabled;
 	const struct side_callback *callbacks;
