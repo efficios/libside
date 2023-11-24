@@ -1802,11 +1802,6 @@ void tracer_event_notification(enum side_tracer_notification notif,
 				event->version, SIDE_EVENT_DESCRIPTION_ABI_VERSION);
 				return;
 		}
-		if (side_ptr_get(event->state)->version != SIDE_EVENT_STATE_ABI_VERSION) {
-			printf("Error: event state ABI version (%u) does not match the version supported by the tracer (%u)\n",
-				side_ptr_get(event->state)->version, SIDE_EVENT_STATE_ABI_VERSION);
-				return;
-		}
 		printf("provider: %s, event: %s\n",
 			side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
 		if (event->struct_size != side_offsetofend(struct side_event_description, side_event_description_orig_abi_last)) {
