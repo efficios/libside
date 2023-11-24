@@ -1164,8 +1164,8 @@
 			.version = SIDE_EVENT_STATE_ABI_VERSION, \
 		}, \
 		.enabled = 0, \
-		.callbacks = SIDE_PTR_INIT(&side_empty_callback), \
-		.desc = SIDE_PTR_INIT(&(_identifier)), \
+		.callbacks = &side_empty_callback, \
+		.desc = &(_identifier), \
 	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 			_identifier = { \

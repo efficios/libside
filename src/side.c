@@ -77,14 +77,14 @@ void side_call(const struct side_event_state *event_state, const struct side_arg
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, const struct side_event_state_0, p);
-	assert(!(side_ptr_get(es0->desc)->flags & SIDE_EVENT_FLAG_VARIADIC));
+	assert(!(es0->desc->flags & SIDE_EVENT_FLAG_VARIADIC));
 	enabled = __atomic_load_n(&es0->enabled, __ATOMIC_RELAXED);
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
 	}
 	side_rcu_read_begin(&rcu_gp, &rcu_read_state);
-	for (side_cb = side_rcu_dereference(side_ptr_get(es0->callbacks)); side_cb->u.call != NULL; side_cb++)
-		side_cb->u.call(side_ptr_get(es0->desc), side_arg_vec, side_cb->priv);
+	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call != NULL; side_cb++)
+		side_cb->u.call(es0->desc, side_arg_vec, side_cb->priv);
 	side_rcu_read_end(&rcu_gp, &rcu_read_state);
 }
 
@@ -104,14 +104,14 @@ void side_call_variadic(const struct side_event_state *event_state,
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, const struct side_event_state_0, p);
-	assert(side_ptr_get(es0->desc)->flags & SIDE_EVENT_FLAG_VARIADIC);
+	assert(es0->desc->flags & SIDE_EVENT_FLAG_VARIADIC);
 	enabled = __atomic_load_n(&es0->enabled, __ATOMIC_RELAXED);
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
 	}
 	side_rcu_read_begin(&rcu_gp, &rcu_read_state);
-	for (side_cb = side_rcu_dereference(side_ptr_get(es0->callbacks)); side_cb->u.call_variadic != NULL; side_cb++)
-		side_cb->u.call_variadic(side_ptr_get(es0->desc), side_arg_vec, var_struct, side_cb->priv);
+	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call_variadic != NULL; side_cb++)
+		side_cb->u.call_variadic(es0->desc, side_arg_vec, var_struct, side_cb->priv);
 	side_rcu_read_end(&rcu_gp, &rcu_read_state);
 }
 
@@ -127,7 +127,7 @@ const struct side_callback *side_tracer_callback_lookup(
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, const struct side_event_state_0, p);
-	for (cb = side_ptr_get(es0->callbacks); cb->u.call != NULL; cb++) {
+	for (cb = es0->callbacks; cb->u.call != NULL; cb++) {
 		if ((void *) cb->u.call == call && cb->priv == priv)
 			return cb;
 	}
@@ -165,7 +165,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		ret = SIDE_ERROR_EXIST;
 		goto unlock;
 	}
-	old_cb = (struct side_callback *) side_ptr_get(es0->callbacks);
+	old_cb = (struct side_callback *) es0->callbacks;
 	/* old_nr_cb + 1 (new cb) + 1 (NULL) */
 	new_cb = (struct side_callback *) calloc(old_nr_cb + 2, sizeof(struct side_callback));
 	if (!new_cb) {
@@ -181,7 +181,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 			(side_tracer_callback_func) call;
 	new_cb[old_nr_cb].priv = priv;
 	/* High order bits are already zeroed. */
-	side_rcu_assign_pointer(side_ptr_get(es0->callbacks), new_cb);
+	side_rcu_assign_pointer(es0->callbacks, new_cb);
 	side_rcu_wait_grace_period(&rcu_gp);
 	if (old_nr_cb)
 		free(old_cb);
@@ -240,11 +240,11 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 		goto unlock;
 	}
 	old_nr_cb = desc->nr_callbacks;
-	old_cb = (struct side_callback *) side_ptr_get(es0->callbacks);
+	old_cb = (struct side_callback *) es0->callbacks;
 	if (old_nr_cb == 1) {
 		new_cb = (struct side_callback *) &side_empty_callback;
 	} else {
-		pos_idx = cb_pos - side_ptr_get(es0->callbacks);
+		pos_idx = cb_pos - es0->callbacks;
 		/* Remove entry at pos_idx. */
 		/* old_nr_cb - 1 (removed cb) + 1 (NULL) */
 		new_cb = (struct side_callback *) calloc(old_nr_cb, sizeof(struct side_callback));
@@ -256,7 +256,7 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 		memcpy(&new_cb[pos_idx], &old_cb[pos_idx + 1], old_nr_cb - pos_idx - 1);
 	}
 	/* High order bits are already zeroed. */
-	side_rcu_assign_pointer(side_ptr_get(es0->callbacks), new_cb);
+	side_rcu_assign_pointer(es0->callbacks, new_cb);
 	side_rcu_wait_grace_period(&rcu_gp);
 	free(old_cb);
 	desc->nr_callbacks--;
@@ -326,7 +326,7 @@ void side_event_remove_callbacks(struct side_event_description *desc)
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, struct side_event_state_0, p);
-	old_cb = (struct side_callback *) side_ptr_get(es0->callbacks);
+	old_cb = (struct side_callback *) es0->callbacks;
 	(void) __atomic_add_fetch(&es0->enabled, -1, __ATOMIC_RELAXED);
 	/*
 	 * Setting the state back to 0 cb and empty callbacks out of
@@ -334,7 +334,7 @@ void side_event_remove_callbacks(struct side_event_description *desc)
 	 * unreachable.
 	 */
 	desc->nr_callbacks = 0;
-	side_rcu_assign_pointer(side_ptr_get(es0->callbacks), &side_empty_callback);
+	side_rcu_assign_pointer(es0->callbacks, &side_empty_callback);
 	/*
 	 * No need to wait for grace period because instrumentation is
 	 * unreachable.

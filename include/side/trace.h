@@ -63,8 +63,8 @@ struct side_event_state {
 struct side_event_state_0 {
 	struct side_event_state p;	/* Required first field. */
 	uint32_t enabled;
-	side_ptr_t(const struct side_callback) callbacks;
-	side_ptr_t(struct side_event_description) desc;
+	const struct side_callback *callbacks;
+	struct side_event_description *desc;
 };
 
 #ifdef __cplusplus
