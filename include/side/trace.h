@@ -81,9 +81,9 @@ struct side_callback {
 			const struct side_arg_vec *side_arg_vec,
 			const struct side_arg_dynamic_struct *var_struct,
 			void *priv);
-	} SIDE_PACKED u;
+	} u;
 	void *priv;
-} SIDE_PACKED;
+};
 
 extern const struct side_callback side_empty_callback;
 
