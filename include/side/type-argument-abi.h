@@ -15,8 +15,6 @@
 #include <side/type-description-abi.h>
 #include <side/visitor-abi.h>
 
-struct side_tracer_dynamic_struct_visitor_ctx;
-
 #if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
 # define SIDE_TYPE_BYTE_ORDER_HOST		SIDE_TYPE_BYTE_ORDER_LE
 #else
