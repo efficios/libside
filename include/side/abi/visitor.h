@@ -28,7 +28,6 @@ struct side_arg_dynamic_field;
 struct side_tracer_visitor_ctx;
 struct side_tracer_dynamic_struct_visitor_ctx;
 
-
 typedef enum side_visitor_status (*side_write_elem_func)(
 		const struct side_tracer_visitor_ctx *tracer_ctx,
 		const struct side_arg *elem);
@@ -39,7 +38,7 @@ typedef enum side_visitor_status (*side_visitor_func)(
 struct side_tracer_visitor_ctx {
 	side_write_elem_func write_elem;
 	void *priv;		/* Private tracer context. */
-} SIDE_PACKED;
+};
 
 typedef enum side_visitor_status (*side_write_field_func)(
 		const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
@@ -51,6 +50,6 @@ typedef enum side_visitor_status (*side_dynamic_struct_visitor_func)(
 struct side_tracer_dynamic_struct_visitor_ctx {
 	side_write_field_func write_field;
 	void *priv;		/* Private tracer context. */
-} SIDE_PACKED;
+};
 
 #endif /* SIDE_ABI_VISITOR_H */
