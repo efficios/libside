@@ -57,8 +57,7 @@ struct side_event_description {
 	side_enum_t(enum side_loglevel, uint32_t) loglevel;
 	uint32_t nr_fields;
 	uint32_t nr_attr;
-	uint32_t nr_callbacks;
-#define side_event_description_orig_abi_last nr_callbacks
+#define side_event_description_orig_abi_last nr_attr
 	/* End of fields supported in the original ABI. */
 
 	char end[];	/* End with a flexible array to account for extensibility. */

@@ -1163,6 +1163,7 @@
 		.p = { \
 			.version = SIDE_EVENT_STATE_ABI_VERSION, \
 		}, \
+		.nr_callbacks = 0, \
 		.enabled = 0, \
 		.callbacks = &side_empty_callback, \
 		.desc = &(_identifier), \
@@ -1182,7 +1183,6 @@
 		.loglevel = SIDE_ENUM_INIT(_loglevel), \
 		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-		.nr_callbacks = 0, \
 	}; \
 	static const struct side_event_description *side_event_ptr__##_identifier \
 		__attribute__((section("side_event_description_ptr"), used)) = &(_identifier);
