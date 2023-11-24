@@ -10,12 +10,24 @@
 #include <side/macros.h>
 #include <side/endian.h>
 
+/*
+ * SIDE ABI for visitor pattern.
+ *
+ * The visitor pattern is a double-dispatch visitor. Changing this ABI
+ * is a breaking ABI change.
+ *
+ * This ABI is a contract between the instrumented application and
+ * user-space tracers. Kernel tracers are not expected to interact with
+ * visitors directly: a proxy in libside should execute visitors to
+ * convert their output to other types which can be read by the kernel
+ * tracers.
+ */
+
 struct side_arg;
 struct side_arg_dynamic_field;
 struct side_tracer_visitor_ctx;
 struct side_tracer_dynamic_struct_visitor_ctx;
 
-/* The visitor pattern is a double-dispatch visitor. */
 
 typedef enum side_visitor_status (*side_write_elem_func)(
 		const struct side_tracer_visitor_ctx *tracer_ctx,

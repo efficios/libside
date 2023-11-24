@@ -12,6 +12,33 @@
 
 #include <side/abi/type-value.h>
 
+/*
+ * SIDE ABI for description of event and type attributes.
+ * Event and type attributes are an optional array of { key, value }
+ * pairs which can be associated with either an event or a type.
+ *
+ * The extensibility scheme for the SIDE ABI for description of event
+ * and type attributes is as follows:
+ *
+ * * Existing attribute types are never changed nor extended. Attribute
+ *   types can be added to the ABI by reserving a label within
+ *   enum side_attr_type.
+ * * Each union part of the ABI has an explicit size defined by a
+ *   side_padding() member. Each structure and union have a static
+ *   assert validating its size.
+ * * Changing the semantic of the existing attribute type fields is a
+ *   breaking ABI change.
+ *
+ * Handling of unknown attribute types by the tracers:
+ *
+ * * A tracer may choose to support only a subset of the types supported
+ *   by libside. When encountering an unknown or unsupported attribute
+ *   type, the tracer has the option to either disallow the entire
+ *   event, skip over the field containing the unknown attribute, or
+ *   skip over the unknown attribute, both at event registration and
+ *   when receiving the side_call arguments.
+ */
+
 enum side_attr_type {
 	SIDE_ATTR_TYPE_NULL,
 	SIDE_ATTR_TYPE_BOOL,

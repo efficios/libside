@@ -10,6 +10,21 @@
 #include <side/macros.h>
 #include <side/endian.h>
 
+/*
+ * SIDE ABI event description.
+ *
+ * The extensibility scheme for the SIDE ABI event description is as
+ * follows:
+ *
+ * * Changing the semantic of the existing event description fields is a
+ *   breaking ABI change: the SIDE_EVENT_DESCRIPTION_ABI_VERSION should
+ *   be increased to reflect this.
+ *
+ * * Event descriptions can be extended by adding fields at the end of
+ *   the structure. The "struct side_event_description" is a structure
+ *   with flexible size which must not be used within arrays.
+ */
+
 #define SIDE_EVENT_DESCRIPTION_ABI_VERSION	0
 
 enum side_event_flags {

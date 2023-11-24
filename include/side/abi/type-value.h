@@ -10,6 +10,30 @@
 #include <side/macros.h>
 #include <side/endian.h>
 
+/*
+ * SIDE ABI for type values.
+ *
+ * The extensibility scheme for the SIDE ABI for type values is as
+ * follows:
+ *
+ * * Existing type values are never changed nor extended. Type values
+ *   can be added to the ABI by reserving a label within enum
+ *   side_type_label.
+ * * Each union part of the ABI has an explicit size defined by a
+ *   side_padding() member. Each structure and union have a static
+ *   assert validating its size.
+ * * Changing the semantic of the existing type value fields is a
+ *   breaking ABI change.
+ *
+ * Handling of unknown type values by the tracers:
+ *
+ * * A tracer may choose to support only a subset of the type values
+ *   supported by libside. When encountering an unknown or unsupported
+ *   type value, the tracer has the option to either disallow the entire
+ *   event or skip over the unknown type, both at event registration and
+ *   when receiving the side_call arguments.
+ */
+
 enum side_type_label_byte_order {
 	SIDE_TYPE_BYTE_ORDER_LE = 0,
 	SIDE_TYPE_BYTE_ORDER_BE = 1,

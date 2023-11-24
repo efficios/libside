@@ -15,6 +15,30 @@
 #include <side/abi/type-description.h>
 #include <side/abi/visitor.h>
 
+/*
+ * SIDE ABI for arguments passed to instrumentation call site.
+ *
+ * The extensibility scheme for the SIDE ABI for call site arguments is
+ * as follows:
+ *
+ * * Existing argument types are never changed nor extended. Argument
+ *   types can be added to the ABI by reserving a label within
+ *   enum side_type_label.
+ * * Each union part of the ABI has an explicit size defined by a
+ *   side_padding() member. Each structure and union have a static
+ *   assert validating its size.
+ * * Changing the semantic of the existing argument type fields is a
+ *   breaking ABI change.
+ *
+ * Handling of unknown argument types by the tracers:
+ *
+ * * A tracer may choose to support only a subset of the types supported
+ *   by libside. When encountering an unknown or unsupported type, the
+ *   tracer has the option to either disallow the entire event or skip
+ *   over the unknown type, both at event registration and when
+ *   receiving the side_call arguments.
+ */
+
 #if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
 # define SIDE_TYPE_BYTE_ORDER_HOST		SIDE_TYPE_BYTE_ORDER_LE
 #else

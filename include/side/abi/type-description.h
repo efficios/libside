@@ -14,6 +14,74 @@
 #include <side/abi/attribute.h>
 #include <side/abi/visitor.h>
 
+/*
+ * SIDE ABI for type description.
+ *
+ * This instrumentation ABI exposes 3 type systems:
+ *
+ * * Stack-copy type system: This is the core type system which can
+ *   represent all supported types and into which all other type systems
+ *   can be nested. This type system requires that every type is
+ *   statically or dynamically declared and then registered, thus giving
+ *   tracers a complete description of the events and their associated
+ *   fields before the associated instrumentation is invoked. The
+ *   application needs to copy each argument (side_arg_...()) onto the
+ *   stack when calling the instrumentation.
+ *
+ *   This is the most expressive of the 3 type systems, althrough not the
+ *   fastest due to the extra copy of the arguments.
+ *
+ * * Data-gathering type system: This type system requires every type to
+ *   be statically or dynamically declared and registered, but does not
+ *   require the application to copy its arguments onto the stack.
+ *   Instead, the type description contains all the required information
+ *   to fetch the data from the application memory. The only argument
+ *   required from the instrumentation is the base pointer from which
+ *   the data should be fetched.
+ *
+ *   This type system can be used as an event field, or nested within
+ *   the stack-copy type system. Nesting of gather-vla within
+ *   gather-array and gather-vla types is not allowed.
+ *
+ *   This type system is has the least overhead of the 3 type systems.
+ *
+ * * Dynamic type system: This type system receives both type
+ *   description and actual data onto the stack at runtime. It has more
+ *   overhead that the 2 other type systems, but does not require a
+ *   prior registration of event field description. This makes it useful
+ *   for seldom used types which are not performance critical, but for
+ *   which registering each individual events would needlessly grow the
+ *   number of events to declare and register.
+ *
+ *   Another use-case for this type system is for use by dynamically
+ *   typed language runtimes, where the field type is only known when
+ *   the instrumentation is called.
+ *
+ *   Those dynamic types can be either used as arguments to a variadic
+ *   field list, or as on-stack instrumentation argument for a static
+ *   type SIDE_TYPE_DYNAMIC place holder in the stack-copy type system.
+ *
+ * The extensibility scheme for the SIDE ABI for type description is as
+ * follows:
+ *
+ * * Existing field types are never changed nor extended. Field types
+ *   can be added to the ABI by reserving a label within
+ *   enum side_type_label.
+ * * Each union part of the ABI has an explicit size defined by a
+ *   side_padding() member. Each structure and union have a static
+ *   assert validating its size.
+ * * Changing the semantic of the existing type fields is a breaking
+ *   ABI change.
+ *
+ * Handling of unknown types by the tracers:
+ *
+ * * A tracer may choose to support only a subset of the types supported
+ *   by libside. When encountering an unknown or unsupported type, the
+ *   tracer has the option to either disallow the entire event or skip
+ *   over the unknown type, both at event registration and when
+ *   receiving the side_call arguments.
+ */
+
 enum side_type_label {
 	/* Stack-copy basic types */
 	SIDE_TYPE_NULL,
