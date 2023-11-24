@@ -10,9 +10,9 @@
 #include <side/macros.h>
 #include <side/endian.h>
 
-#include <side/type-value-abi.h>
-#include <side/attribute-abi.h>
-#include <side/type-description-abi.h>
+#include <side/abi/type-value.h>
+#include <side/abi/attribute.h>
+#include <side/abi/type-description.h>
 
 #if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
 # define SIDE_TYPE_BYTE_ORDER_HOST		SIDE_TYPE_BYTE_ORDER_LE

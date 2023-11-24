@@ -3,8 +3,8 @@
  * Copyright 2022-2023 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef SIDE_EVENT_DESCRIPTION_ABI_H
-#define SIDE_EVENT_DESCRIPTION_ABI_H
+#ifndef SIDE_ABI_EVENT_DESCRIPTION_H
+#define SIDE_ABI_EVENT_DESCRIPTION_H
 
 #include <stdint.h>
 #include <side/macros.h>
@@ -49,4 +49,4 @@ struct side_event_description {
 	char end[];	/* End with a flexible array to account for extensibility. */
 } SIDE_PACKED;
 
-#endif /* SIDE_EVENT_DESCRIPTION_ABI_H */
+#endif /* SIDE_ABI_EVENT_DESCRIPTION_H */

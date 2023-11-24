@@ -102,8 +102,8 @@
 
 #define SIDE_EVENT_STATE_ABI_VERSION		0
 
-#include <side/event-description-abi.h>
-#include <side/type-argument-abi.h>
+#include <side/abi/event-description.h>
+#include <side/abi/type-argument.h>
 #include <side/instrumentation-c-api.h>
 
 enum side_error {

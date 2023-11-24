@@ -3,8 +3,8 @@
  * Copyright 2022-2023 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef SIDE_TYPE_VALUE_ABI_H
-#define SIDE_TYPE_VALUE_ABI_H
+#ifndef SIDE_ABI_TYPE_VALUE_H
+#define SIDE_ABI_TYPE_VALUE_H
 
 #include <stdint.h>
 #include <side/macros.h>
@@ -62,4 +62,4 @@ struct side_type_raw_string {
 } SIDE_PACKED;
 side_check_size(struct side_type_raw_string, 18);
 
-#endif /* SIDE_TYPE_VALUE_ABI_H */
+#endif /* SIDE_ABI_TYPE_VALUE_H */

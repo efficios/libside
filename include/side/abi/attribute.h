@@ -3,14 +3,14 @@
  * Copyright 2022-2023 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef SIDE_ATTRIBUTE_ABI_H
-#define SIDE_ATTRIBUTE_ABI_H
+#ifndef SIDE_ABI_ATTRIBUTE_H
+#define SIDE_ABI_ATTRIBUTE_H
 
 #include <stdint.h>
 #include <side/macros.h>
 #include <side/endian.h>
 
-#include <side/type-value-abi.h>
+#include <side/abi/type-value.h>
 
 enum side_attr_type {
 	SIDE_ATTR_TYPE_NULL,
@@ -50,4 +50,4 @@ struct side_attr {
 } SIDE_PACKED;
 side_check_size(struct side_attr, 54);
 
-#endif /* SIDE_ATTRIBUTE_ABI_H */
+#endif /* SIDE_ABI_ATTRIBUTE_H */

@@ -3,16 +3,16 @@
  * Copyright 2022-2023 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef SIDE_TYPE_DESCRIPTION_ABI_H
-#define SIDE_TYPE_DESCRIPTION_ABI_H
+#ifndef SIDE_ABI_TYPE_DESCRIPTION_H
+#define SIDE_ABI_TYPE_DESCRIPTION_H
 
 #include <stdint.h>
 #include <side/macros.h>
 #include <side/endian.h>
 
-#include <side/type-value-abi.h>
-#include <side/attribute-abi.h>
-#include <side/visitor-abi.h>
+#include <side/abi/type-value.h>
+#include <side/abi/attribute.h>
+#include <side/abi/visitor.h>
 
 enum side_type_label {
 	/* Stack-copy basic types */
@@ -348,4 +348,4 @@ struct side_event_field {
 } SIDE_PACKED;
 side_check_size(struct side_event_field, 16 + sizeof(struct side_type));
 
-#endif /* SIDE_TYPE_DESCRIPTION_ABI_H */
+#endif /* SIDE_ABI_TYPE_DESCRIPTION_H */

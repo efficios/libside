@@ -3,17 +3,17 @@
  * Copyright 2022-2023 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef SIDE_TYPE_ARGUMENT_ABI_H
-#define SIDE_TYPE_ARGUMENT_ABI_H
+#ifndef SIDE_ABI_TYPE_ARGUMENT_H
+#define SIDE_ABI_TYPE_ARGUMENT_H
 
 #include <stdint.h>
 #include <side/macros.h>
 #include <side/endian.h>
 
-#include <side/type-value-abi.h>
-#include <side/attribute-abi.h>
-#include <side/type-description-abi.h>
-#include <side/visitor-abi.h>
+#include <side/abi/type-value.h>
+#include <side/abi/attribute.h>
+#include <side/abi/type-description.h>
+#include <side/abi/visitor.h>
 
 #if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
 # define SIDE_TYPE_BYTE_ORDER_HOST		SIDE_TYPE_BYTE_ORDER_LE
@@ -155,4 +155,4 @@ struct side_arg_dynamic_field {
 } SIDE_PACKED;
 side_check_size(struct side_arg_dynamic_field, 16 + sizeof(const struct side_arg));
 
-#endif /* SIDE_TYPE_ARGUMENT_ABI_H */
+#endif /* SIDE_ABI_TYPE_ARGUMENT_H */
