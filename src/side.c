@@ -38,6 +38,19 @@ struct side_tracer_handle {
 	void *priv;
 };
 
+struct side_callback {
+	union {
+		void (*call)(const struct side_event_description *desc,
+			const struct side_arg_vec *side_arg_vec,
+			void *priv);
+		void (*call_variadic)(const struct side_event_description *desc,
+			const struct side_arg_vec *side_arg_vec,
+			const struct side_arg_dynamic_struct *var_struct,
+			void *priv);
+	} u;
+	void *priv;
+};
+
 static struct side_rcu_gp_state rcu_gp;
 
 /*
@@ -61,7 +74,7 @@ static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
  * The empty callback has a NULL function callback pointer, which stops
  * iteration on the array of callbacks immediately.
  */
-const struct side_callback side_empty_callback = { };
+const char side_empty_callback[sizeof(struct side_callback)];
 
 void side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
 {

@@ -1165,7 +1165,7 @@
 		}, \
 		.nr_callbacks = 0, \
 		.enabled = 0, \
-		.callbacks = &side_empty_callback, \
+		.callbacks = (const struct side_callback *) &side_empty_callback[0], \
 		.desc = &(_identifier), \
 	}; \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \

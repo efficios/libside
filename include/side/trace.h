@@ -72,20 +72,9 @@ struct side_event_state_0 {
 extern "C" {
 #endif
 
-struct side_callback {
-	union {
-		void (*call)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			void *priv);
-		void (*call_variadic)(const struct side_event_description *desc,
-			const struct side_arg_vec *side_arg_vec,
-			const struct side_arg_dynamic_struct *var_struct,
-			void *priv);
-	} u;
-	void *priv;
-};
+struct side_callback;
 
-extern const struct side_callback side_empty_callback;
+extern const char side_empty_callback[];
 
 void side_call(const struct side_event_state *state,
 	const struct side_arg_vec *side_arg_vec);
