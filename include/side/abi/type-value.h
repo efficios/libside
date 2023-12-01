@@ -44,10 +44,12 @@ union side_integer_value {
 	uint16_t side_u16;
 	uint32_t side_u32;
 	uint64_t side_u64;
+	uint64_t side_u128_split[2];
 	int8_t side_s8;
 	int16_t side_s16;
 	int32_t side_s32;
 	int64_t side_s64;
+	int64_t side_s128_split[2];
 	uintptr_t side_uptr;
 	side_padding(32);
 } SIDE_PACKED;
