@@ -51,6 +51,16 @@
 # define SIDE_TYPE_FLOAT_WORD_ORDER_HOST	SIDE_TYPE_BYTE_ORDER_BE
 #endif
 
+enum side_arg_flag_bit {
+	SIDE_ARG_FLAG_INCOMPLETE_BIT = 0,
+
+	_NR_SIDE_ARG_FLAG_BIT,
+};
+
+enum side_arg_flag {
+	SIDE_ARG_FLAG_INCOMPLETE = (1U << SIDE_ARG_FLAG_INCOMPLETE_BIT),
+};
+
 union side_arg_static {
 	/* Stack-copy basic types */
 	union side_bool_value bool_value;
@@ -153,10 +163,11 @@ side_check_size(union side_arg_dynamic, 58);
 
 struct side_arg {
 	side_enum_t(enum side_type_label, uint16_t) type;
+	uint16_t flags;
 	union {
 		union side_arg_static side_static;
 		union side_arg_dynamic side_dynamic;
-		side_padding(62);
+		side_padding(60);
 	} SIDE_PACKED u;
 } SIDE_PACKED;
 side_check_size(struct side_arg, 64);
