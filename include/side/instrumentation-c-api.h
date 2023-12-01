@@ -801,7 +801,7 @@
 #define side_arg_struct(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_STRUCT), .flags = 0, .u = { .side_static = { .side_struct = SIDE_PTR_INIT(_side_type) } } }
 
 #define side_arg_define_variant(_identifier, _selector_val, _option) \
-	struct side_arg_variant _identifier = { \
+	const struct side_arg_variant _identifier = { \
 		.selector = _selector_val, \
 		.option = _option, \
 	}
@@ -1090,7 +1090,7 @@
 	}
 
 #define side_arg_dynamic_define_vec(_identifier, _sav, _attr...) \
-	struct side_arg _identifier##_vec[] = { _sav }; \
+	const struct side_arg _identifier##_vec[] = { _sav }; \
 	const struct side_arg_dynamic_vla _identifier = { \
 		.sav = SIDE_PTR_INIT(_identifier##_vec), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -1099,7 +1099,7 @@
 	}
 
 #define side_arg_dynamic_define_struct(_identifier, _struct_fields, _attr...) \
-	struct side_arg_dynamic_field _identifier##_fields[] = { _struct_fields }; \
+	const struct side_arg_dynamic_field _identifier##_fields[] = { _struct_fields }; \
 	const struct side_arg_dynamic_struct _identifier = { \
 		.fields = SIDE_PTR_INIT(_identifier##_fields), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -1108,7 +1108,7 @@
 	}
 
 #define side_arg_define_vec(_identifier, _sav) \
-	struct side_arg _identifier##_vec[] = { _sav }; \
+	const struct side_arg _identifier##_vec[] = { _sav }; \
 	const struct side_arg_vec _identifier = { \
 		.sav = SIDE_PTR_INIT(_identifier##_vec), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
@@ -1133,7 +1133,7 @@
 
 #define side_event_call(_identifier, _sav) \
 	{ \
-		struct side_arg side_sav[] = { _sav }; \
+		const struct side_arg side_sav[] = { _sav }; \
 		const struct side_arg_vec side_arg_vec = { \
 			.sav = SIDE_PTR_INIT(side_sav), \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
@@ -1147,12 +1147,12 @@
 
 #define side_event_call_variadic(_identifier, _sav, _var_fields, _attr...) \
 	{ \
-		struct side_arg side_sav[] = { _sav }; \
+		const struct side_arg side_sav[] = { _sav }; \
 		const struct side_arg_vec side_arg_vec = { \
 			.sav = SIDE_PTR_INIT(side_sav), \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
+		const struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
 		const struct side_arg_dynamic_struct var_struct = { \
 			.fields = SIDE_PTR_INIT(side_fields), \
 			.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \

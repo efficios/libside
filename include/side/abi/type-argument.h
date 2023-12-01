@@ -71,7 +71,7 @@ union side_arg_static {
 
 	/* Stack-copy compound types */
 	side_ptr_t(const struct side_arg_vec) side_struct;
-	side_ptr_t(struct side_arg_variant) side_variant;
+	side_ptr_t(const struct side_arg_variant) side_variant;
 	side_ptr_t(const struct side_arg_vec) side_array;
 	side_ptr_t(const struct side_arg_vec) side_vla;
 	void *side_vla_app_visitor_ctx;
@@ -95,7 +95,7 @@ union side_arg_static {
 side_check_size(union side_arg_static, 32);
 
 struct side_arg_dynamic_vla {
-	side_ptr_t(struct side_arg) sav;
+	side_ptr_t(const struct side_arg) sav;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t len;
 	uint32_t nr_attr;
@@ -103,7 +103,7 @@ struct side_arg_dynamic_vla {
 side_check_size(struct side_arg_dynamic_vla, 40);
 
 struct side_arg_dynamic_struct {
-	side_ptr_t(struct side_arg_dynamic_field) fields;
+	side_ptr_t(const struct side_arg_dynamic_field) fields;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t len;
 	uint32_t nr_attr;
@@ -179,14 +179,14 @@ struct side_arg_variant {
 side_check_size(struct side_arg_variant, 128);
 
 struct side_arg_vec {
-	side_ptr_t(struct side_arg) sav;
+	side_ptr_t(const struct side_arg) sav;
 	uint32_t len;
 } SIDE_PACKED;
 side_check_size(struct side_arg_vec, 20);
 
 struct side_arg_dynamic_field {
 	side_ptr_t(const char) field_name;
-	struct side_arg elem;
+	const struct side_arg elem;
 } SIDE_PACKED;
 side_check_size(struct side_arg_dynamic_field, 16 + sizeof(const struct side_arg));
 
