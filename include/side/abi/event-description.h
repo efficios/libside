@@ -60,7 +60,7 @@ struct side_event_description {
 #define side_event_description_orig_abi_last nr_attr
 	/* End of fields supported in the original ABI. */
 
-	char end[];	/* End with a flexible array to account for extensibility. */
+	char end[0];	/* End with a zero-sized array to account for extensibility. */
 } SIDE_PACKED;
 
 #endif /* SIDE_ABI_EVENT_DESCRIPTION_H */
