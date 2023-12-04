@@ -39,17 +39,33 @@ enum side_type_label_byte_order {
 	SIDE_TYPE_BYTE_ORDER_BE = 1,
 };
 
+#if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
+enum side_integer128_split_index {
+	SIDE_INTEGER128_SPLIT_LOW = 0,
+	SIDE_INTEGER128_SPLIT_HIGH = 1,
+	NR_SIDE_INTEGER128_SPLIT,
+};
+#else
+enum side_integer128_split_index {
+	SIDE_INTEGER128_SPLIT_HIGH = 0,
+	SIDE_INTEGER128_SPLIT_LOW = 1,
+	NR_SIDE_INTEGER128_SPLIT,
+};
+#endif
+
 union side_integer_value {
 	uint8_t side_u8;
 	uint16_t side_u16;
 	uint32_t side_u32;
 	uint64_t side_u64;
-	uint64_t side_u128_split[2];
+	/* Indexed with enum side_integer128_split_index */
+	uint64_t side_u128_split[NR_SIDE_INTEGER128_SPLIT];
 	int8_t side_s8;
 	int16_t side_s16;
 	int32_t side_s32;
 	int64_t side_s64;
-	int64_t side_s128_split[2];
+	/* Indexed with enum side_integer128_split_index */
+	int64_t side_s128_split[NR_SIDE_INTEGER128_SPLIT];
 	uintptr_t side_uptr;
 	side_padding(32);
 } SIDE_PACKED;
