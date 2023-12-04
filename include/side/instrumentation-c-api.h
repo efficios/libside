@@ -47,10 +47,12 @@
 #define side_attr_u16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U16), .u = { .integer_value = { .side_u16 = (_val) } } }
 #define side_attr_u32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U32), .u = { .integer_value = { .side_u32 = (_val) } } }
 #define side_attr_u64(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U64), .u = { .integer_value = { .side_u64 = (_val) } } }
+#define side_attr_u128(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U128), .u = { .integer_value = { .side_u128 = (_val) } } }
 #define side_attr_s8(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S8), .u = { .integer_value = { .side_s8 = (_val) } } }
 #define side_attr_s16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S16), .u = { .integer_value = { .side_s16 = (_val) } } }
 #define side_attr_s32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S32), .u = { .integer_value = { .side_s32 = (_val) } } }
 #define side_attr_s64(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S64), .u = { .integer_value = { .side_s64 = (_val) } } }
+#define side_attr_s128(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_S128), .u = { .integer_value = { .side_s128 = (_val) } } }
 #define side_attr_float_binary16(_val)	{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_FLOAT_BINARY16), .u = { .float_value = { .side_float_binary16 = (_val) } } }
 #define side_attr_float_binary32(_val)	{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_FLOAT_BINARY32), .u = { .float_value = { .side_float_binary32 = (_val) } } }
 #define side_attr_float_binary64(_val)	{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_FLOAT_BINARY64), .u = { .float_value = { .side_float_binary64 = (_val) } } }
@@ -245,10 +247,12 @@
 #define side_type_u16(_attr...)				_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_u32(_attr...)				_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_u64(_attr...)				_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u128(_attr...)			_side_type_integer(SIDE_TYPE_U128, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s8(_attr...)				_side_type_integer(SIDE_TYPE_S8, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int8_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s16(_attr...)				_side_type_integer(SIDE_TYPE_S16, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s32(_attr...)				_side_type_integer(SIDE_TYPE_S32, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s64(_attr...)				_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s128(_attr...)			_side_type_integer(SIDE_TYPE_S128, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_pointer(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uintptr_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_float_binary16(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float16), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_float_binary32(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float32), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
@@ -264,10 +268,12 @@
 #define side_field_u16(_name, _attr...)			_side_field(_name, side_type_u16(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_u32(_name, _attr...)			_side_field(_name, side_type_u32(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_u64(_name, _attr...)			_side_field(_name, side_type_u64(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u128(_name, _attr...)		_side_field(_name, side_type_u128(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s8(_name, _attr...)			_side_field(_name, side_type_s8(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s16(_name, _attr...)			_side_field(_name, side_type_s16(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s32(_name, _attr...)			_side_field(_name, side_type_s32(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s64(_name, _attr...)			_side_field(_name, side_type_s64(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s128(_name, _attr...)		_side_field(_name, side_type_s128(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_byte(_name, _attr...)		_side_field(_name, side_type_byte(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_pointer(_name, _attr...)		_side_field(_name, side_type_pointer(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_float_binary16(_name, _attr...)	_side_field(_name, side_type_float_binary16(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
@@ -283,9 +289,11 @@
 #define side_type_u16_le(_attr...)			_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_u32_le(_attr...)			_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_u64_le(_attr...)			_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u128_le(_attr...)			_side_type_integer(SIDE_TYPE_U128, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(unsigned __int128), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s16_le(_attr...)			_side_type_integer(SIDE_TYPE_S16, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s32_le(_attr...)			_side_type_integer(SIDE_TYPE_S32, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s64_le(_attr...)			_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s128_le(_attr...)			_side_type_integer(SIDE_TYPE_S128, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(__int128), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_pointer_le(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uintptr_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_float_binary16_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float16), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_float_binary32_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float32), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
@@ -297,9 +305,11 @@
 #define side_field_u16_le(_name, _attr...)		_side_field(_name, side_type_u16_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_u32_le(_name, _attr...)		_side_field(_name, side_type_u32_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_u64_le(_name, _attr...)		_side_field(_name, side_type_u64_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u128_le(_name, _attr...)		_side_field(_name, side_type_u128_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s16_le(_name, _attr...)		_side_field(_name, side_type_s16_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s32_le(_name, _attr...)		_side_field(_name, side_type_s32_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s64_le(_name, _attr...)		_side_field(_name, side_type_s64_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s128_le(_name, _attr...)		_side_field(_name, side_type_s128_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_pointer_le(_name, _attr...)		_side_field(_name, side_type_pointer_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_float_binary16_le(_name, _attr...)	_side_field(_name, side_type_float_binary16_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_float_binary32_le(_name, _attr...)	_side_field(_name, side_type_float_binary32_le(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
@@ -312,9 +322,11 @@
 #define side_type_u16_be(_attr...)			_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_u32_be(_attr...)			_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_u64_be(_attr...)			_side_type_integer(SIDE_TYPE_U64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_u128_be(_attr...)			_side_type_integer(SIDE_TYPE_U128, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(unsigned __int128), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s16_be(_attr...)			_side_type_integer(SIDE_TYPE_S16, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s32_be(_attr...)			_side_type_integer(SIDE_TYPE_S32, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_s64_be(_attr...)			_side_type_integer(SIDE_TYPE_S64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_type_s128_be(_attr...)			_side_type_integer(SIDE_TYPE_S128, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(__int128), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_pointer_be(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uintptr_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_float_binary16_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float16), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_float_binary32_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float32), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
@@ -326,9 +338,11 @@
 #define side_field_u16_be(_name, _attr...)		_side_field(_name, side_type_u16_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_u32_be(_name, _attr...)		_side_field(_name, side_type_u32_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_u64_be(_name, _attr...)		_side_field(_name, side_type_u64_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_u128_be(_name, _attr...)		_side_field(_name, side_type_u128_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s16_be(_name, _attr...)		_side_field(_name, side_type_s16_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s32_be(_name, _attr...)		_side_field(_name, side_type_s32_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_s64_be(_name, _attr...)		_side_field(_name, side_type_s64_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_s128_be(_name, _attr...)		_side_field(_name, side_type_s128_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_pointer_be(_name, _attr...)		_side_field(_name, side_type_pointer_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_float_binary16_be(_name, _attr...)	_side_field(_name, side_type_float_binary16_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_float_binary32_be(_name, _attr...)	_side_field(_name, side_type_float_binary32_be(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
@@ -788,10 +802,12 @@
 #define side_arg_u16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_U16), .flags = 0, .u = { .side_static = { .integer_value = { .side_u16 = (_val) } } } }
 #define side_arg_u32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_U32), .flags = 0, .u = { .side_static = { .integer_value = { .side_u32 = (_val) } } } }
 #define side_arg_u64(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_U64), .flags = 0, .u = { .side_static = { .integer_value = { .side_u64 = (_val) } } } }
+#define side_arg_u128(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_U128), .flags = 0, .u = { .side_static = { .integer_value = { .side_u128 = (_val) } } } }
 #define side_arg_s8(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S8), .flags = 0, .u = { .side_static = { .integer_value = { .side_s8 = (_val) } } } }
 #define side_arg_s16(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S16), .flags = 0, .u = { .side_static = { .integer_value = { .side_s16 = (_val) } } } }
 #define side_arg_s32(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S32), .flags = 0, .u = { .side_static = { .integer_value = { .side_s32 = (_val) } } } }
 #define side_arg_s64(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S64), .flags = 0, .u = { .side_static = { .integer_value = { .side_s64 = (_val) } } } }
+#define side_arg_s128(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_S128), .flags = 0, .u = { .side_static = { .integer_value = { .side_s128 = (_val) } } } }
 #define side_arg_pointer(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_POINTER), .flags = 0, .u = { .side_static = { .integer_value = { .side_uptr = (uintptr_t) (_val) } } } }
 #define side_arg_float_binary16(_val)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_FLOAT_BINARY16), .flags = 0, .u = { .side_static = { .float_value = { .side_float_binary16 = (_val) } } } }
 #define side_arg_float_binary32(_val)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_FLOAT_BINARY32), .flags = 0, .u = { .side_static = { .float_value = { .side_float_binary32 = (_val) } } } }
@@ -954,6 +970,8 @@
 	_side_arg_dynamic_integer(.side_u32, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define _side_arg_dynamic_u64(_val, _byte_order, _attr...) \
 	_side_arg_dynamic_integer(.side_u64, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(uint64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_u128(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_integer(.side_u128, _val, SIDE_TYPE_DYNAMIC_INTEGER, false, _byte_order, sizeof(unsigned __int128), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define _side_arg_dynamic_s16(_val, _byte_order, _attr...) \
 	_side_arg_dynamic_integer(.side_s16, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
@@ -961,6 +979,8 @@
 	_side_arg_dynamic_integer(.side_s32, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define _side_arg_dynamic_s64(_val, _byte_order, _attr...) \
 	_side_arg_dynamic_integer(.side_s64, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(int64_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define _side_arg_dynamic_s128(_val, _byte_order, _attr...) \
+	_side_arg_dynamic_integer(.side_s128, _val, SIDE_TYPE_DYNAMIC_INTEGER, true, _byte_order, sizeof(__int128), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define _side_arg_dynamic_pointer(_val, _byte_order, _attr...) \
 	_side_arg_dynamic_integer(.side_uptr, (uintptr_t) (_val), SIDE_TYPE_DYNAMIC_POINTER, false, _byte_order, \
@@ -1000,9 +1020,11 @@
 #define side_arg_dynamic_u16(_val, _attr...) 			_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_u32(_val, _attr...) 			_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_u64(_val, _attr...) 			_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u128(_val, _attr...) 			_side_arg_dynamic_u128(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s16(_val, _attr...) 			_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s32(_val, _attr...) 			_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s64(_val, _attr...) 			_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s128(_val, _attr...) 			_side_arg_dynamic_s128(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_pointer(_val, _attr...) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_float_binary16(_val, _attr...)		_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_float_binary32(_val, _attr...)		_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
@@ -1013,9 +1035,11 @@
 #define side_arg_dynamic_u16_le(_val, _attr...) 		_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_u32_le(_val, _attr...) 		_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_u64_le(_val, _attr...) 		_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u128_le(_val, _attr...) 		_side_arg_dynamic_u128(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s16_le(_val, _attr...) 		_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s32_le(_val, _attr...) 		_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s64_le(_val, _attr...) 		_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s128_le(_val, _attr...) 		_side_arg_dynamic_s128(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_pointer_le(_val, _attr...) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_float_binary16_le(_val, _attr...)	_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_float_binary32_le(_val, _attr...)	_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_BYTE_ORDER_LE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
@@ -1026,9 +1050,11 @@
 #define side_arg_dynamic_u16_be(_val, _attr...) 		_side_arg_dynamic_u16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_u32_be(_val, _attr...) 		_side_arg_dynamic_u32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_u64_be(_val, _attr...) 		_side_arg_dynamic_u64(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_u128_be(_val, _attr...) 		_side_arg_dynamic_u128(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s16_be(_val, _attr...) 		_side_arg_dynamic_s16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s32_be(_val, _attr...) 		_side_arg_dynamic_s32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_s64_be(_val, _attr...) 		_side_arg_dynamic_s64(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_dynamic_s128_be(_val, _attr...) 		_side_arg_dynamic_s128(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_pointer_be(_val, _attr...) 		_side_arg_dynamic_pointer(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_float_binary16_be(_val, _attr...)	_side_arg_dynamic_float_binary16(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_arg_dynamic_float_binary32_be(_val, _attr...)	_side_arg_dynamic_float_binary32(_val, SIDE_TYPE_BYTE_ORDER_BE, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
