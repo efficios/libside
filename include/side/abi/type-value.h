@@ -58,15 +58,18 @@ union side_integer_value {
 	uint16_t side_u16;
 	uint32_t side_u32;
 	uint64_t side_u64;
-	/* Indexed with enum side_integer128_split_index */
-	uint64_t side_u128_split[NR_SIDE_INTEGER128_SPLIT];
 	int8_t side_s8;
 	int16_t side_s16;
 	int32_t side_s32;
 	int64_t side_s64;
-	/* Indexed with enum side_integer128_split_index */
-	int64_t side_s128_split[NR_SIDE_INTEGER128_SPLIT];
 	uintptr_t side_uptr;
+	/* Indexed with enum side_integer128_split_index */
+	uint64_t side_u128_split[NR_SIDE_INTEGER128_SPLIT];
+	int64_t side_s128_split[NR_SIDE_INTEGER128_SPLIT];
+#ifdef __SIZEOF_INT128__
+	unsigned __int128 side_u128;
+	__int128 side_s128;
+#endif
 	side_padding(32);
 } SIDE_PACKED;
 side_check_size(union side_integer_value, 32);
