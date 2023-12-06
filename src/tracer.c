@@ -20,9 +20,9 @@ enum tracer_display_base {
 	TRACER_DISPLAY_BASE_16,
 };
 
-union int64_value {
-	uint64_t u;
-	int64_t s;
+union int_value {
+	uint64_t u[NR_SIDE_INTEGER128_SPLIT];
+	int64_t s[NR_SIDE_INTEGER128_SPLIT];
 };
 
 static struct side_tracer_handle *tracer_handle;
@@ -182,7 +182,32 @@ void tracer_print_string(const void *p, uint8_t unit_size, enum side_type_label_
 }
 
 static
-int64_t get_attr_integer_value(const struct side_attr *attr)
+void side_check_value_u64(union int_value v)
+{
+	if (v.u[SIDE_INTEGER128_SPLIT_HIGH]) {
+		fprintf(stderr, "Unexpected integer value\n");
+		abort();
+	}
+}
+
+static
+void side_check_value_s64(union int_value v)
+{
+	if (v.s[SIDE_INTEGER128_SPLIT_LOW] & (1ULL << 63)) {
+		if (v.s[SIDE_INTEGER128_SPLIT_HIGH] != ~0LL) {
+			fprintf(stderr, "Unexpected integer value\n");
+			abort();
+		}
+	} else {
+		if (v.s[SIDE_INTEGER128_SPLIT_HIGH]) {
+			fprintf(stderr, "Unexpected integer value\n");
+			abort();
+		}
+	}
+}
+
+static
+int64_t get_attr_integer64_value(const struct side_attr *attr)
 {
 	int64_t val;
 
@@ -199,6 +224,18 @@ int64_t get_attr_integer_value(const struct side_attr *attr)
 	case SIDE_ATTR_TYPE_U64:
 		val = attr->value.u.integer_value.side_u64;
 		break;
+	case SIDE_ATTR_TYPE_U128:
+	{
+		union int_value v = {
+			.u = {
+				[SIDE_INTEGER128_SPLIT_LOW] = attr->value.u.integer_value.side_u128_split[SIDE_INTEGER128_SPLIT_LOW],
+				[SIDE_INTEGER128_SPLIT_HIGH] = attr->value.u.integer_value.side_u128_split[SIDE_INTEGER128_SPLIT_HIGH],
+			},
+		};
+		side_check_value_u64(v);
+		val = v.u[SIDE_INTEGER128_SPLIT_LOW];
+		break;
+	}
 	case SIDE_ATTR_TYPE_S8:
 		val = attr->value.u.integer_value.side_s8;
 		break;
@@ -211,6 +248,18 @@ int64_t get_attr_integer_value(const struct side_attr *attr)
 	case SIDE_ATTR_TYPE_S64:
 		val = attr->value.u.integer_value.side_s64;
 		break;
+	case SIDE_ATTR_TYPE_S128:
+	{
+		union int_value v = {
+			.s = {
+				[SIDE_INTEGER128_SPLIT_LOW] = attr->value.u.integer_value.side_s128_split[SIDE_INTEGER128_SPLIT_LOW],
+				[SIDE_INTEGER128_SPLIT_HIGH] = attr->value.u.integer_value.side_s128_split[SIDE_INTEGER128_SPLIT_HIGH],
+			},
+		};
+		side_check_value_s64(v);
+		val = v.s[SIDE_INTEGER128_SPLIT_LOW];
+		break;
+	}
 	default:
 		fprintf(stderr, "Unexpected attribute type\n");
 		abort();
@@ -235,7 +284,7 @@ enum tracer_display_base get_attr_display_base(const struct side_attr *_attr, ui
 		if (utf8_str != side_ptr_get(attr->key.p))
 			free(utf8_str);
 		if (!cmp) {
-			int64_t val = get_attr_integer_value(attr);
+			int64_t val = get_attr_integer64_value(attr);
 
 			switch (val) {
 			case 2:
@@ -281,6 +330,15 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 	case SIDE_ATTR_TYPE_U64:
 		printf("%" PRIu64, attr->value.u.integer_value.side_u64);
 		break;
+	case SIDE_ATTR_TYPE_U128:
+		if (attr->value.u.integer_value.side_u128_split[SIDE_INTEGER128_SPLIT_HIGH] == 0) {
+			printf("0x%" PRIx64, attr->value.u.integer_value.side_u128_split[SIDE_INTEGER128_SPLIT_LOW]);
+		} else {
+			printf("0x%" PRIx64 "%016" PRIx64,
+				attr->value.u.integer_value.side_u128_split[SIDE_INTEGER128_SPLIT_HIGH],
+				attr->value.u.integer_value.side_u128_split[SIDE_INTEGER128_SPLIT_LOW]);
+		}
+		break;
 	case SIDE_ATTR_TYPE_S8:
 		printf("%" PRId8, attr->value.u.integer_value.side_s8);
 		break;
@@ -292,6 +350,15 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 		break;
 	case SIDE_ATTR_TYPE_S64:
 		printf("%" PRId64, attr->value.u.integer_value.side_s64);
+		break;
+	case SIDE_ATTR_TYPE_S128:
+		if (attr->value.u.integer_value.side_s128_split[SIDE_INTEGER128_SPLIT_HIGH] == 0) {
+			printf("0x%" PRIx64, attr->value.u.integer_value.side_s128_split[SIDE_INTEGER128_SPLIT_LOW]);
+		} else {
+			printf("0x%" PRIx64 "%016" PRIx64,
+				attr->value.u.integer_value.side_s128_split[SIDE_INTEGER128_SPLIT_HIGH],
+				attr->value.u.integer_value.side_s128_split[SIDE_INTEGER128_SPLIT_LOW]);
+		}
 		break;
 	case SIDE_ATTR_TYPE_FLOAT_BINARY16:
 #if __HAVE_FLOAT16
@@ -354,11 +421,11 @@ void print_attributes(const char *prefix_str, const char *separator,
 }
 
 static
-union int64_value tracer_load_integer_value(const struct side_type_integer *type_integer,
+union int_value tracer_load_integer_value(const struct side_type_integer *type_integer,
 		const union side_integer_value *value,
 		uint16_t offset_bits, uint16_t *_len_bits)
 {
-	union int64_value v64;
+	union int_value v = {};
 	uint16_t len_bits;
 	bool reverse_bo;
 
@@ -372,9 +439,9 @@ union int64_value tracer_load_integer_value(const struct side_type_integer *type
 	switch (type_integer->integer_size) {
 	case 1:
 		if (type_integer->signedness)
-			v64.s = value->side_s8;
+			v.s[SIDE_INTEGER128_SPLIT_LOW] = value->side_s8;
 		else
-			v64.u = value->side_u8;
+			v.u[SIDE_INTEGER128_SPLIT_LOW] = value->side_u8;
 		break;
 	case 2:
 		if (type_integer->signedness) {
@@ -383,14 +450,14 @@ union int64_value tracer_load_integer_value(const struct side_type_integer *type
 			side_s16 = value->side_s16;
 			if (reverse_bo)
 				side_s16 = side_bswap_16(side_s16);
-			v64.s = side_s16;
+			v.s[SIDE_INTEGER128_SPLIT_LOW] = side_s16;
 		} else {
 			uint16_t side_u16;
 
 			side_u16 = value->side_u16;
 			if (reverse_bo)
 				side_u16 = side_bswap_16(side_u16);
-			v64.u = side_u16;
+			v.u[SIDE_INTEGER128_SPLIT_LOW] = side_u16;
 		}
 		break;
 	case 4:
@@ -400,14 +467,14 @@ union int64_value tracer_load_integer_value(const struct side_type_integer *type
 			side_s32 = value->side_s32;
 			if (reverse_bo)
 				side_s32 = side_bswap_32(side_s32);
-			v64.s = side_s32;
+			v.s[SIDE_INTEGER128_SPLIT_LOW] = side_s32;
 		} else {
 			uint32_t side_u32;
 
 			side_u32 = value->side_u32;
 			if (reverse_bo)
 				side_u32 = side_bswap_32(side_u32);
-			v64.u = side_u32;
+			v.u[SIDE_INTEGER128_SPLIT_LOW] = side_u32;
 		}
 		break;
 	case 8:
@@ -417,38 +484,78 @@ union int64_value tracer_load_integer_value(const struct side_type_integer *type
 			side_s64 = value->side_s64;
 			if (reverse_bo)
 				side_s64 = side_bswap_64(side_s64);
-			v64.s = side_s64;
+			v.s[SIDE_INTEGER128_SPLIT_LOW] = side_s64;
 		} else {
 			uint64_t side_u64;
 
 			side_u64 = value->side_u64;
 			if (reverse_bo)
 				side_u64 = side_bswap_64(side_u64);
-			v64.u = side_u64;
+			v.u[SIDE_INTEGER128_SPLIT_LOW] = side_u64;
+		}
+		break;
+	case 16:
+		if (type_integer->signedness) {
+			int64_t side_s64[NR_SIDE_INTEGER128_SPLIT];
+
+			side_s64[SIDE_INTEGER128_SPLIT_LOW] = value->side_s128_split[SIDE_INTEGER128_SPLIT_LOW];
+			side_s64[SIDE_INTEGER128_SPLIT_HIGH] = value->side_s128_split[SIDE_INTEGER128_SPLIT_HIGH];
+			if (reverse_bo) {
+				side_s64[SIDE_INTEGER128_SPLIT_LOW] = side_bswap_64(side_s64[SIDE_INTEGER128_SPLIT_LOW]);
+				side_s64[SIDE_INTEGER128_SPLIT_HIGH] = side_bswap_64(side_s64[SIDE_INTEGER128_SPLIT_HIGH]);
+				v.s[SIDE_INTEGER128_SPLIT_LOW] = side_s64[SIDE_INTEGER128_SPLIT_HIGH];
+				v.s[SIDE_INTEGER128_SPLIT_HIGH] = side_s64[SIDE_INTEGER128_SPLIT_LOW];
+			} else {
+				v.s[SIDE_INTEGER128_SPLIT_LOW] = side_s64[SIDE_INTEGER128_SPLIT_LOW];
+				v.s[SIDE_INTEGER128_SPLIT_HIGH] = side_s64[SIDE_INTEGER128_SPLIT_HIGH];
+			}
+		} else {
+			uint64_t side_u64[NR_SIDE_INTEGER128_SPLIT];
+
+			side_u64[SIDE_INTEGER128_SPLIT_LOW] = value->side_u128_split[SIDE_INTEGER128_SPLIT_LOW];
+			side_u64[SIDE_INTEGER128_SPLIT_HIGH] = value->side_u128_split[SIDE_INTEGER128_SPLIT_HIGH];
+			if (reverse_bo) {
+				side_u64[SIDE_INTEGER128_SPLIT_LOW] = side_bswap_64(side_u64[SIDE_INTEGER128_SPLIT_LOW]);
+				side_u64[SIDE_INTEGER128_SPLIT_HIGH] = side_bswap_64(side_u64[SIDE_INTEGER128_SPLIT_HIGH]);
+				v.u[SIDE_INTEGER128_SPLIT_LOW] = side_u64[SIDE_INTEGER128_SPLIT_HIGH];
+				v.u[SIDE_INTEGER128_SPLIT_HIGH] = side_u64[SIDE_INTEGER128_SPLIT_LOW];
+			} else {
+				v.u[SIDE_INTEGER128_SPLIT_LOW] = side_u64[SIDE_INTEGER128_SPLIT_LOW];
+				v.u[SIDE_INTEGER128_SPLIT_HIGH] = side_u64[SIDE_INTEGER128_SPLIT_HIGH];
+			}
 		}
 		break;
 	default:
 		abort();
 	}
-	v64.u >>= offset_bits;
-	if (len_bits < 64) {
-		v64.u &= (1ULL << len_bits) - 1;
-		if (type_integer->signedness) {
-			/* Sign-extend. */
-			if (v64.u & (1ULL << (len_bits - 1)))
-				v64.u |= ~((1ULL << len_bits) - 1);
+	if (type_integer->integer_size <= 8) {
+		v.u[SIDE_INTEGER128_SPLIT_LOW] >>= offset_bits;
+		if (len_bits < 64) {
+			v.u[SIDE_INTEGER128_SPLIT_LOW] &= (1ULL << len_bits) - 1;
+			if (type_integer->signedness) {
+				/* Sign-extend. */
+				if (v.u[SIDE_INTEGER128_SPLIT_LOW] & (1ULL << (len_bits - 1))) {
+					v.u[SIDE_INTEGER128_SPLIT_LOW] |= ~((1ULL << len_bits) - 1);
+					v.u[SIDE_INTEGER128_SPLIT_HIGH] = ~0ULL;
+				}
+			}
 		}
+	} else {
+		//TODO: Implement 128-bit integer with len_bits != 128 or nonzero offset_bits
+		if (len_bits < 128 || offset_bits != 0)
+			abort();
 	}
 	if (_len_bits)
 		*_len_bits = len_bits;
-	return v64;
+	return v;
 }
 
 static
-void print_enum_labels(const struct side_enum_mappings *mappings, union int64_value v64)
+void print_enum_labels(const struct side_enum_mappings *mappings, union int_value v)
 {
 	uint32_t i, print_count = 0;
 
+	side_check_value_s64(v);
 	printf(", labels: [ ");
 	for (i = 0; i < mappings->nr_mappings; i++) {
 		const struct side_enum_mapping *mapping = &side_ptr_get(mappings->mappings)[i];
@@ -458,7 +565,7 @@ void print_enum_labels(const struct side_enum_mappings *mappings, union int64_va
 				mapping->range_begin, mapping->range_end);
 			abort();
 		}
-		if (v64.s >= mapping->range_begin && v64.s <= mapping->range_end) {
+		if (v.s[SIDE_INTEGER128_SPLIT_LOW] >= mapping->range_begin && v.s[SIDE_INTEGER128_SPLIT_LOW] <= mapping->range_end) {
 			printf("%s", print_count++ ? ", " : "");
 			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size,
 				side_enum_get(mapping->label.byte_order), NULL);
@@ -474,18 +581,18 @@ void tracer_print_enum(const struct side_type *type_desc, const struct side_arg 
 {
 	const struct side_enum_mappings *mappings = side_ptr_get(type_desc->u.side_enum.mappings);
 	const struct side_type *elem_type = side_ptr_get(type_desc->u.side_enum.elem_type);
-	union int64_value v64;
+	union int_value v;
 
 	if (side_enum_get(elem_type->type) != side_enum_get(item->type)) {
 		fprintf(stderr, "ERROR: Unexpected enum element type\n");
 		abort();
 	}
-	v64 = tracer_load_integer_value(&elem_type->u.side_integer,
+	v = tracer_load_integer_value(&elem_type->u.side_integer,
 			&item->u.side_static.integer_value, 0, NULL);
 	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
 	printf("%s", mappings->nr_attr ? ", " : "");
 	tracer_print_type(elem_type, item);
-	print_enum_labels(mappings, v64);
+	print_enum_labels(mappings, v);
 }
 
 static
@@ -502,10 +609,12 @@ uint32_t elem_type_to_stride(const struct side_type *elem_type)
 	case SIDE_TYPE_U16:
 	case SIDE_TYPE_U32:
 	case SIDE_TYPE_U64:
+	case SIDE_TYPE_U128:
 	case SIDE_TYPE_S8:
 	case SIDE_TYPE_S16:
 	case SIDE_TYPE_S32:
 	case SIDE_TYPE_S64:
+	case SIDE_TYPE_S128:
 		return elem_type->u.side_integer.integer_size * CHAR_BIT;
 	default:
 		fprintf(stderr, "ERROR: Unexpected enum bitmap element type\n");
@@ -529,10 +638,12 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 	case SIDE_TYPE_U16:		/* Fall-through */
 	case SIDE_TYPE_U32:		/* Fall-through */
 	case SIDE_TYPE_U64:		/* Fall-through */
+	case SIDE_TYPE_U128:		/* Fall-through */
 	case SIDE_TYPE_S8:		/* Fall-through */
 	case SIDE_TYPE_S16:		/* Fall-through */
 	case SIDE_TYPE_S32:		/* Fall-through */
-	case SIDE_TYPE_S64:
+	case SIDE_TYPE_S64:		/* Fall-through */
+	case SIDE_TYPE_S128:
 		elem_type = enum_elem_type;
 		array_item = item;
 		nr_items = 1;
@@ -576,12 +687,13 @@ void tracer_print_enum_bitmap(const struct side_type *type_desc,
 					goto match;
 				}
 			} else {
-				union int64_value v64;
+				union int_value v = {};
 
-				v64 = tracer_load_integer_value(&elem_type->u.side_integer,
+				v = tracer_load_integer_value(&elem_type->u.side_integer,
 						&array_item[bit / stride_bit].u.side_static.integer_value,
 						0, NULL);
-				if (v64.u & (1ULL << (bit % stride_bit))) {
+				side_check_value_u64(v);
+				if (v.u[SIDE_INTEGER128_SPLIT_LOW] & (1ULL << (bit % stride_bit))) {
 					match = true;
 					goto match;
 				}
@@ -600,15 +712,24 @@ match:
 }
 
 static
-void print_integer_binary(uint64_t v, int bits)
+void print_integer_binary(uint64_t v[NR_SIDE_INTEGER128_SPLIT], int bits)
 {
-	int i;
+	int bit;
 
 	printf("0b");
-	v <<= 64 - bits;
-	for (i = 0; i < bits; i++) {
-		printf("%c", v & (1ULL << 63) ? '1' : '0');
-		v <<= 1;
+	if (bits > 64) {
+		bits -= 64;
+		v[SIDE_INTEGER128_SPLIT_HIGH] <<= 64 - bits;
+		for (bit = 0; bit < bits; bit++) {
+			printf("%c", v[SIDE_INTEGER128_SPLIT_HIGH] & (1ULL << 63) ? '1' : '0');
+			v[SIDE_INTEGER128_SPLIT_HIGH] <<= 1;
+		}
+		bits = 64;
+	}
+	v[SIDE_INTEGER128_SPLIT_LOW] <<= 64 - bits;
+	for (bit = 0; bit < bits; bit++) {
+		printf("%c", v[SIDE_INTEGER128_SPLIT_LOW] & (1ULL << 63) ? '1' : '0');
+		v[SIDE_INTEGER128_SPLIT_LOW] <<= 1;
 	}
 }
 
@@ -682,6 +803,124 @@ void tracer_print_type_bool(const char *separator,
 	printf("%s", v ? "true" : "false");
 }
 
+/* 2^128 - 1 */
+#define U128_BASE_10_ARRAY_LEN	sizeof("340282366920938463463374607431768211455")
+/* -2^127 */
+#define S128_BASE_10_ARRAY_LEN	sizeof("-170141183460469231731687303715884105728")
+
+/*
+ * u128_tostring_base_10 is inspired from https://stackoverflow.com/a/4364365
+ */
+static
+void u128_tostring_base_10(union int_value v, char str[U128_BASE_10_ARRAY_LEN])
+{
+	int d[39] = {}, i, j, str_i = 0;
+
+	for (i = 63; i > -1; i--) {
+		if ((v.u[SIDE_INTEGER128_SPLIT_HIGH] >> i) & 1)
+			d[0]++;
+		for (j = 0; j < 39; j++)
+			d[j] *= 2;
+		for (j = 0; j < 38; j++) {
+			d[j + 1] += d[j] / 10;
+			d[j] %= 10;
+		}
+	}
+	for (i = 63; i > -1; i--) {
+		if ((v.u[SIDE_INTEGER128_SPLIT_LOW] >> i) & 1)
+			d[0]++;
+		if (i > 0) {
+			for (j = 0; j < 39; j++)
+				d[j] *= 2;
+		}
+		for (j = 0; j < 38; j++) {
+			d[j + 1] += d[j] / 10;
+			d[j] %= 10;
+		}
+	}
+	for (i = 38; i > 0; i--)
+		if (d[i] > 0)
+			break;
+	for (; i > -1; i--) {
+		str[str_i++] = '0' + d[i];
+	}
+	str[str_i] = '\0';
+}
+
+static
+void s128_tostring_base_10(union int_value v, char str[S128_BASE_10_ARRAY_LEN])
+{
+	uint64_t low, high, tmp;
+
+	if (v.s[SIDE_INTEGER128_SPLIT_HIGH] >= 0) {
+		/* Positive. */
+		v.u[SIDE_INTEGER128_SPLIT_LOW] = (uint64_t) v.s[SIDE_INTEGER128_SPLIT_LOW];
+		v.u[SIDE_INTEGER128_SPLIT_HIGH] = (uint64_t) v.s[SIDE_INTEGER128_SPLIT_HIGH];
+		u128_tostring_base_10(v, str);
+		return;
+	}
+
+	/* Negative. */
+
+	/* Special-case minimum value, which has no positive signed representation. */
+	if ((v.s[SIDE_INTEGER128_SPLIT_HIGH] == INT64_MIN) && (v.s[SIDE_INTEGER128_SPLIT_LOW] == 0)) {
+		memcpy(str, "-170141183460469231731687303715884105728", S128_BASE_10_ARRAY_LEN);
+		return;
+	}
+	/* Convert from two's complement. */
+	high = ~(uint64_t) v.s[SIDE_INTEGER128_SPLIT_HIGH];
+	low = ~(uint64_t) v.s[SIDE_INTEGER128_SPLIT_LOW];
+	tmp = low + 1;
+	if (tmp < low) {
+		high++;
+		/* Clear overflow to sign bit. */
+		high &= ~0x8000000000000000ULL;
+	}
+	v.u[SIDE_INTEGER128_SPLIT_LOW] = tmp;
+	v.u[SIDE_INTEGER128_SPLIT_HIGH] = high;
+	str[0] = '-';
+	u128_tostring_base_10(v, str + 1);
+}
+
+/* 2^128 - 1 */
+#define U128_BASE_8_ARRAY_LEN	sizeof("3777777777777777777777777777777777777777777")
+
+static
+void u128_tostring_base_8(union int_value v, char str[U128_BASE_8_ARRAY_LEN])
+{
+	int d[43] = {}, i, j, str_i = 0;
+
+	for (i = 63; i > -1; i--) {
+		if ((v.u[SIDE_INTEGER128_SPLIT_HIGH] >> i) & 1)
+			d[0]++;
+		for (j = 0; j < 43; j++)
+			d[j] *= 2;
+		for (j = 0; j < 42; j++) {
+			d[j + 1] += d[j] / 8;
+			d[j] %= 8;
+		}
+	}
+	for (i = 63; i > -1; i--) {
+		if ((v.u[SIDE_INTEGER128_SPLIT_LOW] >> i) & 1)
+			d[0]++;
+		if (i > 0) {
+			for (j = 0; j < 43; j++)
+				d[j] *= 2;
+		}
+		for (j = 0; j < 42; j++) {
+			d[j + 1] += d[j] / 8;
+			d[j] %= 8;
+		}
+	}
+	for (i = 42; i > 0; i--)
+		if (d[i] > 0)
+			break;
+	for (; i > -1; i--) {
+		str[str_i++] = '0' + d[i];
+	}
+	str[str_i] = '\0';
+}
+
 static
 void tracer_print_type_integer(const char *separator,
 		const struct side_type_integer *type_integer,
@@ -690,33 +929,66 @@ void tracer_print_type_integer(const char *separator,
 		enum tracer_display_base default_base)
 {
 	enum tracer_display_base base;
-	union int64_value v64;
+	union int_value v;
 	uint16_t len_bits;
 
-	v64 = tracer_load_integer_value(type_integer, value, offset_bits, &len_bits);
+	v = tracer_load_integer_value(type_integer, value, offset_bits, &len_bits);
 	tracer_print_type_header(separator, side_ptr_get(type_integer->attr), type_integer->nr_attr);
 	base = get_attr_display_base(side_ptr_get(type_integer->attr), type_integer->nr_attr, default_base);
 	switch (base) {
 	case TRACER_DISPLAY_BASE_2:
-		print_integer_binary(v64.u, len_bits);
+		print_integer_binary(v.u, len_bits);
 		break;
 	case TRACER_DISPLAY_BASE_8:
 		/* Clear sign bits beyond len_bits */
-		if (len_bits < 64)
-			v64.u &= (1ULL << len_bits) - 1;
-		printf("0%" PRIo64, v64.u);
+		if (len_bits < 64) {
+			v.u[SIDE_INTEGER128_SPLIT_LOW] &= (1ULL << len_bits) - 1;
+			v.u[SIDE_INTEGER128_SPLIT_HIGH] = 0;
+		} else if (len_bits < 128) {
+			v.u[SIDE_INTEGER128_SPLIT_HIGH] &= (1ULL << (len_bits - 64)) - 1;
+		}
+		if (len_bits <= 64) {
+			printf("0o%" PRIo64, v.u[SIDE_INTEGER128_SPLIT_LOW]);
+		} else {
+			char str[U128_BASE_8_ARRAY_LEN];
+
+			u128_tostring_base_8(v, str);
+			printf("0o%s", str);
+		}
 		break;
 	case TRACER_DISPLAY_BASE_10:
-		if (type_integer->signedness)
-			printf("%" PRId64, v64.s);
-		else
-			printf("%" PRIu64, v64.u);
+		if (len_bits <= 64) {
+			if (type_integer->signedness)
+				printf("%" PRId64, v.s[SIDE_INTEGER128_SPLIT_LOW]);
+			else
+				printf("%" PRIu64, v.u[SIDE_INTEGER128_SPLIT_LOW]);
+		} else {
+			if (type_integer->signedness) {
+				char str[S128_BASE_10_ARRAY_LEN];
+				s128_tostring_base_10(v, str);
+				printf("%s", str);
+			} else {
+				char str[U128_BASE_10_ARRAY_LEN];
+				u128_tostring_base_10(v, str);
+				printf("%s", str);
+			}
+		}
 		break;
 	case TRACER_DISPLAY_BASE_16:
 		/* Clear sign bits beyond len_bits */
-		if (len_bits < 64)
-			v64.u &= (1ULL << len_bits) - 1;
-		printf("0x%" PRIx64, v64.u);
+		if (len_bits < 64) {
+			v.u[SIDE_INTEGER128_SPLIT_LOW] &= (1ULL << len_bits) - 1;
+			v.u[SIDE_INTEGER128_SPLIT_HIGH] = 0;
+		} else if (len_bits < 128) {
+			v.u[SIDE_INTEGER128_SPLIT_HIGH] &= (1ULL << (len_bits - 64)) - 1;
+		}
+		if (len_bits <= 64 || v.u[SIDE_INTEGER128_SPLIT_HIGH] == 0) {
+			printf("0x%" PRIx64, v.u[SIDE_INTEGER128_SPLIT_LOW]);
+		} else {
+			printf("0x%" PRIx64 "%016" PRIx64,
+				v.u[SIDE_INTEGER128_SPLIT_HIGH],
+				v.u[SIDE_INTEGER128_SPLIT_LOW]);
+		}
 		break;
 	default:
 		abort();
@@ -827,10 +1099,12 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		case SIDE_TYPE_U16:
 		case SIDE_TYPE_U32:
 		case SIDE_TYPE_U64:
+		case SIDE_TYPE_U128:
 		case SIDE_TYPE_S8:
 		case SIDE_TYPE_S16:
 		case SIDE_TYPE_S32:
 		case SIDE_TYPE_S64:
+		case SIDE_TYPE_S128:
 			break;
 		default:
 			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
@@ -846,6 +1120,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		case SIDE_TYPE_U16:
 		case SIDE_TYPE_U32:
 		case SIDE_TYPE_U64:
+		case SIDE_TYPE_U128:
 		case SIDE_TYPE_ARRAY:
 		case SIDE_TYPE_VLA:
 			break;
@@ -918,10 +1193,12 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_U16:
 	case SIDE_TYPE_U32:
 	case SIDE_TYPE_U64:
+	case SIDE_TYPE_U128:
 	case SIDE_TYPE_S8:
 	case SIDE_TYPE_S16:
 	case SIDE_TYPE_S32:
 	case SIDE_TYPE_S64:
+	case SIDE_TYPE_S128:
 		tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.side_static.integer_value, 0,
 				TRACER_DISPLAY_BASE_10);
 		break;
@@ -1071,7 +1348,7 @@ void tracer_print_variant(const struct side_type *type_desc, const struct side_a
 {
 	const struct side_type_variant *side_type_variant = side_ptr_get(type_desc->u.side_variant);
 	const struct side_type *selector_type = &side_type_variant->selector;
-	union int64_value v64;
+	union int_value v;
 	uint32_t i;
 
 	if (side_enum_get(selector_type->type) != side_enum_get(side_arg_variant->selector.type)) {
@@ -1083,26 +1360,29 @@ void tracer_print_variant(const struct side_type *type_desc, const struct side_a
 	case SIDE_TYPE_U16:
 	case SIDE_TYPE_U32:
 	case SIDE_TYPE_U64:
+	case SIDE_TYPE_U128:
 	case SIDE_TYPE_S8:
 	case SIDE_TYPE_S16:
 	case SIDE_TYPE_S32:
 	case SIDE_TYPE_S64:
+	case SIDE_TYPE_S128:
 		break;
 	default:
 		fprintf(stderr, "ERROR: Expecting integer variant selector type\n");
 		abort();
 	}
-	v64 = tracer_load_integer_value(&selector_type->u.side_integer,
+	v = tracer_load_integer_value(&selector_type->u.side_integer,
 			&side_arg_variant->selector.u.side_static.integer_value, 0, NULL);
+	side_check_value_u64(v);
 	for (i = 0; i < side_type_variant->nr_options; i++) {
 		const struct side_variant_option *option = &side_ptr_get(side_type_variant->options)[i];
 
-		if (v64.s >= option->range_begin && v64.s <= option->range_end) {
+		if (v.s[SIDE_INTEGER128_SPLIT_LOW] >= option->range_begin && v.s[SIDE_INTEGER128_SPLIT_LOW] <= option->range_end) {
 			tracer_print_type(&option->side_type, &side_arg_variant->option);
 			return;
 		}
 	}
-	fprintf(stderr, "ERROR: Variant selector value unknown %" PRId64 "\n", v64.s);
+	fprintf(stderr, "ERROR: Variant selector value unknown %" PRId64 "\n", v.s[SIDE_INTEGER128_SPLIT_LOW]);
 	abort();
 }
 
@@ -1173,7 +1453,7 @@ uint32_t tracer_gather_size(enum side_type_gather_access_mode access_mode, uint3
 }
 
 static
-union int64_value tracer_load_gather_integer_value(const struct side_type_gather_integer *side_integer,
+union int_value tracer_load_gather_integer_value(const struct side_type_gather_integer *side_integer,
 		const void *_ptr)
 {
 	enum side_type_gather_access_mode access_mode =
@@ -1244,6 +1524,7 @@ uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_ga
 	case 2:
 	case 4:
 	case 8:
+	case 16:
 		break;
 	default:
 		abort();
@@ -1363,24 +1644,25 @@ uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gathe
 	uint32_t integer_size_bytes = side_integer->type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
-	union int64_value v64;
+	union int_value v;
 
 	switch (integer_size_bytes) {
 	case 1:
 	case 2:
 	case 4:
 	case 8:
+	case 16:
 		break;
 	default:
 		abort();
 	}
 	ptr = tracer_gather_access(access_mode, ptr + side_integer->offset);
 	memcpy(&value, ptr, integer_size_bytes);
-	v64 = tracer_load_gather_integer_value(side_integer, &value);
+	v = tracer_load_gather_integer_value(side_integer, &value);
 	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
 	printf("%s", mappings->nr_attr ? ", " : "");
 	tracer_print_gather_type(enum_elem_type, ptr);
-	print_enum_labels(mappings, v64);
+	print_enum_labels(mappings, v);
 	return tracer_gather_size(access_mode, integer_size_bytes);
 }
 
@@ -1452,7 +1734,7 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 	const struct side_type *length_type = side_ptr_get(type_gather->u.side_vla.length_type);
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	const char *length_ptr = (const char *) _length_ptr;
-	union int64_value v64;
+	union int_value v = {};
 	uint32_t i, length;
 
 	/* Access length */
@@ -1463,9 +1745,13 @@ uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, con
 		fprintf(stderr, "<gather VLA expects integer gather length type>\n");
 		abort();
 	}
-	v64 = tracer_load_gather_integer_value(&length_type->u.side_gather.u.side_integer,
+	v = tracer_load_gather_integer_value(&length_type->u.side_gather.u.side_integer,
 					length_ptr);
-	length = (uint32_t) v64.u;
+	if (v.u[SIDE_INTEGER128_SPLIT_HIGH] || v.u[SIDE_INTEGER128_SPLIT_LOW] > UINT32_MAX) {
+		fprintf(stderr, "Unexpected vla length value\n");
+		abort();
+	}
+	length = (uint32_t) v.u[SIDE_INTEGER128_SPLIT_LOW];
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
 	orig_ptr = ptr;
 	print_attributes("attr", ":", side_ptr_get(type_gather->u.side_vla.type.attr), type_gather->u.side_vla.type.nr_attr);

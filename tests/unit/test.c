@@ -2144,6 +2144,103 @@ void test_variant(void)
 	}
 }
 
+#ifdef __SIZEOF_INT128__
+side_static_event(my_provider_event_integer128, "myprovider", "myevent_integer128", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_s128("signed128_base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_u128("unsigned128_base2", side_attr_list(side_attr("std.integer.base", side_attr_u8(2)))),
+		side_field_s128("signed128_base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_u128("unsigned128_base8", side_attr_list(side_attr("std.integer.base", side_attr_u8(8)))),
+		side_field_s128("signed128_base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_u128("unsigned128_base10", side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
+		side_field_s128("signed128_base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+		side_field_u128("unsigned128_base16", side_attr_list(side_attr("std.integer.base", side_attr_u8(16)))),
+	)
+);
+
+static
+void test_integer128(void)
+{
+	side_event_cond(my_provider_event_integer128) {
+		__int128 s_v128 = 0;
+		unsigned __int128 u_v128;
+
+		/* -2^63 - 1 */
+		s_v128 = INT64_MIN;
+		s_v128--;
+		/* Maximum unsigned 128-bit value: 340282366920938463463374607431768211455. */
+		u_v128 = 0;
+		u_v128--;
+		side_event_call(my_provider_event_integer128,
+			side_arg_list(
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+			)
+		);
+	}
+	side_event_cond(my_provider_event_integer128) {
+		__int128 s_v128 = 0;
+		unsigned __int128 u_v128;
+
+		/* Minimum signed 128-bit value: -170141183460469231731687303715884105728 */
+		s_v128 = 1;
+		s_v128 <<= 64;
+		s_v128 <<= 63;
+		/* Zero. */
+		u_v128 = 0;
+		side_event_call(my_provider_event_integer128,
+			side_arg_list(
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+			)
+		);
+	}
+	side_event_cond(my_provider_event_integer128) {
+		__int128 s_v128 = 0;
+		unsigned __int128 u_v128;
+
+		/* Minimum signed 128-bit value + 1: -170141183460469231731687303715884105727 */
+		s_v128 = 1;
+		s_v128 <<= 64;
+		s_v128 <<= 63;
+		s_v128++;
+		/* INT64_MAX + 1. */
+		u_v128 = INT64_MAX;	/* 9223372036854775807LL */
+		u_v128++;
+		side_event_call(my_provider_event_integer128,
+			side_arg_list(
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+				side_arg_s128(s_v128),
+				side_arg_u128(u_v128),
+			)
+		);
+	}
+}
+#else
+static
+void test_integer128(void)
+{
+}
+#endif
+
+
 int main()
 {
 	test_fields();
@@ -2196,5 +2293,6 @@ int main()
 	test_gather_string();
 	test_string_utf();
 	test_variant();
+	test_integer128();
 	return 0;
 }
