@@ -186,7 +186,9 @@ void test_vla_visitor(void)
 			.ptr = testarray,
 			.length = SIDE_ARRAY_SIZE(testarray),
 		};
-		side_event_call(my_provider_event_vla_visitor, side_arg_list(side_arg_vla_visitor(&ctx), side_arg_s64(42)));
+		side_arg_define_vla_visitor(side_visitor, &ctx);
+		side_event_call(my_provider_event_vla_visitor,
+			side_arg_list(side_arg_vla_visitor(&side_visitor), side_arg_s64(42)));
 	}
 }
 
@@ -228,7 +230,8 @@ enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx
 			.ptr = ctx->ptr[i],
 			.length = 2,
 		};
-		const struct side_arg elem = side_arg_vla_visitor(&inner_ctx);
+		side_arg_define_vla_visitor(side_inner_visitor, &inner_ctx);
+		const struct side_arg elem = side_arg_vla_visitor(&side_inner_visitor);
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
 	}
@@ -262,7 +265,9 @@ void test_vla_visitor_2d(void)
 			.ptr = testarray2d,
 			.length = SIDE_ARRAY_SIZE(testarray2d),
 		};
-		side_event_call(my_provider_event_vla_visitor2d, side_arg_list(side_arg_vla_visitor(&ctx), side_arg_s64(42)));
+		side_arg_define_vla_visitor(side_outer_visitor, &ctx);
+		side_event_call(my_provider_event_vla_visitor2d,
+			side_arg_list(side_arg_vla_visitor(&side_outer_visitor), side_arg_s64(42)));
 	}
 }
 
@@ -596,9 +601,10 @@ void test_dynamic_vla_with_visitor(void)
 			.ptr = testarray_dynamic_vla,
 			.length = SIDE_ARRAY_SIZE(testarray_dynamic_vla),
 		};
+		side_arg_dynamic_define_vla_visitor(myvlavisitor, test_dynamic_vla_visitor, &ctx);
 		side_event_call(my_provider_event_dynamic_vla_visitor,
 			side_arg_list(
-				side_arg_dynamic_vla_visitor(test_dynamic_vla_visitor, &ctx)
+				side_arg_dynamic_vla_visitor(&myvlavisitor)
 			)
 		);
 	}
@@ -652,9 +658,10 @@ void test_dynamic_struct_with_visitor(void)
 			.ptr = testarray_dynamic_struct,
 			.length = SIDE_ARRAY_SIZE(testarray_dynamic_struct),
 		};
+		side_arg_dynamic_define_struct_visitor(mystructvisitor, test_dynamic_struct_visitor, &ctx);
 		side_event_call(my_provider_event_dynamic_struct_visitor,
 			side_arg_list(
-				side_arg_dynamic_struct_visitor(test_dynamic_struct_visitor, &ctx)
+				side_arg_dynamic_struct_visitor(&mystructvisitor)
 			)
 		);
 	}

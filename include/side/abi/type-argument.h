@@ -61,6 +61,13 @@ enum side_arg_flag {
 	SIDE_ARG_FLAG_INCOMPLETE = (1U << SIDE_ARG_FLAG_INCOMPLETE_BIT),
 };
 
+struct side_arg_vla_visitor {
+	side_ptr_t(void) app_ctx;
+	/* libside argument cache, initialize to NULL. */
+	side_ptr_t(struct side_arg) cached_arg;
+} SIDE_PACKED;
+side_check_size(struct side_arg_vla_visitor, 32);
+
 union side_arg_static {
 	/* Stack-copy basic types */
 	union side_bool_value bool_value;
@@ -74,7 +81,8 @@ union side_arg_static {
 	side_ptr_t(const struct side_arg_variant) side_variant;
 	side_ptr_t(const struct side_arg_vec) side_array;
 	side_ptr_t(const struct side_arg_vec) side_vla;
-	void *side_vla_app_visitor_ctx;
+	/* Pointer to non-const structure. Content modified by libside. */
+	side_ptr_t(struct side_arg_vla_visitor) side_vla_visitor;
 
 	/* Gather basic types */
 	side_ptr_t(const void) side_bool_gather_ptr;
@@ -110,21 +118,25 @@ struct side_arg_dynamic_struct {
 } SIDE_PACKED;
 side_check_size(struct side_arg_dynamic_struct, 40);
 
-struct side_dynamic_struct_visitor {
+struct side_arg_dynamic_struct_visitor {
 	side_func_ptr_t(side_dynamic_struct_visitor_func) visitor;
 	side_ptr_t(void) app_ctx;
 	side_ptr_t(const struct side_attr) attr;
+	/* libside argument cache, initialize to NULL. */
+	side_ptr_t(struct side_arg) cached_arg;
 	uint32_t nr_attr;
 } SIDE_PACKED;
-side_check_size(struct side_dynamic_struct_visitor, 52);
+side_check_size(struct side_arg_dynamic_struct_visitor, 68);
 
-struct side_dynamic_vla_visitor {
+struct side_arg_dynamic_vla_visitor {
 	side_func_ptr_t(side_visitor_func) visitor;
 	side_ptr_t(void) app_ctx;
 	side_ptr_t(const struct side_attr) attr;
+	/* libside argument cache, initialize to NULL. */
+	side_ptr_t(struct side_arg) cached_arg;
 	uint32_t nr_attr;
 } SIDE_PACKED;
-side_check_size(struct side_dynamic_vla_visitor, 52);
+side_check_size(struct side_arg_dynamic_vla_visitor, 68);
 
 union side_arg_dynamic {
 	/* Dynamic basic types */
@@ -154,8 +166,10 @@ union side_arg_dynamic {
 	side_ptr_t(const struct side_arg_dynamic_struct) side_dynamic_struct;
 	side_ptr_t(const struct side_arg_dynamic_vla) side_dynamic_vla;
 
-	struct side_dynamic_struct_visitor side_dynamic_struct_visitor;
-	struct side_dynamic_vla_visitor side_dynamic_vla_visitor;
+	/* Pointer to non-const structure. Content modified by libside. */
+	side_ptr_t(struct side_arg_dynamic_struct_visitor) side_dynamic_struct_visitor;
+	/* Pointer to non-const structure. Content modified by libside. */
+	side_ptr_t(struct side_arg_dynamic_vla_visitor) side_dynamic_vla_visitor;
 
 	side_padding(58);
 } SIDE_PACKED;

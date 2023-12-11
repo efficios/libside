@@ -36,7 +36,7 @@ void tracer_print_array(const struct side_type *type_desc, const struct side_arg
 static
 void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
-void tracer_print_vla_visitor(const struct side_type *type_desc, void *app_ctx);
+void tracer_print_vla_visitor(const struct side_type *type_desc, struct side_arg_vla_visitor *vla_visitor);
 static
 void tracer_print_dynamic(const struct side_arg *dynamic_item);
 static
@@ -1242,7 +1242,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		tracer_print_vla(type_desc, side_ptr_get(item->u.side_static.side_vla));
 		break;
 	case SIDE_TYPE_VLA_VISITOR:
-		tracer_print_vla_visitor(type_desc, item->u.side_static.side_vla_app_visitor_ctx);
+		tracer_print_vla_visitor(type_desc, side_ptr_get(item->u.side_static.side_vla_visitor));
 		break;
 
 		/* Stack-copy enumeration types */
@@ -1792,8 +1792,9 @@ enum side_visitor_status tracer_write_elem_cb(const struct side_tracer_visitor_c
 }
 
 static
-void tracer_print_vla_visitor(const struct side_type *type_desc, void *app_ctx)
+void tracer_print_vla_visitor(const struct side_type *type_desc, struct side_arg_vla_visitor *vla_visitor)
 {
+	void *app_ctx;
 	enum side_visitor_status status;
 	struct tracer_visitor_priv tracer_priv = {
 		.elem_type = side_ptr_get(type_desc->u.side_vla_visitor.elem_type),
@@ -1805,6 +1806,9 @@ void tracer_print_vla_visitor(const struct side_type *type_desc, void *app_ctx)
 	};
 	side_visitor_func func;
 
+	if (!vla_visitor)
+		abort();
+	app_ctx = side_ptr_get(vla_visitor->app_ctx);
 	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_vla_visitor.attr), type_desc->u.side_vla_visitor.nr_attr);
 	printf("%s", type_desc->u.side_vla_visitor.nr_attr ? ", " : "");
 	printf("elements: ");
@@ -1860,7 +1864,7 @@ enum side_visitor_status tracer_dynamic_struct_write_elem_cb(
 static
 void tracer_print_dynamic_struct_visitor(const struct side_arg *item)
 {
-	enum side_visitor_status status;
+	struct side_arg_dynamic_struct_visitor *dynamic_struct_visitor;
 	struct tracer_dynamic_struct_visitor_priv tracer_priv = {
 		.i = 0,
 	};
@@ -1868,13 +1872,18 @@ void tracer_print_dynamic_struct_visitor(const struct side_arg *item)
 		.write_field = tracer_dynamic_struct_write_elem_cb,
 		.priv = &tracer_priv,
 	};
-	void *app_ctx = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor.app_ctx);
+	enum side_visitor_status status;
+	void *app_ctx;
 
-	print_attributes("attr", "::", side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor.attr), item->u.side_dynamic.side_dynamic_struct_visitor.nr_attr);
-	printf("%s", item->u.side_dynamic.side_dynamic_struct_visitor.nr_attr ? ", " : "");
+	dynamic_struct_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor);
+	if (!dynamic_struct_visitor)
+		abort();
+	app_ctx = side_ptr_get(dynamic_struct_visitor->app_ctx);
+	print_attributes("attr", "::", side_ptr_get(dynamic_struct_visitor->attr), dynamic_struct_visitor->nr_attr);
+	printf("%s", dynamic_struct_visitor->nr_attr ? ", " : "");
 	printf("fields:: ");
 	printf("[ ");
-	status = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor.visitor)(&tracer_ctx, app_ctx);
+	status = side_ptr_get(dynamic_struct_visitor->visitor)(&tracer_ctx, app_ctx);
 	switch (status) {
 	case SIDE_VISITOR_STATUS_OK:
 		break;
@@ -1922,7 +1931,7 @@ enum side_visitor_status tracer_dynamic_vla_write_elem_cb(
 static
 void tracer_print_dynamic_vla_visitor(const struct side_arg *item)
 {
-	enum side_visitor_status status;
+	struct side_arg_dynamic_vla_visitor *dynamic_vla_visitor;
 	struct tracer_dynamic_vla_visitor_priv tracer_priv = {
 		.i = 0,
 	};
@@ -1930,13 +1939,18 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg *item)
 		.write_elem = tracer_dynamic_vla_write_elem_cb,
 		.priv = &tracer_priv,
 	};
-	void *app_ctx = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor.app_ctx);
+	enum side_visitor_status status;
+	void *app_ctx;
 
-	print_attributes("attr", "::", side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor.attr), item->u.side_dynamic.side_dynamic_vla_visitor.nr_attr);
-	printf("%s", item->u.side_dynamic.side_dynamic_vla_visitor.nr_attr ? ", " : "");
+	dynamic_vla_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor);
+	if (!dynamic_vla_visitor)
+		abort();
+	app_ctx = side_ptr_get(dynamic_vla_visitor->app_ctx);
+	print_attributes("attr", "::", side_ptr_get(dynamic_vla_visitor->attr), dynamic_vla_visitor->nr_attr);
+	printf("%s", dynamic_vla_visitor->nr_attr ? ", " : "");
 	printf("elements:: ");
 	printf("[ ");
-	status = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor.visitor)(&tracer_ctx, app_ctx);
+	status = side_ptr_get(dynamic_vla_visitor->visitor)(&tracer_ctx, app_ctx);
 	switch (status) {
 	case SIDE_VISITOR_STATUS_OK:
 		break;

@@ -834,7 +834,22 @@
 
 #define side_arg_array(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_ARRAY), .flags = 0, .u = { .side_static = { .side_array = SIDE_PTR_INIT(_side_type) } } }
 #define side_arg_vla(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_VLA), .flags = 0, .u = { .side_static = { .side_vla = SIDE_PTR_INIT(_side_type) } } }
-#define side_arg_vla_visitor(_ctx)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_VLA_VISITOR), .flags = 0, .u = { .side_static = { .side_vla_app_visitor_ctx = (_ctx) } } }
+#define side_arg_vla_visitor(_side_vla_visitor) \
+	{ \
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA_VISITOR), \
+		.flags = 0, \
+		.u = { \
+			.side_static = { \
+				.side_vla_visitor = SIDE_PTR_INIT(_side_vla_visitor), \
+			 } \
+		 } \
+	}
+
+#define side_arg_define_vla_visitor(_identifier, _ctx) \
+	struct side_arg_vla_visitor _identifier = { \
+		.app_ctx = SIDE_PTR_INIT(_ctx), \
+		.cached_arg = SIDE_PTR_INIT(NULL), \
+	}
 
 /* Gather field arguments */
 
@@ -1072,18 +1087,13 @@
 		}, \
 	}
 
-#define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor, _ctx, _attr...) \
+#define side_arg_dynamic_vla_visitor(_dynamic_vla_visitor) \
 	{ \
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_VLA_VISITOR), \
 		.flags = 0, \
 		.u = { \
 			.side_dynamic = { \
-				.side_dynamic_vla_visitor = { \
-					.app_ctx = SIDE_PTR_INIT(_ctx), \
-					.visitor = SIDE_PTR_INIT(_dynamic_vla_visitor), \
-					.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-				}, \
+				.side_dynamic_vla_visitor = SIDE_PTR_INIT(_dynamic_vla_visitor), \
 			}, \
 		}, \
 	}
@@ -1099,18 +1109,13 @@
 		}, \
 	}
 
-#define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor, _ctx, _attr...) \
+#define side_arg_dynamic_struct_visitor(_dynamic_struct_visitor) \
 	{ \
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_STRUCT_VISITOR), \
 		.flags = 0, \
 		.u = { \
 			.side_dynamic = { \
-				.side_dynamic_struct_visitor = { \
-					.app_ctx = SIDE_PTR_INIT(_ctx), \
-					.visitor = SIDE_PTR_INIT(_dynamic_struct_visitor), \
-					.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-					.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-				}, \
+				.side_dynamic_struct_visitor = SIDE_PTR_INIT(_dynamic_struct_visitor), \
 			}, \
 		}, \
 	}
@@ -1130,6 +1135,24 @@
 		.fields = SIDE_PTR_INIT(_identifier##_fields), \
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_fields), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+	}
+
+#define side_arg_dynamic_define_struct_visitor(_identifier, _dynamic_struct_visitor, _ctx, _attr...) \
+	struct side_arg_dynamic_struct_visitor _identifier = { \
+		.visitor = SIDE_PTR_INIT(_dynamic_struct_visitor), \
+		.app_ctx = SIDE_PTR_INIT(_ctx), \
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+		.cached_arg = SIDE_PTR_INIT(NULL), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+	}
+
+#define side_arg_dynamic_define_vla_visitor(_identifier, _dynamic_vla_visitor, _ctx, _attr...) \
+	struct side_arg_dynamic_vla_visitor _identifier = { \
+		.visitor = SIDE_PTR_INIT(_dynamic_vla_visitor), \
+		.app_ctx = SIDE_PTR_INIT(_ctx), \
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+		.cached_arg = SIDE_PTR_INIT(NULL), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
 
