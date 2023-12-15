@@ -72,12 +72,18 @@ static DEFINE_SIDE_LIST_HEAD(side_events_list);
 static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
 
 /*
+ * Callback filter key for state dump.
+ */
+static __thread void *filter_key;
+
+/*
  * The empty callback has a NULL function callback pointer, which stops
  * iteration on the array of callbacks immediately.
  */
 const char side_empty_callback[sizeof(struct side_callback)];
 
-void side_call_key(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec, void *key)
+static
+void _side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec, void *key)
 {
 	struct side_rcu_read_state rcu_read_state;
 	const struct side_event_state_0 *es0;
@@ -108,10 +114,16 @@ void side_call_key(const struct side_event_state *event_state, const struct side
 
 void side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
 {
-	side_call_key(event_state, side_arg_vec, NULL);
+	_side_call(event_state, side_arg_vec, NULL);
 }
 
-void side_call_variadic_key(const struct side_event_state *event_state,
+void side_call_key(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
+{
+	_side_call(event_state, side_arg_vec, filter_key);
+}
+
+static
+void _side_call_variadic(const struct side_event_state *event_state,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct,
 	void *key)
@@ -147,7 +159,14 @@ void side_call_variadic(const struct side_event_state *event_state,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct)
 {
-	side_call_variadic_key(event_state, side_arg_vec, var_struct, NULL);
+	_side_call_variadic(event_state, side_arg_vec, var_struct, NULL);
+}
+
+void side_call_variadic_key(const struct side_event_state *event_state,
+	const struct side_arg_vec *side_arg_vec,
+	const struct side_arg_dynamic_struct *var_struct)
+{
+	_side_call_variadic(event_state, side_arg_vec, var_struct, filter_key);
 }
 
 static
