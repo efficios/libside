@@ -3,6 +3,7 @@
 
 # Editor files
 *.swp
+*~
 
 # Prerequisites
 *.d
