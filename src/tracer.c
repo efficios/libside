@@ -2120,21 +2120,21 @@ void tracer_event_notification(enum side_tracer_notification notif,
 					event->nr_side_attr_type - _NR_SIDE_ATTR_TYPE);
 			}
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
-				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL, NULL);
+				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL, tracer_handle);
 				if (ret)
 					abort();
 			} else {
-				ret = side_tracer_callback_register(event, tracer_call, NULL, NULL);
+				ret = side_tracer_callback_register(event, tracer_call, NULL, tracer_handle);
 				if (ret)
 					abort();
 			}
 		} else {
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
-				ret = side_tracer_callback_variadic_unregister(event, tracer_call_variadic, NULL, NULL);
+				ret = side_tracer_callback_variadic_unregister(event, tracer_call_variadic, NULL, tracer_handle);
 				if (ret)
 					abort();
 			} else {
-				ret = side_tracer_callback_unregister(event, tracer_call, NULL, NULL);
+				ret = side_tracer_callback_unregister(event, tracer_call, NULL, tracer_handle);
 				if (ret)
 					abort();
 			}

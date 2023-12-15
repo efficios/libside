@@ -73,6 +73,8 @@ extern "C" {
 #endif
 
 struct side_callback;
+struct side_tracer_handle;
+struct side_statedump_request_handle;
 
 extern const char side_empty_callback[];
 
@@ -81,13 +83,6 @@ void side_call(const struct side_event_state *state,
 void side_call_variadic(const struct side_event_state *state,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct);
-void side_call_key(const struct side_event_state *state,
-	const struct side_arg_vec *side_arg_vec,
-	void *key);
-void side_call_variadic_key(const struct side_event_state *state,
-	const struct side_arg_vec *side_arg_vec,
-	const struct side_arg_dynamic_struct *var_struct,
-	void *key);
 
 struct side_events_register_handle *side_events_register(struct side_event_description **events,
 		uint32_t nr_events);
@@ -131,6 +126,36 @@ struct side_tracer_handle *side_tracer_event_notification_register(
 			struct side_event_description **events, uint32_t nr_events, void *priv),
 		void *priv);
 void side_tracer_event_notification_unregister(struct side_tracer_handle *handle);
+
+/*
+ * The side_statedump_call APIs should be used for application/library
+ * state dump.
+ * The statedump callback dumps application state to tracers by invoking
+ * side_statedump_call APIs.
+ * The statedump callback is invoked with side library internal lock held.
+ * The statedump callback should not invoke functions which require the
+ * side library internal lock.
+ */
+void side_statedump_call(const struct side_event_state *state,
+	const struct side_arg_vec *side_arg_vec);
+void side_statedump_call_variadic(const struct side_event_state *state,
+	const struct side_arg_vec *side_arg_vec,
+	const struct side_arg_dynamic_struct *var_struct);
+
+/*
+ * If side_statedump_request_notification_register is invoked from
+ * library constructors and side_statedump_request_notification_unregister
+ * from library destructors, make sure to:
+ * - invoke side_event_description_ptr_init before registration of the
+ *   callback,
+ * - invoke side_event_description_ptr_exit after unregistration of the
+ *   callback.
+ */
+
+struct side_statedump_request_handle *side_statedump_request_notification_register(void (*statedump_cb)(void));
+void side_statedump_request_notification_unregister(struct side_statedump_request_handle *handle);
+
+void side_tracer_statedump_request(void *key);
 
 /*
  * Explicit hooks to initialize/finalize the side instrumentation

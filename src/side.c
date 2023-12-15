@@ -38,6 +38,11 @@ struct side_tracer_handle {
 	void *priv;
 };
 
+struct side_statedump_request_handle {
+	struct side_list_node node;
+	void (*cb)(void);
+};
+
 struct side_callback {
 	union {
 		void (*call)(const struct side_event_description *desc,
@@ -70,6 +75,7 @@ static pthread_mutex_t side_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 static DEFINE_SIDE_LIST_HEAD(side_events_list);
 static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
+static DEFINE_SIDE_LIST_HEAD(side_statedump_list);
 
 /*
  * Callback filter key for state dump.
@@ -117,7 +123,7 @@ void side_call(const struct side_event_state *event_state, const struct side_arg
 	_side_call(event_state, side_arg_vec, NULL);
 }
 
-void side_call_key(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
+void side_statedump_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
 {
 	_side_call(event_state, side_arg_vec, filter_key);
 }
@@ -162,7 +168,7 @@ void side_call_variadic(const struct side_event_state *event_state,
 	_side_call_variadic(event_state, side_arg_vec, var_struct, NULL);
 }
 
-void side_call_variadic_key(const struct side_event_state *event_state,
+void side_statedump_call_variadic(const struct side_event_state *event_state,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct)
 {
@@ -478,6 +484,58 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *tracer
 	side_list_remove_node(&tracer_handle->node);
 	pthread_mutex_unlock(&side_lock);
 	free(tracer_handle);
+}
+
+struct side_statedump_request_handle *side_statedump_request_notification_register(void (*statedump_cb)(void))
+{
+	struct side_statedump_request_handle *handle;
+
+	if (finalized)
+		return NULL;
+	if (!initialized)
+		side_init();
+	/*
+	 * The statedump request notification should not be registered
+	 * from a notification callback.
+	 */
+	assert(filter_key == NULL);
+	handle = (struct side_statedump_request_handle *)
+				calloc(1, sizeof(struct side_statedump_request_handle));
+	if (!handle)
+		return NULL;
+	pthread_mutex_lock(&side_lock);
+	handle->cb = statedump_cb;
+	side_list_insert_node_tail(&side_statedump_list, &handle->node);
+	/* Invoke callback for all tracers. */
+	statedump_cb();
+	pthread_mutex_unlock(&side_lock);
+	return handle;
+}
+
+void side_statedump_request_notification_unregister(struct side_statedump_request_handle *handle)
+{
+	if (finalized)
+		return;
+	if (!initialized)
+		side_init();
+	assert(filter_key == NULL);
+	pthread_mutex_lock(&side_lock);
+	side_list_remove_node(&handle->node);
+	pthread_mutex_unlock(&side_lock);
+	free(handle);
+}
+
+void side_tracer_statedump_request(void *key)
+{
+	struct side_statedump_request_handle *handle;
+
+	/* Invoke the state dump callback specifically for the tracer key. */
+	filter_key = key;
+	pthread_mutex_lock(&side_lock);
+	side_list_for_each_entry(handle, &side_statedump_list, node)
+		handle->cb();
+	pthread_mutex_unlock(&side_lock);
+	filter_key = NULL;
 }
 
 void side_init(void)

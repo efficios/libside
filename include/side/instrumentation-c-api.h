@@ -1180,21 +1180,24 @@
 	if (side_unlikely(__atomic_load_n(&side_event_state__##_identifier.enabled, \
 					__ATOMIC_RELAXED)))
 
-#define side_event_call(_identifier, _sav) \
+#define _side_event_call(_call, _identifier, _sav) \
 	{ \
 		const struct side_arg side_sav[] = { _sav }; \
 		const struct side_arg_vec side_arg_vec = { \
 			.sav = SIDE_PTR_INIT(side_sav), \
 			.len = SIDE_ARRAY_SIZE(side_sav), \
 		}; \
-		side_call(&(side_event_state__##_identifier).parent, &side_arg_vec); \
+		_call(&(side_event_state__##_identifier).parent, &side_arg_vec); \
 	}
+
+#define side_event_call(_identifier, _sav) \
+	_side_event_call(side_call, _identifier, SIDE_PARAM(_sav))
 
 #define side_event(_identifier, _sav) \
 	side_event_cond(_identifier) \
 		side_event_call(_identifier, SIDE_PARAM(_sav))
 
-#define side_event_call_variadic(_identifier, _sav, _var_fields, _attr...) \
+#define _side_event_call_variadic(_call, _identifier, _sav, _var_fields, _attr...) \
 	{ \
 		const struct side_arg side_sav[] = { _sav }; \
 		const struct side_arg_vec side_arg_vec = { \
@@ -1204,16 +1207,25 @@
 		const struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
 		const struct side_arg_dynamic_struct var_struct = { \
 			.fields = SIDE_PTR_INIT(side_fields), \
-			.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+			.attr = SIDE_PTR_INIT(_attr), \
 			.len = SIDE_ARRAY_SIZE(side_fields), \
-			.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+			.nr_attr = SIDE_ARRAY_SIZE(_attr), \
 		}; \
-		side_call_variadic(&(side_event_state__##_identifier.parent), &side_arg_vec, &var_struct); \
+		_call(&(side_event_state__##_identifier.parent), &side_arg_vec, &var_struct); \
 	}
+
+#define side_event_call_variadic(_identifier, _sav, _var_fields, _attr...) \
+	_side_event_call_variadic(side_call_variadic, _identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var_fields), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_event_variadic(_identifier, _sav, _var, _attr...) \
 	side_event_cond(_identifier) \
 		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+
+#define side_statedump_event_call(_identifier, _sav) \
+	_side_event_call(side_statedump_call, _identifier, SIDE_PARAM(_sav))
+
+#define side_statedump_event_call_variadic(_identifier, _sav, _var_fields, _attr...) \
+	_side_event_call_variadic(side_statedump_call_variadic, _identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var_fields), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
