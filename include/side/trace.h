@@ -81,6 +81,13 @@ void side_call(const struct side_event_state *state,
 void side_call_variadic(const struct side_event_state *state,
 	const struct side_arg_vec *side_arg_vec,
 	const struct side_arg_dynamic_struct *var_struct);
+void side_call_key(const struct side_event_state *state,
+	const struct side_arg_vec *side_arg_vec,
+	void *key);
+void side_call_variadic_key(const struct side_event_state *state,
+	const struct side_arg_vec *side_arg_vec,
+	const struct side_arg_dynamic_struct *var_struct,
+	void *key);
 
 struct side_events_register_handle *side_events_register(struct side_event_description **events,
 		uint32_t nr_events);
@@ -102,16 +109,16 @@ typedef void (*side_tracer_callback_variadic_func)(const struct side_event_descr
 
 int side_tracer_callback_register(struct side_event_description *desc,
 		side_tracer_callback_func call,
-		void *priv);
+		void *priv, void *key);
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
 		side_tracer_callback_variadic_func call_variadic,
-		void *priv);
+		void *priv, void *key);
 int side_tracer_callback_unregister(struct side_event_description *desc,
 		side_tracer_callback_func call,
-		void *priv);
+		void *priv, void *key);
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
 		side_tracer_callback_variadic_func call_variadic,
-		void *priv);
+		void *priv, void *key);
 
 enum side_tracer_notification {
 	SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,

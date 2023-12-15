@@ -49,6 +49,7 @@ struct side_callback {
 			void *priv);
 	} u;
 	void *priv;
+	void *key;
 };
 
 static struct side_rcu_gp_state rcu_gp;
@@ -76,7 +77,7 @@ static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
  */
 const char side_empty_callback[sizeof(struct side_callback)];
 
-void side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
+void side_call_key(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec, void *key)
 {
 	struct side_rcu_read_state rcu_read_state;
 	const struct side_event_state_0 *es0;
@@ -96,14 +97,24 @@ void side_call(const struct side_event_state *event_state, const struct side_arg
 		// TODO: call kernel write.
 	}
 	side_rcu_read_begin(&rcu_gp, &rcu_read_state);
-	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call != NULL; side_cb++)
+	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call != NULL; side_cb++) {
+		/* A NULL key is always a match. */
+		if (key && side_cb->key && side_cb->key != key)
+			continue;
 		side_cb->u.call(es0->desc, side_arg_vec, side_cb->priv);
+	}
 	side_rcu_read_end(&rcu_gp, &rcu_read_state);
 }
 
-void side_call_variadic(const struct side_event_state *event_state,
+void side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
+{
+	side_call_key(event_state, side_arg_vec, NULL);
+}
+
+void side_call_variadic_key(const struct side_event_state *event_state,
 	const struct side_arg_vec *side_arg_vec,
-	const struct side_arg_dynamic_struct *var_struct)
+	const struct side_arg_dynamic_struct *var_struct,
+	void *key)
 {
 	struct side_rcu_read_state rcu_read_state;
 	const struct side_event_state_0 *es0;
@@ -123,15 +134,26 @@ void side_call_variadic(const struct side_event_state *event_state,
 		// TODO: call kernel write.
 	}
 	side_rcu_read_begin(&rcu_gp, &rcu_read_state);
-	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call_variadic != NULL; side_cb++)
+	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call_variadic != NULL; side_cb++) {
+		/* A NULL key is always a match. */
+		if (key && side_cb->key && side_cb->key != key)
+			continue;
 		side_cb->u.call_variadic(es0->desc, side_arg_vec, var_struct, side_cb->priv);
+	}
 	side_rcu_read_end(&rcu_gp, &rcu_read_state);
+}
+
+void side_call_variadic(const struct side_event_state *event_state,
+	const struct side_arg_vec *side_arg_vec,
+	const struct side_arg_dynamic_struct *var_struct)
+{
+	side_call_variadic_key(event_state, side_arg_vec, var_struct, NULL);
 }
 
 static
 const struct side_callback *side_tracer_callback_lookup(
 		const struct side_event_description *desc,
-		void *call, void *priv)
+		void *call, void *priv, void *key)
 {
 	struct side_event_state *event_state = side_ptr_get(desc->state);
 	const struct side_event_state_0 *es0;
@@ -141,7 +163,7 @@ const struct side_callback *side_tracer_callback_lookup(
 		abort();
 	es0 = side_container_of(event_state, const struct side_event_state_0, parent);
 	for (cb = es0->callbacks; cb->u.call != NULL; cb++) {
-		if ((void *) cb->u.call == call && cb->priv == priv)
+		if ((void *) cb->u.call == call && cb->priv == priv && cb->key == key)
 			return cb;
 	}
 	return NULL;
@@ -149,7 +171,7 @@ const struct side_callback *side_tracer_callback_lookup(
 
 static
 int _side_tracer_callback_register(struct side_event_description *desc,
-		void *call, void *priv)
+		void *call, void *priv, void *key)
 {
 	struct side_event_state *event_state;
 	struct side_callback *old_cb, *new_cb;
@@ -174,7 +196,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		goto unlock;
 	}
 	/* Reject duplicate (call, priv) tuples. */
-	if (side_tracer_callback_lookup(desc, call, priv)) {
+	if (side_tracer_callback_lookup(desc, call, priv, key)) {
 		ret = SIDE_ERROR_EXIST;
 		goto unlock;
 	}
@@ -193,6 +215,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		new_cb[old_nr_cb].u.call =
 			(side_tracer_callback_func) call;
 	new_cb[old_nr_cb].priv = priv;
+	new_cb[old_nr_cb].key = key;
 	/* High order bits are already zeroed. */
 	side_rcu_assign_pointer(es0->callbacks, new_cb);
 	side_rcu_wait_grace_period(&rcu_gp);
@@ -209,24 +232,24 @@ unlock:
 
 int side_tracer_callback_register(struct side_event_description *desc,
 		side_tracer_callback_func call,
-		void *priv)
+		void *priv, void *key)
 {
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, (void *) call, priv);
+	return _side_tracer_callback_register(desc, (void *) call, priv, key);
 }
 
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
 		side_tracer_callback_variadic_func call_variadic,
-		void *priv)
+		void *priv, void *key)
 {
 	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, (void *) call_variadic, priv);
+	return _side_tracer_callback_register(desc, (void *) call_variadic, priv, key);
 }
 
 static int _side_tracer_callback_unregister(struct side_event_description *desc,
-		void *call, void *priv)
+		void *call, void *priv, void *key)
 {
 	struct side_event_state *event_state;
 	struct side_callback *old_cb, *new_cb;
@@ -247,7 +270,7 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, struct side_event_state_0, parent);
-	cb_pos = side_tracer_callback_lookup(desc, call, priv);
+	cb_pos = side_tracer_callback_lookup(desc, call, priv, key);
 	if (!cb_pos) {
 		ret = SIDE_ERROR_NOENT;
 		goto unlock;
@@ -283,20 +306,20 @@ unlock:
 
 int side_tracer_callback_unregister(struct side_event_description *desc,
 		side_tracer_callback_func call,
-		void *priv)
+		void *priv, void *key)
 {
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, (void *) call, priv);
+	return _side_tracer_callback_unregister(desc, (void *) call, priv, key);
 }
 
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
 		side_tracer_callback_variadic_func call_variadic,
-		void *priv)
+		void *priv, void *key)
 {
 	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv);
+	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv, key);
 }
 
 struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events)
