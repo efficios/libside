@@ -11,20 +11,27 @@
 #include "list.h"
 #include "rculist.h"
 
-/* Top 8 bits reserved for kernel tracer use. */
+/* Top 8 bits reserved for shared tracer use. */
 #if SIDE_BITS_PER_LONG == 64
-# define SIDE_EVENT_ENABLED_KERNEL_MASK			0xFF00000000000000ULL
-# define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK 	0x8000000000000000ULL
+# define SIDE_EVENT_ENABLED_SHARED_MASK			0xFF00000000000000ULL
+# define SIDE_EVENT_ENABLED_SHARED_USER_EVENT_MASK 	0x8000000000000000ULL
+# define SIDE_EVENT_ENABLED_SHARED_PTRACE_MASK 		0x4000000000000000ULL
 
-/* Allow 2^56 tracer references on an event. */
-# define SIDE_EVENT_ENABLED_USER_MASK			0x00FFFFFFFFFFFFFFULL
+/* Allow 2^56 private tracer references on an event. */
+# define SIDE_EVENT_ENABLED_PRIVATE_MASK		0x00FFFFFFFFFFFFFFULL
 #else
-# define SIDE_EVENT_ENABLED_KERNEL_MASK			0xFF000000UL
-# define SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK	0x80000000UL
+# define SIDE_EVENT_ENABLED_SHARED_MASK			0xFF000000UL
+# define SIDE_EVENT_ENABLED_SHARED_USER_EVENT_MASK	0x80000000UL
+# define SIDE_EVENT_ENABLED_SHARED_PTRACE_MASK		0x40000000UL
 
-/* Allow 2^24 tracer references on an event. */
-# define SIDE_EVENT_ENABLED_USER_MASK			0x00FFFFFFUL
+/* Allow 2^24 private tracer references on an event. */
+# define SIDE_EVENT_ENABLED_PRIVATE_MASK		0x00FFFFFFUL
 #endif
+
+/* Key 0x1 is reserved for user event. */
+#define SIDE_USER_EVENT_KEY				((void *)0x1UL)
+/* Key 0x2 is reserved for ptrace. */
+#define SIDE_PTRACE_KEY					((void *)0x2UL)
 
 struct side_events_register_handle {
 	struct side_list_node node;
@@ -90,6 +97,20 @@ static __thread void *filter_key;
  */
 const char side_empty_callback[sizeof(struct side_callback)];
 
+/*
+ * side_ptrace_hook is a place holder for a debugger breakpoint.
+ * var_struct is NULL if not variadic.
+ */
+void side_ptrace_hook(const struct side_event_state *event_state __attribute__((unused)),
+	const struct side_arg_vec *side_arg_vec __attribute__((unused)),
+	const struct side_arg_dynamic_struct *var_struct __attribute__((unused)))
+	__attribute__((noinline));
+void side_ptrace_hook(const struct side_event_state *event_state __attribute__((unused)),
+	const struct side_arg_vec *side_arg_vec __attribute__((unused)),
+	const struct side_arg_dynamic_struct *var_struct __attribute__((unused)))
+{
+}
+
 static
 void _side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec, void *key)
 {
@@ -107,8 +128,14 @@ void _side_call(const struct side_event_state *event_state, const struct side_ar
 	es0 = side_container_of(event_state, const struct side_event_state_0, parent);
 	assert(!(es0->desc->flags & SIDE_EVENT_FLAG_VARIADIC));
 	enabled = __atomic_load_n(&es0->enabled, __ATOMIC_RELAXED);
-	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
-		// TODO: call kernel write.
+	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_SHARED_MASK)) {
+		if ((enabled & SIDE_EVENT_ENABLED_SHARED_USER_EVENT_MASK) &&
+		    (!key || key == SIDE_USER_EVENT_KEY)) {
+			// TODO: call kernel write.
+		}
+		if ((enabled & SIDE_EVENT_ENABLED_SHARED_PTRACE_MASK) &&
+		    (!key || key == SIDE_PTRACE_KEY))
+			side_ptrace_hook(event_state, side_arg_vec, NULL);
 	}
 	side_rcu_read_begin(&event_rcu_gp, &rcu_read_state);
 	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call != NULL; side_cb++) {
@@ -150,8 +177,14 @@ void _side_call_variadic(const struct side_event_state *event_state,
 	es0 = side_container_of(event_state, const struct side_event_state_0, parent);
 	assert(es0->desc->flags & SIDE_EVENT_FLAG_VARIADIC);
 	enabled = __atomic_load_n(&es0->enabled, __ATOMIC_RELAXED);
-	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
-		// TODO: call kernel write.
+	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_SHARED_MASK)) {
+		if ((enabled & SIDE_EVENT_ENABLED_SHARED_USER_EVENT_MASK) &&
+		    (!key || key == SIDE_USER_EVENT_KEY)) {
+			// TODO: call kernel write.
+		}
+		if ((enabled & SIDE_EVENT_ENABLED_SHARED_PTRACE_MASK) &&
+		    (!key || key == SIDE_PTRACE_KEY))
+			side_ptrace_hook(event_state, side_arg_vec, var_struct);
 	}
 	side_rcu_read_begin(&event_rcu_gp, &rcu_read_state);
 	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call_variadic != NULL; side_cb++) {
