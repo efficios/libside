@@ -6,22 +6,7 @@
 #ifndef _SIDE_LIST_H
 #define _SIDE_LIST_H
 
-struct side_list_node {
-	struct side_list_node *next;
-	struct side_list_node *prev;
-};
-
-struct side_list_head {
-	struct side_list_node node;
-};
-
-#define DEFINE_SIDE_LIST_HEAD(_identifier) \
-	struct side_list_head _identifier = { \
-		.node = { \
-			.next = &(_identifier).node, \
-			.prev = &(_identifier).node, \
-		}, \
-	}
+#include "list_types.h"
 
 static inline
 void side_list_insert_node_tail(struct side_list_head *head, struct side_list_node *node)
