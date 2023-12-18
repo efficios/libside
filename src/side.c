@@ -9,6 +9,7 @@
 
 #include "rcu.h"
 #include "list.h"
+#include "rculist.h"
 
 /* Top 8 bits reserved for kernel tracer use. */
 #if SIDE_BITS_PER_LONG == 64
@@ -39,7 +40,7 @@ struct side_tracer_handle {
 };
 
 struct side_statedump_request_handle {
-	struct side_list_node node;
+	struct side_list_node node;	/* RCU list. */
 	void (*cb)(void);
 };
 
@@ -57,7 +58,7 @@ struct side_callback {
 	void *key;
 };
 
-static struct side_rcu_gp_state rcu_gp;
+static struct side_rcu_gp_state event_rcu_gp, statedump_rcu_gp;
 
 /*
  * Lazy initialization for early use within library constructors.
@@ -71,7 +72,8 @@ static bool finalized;
 /*
  * Recursive mutex to allow tracer callbacks to use the side API.
  */
-static pthread_mutex_t side_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+static pthread_mutex_t side_event_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+static pthread_mutex_t side_statedump_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 static DEFINE_SIDE_LIST_HEAD(side_events_list);
 static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
@@ -108,14 +110,14 @@ void _side_call(const struct side_event_state *event_state, const struct side_ar
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
 	}
-	side_rcu_read_begin(&rcu_gp, &rcu_read_state);
+	side_rcu_read_begin(&event_rcu_gp, &rcu_read_state);
 	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call != NULL; side_cb++) {
 		/* A NULL key is always a match. */
 		if (key && side_cb->key && side_cb->key != key)
 			continue;
 		side_cb->u.call(es0->desc, side_arg_vec, side_cb->priv);
 	}
-	side_rcu_read_end(&rcu_gp, &rcu_read_state);
+	side_rcu_read_end(&event_rcu_gp, &rcu_read_state);
 }
 
 void side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
@@ -151,14 +153,14 @@ void _side_call_variadic(const struct side_event_state *event_state,
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_KERNEL_USER_EVENT_MASK)) {
 		// TODO: call kernel write.
 	}
-	side_rcu_read_begin(&rcu_gp, &rcu_read_state);
+	side_rcu_read_begin(&event_rcu_gp, &rcu_read_state);
 	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call_variadic != NULL; side_cb++) {
 		/* A NULL key is always a match. */
 		if (key && side_cb->key && side_cb->key != key)
 			continue;
 		side_cb->u.call_variadic(es0->desc, side_arg_vec, var_struct, side_cb->priv);
 	}
-	side_rcu_read_end(&rcu_gp, &rcu_read_state);
+	side_rcu_read_end(&event_rcu_gp, &rcu_read_state);
 }
 
 void side_call_variadic(const struct side_event_state *event_state,
@@ -210,7 +212,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		return SIDE_ERROR_EXITING;
 	if (!initialized)
 		side_init();
-	pthread_mutex_lock(&side_lock);
+	pthread_mutex_lock(&side_event_lock);
 	event_state = side_ptr_get(desc->state);
 	if (side_unlikely(event_state->version != 0))
 		abort();
@@ -243,7 +245,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	new_cb[old_nr_cb].key = key;
 	/* High order bits are already zeroed. */
 	side_rcu_assign_pointer(es0->callbacks, new_cb);
-	side_rcu_wait_grace_period(&rcu_gp);
+	side_rcu_wait_grace_period(&event_rcu_gp);
 	if (old_nr_cb)
 		free(old_cb);
 	es0->nr_callbacks++;
@@ -251,7 +253,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	if (!old_nr_cb)
 		(void) __atomic_add_fetch(&es0->enabled, 1, __ATOMIC_RELAXED);
 unlock:
-	pthread_mutex_unlock(&side_lock);
+	pthread_mutex_unlock(&side_event_lock);
 	return ret;
 }
 
@@ -290,7 +292,7 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 		return SIDE_ERROR_EXITING;
 	if (!initialized)
 		side_init();
-	pthread_mutex_lock(&side_lock);
+	pthread_mutex_lock(&side_event_lock);
 	event_state = side_ptr_get(desc->state);
 	if (side_unlikely(event_state->version != 0))
 		abort();
@@ -318,14 +320,14 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 	}
 	/* High order bits are already zeroed. */
 	side_rcu_assign_pointer(es0->callbacks, new_cb);
-	side_rcu_wait_grace_period(&rcu_gp);
+	side_rcu_wait_grace_period(&event_rcu_gp);
 	free(old_cb);
 	es0->nr_callbacks--;
 	/* Decrement concurrently with kernel setting the top bits. */
 	if (old_nr_cb == 1)
 		(void) __atomic_add_fetch(&es0->enabled, -1, __ATOMIC_RELAXED);
 unlock:
-	pthread_mutex_unlock(&side_lock);
+	pthread_mutex_unlock(&side_event_lock);
 	return ret;
 }
 
@@ -363,13 +365,13 @@ struct side_events_register_handle *side_events_register(struct side_event_descr
 	events_handle->events = events;
 	events_handle->nr_events = nr_events;
 
-	pthread_mutex_lock(&side_lock);
+	pthread_mutex_lock(&side_event_lock);
 	side_list_insert_node_tail(&side_events_list, &events_handle->node);
 	side_list_for_each_entry(tracer_handle, &side_tracer_list, node) {
 		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
 			events, nr_events, tracer_handle->priv);
 	}
-	pthread_mutex_unlock(&side_lock);
+	pthread_mutex_unlock(&side_event_lock);
 	//TODO: call event batch register ioctl
 	return events_handle;
 }
@@ -419,7 +421,7 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 		return;
 	if (!initialized)
 		side_init();
-	pthread_mutex_lock(&side_lock);
+	pthread_mutex_lock(&side_event_lock);
 	side_list_remove_node(&events_handle->node);
 	side_list_for_each_entry(tracer_handle, &side_tracer_list, node) {
 		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
@@ -434,7 +436,7 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 			continue;
 		side_event_remove_callbacks(event);
 	}
-	pthread_mutex_unlock(&side_lock);
+	pthread_mutex_unlock(&side_event_lock);
 	//TODO: call event batch unregister ioctl
 	free(events_handle);
 }
@@ -455,7 +457,7 @@ struct side_tracer_handle *side_tracer_event_notification_register(
 				calloc(1, sizeof(struct side_tracer_handle));
 	if (!tracer_handle)
 		return NULL;
-	pthread_mutex_lock(&side_lock);
+	pthread_mutex_lock(&side_event_lock);
 	tracer_handle->cb = cb;
 	tracer_handle->priv = priv;
 	side_list_insert_node_tail(&side_tracer_list, &tracer_handle->node);
@@ -463,7 +465,7 @@ struct side_tracer_handle *side_tracer_event_notification_register(
 		cb(SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
 			events_handle->events, events_handle->nr_events, priv);
 	}
-	pthread_mutex_unlock(&side_lock);
+	pthread_mutex_unlock(&side_event_lock);
 	return tracer_handle;
 }
 
@@ -475,14 +477,14 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *tracer
 		return;
 	if (!initialized)
 		side_init();
-	pthread_mutex_lock(&side_lock);
+	pthread_mutex_lock(&side_event_lock);
 	side_list_for_each_entry(events_handle, &side_events_list, node) {
 		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
 			events_handle->events, events_handle->nr_events,
 			tracer_handle->priv);
 	}
 	side_list_remove_node(&tracer_handle->node);
-	pthread_mutex_unlock(&side_lock);
+	pthread_mutex_unlock(&side_event_lock);
 	free(tracer_handle);
 }
 
@@ -503,12 +505,15 @@ struct side_statedump_request_handle *side_statedump_request_notification_regist
 				calloc(1, sizeof(struct side_statedump_request_handle));
 	if (!handle)
 		return NULL;
-	pthread_mutex_lock(&side_lock);
 	handle->cb = statedump_cb;
-	side_list_insert_node_tail(&side_statedump_list, &handle->node);
+
+	pthread_mutex_lock(&side_statedump_lock);
+	side_list_insert_node_tail_rcu(&side_statedump_list, &handle->node);
+	pthread_mutex_unlock(&side_statedump_lock);
+
 	/* Invoke callback for all tracers. */
 	statedump_cb();
-	pthread_mutex_unlock(&side_lock);
+
 	return handle;
 }
 
@@ -519,22 +524,26 @@ void side_statedump_request_notification_unregister(struct side_statedump_reques
 	if (!initialized)
 		side_init();
 	assert(filter_key == NULL);
-	pthread_mutex_lock(&side_lock);
-	side_list_remove_node(&handle->node);
-	pthread_mutex_unlock(&side_lock);
+
+	pthread_mutex_lock(&side_statedump_lock);
+	side_list_remove_node_rcu(&handle->node);
+	pthread_mutex_unlock(&side_statedump_lock);
+
+	side_rcu_wait_grace_period(&statedump_rcu_gp);
 	free(handle);
 }
 
 void side_tracer_statedump_request(void *key)
 {
 	struct side_statedump_request_handle *handle;
+	struct side_rcu_read_state rcu_read_state;
 
 	/* Invoke the state dump callback specifically for the tracer key. */
 	filter_key = key;
-	pthread_mutex_lock(&side_lock);
-	side_list_for_each_entry(handle, &side_statedump_list, node)
+	side_rcu_read_begin(&statedump_rcu_gp, &rcu_read_state);
+	side_list_for_each_entry_rcu(handle, &side_statedump_list, node)
 		handle->cb();
-	pthread_mutex_unlock(&side_lock);
+	side_rcu_read_end(&statedump_rcu_gp, &rcu_read_state);
 	filter_key = NULL;
 }
 
@@ -542,7 +551,8 @@ void side_init(void)
 {
 	if (initialized)
 		return;
-	side_rcu_gp_init(&rcu_gp);
+	side_rcu_gp_init(&event_rcu_gp);
+	side_rcu_gp_init(&statedump_rcu_gp);
 	initialized = true;
 }
 
@@ -559,6 +569,7 @@ void side_exit(void)
 		return;
 	side_list_for_each_entry_safe(handle, tmp, &side_events_list, node)
 		side_events_unregister(handle);
-	side_rcu_gp_exit(&rcu_gp);
+	side_rcu_gp_exit(&event_rcu_gp);
+	side_rcu_gp_exit(&statedump_rcu_gp);
 	finalized = true;
 }

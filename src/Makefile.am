@@ -19,6 +19,7 @@ lib_LTLIBRARIES = libside.la
 
 libside_la_SOURCES = \
 	list.h \
+	rculist.h \
 	side.c \
 	tracer.c
 

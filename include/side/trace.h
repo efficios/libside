@@ -93,6 +93,11 @@ void side_events_unregister(struct side_events_register_handle *handle);
  * register event notification callbacks to be notified of the currently
  * registered instrumentation, and to register their callbacks to
  * specific events.
+ *
+ * Application statedump callbacks are allowed to invoke
+ * side event register/unregister(), but tracer callbacks are _not_
+ * allowed to invoke statedump request notification register/unregister.
+ * The latter could result in hangs across RCU grace period domains.
  */
 typedef void (*side_tracer_callback_func)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
@@ -132,9 +137,8 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *handle
  * state dump.
  * The statedump callback dumps application state to tracers by invoking
  * side_statedump_call APIs.
- * The statedump callback is invoked with side library internal lock held.
- * The statedump callback should not invoke functions which require the
- * side library internal lock.
+ * The statedump callback should not invoke libside statedump request
+ * notification register/unregister APIs.
  */
 void side_statedump_call(const struct side_event_state *state,
 	const struct side_arg_vec *side_arg_vec);
