@@ -154,12 +154,49 @@ void side_statedump_call_variadic(const struct side_event_state *state,
  *   callback,
  * - invoke side_event_description_ptr_exit after unregistration of the
  *   callback.
+ *
+ * In "polling" state dump mode, the application or library is responsible
+ * for periodically invoking side_statedump_run_pending_requests(). This
+ * mechanism is well-suited for single-threaded event-loop driven
+ * applications which do not wish to introduce multithreading nor
+ * locking-based synchronization of their state.
+ *
+ * In "agent thread" state dump mode, libside spawns a helper agent
+ * thread which is responsible for invoking the state dump callbacks
+ * when requested by the tracers. This mechanism is well-suited for
+ * instrumentation of multi-threaded applications which rely on
+ * locking to synchronize their data structures across threads, and
+ * for libraries which have no control on application event loops.
  */
+enum side_statedump_mode {
+	SIDE_STATEDUMP_MODE_POLLING,
+	SIDE_STATEDUMP_MODE_AGENT_THREAD,
+};
 
-struct side_statedump_request_handle *side_statedump_request_notification_register(void (*statedump_cb)(void));
-void side_statedump_request_notification_unregister(struct side_statedump_request_handle *handle);
+struct side_statedump_request_handle *
+	side_statedump_request_notification_register(
+		const char *state_name,
+		void (*statedump_cb)(void),
+		enum side_statedump_mode mode);
+void side_statedump_request_notification_unregister(
+		struct side_statedump_request_handle *handle);
 
-void side_tracer_statedump_request(void *key);
+/* Returns true if the handle has pending statedump requests. */
+bool side_statedump_poll_pending_requests(struct side_statedump_request_handle *handle);
+void side_statedump_run_pending_requests(struct side_statedump_request_handle *handle);
+
+/*
+ * Request a state dump for tracer callbacks identified with "key".
+ * Calls the completion callback when the statedump request is fulfilled.
+ */
+void side_tracer_statedump_request(void *key, void (*completion)(void *priv), void *priv);
+/*
+ * Cancel a statedump request.
+ * Returns true if the request is cancelled before completion.
+ * The completion callback is not invoked when a statedump request is
+ * cancelled.
+ */
+bool side_tracer_statedump_request_cancel(void *key);
 
 /*
  * Explicit hooks to initialize/finalize the side instrumentation
