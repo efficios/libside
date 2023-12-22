@@ -27,6 +27,8 @@ union int_value {
 
 static struct side_tracer_handle *tracer_handle;
 
+static uint64_t tracer_key;
+
 static
 void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
 static
@@ -2120,21 +2122,21 @@ void tracer_event_notification(enum side_tracer_notification notif,
 					event->nr_side_attr_type - _NR_SIDE_ATTR_TYPE);
 			}
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
-				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL, tracer_handle);
+				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL, tracer_key);
 				if (ret)
 					abort();
 			} else {
-				ret = side_tracer_callback_register(event, tracer_call, NULL, tracer_handle);
+				ret = side_tracer_callback_register(event, tracer_call, NULL, tracer_key);
 				if (ret)
 					abort();
 			}
 		} else {
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
-				ret = side_tracer_callback_variadic_unregister(event, tracer_call_variadic, NULL, tracer_handle);
+				ret = side_tracer_callback_variadic_unregister(event, tracer_call_variadic, NULL, tracer_key);
 				if (ret)
 					abort();
 			} else {
-				ret = side_tracer_callback_unregister(event, tracer_call, NULL, tracer_handle);
+				ret = side_tracer_callback_unregister(event, tracer_call, NULL, tracer_key);
 				if (ret)
 					abort();
 			}
@@ -2148,6 +2150,8 @@ void tracer_init(void);
 static
 void tracer_init(void)
 {
+	if (side_tracer_request_key(&tracer_key))
+		abort();
 	tracer_handle = side_tracer_event_notification_register(tracer_event_notification, NULL);
 	if (!tracer_handle)
 		abort();

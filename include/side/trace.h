@@ -107,18 +107,20 @@ typedef void (*side_tracer_callback_variadic_func)(const struct side_event_descr
 			const struct side_arg_dynamic_struct *var_struct,
 			void *priv);
 
+int side_tracer_request_key(uint64_t *key);
+
 int side_tracer_callback_register(struct side_event_description *desc,
 		side_tracer_callback_func call,
-		void *priv, void *key);
+		void *priv, uint64_t key);
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
 		side_tracer_callback_variadic_func call_variadic,
-		void *priv, void *key);
+		void *priv, uint64_t key);
 int side_tracer_callback_unregister(struct side_event_description *desc,
 		side_tracer_callback_func call,
-		void *priv, void *key);
+		void *priv, uint64_t key);
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
 		side_tracer_callback_variadic_func call_variadic,
-		void *priv, void *key);
+		void *priv, uint64_t key);
 
 enum side_tracer_notification {
 	SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
@@ -183,20 +185,16 @@ void side_statedump_request_notification_unregister(
 
 /* Returns true if the handle has pending statedump requests. */
 bool side_statedump_poll_pending_requests(struct side_statedump_request_handle *handle);
-void side_statedump_run_pending_requests(struct side_statedump_request_handle *handle);
+int side_statedump_run_pending_requests(struct side_statedump_request_handle *handle);
 
 /*
  * Request a state dump for tracer callbacks identified with "key".
- * Calls the completion callback when the statedump request is fulfilled.
  */
-void side_tracer_statedump_request(void *key, void (*completion)(void *priv), void *priv);
+int side_tracer_statedump_request(uint64_t key);
 /*
  * Cancel a statedump request.
- * Returns true if the request is cancelled before completion.
- * The completion callback is not invoked when a statedump request is
- * cancelled.
  */
-bool side_tracer_statedump_request_cancel(void *key);
+int side_tracer_statedump_request_cancel(uint64_t key);
 
 /*
  * Explicit hooks to initialize/finalize the side instrumentation

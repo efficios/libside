@@ -51,7 +51,8 @@ static void my_constructor(void)
 static void my_constructor(void)
 {
 	side_event_description_ptr_init();
-	statedump_request_handle = side_statedump_request_notification_register(statedump_cb);
+	statedump_request_handle = side_statedump_request_notification_register("mystatedump",
+			statedump_cb, SIDE_STATEDUMP_MODE_AGENT_THREAD);
 	if (!statedump_request_handle)
 		abort();
 }
