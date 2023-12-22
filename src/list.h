@@ -69,7 +69,7 @@ void side_list_splice(struct side_list_head *from, struct side_list_head *to)
 	for ((_entry) = side_container_of((_head)->node.next, __typeof__(*(_entry)), _member), \
 			(_next_entry) = side_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member); \
 		&(_entry)->_member != &(_head)->node; \
-		(_entry) = side_container_of((_next_entry)->_member.next, __typeof__(*(_entry)), _member), \
+		(_entry) = (_next_entry), \
 		(_next_entry) = side_container_of((_entry)->_member.next, __typeof__(*(_entry)), _member))
 
 #endif /* _SIDE_LIST_H */
