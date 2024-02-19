@@ -169,6 +169,12 @@ void side_statedump_call_variadic(const struct side_event_state *state,
  * instrumentation of multi-threaded applications which rely on
  * locking to synchronize their data structures across threads, and
  * for libraries which have no control on application event loops.
+ *
+ * Applications using fork/clone with locks held should not take those
+ * locks (or block on any resource that depend on these locks) within
+ * their statedump callbacks registered with the agent thread. This
+ * could result in deadlocks when pthread_atfork handler waits for
+ * agent thread quiescence.
  */
 enum side_statedump_mode {
 	SIDE_STATEDUMP_MODE_POLLING,
