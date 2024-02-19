@@ -8,7 +8,9 @@
 #include <assert.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <poll.h>
 
+#include "compiler.h"
 #include "rcu.h"
 #include "list.h"
 #include "rculist.h"
@@ -38,6 +40,9 @@
 #define SIDE_KEY_USER_EVENT				0x1
 /* Key 0x2 is reserved for ptrace. */
 #define SIDE_KEY_PTRACE					0x2
+
+#define SIDE_RETRY_BUSY_LOOP_ATTEMPTS			100
+#define SIDE_RETRY_DELAY_MS				1
 
 struct side_events_register_handle {
 	struct side_list_node node;
@@ -83,6 +88,8 @@ enum agent_thread_state {
 	AGENT_THREAD_STATE_BLOCKED = 0,
 	AGENT_THREAD_STATE_HANDLE_REQUEST = (1 << 0),
 	AGENT_THREAD_STATE_EXIT = (1 << 1),
+	AGENT_THREAD_STATE_PAUSE = (1 << 2),
+	AGENT_THREAD_STATE_PAUSE_ACK = (1 << 3),
 };
 
 struct statedump_agent_thread {
@@ -659,6 +666,23 @@ void *statedump_agent_func(void *arg __attribute__((unused)))
 		pthread_mutex_unlock(&side_statedump_lock);
 		if (state & AGENT_THREAD_STATE_EXIT)
 			break;
+		if (state & AGENT_THREAD_STATE_PAUSE) {
+			int attempt = 0;
+
+			(void)__atomic_or_fetch(&statedump_agent_thread.state, AGENT_THREAD_STATE_PAUSE_ACK, __ATOMIC_SEQ_CST);
+			for (;;) {
+				state = __atomic_load_n(&statedump_agent_thread.state, __ATOMIC_SEQ_CST);
+				if (!(state & AGENT_THREAD_STATE_PAUSE))
+					break;
+				if (attempt > SIDE_RETRY_BUSY_LOOP_ATTEMPTS) {
+					(void)poll(NULL, 0, SIDE_RETRY_DELAY_MS);
+					continue;
+				}
+				attempt++;
+				side_cpu_relax();
+			}
+			continue;
+		}
 		(void)__atomic_and_fetch(&statedump_agent_thread.state, ~AGENT_THREAD_STATE_HANDLE_REQUEST, __ATOMIC_SEQ_CST);
 		side_rcu_read_begin(&statedump_rcu_gp, &rcu_read_state);
 		side_list_for_each_entry_rcu(handle, &side_statedump_list, node)
@@ -666,6 +690,14 @@ void *statedump_agent_func(void *arg __attribute__((unused)))
 		side_rcu_read_end(&statedump_rcu_gp, &rcu_read_state);
 	}
 	return NULL;
+}
+
+static
+void statedump_agent_thread_init(void)
+{
+	pthread_cond_init(&statedump_agent_thread.worker_cond, NULL);
+	pthread_cond_init(&statedump_agent_thread.waiter_cond, NULL);
+	statedump_agent_thread.state = AGENT_THREAD_STATE_BLOCKED;
 }
 
 /* Called with side_agent_thread_lock and side_statedump_lock held. */
@@ -676,9 +708,7 @@ void statedump_agent_thread_get(void)
 
 	if (statedump_agent_thread.ref++)
 		return;
-	pthread_cond_init(&statedump_agent_thread.worker_cond, NULL);
-	pthread_cond_init(&statedump_agent_thread.waiter_cond, NULL);
-	statedump_agent_thread.state = AGENT_THREAD_STATE_BLOCKED;
+	statedump_agent_thread_init();
 	ret = pthread_create(&statedump_agent_thread.id, NULL,
 			statedump_agent_func, NULL);
 	if (ret) {
@@ -700,6 +730,16 @@ bool statedump_agent_thread_put(void)
 	return true;
 }
 
+static
+void statedump_agent_thread_fini(void)
+{
+	statedump_agent_thread.state = AGENT_THREAD_STATE_BLOCKED;
+	if (pthread_cond_destroy(&statedump_agent_thread.worker_cond))
+		abort();
+	if (pthread_cond_destroy(&statedump_agent_thread.waiter_cond))
+		abort();
+}
+
 /* Called with side_agent_thread_lock held. */
 static
 void statedump_agent_thread_join(void)
@@ -711,9 +751,7 @@ void statedump_agent_thread_join(void)
 	if (ret) {
 		abort();
 	}
-	statedump_agent_thread.state = AGENT_THREAD_STATE_BLOCKED;
-	pthread_cond_destroy(&statedump_agent_thread.worker_cond);
-	pthread_cond_destroy(&statedump_agent_thread.waiter_cond);
+	statedump_agent_thread_fini();
 }
 
 struct side_statedump_request_handle *
@@ -875,12 +913,76 @@ end:
 	return ret;
 }
 
+/*
+ * Use of pthread_atfork depends on glibc 2.24 to eliminate hangs when
+ * waiting for the agent thread if the agent thread calls malloc. This
+ * is corrected by GNU libc
+ * commit 8a727af925be63aa6ea0f5f90e16751fd541626b.
+ * Ref. https://bugzilla.redhat.com/show_bug.cgi?id=906468
+ */
+static
+void side_before_fork(void)
+{
+	int attempt = 0;
+
+	pthread_mutex_lock(&side_agent_thread_lock);
+	if (!statedump_agent_thread.ref)
+		return;
+	/* Pause agent thread. */
+	pthread_mutex_lock(&side_statedump_lock);
+	(void)__atomic_or_fetch(&statedump_agent_thread.state, AGENT_THREAD_STATE_PAUSE, __ATOMIC_SEQ_CST);
+	pthread_cond_broadcast(&statedump_agent_thread.worker_cond);
+	pthread_mutex_unlock(&side_statedump_lock);
+	/* Wait for agent thread acknowledge. */
+	while (!(__atomic_load_n(&statedump_agent_thread.state, __ATOMIC_SEQ_CST) & AGENT_THREAD_STATE_PAUSE_ACK)) {
+		if (attempt > SIDE_RETRY_BUSY_LOOP_ATTEMPTS) {
+			(void)poll(NULL, 0, SIDE_RETRY_DELAY_MS);
+			continue;
+		}
+		attempt++;
+		side_cpu_relax();
+	}
+}
+
+static
+void side_after_fork_parent(void)
+{
+	if (statedump_agent_thread.ref)
+		(void)__atomic_and_fetch(&statedump_agent_thread.state,
+			~(AGENT_THREAD_STATE_PAUSE | AGENT_THREAD_STATE_PAUSE_ACK),
+			__ATOMIC_SEQ_CST);
+	pthread_mutex_unlock(&side_agent_thread_lock);
+}
+
+/*
+ * The agent thread does not exist in the child process after a fork.
+ * Re-initialize its data structures and create a new agent thread.
+ */
+static
+void side_after_fork_child(void)
+{
+	if (statedump_agent_thread.ref) {
+		int ret;
+
+		statedump_agent_thread_fini();
+		statedump_agent_thread_init();
+		ret = pthread_create(&statedump_agent_thread.id, NULL,
+				statedump_agent_func, NULL);
+		if (ret) {
+			abort();
+		}
+	}
+	pthread_mutex_unlock(&side_agent_thread_lock);
+}
+
 void side_init(void)
 {
 	if (initialized)
 		return;
 	side_rcu_gp_init(&event_rcu_gp);
 	side_rcu_gp_init(&statedump_rcu_gp);
+	if (pthread_atfork(side_before_fork, side_after_fork_parent, side_after_fork_child))
+		abort();
 	initialized = true;
 }
 

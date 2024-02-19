@@ -18,6 +18,7 @@ libsmp_la_SOURCES = \
 lib_LTLIBRARIES = libside.la
 
 libside_la_SOURCES = \
+	compiler.h \
 	list.h \
 	rculist.h \
 	side.c \
