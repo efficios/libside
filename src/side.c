@@ -74,11 +74,11 @@ struct side_callback {
 	union {
 		void (*call)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
-			void *priv);
+			void *priv, void *caller_addr);
 		void (*call_variadic)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
 			const struct side_arg_dynamic_struct *var_struct,
-			void *priv);
+			void *priv, void *caller_addr);
 	} u;
 	void *priv;
 	uint64_t key;
@@ -157,17 +157,20 @@ side_static_event(side_statedump_end, "side", "statedump_end",
  */
 void side_ptrace_hook(const struct side_event_state *event_state __attribute__((unused)),
 		const struct side_arg_vec *side_arg_vec __attribute__((unused)),
-		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)))
+		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)),
+		void *caller_addr __attribute__((unused)))
 		__attribute__((noinline));
 void side_ptrace_hook(const struct side_event_state *event_state __attribute__((unused)),
 		const struct side_arg_vec *side_arg_vec __attribute__((unused)),
-		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)))
+		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)),
+		void *caller_addr __attribute__((unused)))
 {
 }
 
-static
+static inline __attribute__((always_inline))
 void _side_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec, uint64_t key)
 {
+	void *caller_addr = __builtin_return_address(0);
 	struct side_rcu_read_state rcu_read_state;
 	const struct side_event_state_0 *es0;
 	const struct side_callback *side_cb;
@@ -189,13 +192,13 @@ void _side_call(const struct side_event_state *event_state, const struct side_ar
 		}
 		if ((enabled & SIDE_EVENT_ENABLED_SHARED_PTRACE_MASK) &&
 		    (key == SIDE_KEY_MATCH_ALL || key == SIDE_KEY_PTRACE))
-			side_ptrace_hook(event_state, side_arg_vec, NULL);
+			side_ptrace_hook(event_state, side_arg_vec, NULL, caller_addr);
 	}
 	side_rcu_read_begin(&event_rcu_gp, &rcu_read_state);
 	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call != NULL; side_cb++) {
 		if (key != SIDE_KEY_MATCH_ALL && side_cb->key != SIDE_KEY_MATCH_ALL && side_cb->key != key)
 			continue;
-		side_cb->u.call(es0->desc, side_arg_vec, side_cb->priv);
+		side_cb->u.call(es0->desc, side_arg_vec, side_cb->priv, caller_addr);
 	}
 	side_rcu_read_end(&event_rcu_gp, &rcu_read_state);
 }
@@ -212,12 +215,13 @@ void side_statedump_call(const struct side_event_state *event_state,
 	_side_call(event_state, side_arg_vec, *(const uint64_t *) statedump_request_key);
 }
 
-static
+static inline __attribute__((always_inline))
 void _side_call_variadic(const struct side_event_state *event_state,
 		const struct side_arg_vec *side_arg_vec,
 		const struct side_arg_dynamic_struct *var_struct,
 		uint64_t key)
 {
+	void *caller_addr = __builtin_return_address(0);
 	struct side_rcu_read_state rcu_read_state;
 	const struct side_event_state_0 *es0;
 	const struct side_callback *side_cb;
@@ -239,13 +243,13 @@ void _side_call_variadic(const struct side_event_state *event_state,
 		}
 		if ((enabled & SIDE_EVENT_ENABLED_SHARED_PTRACE_MASK) &&
 		    (key == SIDE_KEY_MATCH_ALL || key == SIDE_KEY_PTRACE))
-			side_ptrace_hook(event_state, side_arg_vec, var_struct);
+			side_ptrace_hook(event_state, side_arg_vec, var_struct, caller_addr);
 	}
 	side_rcu_read_begin(&event_rcu_gp, &rcu_read_state);
 	for (side_cb = side_rcu_dereference(es0->callbacks); side_cb->u.call_variadic != NULL; side_cb++) {
 		if (key != SIDE_KEY_MATCH_ALL && side_cb->key != SIDE_KEY_MATCH_ALL && side_cb->key != key)
 			continue;
-		side_cb->u.call_variadic(es0->desc, side_arg_vec, var_struct, side_cb->priv);
+		side_cb->u.call_variadic(es0->desc, side_arg_vec, var_struct, side_cb->priv, caller_addr);
 	}
 	side_rcu_read_end(&event_rcu_gp, &rcu_read_state);
 }

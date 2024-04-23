@@ -101,11 +101,11 @@ void side_events_unregister(struct side_events_register_handle *handle);
  */
 typedef void (*side_tracer_callback_func)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
-			void *priv);
+			void *priv, void *caller_addr);
 typedef void (*side_tracer_callback_variadic_func)(const struct side_event_description *desc,
 			const struct side_arg_vec *side_arg_vec,
 			const struct side_arg_dynamic_struct *var_struct,
-			void *priv);
+			void *priv, void *caller_addr);
 
 int side_tracer_request_key(uint64_t *key);
 

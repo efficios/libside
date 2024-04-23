@@ -2023,12 +2023,14 @@ void tracer_print_dynamic(const struct side_arg *item)
 static
 void tracer_print_static_fields(const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
-		uint32_t *nr_items)
+		uint32_t *nr_items, void *caller_addr)
 {
 	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	printf("provider: %s, event: %s", side_ptr_get(desc->provider_name), side_ptr_get(desc->event_name));
+	printf("caller: [%p], provider: %s, event: %s", caller_addr,
+		side_ptr_get(desc->provider_name),
+		side_ptr_get(desc->event_name));
 	if (desc->nr_fields != side_sav_len) {
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments\n");
 		abort();
@@ -2048,11 +2050,12 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 static
 void tracer_call(const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
-		void *priv __attribute__((unused)))
+		void *priv __attribute__((unused)),
+		void *caller_addr)
 {
 	uint32_t nr_fields = 0;
 
-	tracer_print_static_fields(desc, side_arg_vec, &nr_fields);
+	tracer_print_static_fields(desc, side_arg_vec, &nr_fields, caller_addr);
 	printf("\n");
 }
 
@@ -2060,11 +2063,12 @@ static
 void tracer_call_variadic(const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
 		const struct side_arg_dynamic_struct *var_struct,
-		void *priv __attribute__((unused)))
+		void *priv __attribute__((unused)),
+		void *caller_addr)
 {
 	uint32_t nr_fields = 0, i, var_struct_len = var_struct->len;
 
-	tracer_print_static_fields(desc, side_arg_vec, &nr_fields);
+	tracer_print_static_fields(desc, side_arg_vec, &nr_fields, caller_addr);
 
 	if (side_unlikely(!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))) {
 		fprintf(stderr, "ERROR: unexpected non-variadic event description\n");
