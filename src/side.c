@@ -161,12 +161,12 @@ side_static_event(side_statedump_end, "side", "statedump_end",
  * var_struct is NULL if not variadic.
  */
 void side_ptrace_hook(const struct side_event_state *event_state __attribute__((unused)),
-	const struct side_arg_vec *side_arg_vec __attribute__((unused)),
-	const struct side_arg_dynamic_struct *var_struct __attribute__((unused)))
-	__attribute__((noinline));
+		const struct side_arg_vec *side_arg_vec __attribute__((unused)),
+		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)))
+		__attribute__((noinline));
 void side_ptrace_hook(const struct side_event_state *event_state __attribute__((unused)),
-	const struct side_arg_vec *side_arg_vec __attribute__((unused)),
-	const struct side_arg_dynamic_struct *var_struct __attribute__((unused)))
+		const struct side_arg_vec *side_arg_vec __attribute__((unused)),
+		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)))
 {
 }
 
@@ -217,9 +217,9 @@ void side_statedump_call(const struct side_event_state *event_state, const struc
 
 static
 void _side_call_variadic(const struct side_event_state *event_state,
-	const struct side_arg_vec *side_arg_vec,
-	const struct side_arg_dynamic_struct *var_struct,
-	uint64_t key)
+		const struct side_arg_vec *side_arg_vec,
+		const struct side_arg_dynamic_struct *var_struct,
+		uint64_t key)
 {
 	struct side_rcu_read_state rcu_read_state;
 	const struct side_event_state_0 *es0;
@@ -254,8 +254,8 @@ void _side_call_variadic(const struct side_event_state *event_state,
 }
 
 void side_call_variadic(const struct side_event_state *event_state,
-	const struct side_arg_vec *side_arg_vec,
-	const struct side_arg_dynamic_struct *var_struct)
+		const struct side_arg_vec *side_arg_vec,
+		const struct side_arg_dynamic_struct *var_struct)
 {
 	_side_call_variadic(event_state, side_arg_vec, var_struct, SIDE_KEY_MATCH_ALL);
 }
