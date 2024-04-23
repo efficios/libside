@@ -65,7 +65,7 @@ struct side_statedump_notification {
 struct side_statedump_request_handle {
 	struct side_list_node node;			/* Statedump request RCU list node. */
 	struct side_list_head notification_queue;	/* Queue of struct side_statedump_notification */
-	void (*cb)(void);
+	void (*cb)(void *statedump_request_key);
 	char *name;
 	enum side_statedump_mode mode;
 };
@@ -141,11 +141,6 @@ static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
 static DEFINE_SIDE_LIST_HEAD(side_statedump_list);
 
 /*
- * Callback filter key for state dump.
- */
-static __thread uint64_t filter_key = SIDE_KEY_MATCH_ALL;
-
-/*
  * The empty callback has a NULL function callback pointer, which stops
  * iteration on the array of callbacks immediately.
  */
@@ -210,9 +205,11 @@ void side_call(const struct side_event_state *event_state, const struct side_arg
 	_side_call(event_state, side_arg_vec, SIDE_KEY_MATCH_ALL);
 }
 
-void side_statedump_call(const struct side_event_state *event_state, const struct side_arg_vec *side_arg_vec)
+void side_statedump_call(const struct side_event_state *event_state,
+		const struct side_arg_vec *side_arg_vec,
+		void *statedump_request_key)
 {
-	_side_call(event_state, side_arg_vec, filter_key);
+	_side_call(event_state, side_arg_vec, *(const uint64_t *) statedump_request_key);
 }
 
 static
@@ -261,10 +258,11 @@ void side_call_variadic(const struct side_event_state *event_state,
 }
 
 void side_statedump_call_variadic(const struct side_event_state *event_state,
-	const struct side_arg_vec *side_arg_vec,
-	const struct side_arg_dynamic_struct *var_struct)
+		const struct side_arg_vec *side_arg_vec,
+		const struct side_arg_dynamic_struct *var_struct,
+		void *statedump_request_key)
 {
-	_side_call_variadic(event_state, side_arg_vec, var_struct, filter_key);
+	_side_call_variadic(event_state, side_arg_vec, var_struct, *(const uint64_t *) statedump_request_key);
 }
 
 static
@@ -613,14 +611,12 @@ static
 void side_statedump_run(struct side_statedump_request_handle *handle,
 		struct side_statedump_notification *notif)
 {
+	side_statedump_event_call(side_statedump_begin, &notif->key,
+		side_arg_list(side_arg_string(handle->name)));
 	/* Invoke the state dump callback specifically for the tracer key. */
-	filter_key = notif->key;
-	side_statedump_event_call(side_statedump_begin,
+	handle->cb(&notif->key);
+	side_statedump_event_call(side_statedump_end, &notif->key,
 		side_arg_list(side_arg_string(handle->name)));
-	handle->cb();
-	side_statedump_event_call(side_statedump_end,
-		side_arg_list(side_arg_string(handle->name)));
-	filter_key = SIDE_KEY_MATCH_ALL;
 }
 
 static
@@ -756,7 +752,7 @@ void statedump_agent_thread_join(void)
 
 struct side_statedump_request_handle *
 	side_statedump_request_notification_register(const char *state_name,
-		void (*statedump_cb)(void),
+		void (*statedump_cb)(void *statedump_request_key),
 		enum side_statedump_mode mode)
 {
 	struct side_statedump_request_handle *handle;
@@ -766,11 +762,6 @@ struct side_statedump_request_handle *
 		return NULL;
 	if (!initialized)
 		side_init();
-	/*
-	 * The statedump request notification should not be registered
-	 * from a notification callback.
-	 */
-	assert(!filter_key);
 	handle = (struct side_statedump_request_handle *)
 				calloc(1, sizeof(struct side_statedump_request_handle));
 	if (!handle)
@@ -817,7 +808,6 @@ void side_statedump_request_notification_unregister(struct side_statedump_reques
 		return;
 	if (!initialized)
 		side_init();
-	assert(!filter_key);
 
 	if (handle->mode == SIDE_STATEDUMP_MODE_AGENT_THREAD)
 		pthread_mutex_lock(&side_agent_thread_lock);

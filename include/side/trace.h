@@ -143,10 +143,12 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *handle
  * notification register/unregister APIs.
  */
 void side_statedump_call(const struct side_event_state *state,
-	const struct side_arg_vec *side_arg_vec);
+		const struct side_arg_vec *side_arg_vec,
+		void *statedump_request_key);
 void side_statedump_call_variadic(const struct side_event_state *state,
-	const struct side_arg_vec *side_arg_vec,
-	const struct side_arg_dynamic_struct *var_struct);
+		const struct side_arg_vec *side_arg_vec,
+		const struct side_arg_dynamic_struct *var_struct,
+		void *statedump_request_key);
 
 /*
  * If side_statedump_request_notification_register is invoked from
@@ -175,6 +177,9 @@ void side_statedump_call_variadic(const struct side_event_state *state,
  * their statedump callbacks registered with the agent thread. This
  * could result in deadlocks when pthread_atfork handler waits for
  * agent thread quiescence.
+ *
+ * The statedump_request_key received by the statedump_cb is only
+ * valid until the statedump_cb returns.
  */
 enum side_statedump_mode {
 	SIDE_STATEDUMP_MODE_POLLING,
@@ -184,7 +189,7 @@ enum side_statedump_mode {
 struct side_statedump_request_handle *
 	side_statedump_request_notification_register(
 		const char *state_name,
-		void (*statedump_cb)(void),
+		void (*statedump_cb)(void *statedump_request_key),
 		enum side_statedump_mode mode);
 void side_statedump_request_notification_unregister(
 		struct side_statedump_request_handle *handle);

@@ -1221,11 +1221,38 @@
 	side_event_cond(_identifier) \
 		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_statedump_event_call(_identifier, _sav) \
-	_side_event_call(side_statedump_call, _identifier, SIDE_PARAM(_sav))
+#define _side_statedump_event_call(_call, _identifier, _key, _sav) \
+	{ \
+		const struct side_arg side_sav[] = { _sav }; \
+		const struct side_arg_vec side_arg_vec = { \
+			.sav = SIDE_PTR_INIT(side_sav), \
+			.len = SIDE_ARRAY_SIZE(side_sav), \
+		}; \
+		_call(&(side_event_state__##_identifier).parent, &side_arg_vec, _key); \
+	}
 
-#define side_statedump_event_call_variadic(_identifier, _sav, _var_fields, _attr...) \
-	_side_event_call_variadic(side_statedump_call_variadic, _identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var_fields), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_statedump_event_call(_identifier, _key, _sav) \
+	_side_statedump_event_call(side_statedump_call, _identifier, _key, SIDE_PARAM(_sav))
+
+#define _side_statedump_event_call_variadic(_call, _identifier, _key, _sav, _var_fields, _attr...) \
+	{ \
+		const struct side_arg side_sav[] = { _sav }; \
+		const struct side_arg_vec side_arg_vec = { \
+			.sav = side_ptr_init(side_sav), \
+			.len = side_array_size(side_sav), \
+		}; \
+		const struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
+		const struct side_arg_dynamic_struct var_struct = { \
+			.fields = side_ptr_init(side_fields), \
+			.attr = side_ptr_init(_attr), \
+			.len = side_array_size(side_fields), \
+			.nr_attr = side_array_size(_attr), \
+		}; \
+		_call(&(side_event_state__##_identifier.parent), &side_arg_vec, &var_struct, _key); \
+	}
+
+#define side_statedump_event_call_variadic(_identifier, _key, _sav, _var_fields, _attr...) \
+	_side_statedump_event_call_variadic(side_statedump_call_variadic, _identifier, _key, SIDE_PARAM(_sav), SIDE_PARAM(_var_fields), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
