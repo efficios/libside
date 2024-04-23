@@ -81,7 +81,7 @@ void side_rcu_read_begin(struct side_rcu_gp_state *gp_state, struct side_rcu_rea
 	read_state->percpu_count = begin_cpu_count = &cpu_gp_state->count[period];
 	read_state->cpu = cpu;
 	if (side_likely(side_rcu_rseq_membarrier_available &&
-			!rseq_addv(RSEQ_MO_RELAXED, RSEQ_PERCPU_CPU_ID,
+			!rseq_load_add_store__ptr(RSEQ_MO_RELAXED, RSEQ_PERCPU_CPU_ID,
 				   (intptr_t *)&begin_cpu_count->rseq_begin, 1, cpu))) {
 		/*
 		 * This compiler barrier (A) is paired with membarrier() at (C),
@@ -130,7 +130,7 @@ void side_rcu_read_end(struct side_rcu_gp_state *gp_state, struct side_rcu_read_
 	 */
 	rseq_barrier();
 	if (side_likely(side_rcu_rseq_membarrier_available &&
-			!rseq_addv(RSEQ_MO_RELAXED, RSEQ_PERCPU_CPU_ID,
+			!rseq_load_add_store__ptr(RSEQ_MO_RELAXED, RSEQ_PERCPU_CPU_ID,
 				   (intptr_t *)&begin_cpu_count->rseq_end, 1, cpu))) {
 		/*
 		 * This barrier (F) is paired with membarrier()
