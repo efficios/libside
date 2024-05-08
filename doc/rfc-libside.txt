@@ -1,7 +1,7 @@
 
 RFC - libside
 
-[ This document is under heavy construction. Please be aware of the
+[ This document is under heavy construction. Please beware of the
   potholes as you wander through it. ]
 
 * Introduction
