@@ -6,9 +6,8 @@ RFC - SIDE ABI
 
 * Introduction
 
-The purpose of the SIDE ABI is to allow a kernel tracer and many
-user-space tracers to attach to static and dynamic instrumentation of
-user-space applications.
+The purpose of the SIDE ABI is to allow kernel and user-space tracers to
+attach to static and dynamic instrumentation of user-space applications.
 
 The SIDE ABI expresses the instrumentation description as data (no
 generated code). Instrumentation arguments are passed on the stack as an
@@ -37,9 +36,10 @@ statically known types and dynamic types. Nested structures, arrays, and
 variable-length arrays are supported.
 
 The libside C API is a reference implementation of the SIDE ABI for
-instrumentation of C/C++ applications by the Linux kernel through the
-User Events ABI and by user-space tracers following the default calling
-convention (System V ELF ABI on Linux, MS ABI on Windows).
+instrumentation of C/C++ applications by user-space tracers following
+the default calling convention (System V ELF ABI on Linux, MS ABI on
+Windows) and eventually by Linux kernel tracers through the User Events
+ABI.
 
 A set of macros is provided with the libside C API for convenience of
 C/C++ application instrumentation.
