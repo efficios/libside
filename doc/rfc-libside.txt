@@ -1,39 +1,57 @@
 
-RFC - libside
+RFC - SIDE ABI
 
 [ This document is under heavy construction. Please beware of the
   potholes as you wander through it. ]
 
 * Introduction
 
-The purpose of the libside API/ABI is to allow a kernel tracer and many
+The purpose of the SIDE ABI is to allow a kernel tracer and many
 user-space tracers to attach to static and dynamic instrumentation of
 user-space applications.
 
-The libside library expresses the instrumentation description as data
-(no generated code). Instrumentation arguments are passed on the stack
-as an array of typed items, along with a reference to the
-instrumentation description.
+The SIDE ABI expresses the instrumentation description as data (no
+generated code). Instrumentation arguments are passed on the stack as an
+array of typed items, along with a reference to the instrumentation
+description.
 
--- TODO API vs ABI
-This library exposes a type system and a set of macros to help
-applications declare their instrumentation and insert instrumentation
-calls. It exposes APIs to kernel and user-space tracers so they can list
+The following ABIs are introduced to let applications declare their
+instrumentation and insert instrumentation calls:
+
+- an event description ABI,
+- a type description ABI,
+- an event and type attribute ABI, which allows associating key-value
+  tuples to events and types,
+- an ABI defining how applications provide arguments to instrumentation
+  calls.
+
+The combination of the type description and type argument ABIs is later
+refered to as the SIDE type system.
+
+The ABI exposed to kernel and user-space tracers allow them to list
 and connect to the instrumentation, and conditionally enables
 instrumentation when at least one tracer is using it.
 
-The type system includes support for statically known types and dynamic
-types. Nested structures, arrays, and variable-length arrays are
-supported.
+The type description and type argument ABIs include support for
+statically known types and dynamic types. Nested structures, arrays, and
+variable-length arrays are supported.
 
-This library learns from the user feedback about experience with
-LTTng-UST and Linux kernel tracepoints, and therefore it introduces
-significant changes (and vast simplifications) to the way
-instrumentation is done compared to LTTng-UST and Linux kernel
-tracepoints.
+The libside C API is a reference implementation of the SIDE ABI for
+instrumentation of C/C++ applications by the Linux kernel through the
+User Events ABI and by user-space tracers following the default calling
+convention (System V ELF ABI on Linux, MS ABI on Windows).
+
+A set of macros is provided with the libside C API for convenience of
+C/C++ application instrumentation.
 
 
 * Genesis
+
+The SIDE ABI and libside library learn from the user feedback about
+experience with LTTng-UST and Linux kernel tracepoints, and therefore
+they introduce significant changes (and vast simplifications) to the way
+instrumentation is done compared to LTTng-UST and Linux kernel
+tracepoints.
 
 - Linux kernel User Events ABI
   - Exposes a stable ABI allowing applications to register their event
@@ -52,6 +70,7 @@ tracepoints.
   - API uses standard header inclusion practices
   - share ABI across runtimes (no need to reimplement tracepoints for
     each language, or to use string only payloads)
+
 - Improvements over SDT: allow expressing additional event semantic
   (e.g.  user attributes, versioning, nested and compound data types)
   - libside has less impact on control flow when disabled (no stack setup)
@@ -59,11 +78,13 @@ tracepoints.
     is easier to use from runtime environments which have an ABI
     different from the native architecture (golang, rust, python, java).
     libside instrumentation ABI calls a small fixed set of functions.
+
 - Comparison with ETW
   - similar to libside in terms of array of arguments,
   - does not support pre-registration of events (static typing)
     - type information received at runtime from the instrumentation
       callsite.
+
 
 * Desiderata
 
@@ -146,13 +167,10 @@ tracepoints.
 
 * Design / Architecture
 
-
 - Compiler error messages are easy to understand because it is a simple
   header file without any repeated inclusion tricks.
 
-
 - Variadic events.
-
 
 - Instrumentation API/ABI:
   – Type system,
@@ -202,7 +220,3 @@ tracepoints.
 - Event attributes.
 
 - Type attributes.
-
-
-
-
