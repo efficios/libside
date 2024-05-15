@@ -69,7 +69,7 @@ void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_t
 		size_t *strlen_with_null,
 		char **output_str)
 {
-	size_t ret, inbytesleft = 0, outbytesleft, bufsize;
+	size_t ret, inbytesleft = 0, outbytesleft, bufsize, input_size;
 	const char *str = p, *fromcode;
 	char *inbuf = (char *) p, *outbuf, *buf;
 	iconv_t cd;
@@ -101,6 +101,7 @@ void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_t
 		}
 		for (; *p16; p16++)
 			inbytesleft += 2;
+		input_size = inbytesleft + 2;
 		/*
 		 * Worse case is U+FFFF UTF-16 (2 bytes) converting to
 		 * { ef, bf, bf } UTF-8 (3 bytes).
@@ -129,6 +130,7 @@ void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_t
 		}
 		for (; *p32; p32++)
 			inbytesleft += 4;
+		input_size = inbytesleft + 4;
 		/*
 		 * Each 4-byte UTF-32 character converts to at most a
 		 * 4-byte UTF-8 character.
@@ -167,7 +169,7 @@ void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_t
 		abort();
 	}
 	if (strlen_with_null)
-		*strlen_with_null = outbuf - buf;
+		*strlen_with_null = input_size;
 	*output_str = buf;
 }
 
