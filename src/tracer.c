@@ -1841,13 +1841,13 @@ void tracer_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_s
 	print_attributes("attr", "::", side_ptr_get(dynamic_struct->attr), dynamic_struct->nr_attr);
 	printf("%s", dynamic_struct->nr_attr ? ", " : "");
 	printf("fields:: ");
-	printf("[ ");
+	printf("{ ");
 	for (i = 0; i < len; i++) {
 		printf("%s", i ? ", " : "");
 		printf("%s:: ", side_ptr_get(fields[i].field_name));
 		tracer_print_dynamic(&fields[i].elem, true);
 	}
-	printf(" ]");
+	printf(" }");
 }
 
 struct tracer_dynamic_struct_visitor_priv {
@@ -1889,7 +1889,7 @@ void tracer_print_dynamic_struct_visitor(const struct side_arg *item)
 	print_attributes("attr", "::", side_ptr_get(dynamic_struct_visitor->attr), dynamic_struct_visitor->nr_attr);
 	printf("%s", dynamic_struct_visitor->nr_attr ? ", " : "");
 	printf("fields:: ");
-	printf("[ ");
+	printf("{ ");
 	status = side_ptr_get(dynamic_struct_visitor->visitor)(&tracer_ctx, app_ctx);
 	switch (status) {
 	case SIDE_VISITOR_STATUS_OK:
@@ -1898,7 +1898,7 @@ void tracer_print_dynamic_struct_visitor(const struct side_arg *item)
 		fprintf(stderr, "ERROR: Visitor error\n");
 		abort();
 	}
-	printf(" ]");
+	printf(" }");
 }
 
 static
@@ -2045,7 +2045,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 		abort();
 	}
 	print_attributes(", attr", ":", side_ptr_get(desc->attr), desc->nr_attr);
-	printf("%s", side_sav_len ? ", fields: [ " : "");
+	printf("%s", side_sav_len ? ", fields: { " : "");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
 		tracer_print_field(&side_ptr_get(desc->fields)[i], &sav[i]);
@@ -2053,7 +2053,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 	if (nr_items)
 		*nr_items = i;
 	if (side_sav_len)
-		printf(" ]");
+		printf(" }");
 }
 
 static
@@ -2084,14 +2084,14 @@ void tracer_call_variadic(const struct side_event_description *desc,
 		abort();
 	}
 	print_attributes(", attr ", "::", side_ptr_get(var_struct->attr), var_struct->nr_attr);
-	printf("%s", var_struct_len ? ", fields:: [ " : "");
+	printf("%s", var_struct_len ? ", fields:: { " : "");
 	for (i = 0; i < var_struct_len; i++, nr_fields++) {
 		printf("%s", i ? ", " : "");
 		printf("%s:: ", side_ptr_get(side_ptr_get(var_struct->fields)[i].field_name));
 		tracer_print_dynamic(&side_ptr_get(var_struct->fields)[i].elem, true);
 	}
 	if (i)
-		printf(" ]");
+		printf(" }");
 	printf("\n");
 }
 
