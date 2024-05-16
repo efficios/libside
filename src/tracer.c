@@ -13,8 +13,12 @@
 
 #include <side/trace.h>
 
+#include "visit-arg-vec.h"
+
 /* TODO: optionally print caller address. */
 static bool print_caller = false;
+
+#define MAX_NESTING	32
 
 enum tracer_display_base {
 	TRACER_DISPLAY_BASE_2,
@@ -28,44 +32,14 @@ union int_value {
 	int64_t s[NR_SIDE_INTEGER128_SPLIT];
 };
 
+struct print_ctx {
+	int nesting;			/* Keep track of nesting, useful for tabulations. */
+	int item_nr[MAX_NESTING];	/* Item number in current nesting level, useful for comma-separated lists. */
+};
+
 static struct side_tracer_handle *tracer_handle;
 
 static uint64_t tracer_key;
-
-static
-void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
-static
-void tracer_print_variant(const struct side_type *type_desc, const struct side_arg_variant *side_arg_variant);
-static
-void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
-static
-void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec);
-static
-void tracer_print_vla_visitor(const struct side_type *type_desc, struct side_arg_vla_visitor *vla_visitor);
-static
-void tracer_print_dynamic(const struct side_arg *dynamic_item, bool print_brackets);
-static
-uint32_t tracer_print_gather_bool_type(const struct side_type_gather *type_gather, const void *_ptr);
-static
-uint32_t tracer_print_gather_byte_type(const struct side_type_gather *type_gather, const void *_ptr);
-static
-uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr,
-		enum tracer_display_base default_base);
-static
-uint32_t tracer_print_gather_float_type(const struct side_type_gather *type_gather, const void *_ptr);
-static
-uint32_t tracer_print_gather_string_type(const struct side_type_gather *type_gather, const void *_ptr);
-static
-uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gather, const void *_ptr);
-static
-uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, const void *_ptr);
-static
-uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, const void *_ptr);
-static
-uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, const void *_ptr,
-		const void *_length_ptr);
-static
-void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item, bool print_brackets);
 
 static
 void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
@@ -177,7 +151,7 @@ void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_t
 }
 
 static
-void tracer_print_string(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
+void tracer_print_type_string(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
 		size_t *strlen_with_null)
 {
 	char *output_str = NULL;
@@ -400,7 +374,7 @@ void tracer_print_attr_type(const char *separator, const struct side_attr *attr)
 		abort();
 #endif
 	case SIDE_ATTR_TYPE_STRING:
-		tracer_print_string(side_ptr_get(attr->value.u.string_value.p),
+		tracer_print_type_string(side_ptr_get(attr->value.u.string_value.p),
 				attr->value.u.string_value.unit_size,
 				side_enum_get(attr->value.u.string_value.byte_order), NULL);
 		break;
@@ -419,9 +393,9 @@ void print_attributes(const char *prefix_str, const char *separator,
 
 	if (!nr_attr)
 		return;
-	printf("%s%s [ ", prefix_str, separator);
+	printf("%s%s [", prefix_str, separator);
 	for (i = 0; i < nr_attr; i++) {
-		printf("%s", i ? ", " : "");
+		printf("%s", i ? ", " : " ");
 		tracer_print_attr_type(separator, &attr[i]);
 	}
 	printf(" ]");
@@ -574,32 +548,13 @@ void print_enum_labels(const struct side_enum_mappings *mappings, union int_valu
 		}
 		if (v.s[SIDE_INTEGER128_SPLIT_LOW] >= mapping->range_begin && v.s[SIDE_INTEGER128_SPLIT_LOW] <= mapping->range_end) {
 			printf("%s", print_count++ ? ", " : "");
-			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size,
+			tracer_print_type_string(side_ptr_get(mapping->label.p), mapping->label.unit_size,
 				side_enum_get(mapping->label.byte_order), NULL);
 		}
 	}
 	if (!print_count)
 		printf("<NO LABEL>");
 	printf(" ]");
-}
-
-static
-void tracer_print_enum(const struct side_type *type_desc, const struct side_arg *item)
-{
-	const struct side_enum_mappings *mappings = side_ptr_get(type_desc->u.side_enum.mappings);
-	const struct side_type *elem_type = side_ptr_get(type_desc->u.side_enum.elem_type);
-	union int_value v;
-
-	if (side_enum_get(elem_type->type) != side_enum_get(item->type)) {
-		fprintf(stderr, "ERROR: Unexpected enum element type\n");
-		abort();
-	}
-	v = tracer_load_integer_value(&elem_type->u.side_integer,
-			&item->u.side_static.integer_value, 0, NULL);
-	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
-	printf("%s", mappings->nr_attr ? ", " : "");
-	tracer_print_type(elem_type, item, true);
-	print_enum_labels(mappings, v);
 }
 
 static
@@ -628,94 +583,6 @@ uint32_t elem_type_to_stride(const struct side_type *elem_type)
 		abort();
 	}
 	return stride_bit;
-}
-
-static
-void tracer_print_enum_bitmap(const struct side_type *type_desc,
-		const struct side_arg *item)
-{
-	const struct side_enum_bitmap_mappings *side_enum_mappings = side_ptr_get(type_desc->u.side_enum_bitmap.mappings);
-	const struct side_type *enum_elem_type = side_ptr_get(type_desc->u.side_enum_bitmap.elem_type), *elem_type;
-	uint32_t i, print_count = 0, stride_bit, nr_items;
-	const struct side_arg *array_item;
-
-	switch (side_enum_get(enum_elem_type->type)) {
-	case SIDE_TYPE_U8:		/* Fall-through */
-	case SIDE_TYPE_BYTE:		/* Fall-through */
-	case SIDE_TYPE_U16:		/* Fall-through */
-	case SIDE_TYPE_U32:		/* Fall-through */
-	case SIDE_TYPE_U64:		/* Fall-through */
-	case SIDE_TYPE_U128:		/* Fall-through */
-	case SIDE_TYPE_S8:		/* Fall-through */
-	case SIDE_TYPE_S16:		/* Fall-through */
-	case SIDE_TYPE_S32:		/* Fall-through */
-	case SIDE_TYPE_S64:		/* Fall-through */
-	case SIDE_TYPE_S128:
-		elem_type = enum_elem_type;
-		array_item = item;
-		nr_items = 1;
-		break;
-	case SIDE_TYPE_ARRAY:
-		elem_type = side_ptr_get(enum_elem_type->u.side_array.elem_type);
-		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_array)->sav);
-		nr_items = type_desc->u.side_array.length;
-		break;
-	case SIDE_TYPE_VLA:
-		elem_type = side_ptr_get(enum_elem_type->u.side_vla.elem_type);
-		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_vla)->sav);
-		nr_items = side_ptr_get(item->u.side_static.side_vla)->len;
-		break;
-	default:
-		fprintf(stderr, "ERROR: Unexpected enum element type\n");
-		abort();
-	}
-	stride_bit = elem_type_to_stride(elem_type);
-
-	print_attributes("attr", ":", side_ptr_get(side_enum_mappings->attr), side_enum_mappings->nr_attr);
-	printf("%s", side_enum_mappings->nr_attr ? ", " : "");
-	printf("labels: [ ");
-	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
-		const struct side_enum_bitmap_mapping *mapping = &side_ptr_get(side_enum_mappings->mappings)[i];
-		bool match = false;
-		uint64_t bit;
-
-		if (mapping->range_end < mapping->range_begin) {
-			fprintf(stderr, "ERROR: Unexpected enum bitmap range: %" PRIu64 "-%" PRIu64 "\n",
-				mapping->range_begin, mapping->range_end);
-			abort();
-		}
-		for (bit = mapping->range_begin; bit <= mapping->range_end; bit++) {
-			if (bit > (nr_items * stride_bit) - 1)
-				break;
-			if (side_enum_get(elem_type->type) == SIDE_TYPE_BYTE) {
-				uint8_t v = array_item[bit / 8].u.side_static.byte_value;
-				if (v & (1ULL << (bit % 8))) {
-					match = true;
-					goto match;
-				}
-			} else {
-				union int_value v = {};
-
-				v = tracer_load_integer_value(&elem_type->u.side_integer,
-						&array_item[bit / stride_bit].u.side_static.integer_value,
-						0, NULL);
-				side_check_value_u64(v);
-				if (v.u[SIDE_INTEGER128_SPLIT_LOW] & (1ULL << (bit % stride_bit))) {
-					match = true;
-					goto match;
-				}
-			}
-		}
-match:
-		if (match) {
-			printf("%s", print_count++ ? ", " : "");
-			tracer_print_string(side_ptr_get(mapping->label.p), mapping->label.unit_size,
-				side_enum_get(mapping->label.byte_order), NULL);
-		}
-	}
-	if (!print_count)
-		printf("<NO LABEL>");
-	printf(" ]");
 }
 
 static
@@ -1095,968 +962,736 @@ void tracer_print_type_float(const char *separator,
 }
 
 static
-void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item, bool print_brackets)
+void push_nesting(struct print_ctx *ctx)
 {
-	enum side_type_label type;
-
-	switch (side_enum_get(type_desc->type)) {
-	case SIDE_TYPE_ENUM:
-		switch (side_enum_get(item->type)) {
-		case SIDE_TYPE_U8:
-		case SIDE_TYPE_U16:
-		case SIDE_TYPE_U32:
-		case SIDE_TYPE_U64:
-		case SIDE_TYPE_U128:
-		case SIDE_TYPE_S8:
-		case SIDE_TYPE_S16:
-		case SIDE_TYPE_S32:
-		case SIDE_TYPE_S64:
-		case SIDE_TYPE_S128:
-			break;
-		default:
-			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
-			abort();
-			break;
-		}
-		break;
-
-	case SIDE_TYPE_ENUM_BITMAP:
-		switch (side_enum_get(item->type)) {
-		case SIDE_TYPE_U8:
-		case SIDE_TYPE_BYTE:
-		case SIDE_TYPE_U16:
-		case SIDE_TYPE_U32:
-		case SIDE_TYPE_U64:
-		case SIDE_TYPE_U128:
-		case SIDE_TYPE_ARRAY:
-		case SIDE_TYPE_VLA:
-			break;
-		default:
-			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
-			abort();
-			break;
-		}
-		break;
-
-	case SIDE_TYPE_GATHER_ENUM:
-		switch (side_enum_get(item->type)) {
-		case SIDE_TYPE_GATHER_INTEGER:
-			break;
-		default:
-			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
-			abort();
-			break;
-		}
-		break;
-
-	case SIDE_TYPE_DYNAMIC:
-		switch (side_enum_get(item->type)) {
-		case SIDE_TYPE_DYNAMIC_NULL:
-		case SIDE_TYPE_DYNAMIC_BOOL:
-		case SIDE_TYPE_DYNAMIC_INTEGER:
-		case SIDE_TYPE_DYNAMIC_BYTE:
-		case SIDE_TYPE_DYNAMIC_POINTER:
-		case SIDE_TYPE_DYNAMIC_FLOAT:
-		case SIDE_TYPE_DYNAMIC_STRING:
-		case SIDE_TYPE_DYNAMIC_STRUCT:
-		case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
-		case SIDE_TYPE_DYNAMIC_VLA:
-		case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
-			break;
-		default:
-			fprintf(stderr, "ERROR: Unexpected dynamic type\n");
-			abort();
-			break;
-		}
-		break;
-
-	default:
-		if (side_enum_get(type_desc->type) != side_enum_get(item->type)) {
-			fprintf(stderr, "ERROR: type mismatch between description and arguments\n");
-			abort();
-		}
-		break;
-	}
-
-	if (side_enum_get(type_desc->type) == SIDE_TYPE_ENUM || side_enum_get(type_desc->type) == SIDE_TYPE_ENUM_BITMAP || side_enum_get(type_desc->type) == SIDE_TYPE_GATHER_ENUM)
-		type = side_enum_get(type_desc->type);
-	else
-		type = side_enum_get(item->type);
-
-	if (print_brackets)
-		printf("{ ");
-	switch (type) {
-		/* Stack-copy basic types */
-	case SIDE_TYPE_NULL:
-		tracer_print_type_header(":", side_ptr_get(type_desc->u.side_null.attr),
-			type_desc->u.side_null.nr_attr);
-		printf("<NULL TYPE>");
-		break;
-
-	case SIDE_TYPE_BOOL:
-		tracer_print_type_bool(":", &type_desc->u.side_bool, &item->u.side_static.bool_value, 0);
-		break;
-
-	case SIDE_TYPE_U8:
-	case SIDE_TYPE_U16:
-	case SIDE_TYPE_U32:
-	case SIDE_TYPE_U64:
-	case SIDE_TYPE_U128:
-	case SIDE_TYPE_S8:
-	case SIDE_TYPE_S16:
-	case SIDE_TYPE_S32:
-	case SIDE_TYPE_S64:
-	case SIDE_TYPE_S128:
-		tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.side_static.integer_value, 0,
-				TRACER_DISPLAY_BASE_10);
-		break;
-
-	case SIDE_TYPE_BYTE:
-		tracer_print_type_header(":", side_ptr_get(type_desc->u.side_byte.attr), type_desc->u.side_byte.nr_attr);
-		printf("0x%" PRIx8, item->u.side_static.byte_value);
-		break;
-
-	case SIDE_TYPE_POINTER:
-		tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.side_static.integer_value, 0,
-				TRACER_DISPLAY_BASE_16);
-		break;
-
-	case SIDE_TYPE_FLOAT_BINARY16:
-	case SIDE_TYPE_FLOAT_BINARY32:
-	case SIDE_TYPE_FLOAT_BINARY64:
-	case SIDE_TYPE_FLOAT_BINARY128:
-		tracer_print_type_float(":", &type_desc->u.side_float, &item->u.side_static.float_value);
-		break;
-
-	case SIDE_TYPE_STRING_UTF8:
-	case SIDE_TYPE_STRING_UTF16:
-	case SIDE_TYPE_STRING_UTF32:
-		tracer_print_type_header(":", side_ptr_get(type_desc->u.side_string.attr), type_desc->u.side_string.nr_attr);
-		tracer_print_string(side_ptr_get(item->u.side_static.string_value),
-				type_desc->u.side_string.unit_size, side_enum_get(type_desc->u.side_string.byte_order), NULL);
-		break;
-
-		/* Stack-copy compound types */
-	case SIDE_TYPE_STRUCT:
-		tracer_print_struct(type_desc, side_ptr_get(item->u.side_static.side_struct));
-		break;
-	case SIDE_TYPE_VARIANT:
-		tracer_print_variant(type_desc, side_ptr_get(item->u.side_static.side_variant));
-		break;
-	case SIDE_TYPE_ARRAY:
-		tracer_print_array(type_desc, side_ptr_get(item->u.side_static.side_array));
-		break;
-	case SIDE_TYPE_VLA:
-		tracer_print_vla(type_desc, side_ptr_get(item->u.side_static.side_vla));
-		break;
-	case SIDE_TYPE_VLA_VISITOR:
-		tracer_print_vla_visitor(type_desc, side_ptr_get(item->u.side_static.side_vla_visitor));
-		break;
-
-		/* Stack-copy enumeration types */
-	case SIDE_TYPE_ENUM:
-		tracer_print_enum(type_desc, item);
-		break;
-	case SIDE_TYPE_ENUM_BITMAP:
-		tracer_print_enum_bitmap(type_desc, item);
-		break;
-
-		/* Gather basic types */
-	case SIDE_TYPE_GATHER_BOOL:
-		(void) tracer_print_gather_bool_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_bool_gather_ptr));
-		break;
-	case SIDE_TYPE_GATHER_INTEGER:
-		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_integer_gather_ptr),
-					TRACER_DISPLAY_BASE_10);
-		break;
-	case SIDE_TYPE_GATHER_BYTE:
-		(void) tracer_print_gather_byte_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_byte_gather_ptr));
-		break;
-	case SIDE_TYPE_GATHER_POINTER:
-		(void) tracer_print_gather_integer_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_integer_gather_ptr),
-					TRACER_DISPLAY_BASE_16);
-		break;
-	case SIDE_TYPE_GATHER_FLOAT:
-		(void) tracer_print_gather_float_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_float_gather_ptr));
-		break;
-	case SIDE_TYPE_GATHER_STRING:
-		(void) tracer_print_gather_string_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_string_gather_ptr));
-		break;
-
-		/* Gather compound type */
-	case SIDE_TYPE_GATHER_STRUCT:
-		(void) tracer_print_gather_struct(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_struct_gather_ptr));
-		break;
-	case SIDE_TYPE_GATHER_ARRAY:
-		(void) tracer_print_gather_array(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_array_gather_ptr));
-		break;
-	case SIDE_TYPE_GATHER_VLA:
-		(void) tracer_print_gather_vla(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_vla_gather.ptr),
-				side_ptr_get(item->u.side_static.side_vla_gather.length_ptr));
-		break;
-
-		/* Gather enumeration types */
-	case SIDE_TYPE_GATHER_ENUM:
-		(void) tracer_print_gather_enum_type(&type_desc->u.side_gather, side_ptr_get(item->u.side_static.side_integer_gather_ptr));
-		break;
-
-	/* Dynamic basic types */
-	case SIDE_TYPE_DYNAMIC_NULL:
-	case SIDE_TYPE_DYNAMIC_BOOL:
-	case SIDE_TYPE_DYNAMIC_INTEGER:
-	case SIDE_TYPE_DYNAMIC_BYTE:
-	case SIDE_TYPE_DYNAMIC_POINTER:
-	case SIDE_TYPE_DYNAMIC_FLOAT:
-	case SIDE_TYPE_DYNAMIC_STRING:
-
-	/* Dynamic compound types */
-	case SIDE_TYPE_DYNAMIC_STRUCT:
-	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
-	case SIDE_TYPE_DYNAMIC_VLA:
-	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
-		tracer_print_dynamic(item, false);
-		break;
-	default:
-		fprintf(stderr, "<UNKNOWN TYPE>\n");
+	if (++ctx->nesting >= MAX_NESTING) {
+		fprintf(stderr, "ERROR: Nesting too deep.\n");
 		abort();
 	}
-	if (print_brackets)
-		printf(" }");
+	ctx->item_nr[ctx->nesting] = 0;
 }
 
 static
-void tracer_print_field(const struct side_event_field *item_desc, const struct side_arg *item)
+void pop_nesting(struct print_ctx *ctx)
 {
-	printf("%s: ", side_ptr_get(item_desc->field_name));
-	tracer_print_type(&item_desc->side_type, item, true);
-}
-
-static
-void tracer_print_struct(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
-{
-	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
-	const struct side_type_struct *side_struct = side_ptr_get(type_desc->u.side_struct);
-	uint32_t i, side_sav_len = side_arg_vec->len;
-
-	if (side_struct->nr_fields != side_sav_len) {
-		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments of structure\n");
-		abort();
-	}
-	print_attributes("attr", ":", side_ptr_get(side_struct->attr), side_struct->nr_attr);
-	printf("%s", side_struct->nr_attr ? ", " : "");
-	printf("fields: { ");
-	for (i = 0; i < side_sav_len; i++) {
-		printf("%s", i ? ", " : "");
-		tracer_print_field(&side_ptr_get(side_struct->fields)[i], &sav[i]);
-	}
-	printf(" }");
-}
-
-static
-void tracer_print_variant(const struct side_type *type_desc, const struct side_arg_variant *side_arg_variant)
-{
-	const struct side_type_variant *side_type_variant = side_ptr_get(type_desc->u.side_variant);
-	const struct side_type *selector_type = &side_type_variant->selector;
-	union int_value v;
-	uint32_t i;
-
-	if (side_enum_get(selector_type->type) != side_enum_get(side_arg_variant->selector.type)) {
-		fprintf(stderr, "ERROR: Unexpected variant selector type\n");
-		abort();
-	}
-	switch (side_enum_get(selector_type->type)) {
-	case SIDE_TYPE_U8:
-	case SIDE_TYPE_U16:
-	case SIDE_TYPE_U32:
-	case SIDE_TYPE_U64:
-	case SIDE_TYPE_U128:
-	case SIDE_TYPE_S8:
-	case SIDE_TYPE_S16:
-	case SIDE_TYPE_S32:
-	case SIDE_TYPE_S64:
-	case SIDE_TYPE_S128:
-		break;
-	default:
-		fprintf(stderr, "ERROR: Expecting integer variant selector type\n");
-		abort();
-	}
-	v = tracer_load_integer_value(&selector_type->u.side_integer,
-			&side_arg_variant->selector.u.side_static.integer_value, 0, NULL);
-	side_check_value_u64(v);
-	for (i = 0; i < side_type_variant->nr_options; i++) {
-		const struct side_variant_option *option = &side_ptr_get(side_type_variant->options)[i];
-
-		if (v.s[SIDE_INTEGER128_SPLIT_LOW] >= option->range_begin && v.s[SIDE_INTEGER128_SPLIT_LOW] <= option->range_end) {
-			tracer_print_type(&option->side_type, &side_arg_variant->option, false);
-			return;
-		}
-	}
-	fprintf(stderr, "ERROR: Variant selector value unknown %" PRId64 "\n", v.s[SIDE_INTEGER128_SPLIT_LOW]);
-	abort();
-}
-
-static
-void tracer_print_array(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
-{
-	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
-	uint32_t i, side_sav_len = side_arg_vec->len;
-
-	if (type_desc->u.side_array.length != side_sav_len) {
-		fprintf(stderr, "ERROR: length mismatch between description and arguments of array\n");
-		abort();
-	}
-	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_array.attr), type_desc->u.side_array.nr_attr);
-	printf("%s", type_desc->u.side_array.nr_attr ? ", " : "");
-	printf("elements: ");
-	printf("[ ");
-	for (i = 0; i < side_sav_len; i++) {
-		printf("%s", i ? ", " : "");
-		tracer_print_type(side_ptr_get(type_desc->u.side_array.elem_type), &sav[i], true);
-	}
-	printf(" ]");
-}
-
-static
-void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec)
-{
-	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
-	uint32_t i, side_sav_len = side_arg_vec->len;
-
-	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_vla.attr), type_desc->u.side_vla.nr_attr);
-	printf("%s", type_desc->u.side_vla.nr_attr ? ", " : "");
-	printf("elements: ");
-	printf("[ ");
-	for (i = 0; i < side_sav_len; i++) {
-		printf("%s", i ? ", " : "");
-		tracer_print_type(side_ptr_get(type_desc->u.side_vla.elem_type), &sav[i], true);
-	}
-	printf(" ]");
-}
-
-static
-const char *tracer_gather_access(enum side_type_gather_access_mode access_mode, const char *ptr)
-{
-	switch (access_mode) {
-	case SIDE_TYPE_GATHER_ACCESS_DIRECT:
-		return ptr;
-	case SIDE_TYPE_GATHER_ACCESS_POINTER:
-		/* Dereference pointer */
-		memcpy(&ptr, ptr, sizeof(const char *));
-		return ptr;
-	default:
+	ctx->item_nr[ctx->nesting] = 0;
+	if (ctx->nesting-- <= 0) {
+		fprintf(stderr, "ERROR: Nesting underflow.\n");
 		abort();
 	}
 }
 
 static
-uint32_t tracer_gather_size(enum side_type_gather_access_mode access_mode, uint32_t len)
+int get_nested_item_nr(struct print_ctx *ctx)
 {
-	switch (access_mode) {
-	case SIDE_TYPE_GATHER_ACCESS_DIRECT:
-		return len;
-	case SIDE_TYPE_GATHER_ACCESS_POINTER:
-		return sizeof(void *);
-	default:
-		abort();
-	}
+	return ctx->item_nr[ctx->nesting];
 }
 
 static
-union int_value tracer_load_gather_integer_value(const struct side_type_gather_integer *side_integer,
-		const void *_ptr)
+void inc_nested_item_nr(struct print_ctx *ctx)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) side_integer->access_mode;
-	uint32_t integer_size_bytes = side_integer->type.integer_size;
-	const char *ptr = (const char *) _ptr;
-	union side_integer_value value;
-
-	ptr = tracer_gather_access(access_mode, ptr + side_integer->offset);
-	memcpy(&value, ptr, integer_size_bytes);
-	return tracer_load_integer_value(&side_integer->type, &value,
-			side_integer->offset_bits, NULL);
+	ctx->item_nr[ctx->nesting]++;
 }
 
 static
-uint32_t tracer_print_gather_bool_type(const struct side_type_gather *type_gather, const void *_ptr)
-{
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_bool.access_mode;
-	uint32_t bool_size_bytes = type_gather->u.side_bool.type.bool_size;
-	const char *ptr = (const char *) _ptr;
-	union side_bool_value value;
-
-	switch (bool_size_bytes) {
-	case 1:
-	case 2:
-	case 4:
-	case 8:
-		break;
-	default:
-		abort();
-	}
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_bool.offset);
-	memcpy(&value, ptr, bool_size_bytes);
-	tracer_print_type_bool(":", &type_gather->u.side_bool.type, &value,
-			type_gather->u.side_bool.offset_bits);
-	return tracer_gather_size(access_mode, bool_size_bytes);
-}
-
-static
-uint32_t tracer_print_gather_byte_type(const struct side_type_gather *type_gather, const void *_ptr)
-{
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_byte.access_mode;
-	const char *ptr = (const char *) _ptr;
-	uint8_t value;
-
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_byte.offset);
-	memcpy(&value, ptr, 1);
-	tracer_print_type_header(":", side_ptr_get(type_gather->u.side_byte.type.attr),
-			type_gather->u.side_byte.type.nr_attr);
-	printf("0x%" PRIx8, value);
-	return tracer_gather_size(access_mode, 1);
-}
-
-static
-uint32_t tracer_print_gather_integer_type(const struct side_type_gather *type_gather, const void *_ptr,
-		enum tracer_display_base default_base)
-{
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_integer.access_mode;
-	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size;
-	const char *ptr = (const char *) _ptr;
-	union side_integer_value value;
-
-	switch (integer_size_bytes) {
-	case 1:
-	case 2:
-	case 4:
-	case 8:
-	case 16:
-		break;
-	default:
-		abort();
-	}
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_integer.offset);
-	memcpy(&value, ptr, integer_size_bytes);
-	tracer_print_type_integer(":", &type_gather->u.side_integer.type, &value,
-			type_gather->u.side_integer.offset_bits, default_base);
-	return tracer_gather_size(access_mode, integer_size_bytes);
-}
-
-static
-uint32_t tracer_print_gather_float_type(const struct side_type_gather *type_gather, const void *_ptr)
-{
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_float.access_mode;
-	uint32_t float_size_bytes = type_gather->u.side_float.type.float_size;
-	const char *ptr = (const char *) _ptr;
-	union side_float_value value;
-
-	switch (float_size_bytes) {
-	case 2:
-	case 4:
-	case 8:
-	case 16:
-		break;
-	default:
-		abort();
-	}
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_float.offset);
-	memcpy(&value, ptr, float_size_bytes);
-	tracer_print_type_float(":", &type_gather->u.side_float.type, &value);
-	return tracer_gather_size(access_mode, float_size_bytes);
-}
-
-static
-uint32_t tracer_print_gather_string_type(const struct side_type_gather *type_gather, const void *_ptr)
-{
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_string.access_mode;
-	const char *ptr = (const char *) _ptr;
-	size_t string_len;
-
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_string.offset);
-	tracer_print_type_header(":", side_ptr_get(type_gather->u.side_string.type.attr),
-			type_gather->u.side_string.type.nr_attr);
-	if (ptr) {
-		tracer_print_string(ptr, type_gather->u.side_string.type.unit_size,
-				side_enum_get(type_gather->u.side_string.type.byte_order), &string_len);
-	} else {
-		printf("<NULL>");
-		string_len = type_gather->u.side_string.type.unit_size;
-	}
-	return tracer_gather_size(access_mode, string_len);
-}
-
-static
-uint32_t tracer_print_gather_type(const struct side_type *type_desc, const void *ptr)
-{
-	uint32_t len;
-
-	printf("{ ");
-	switch (side_enum_get(type_desc->type)) {
-		/* Gather basic types */
-	case SIDE_TYPE_GATHER_BOOL:
-		len = tracer_print_gather_bool_type(&type_desc->u.side_gather, ptr);
-		break;
-	case SIDE_TYPE_GATHER_INTEGER:
-		len = tracer_print_gather_integer_type(&type_desc->u.side_gather, ptr,
-				TRACER_DISPLAY_BASE_10);
-		break;
-	case SIDE_TYPE_GATHER_BYTE:
-		len = tracer_print_gather_byte_type(&type_desc->u.side_gather, ptr);
-		break;
-	case SIDE_TYPE_GATHER_POINTER:
-		len = tracer_print_gather_integer_type(&type_desc->u.side_gather, ptr,
-				TRACER_DISPLAY_BASE_16);
-		break;
-	case SIDE_TYPE_GATHER_FLOAT:
-		len = tracer_print_gather_float_type(&type_desc->u.side_gather, ptr);
-		break;
-	case SIDE_TYPE_GATHER_STRING:
-		len = tracer_print_gather_string_type(&type_desc->u.side_gather, ptr);
-		break;
-
-		/* Gather enum types */
-	case SIDE_TYPE_GATHER_ENUM:
-		len = tracer_print_gather_enum_type(&type_desc->u.side_gather, ptr);
-		break;
-
-		/* Gather compound types */
-	case SIDE_TYPE_GATHER_STRUCT:
-		len = tracer_print_gather_struct(&type_desc->u.side_gather, ptr);
-		break;
-	case SIDE_TYPE_GATHER_ARRAY:
-		len = tracer_print_gather_array(&type_desc->u.side_gather, ptr);
-		break;
-	case SIDE_TYPE_GATHER_VLA:
-		len = tracer_print_gather_vla(&type_desc->u.side_gather, ptr, ptr);
-		break;
-	default:
-		fprintf(stderr, "<UNKNOWN GATHER TYPE>");
-		abort();
-	}
-	printf(" }");
-	return len;
-}
-
-static
-uint32_t tracer_print_gather_enum_type(const struct side_type_gather *type_gather, const void *_ptr)
-{
-	const struct side_enum_mappings *mappings = side_ptr_get(type_gather->u.side_enum.mappings);
-	const struct side_type *enum_elem_type = side_ptr_get(type_gather->u.side_enum.elem_type);
-	const struct side_type_gather_integer *side_integer = &enum_elem_type->u.side_gather.u.side_integer;
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) side_integer->access_mode;
-	uint32_t integer_size_bytes = side_integer->type.integer_size;
-	const char *ptr = (const char *) _ptr;
-	union side_integer_value value;
-	union int_value v;
-
-	switch (integer_size_bytes) {
-	case 1:
-	case 2:
-	case 4:
-	case 8:
-	case 16:
-		break;
-	default:
-		abort();
-	}
-	ptr = tracer_gather_access(access_mode, ptr + side_integer->offset);
-	memcpy(&value, ptr, integer_size_bytes);
-	v = tracer_load_gather_integer_value(side_integer, &value);
-	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
-	printf("%s", mappings->nr_attr ? ", " : "");
-	tracer_print_gather_type(enum_elem_type, ptr);
-	print_enum_labels(mappings, v);
-	return tracer_gather_size(access_mode, integer_size_bytes);
-}
-
-static
-void tracer_print_gather_field(const struct side_event_field *field, const void *ptr)
-{
-	printf("%s: ", side_ptr_get(field->field_name));
-	(void) tracer_print_gather_type(&field->side_type, ptr);
-}
-
-static
-uint32_t tracer_print_gather_struct(const struct side_type_gather *type_gather, const void *_ptr)
-{
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_struct.access_mode;
-	const struct side_type_struct *side_struct = side_ptr_get(type_gather->u.side_struct.type);
-	const char *ptr = (const char *) _ptr;
-	uint32_t i;
-
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_struct.offset);
-	print_attributes("attr", ":", side_ptr_get(side_struct->attr), side_struct->nr_attr);
-	printf("%s", side_struct->nr_attr ? ", " : "");
-	printf("fields: { ");
-	for (i = 0; i < side_struct->nr_fields; i++) {
-		printf("%s", i ? ", " : "");
-		tracer_print_gather_field(&side_ptr_get(side_struct->fields)[i], ptr);
-	}
-	printf(" }");
-	return tracer_gather_size(access_mode, type_gather->u.side_struct.size);
-}
-
-static
-uint32_t tracer_print_gather_array(const struct side_type_gather *type_gather, const void *_ptr)
-{
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_array.access_mode;
-	const char *ptr = (const char *) _ptr, *orig_ptr;
-	uint32_t i;
-
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_array.offset);
-	orig_ptr = ptr;
-	print_attributes("attr", ":", side_ptr_get(type_gather->u.side_array.type.attr), type_gather->u.side_array.type.nr_attr);
-	printf("%s", type_gather->u.side_array.type.nr_attr ? ", " : "");
-	printf("elements: ");
-	printf("[ ");
-	for (i = 0; i < type_gather->u.side_array.type.length; i++) {
-		const struct side_type *elem_type = side_ptr_get(type_gather->u.side_array.type.elem_type);
-
-		switch (side_enum_get(elem_type->type)) {
-		case SIDE_TYPE_GATHER_VLA:
-			fprintf(stderr, "<gather VLA only supported within gather structures>\n");
-			abort();
-		default:
-			break;
-		}
-		printf("%s", i ? ", " : "");
-		ptr += tracer_print_gather_type(elem_type, ptr);
-	}
-	printf(" ]");
-	return tracer_gather_size(access_mode, ptr - orig_ptr);
-}
-
-static
-uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, const void *_ptr,
-		const void *_length_ptr)
-{
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_vla.access_mode;
-	const struct side_type *length_type = side_ptr_get(type_gather->u.side_vla.length_type);
-	const char *ptr = (const char *) _ptr, *orig_ptr;
-	const char *length_ptr = (const char *) _length_ptr;
-	union int_value v = {};
-	uint32_t i, length;
-
-	/* Access length */
-	switch (side_enum_get(length_type->type)) {
-	case SIDE_TYPE_GATHER_INTEGER:
-		break;
-	default:
-		fprintf(stderr, "<gather VLA expects integer gather length type>\n");
-		abort();
-	}
-	v = tracer_load_gather_integer_value(&length_type->u.side_gather.u.side_integer,
-					length_ptr);
-	if (v.u[SIDE_INTEGER128_SPLIT_HIGH] || v.u[SIDE_INTEGER128_SPLIT_LOW] > UINT32_MAX) {
-		fprintf(stderr, "Unexpected vla length value\n");
-		abort();
-	}
-	length = (uint32_t) v.u[SIDE_INTEGER128_SPLIT_LOW];
-	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
-	orig_ptr = ptr;
-	print_attributes("attr", ":", side_ptr_get(type_gather->u.side_vla.type.attr), type_gather->u.side_vla.type.nr_attr);
-	printf("%s", type_gather->u.side_vla.type.nr_attr ? ", " : "");
-	printf("elements: ");
-	printf("[ ");
-	for (i = 0; i < length; i++) {
-		const struct side_type *elem_type = side_ptr_get(type_gather->u.side_vla.type.elem_type);
-
-		switch (side_enum_get(elem_type->type)) {
-		case SIDE_TYPE_GATHER_VLA:
-			fprintf(stderr, "<gather VLA only supported within gather structures>\n");
-			abort();
-		default:
-			break;
-		}
-		printf("%s", i ? ", " : "");
-		ptr += tracer_print_gather_type(elem_type, ptr);
-	}
-	printf(" ]");
-	return tracer_gather_size(access_mode, ptr - orig_ptr);
-}
-
-struct tracer_visitor_priv {
-	const struct side_type *elem_type;
-	int i;
-};
-
-static
-enum side_visitor_status tracer_write_elem_cb(const struct side_tracer_visitor_ctx *tracer_ctx,
-			const struct side_arg *elem)
-{
-	struct tracer_visitor_priv *tracer_priv = (struct tracer_visitor_priv *) tracer_ctx->priv;
-
-	printf("%s", tracer_priv->i++ ? ", " : "");
-	tracer_print_type(tracer_priv->elem_type, elem, true);
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static
-void tracer_print_vla_visitor(const struct side_type *type_desc, struct side_arg_vla_visitor *vla_visitor)
-{
-	void *app_ctx;
-	enum side_visitor_status status;
-	struct tracer_visitor_priv tracer_priv = {
-		.elem_type = side_ptr_get(type_desc->u.side_vla_visitor.elem_type),
-		.i = 0,
-	};
-	const struct side_tracer_visitor_ctx tracer_ctx = {
-		.write_elem = tracer_write_elem_cb,
-		.priv = &tracer_priv,
-	};
-	side_visitor_func func;
-
-	if (!vla_visitor)
-		abort();
-	app_ctx = side_ptr_get(vla_visitor->app_ctx);
-	print_attributes("attr", ":", side_ptr_get(type_desc->u.side_vla_visitor.attr), type_desc->u.side_vla_visitor.nr_attr);
-	printf("%s", type_desc->u.side_vla_visitor.nr_attr ? ", " : "");
-	printf("elements: ");
-	printf("[ ");
-	func = side_ptr_get(type_desc->u.side_vla_visitor.visitor);
-	status = func(&tracer_ctx, app_ctx);
-	switch (status) {
-	case SIDE_VISITOR_STATUS_OK:
-		break;
-	case SIDE_VISITOR_STATUS_ERROR:
-		fprintf(stderr, "ERROR: Visitor error\n");
-		abort();
-	}
-	printf(" ]");
-}
-
-static
-void tracer_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_struct)
-{
-	const struct side_arg_dynamic_field *fields = side_ptr_get(dynamic_struct->fields);
-	uint32_t i, len = dynamic_struct->len;
-
-	print_attributes("attr", "::", side_ptr_get(dynamic_struct->attr), dynamic_struct->nr_attr);
-	printf("%s", dynamic_struct->nr_attr ? ", " : "");
-	printf("fields:: ");
-	printf("{ ");
-	for (i = 0; i < len; i++) {
-		printf("%s", i ? ", " : "");
-		printf("%s:: ", side_ptr_get(fields[i].field_name));
-		tracer_print_dynamic(&fields[i].elem, true);
-	}
-	printf(" }");
-}
-
-struct tracer_dynamic_struct_visitor_priv {
-	int i;
-};
-
-static
-enum side_visitor_status tracer_dynamic_struct_write_elem_cb(
-			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-			const struct side_arg_dynamic_field *dynamic_field)
-{
-	struct tracer_dynamic_struct_visitor_priv *tracer_priv =
-		(struct tracer_dynamic_struct_visitor_priv *) tracer_ctx->priv;
-
-	printf("%s", tracer_priv->i++ ? ", " : "");
-	printf("%s:: ", side_ptr_get(dynamic_field->field_name));
-	tracer_print_dynamic(&dynamic_field->elem, true);
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static
-void tracer_print_dynamic_struct_visitor(const struct side_arg *item)
-{
-	struct side_arg_dynamic_struct_visitor *dynamic_struct_visitor;
-	struct tracer_dynamic_struct_visitor_priv tracer_priv = {
-		.i = 0,
-	};
-	const struct side_tracer_dynamic_struct_visitor_ctx tracer_ctx = {
-		.write_field = tracer_dynamic_struct_write_elem_cb,
-		.priv = &tracer_priv,
-	};
-	enum side_visitor_status status;
-	void *app_ctx;
-
-	dynamic_struct_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor);
-	if (!dynamic_struct_visitor)
-		abort();
-	app_ctx = side_ptr_get(dynamic_struct_visitor->app_ctx);
-	print_attributes("attr", "::", side_ptr_get(dynamic_struct_visitor->attr), dynamic_struct_visitor->nr_attr);
-	printf("%s", dynamic_struct_visitor->nr_attr ? ", " : "");
-	printf("fields:: ");
-	printf("{ ");
-	status = side_ptr_get(dynamic_struct_visitor->visitor)(&tracer_ctx, app_ctx);
-	switch (status) {
-	case SIDE_VISITOR_STATUS_OK:
-		break;
-	case SIDE_VISITOR_STATUS_ERROR:
-		fprintf(stderr, "ERROR: Visitor error\n");
-		abort();
-	}
-	printf(" }");
-}
-
-static
-void tracer_print_dynamic_vla(const struct side_arg_dynamic_vla *vla)
-{
-	const struct side_arg *sav = side_ptr_get(vla->sav);
-	uint32_t i, side_sav_len = vla->len;
-
-	print_attributes("attr", "::", side_ptr_get(vla->attr), vla->nr_attr);
-	printf("%s", vla->nr_attr ? ", " : "");
-	printf("elements:: ");
-	printf("[ ");
-	for (i = 0; i < side_sav_len; i++) {
-		printf("%s", i ? ", " : "");
-		tracer_print_dynamic(&sav[i], true);
-	}
-	printf(" ]");
-}
-
-struct tracer_dynamic_vla_visitor_priv {
-	int i;
-};
-
-static
-enum side_visitor_status tracer_dynamic_vla_write_elem_cb(
-			const struct side_tracer_visitor_ctx *tracer_ctx,
-			const struct side_arg *elem)
-{
-	struct tracer_dynamic_vla_visitor_priv *tracer_priv =
-		(struct tracer_dynamic_vla_visitor_priv *) tracer_ctx->priv;
-
-	printf("%s", tracer_priv->i++ ? ", " : "");
-	tracer_print_dynamic(elem, true);
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static
-void tracer_print_dynamic_vla_visitor(const struct side_arg *item)
-{
-	struct side_arg_dynamic_vla_visitor *dynamic_vla_visitor;
-	struct tracer_dynamic_vla_visitor_priv tracer_priv = {
-		.i = 0,
-	};
-	const struct side_tracer_visitor_ctx tracer_ctx = {
-		.write_elem = tracer_dynamic_vla_write_elem_cb,
-		.priv = &tracer_priv,
-	};
-	enum side_visitor_status status;
-	void *app_ctx;
-
-	dynamic_vla_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor);
-	if (!dynamic_vla_visitor)
-		abort();
-	app_ctx = side_ptr_get(dynamic_vla_visitor->app_ctx);
-	print_attributes("attr", "::", side_ptr_get(dynamic_vla_visitor->attr), dynamic_vla_visitor->nr_attr);
-	printf("%s", dynamic_vla_visitor->nr_attr ? ", " : "");
-	printf("elements:: ");
-	printf("[ ");
-	status = side_ptr_get(dynamic_vla_visitor->visitor)(&tracer_ctx, app_ctx);
-	switch (status) {
-	case SIDE_VISITOR_STATUS_OK:
-		break;
-	case SIDE_VISITOR_STATUS_ERROR:
-		fprintf(stderr, "ERROR: Visitor error\n");
-		abort();
-	}
-	printf(" ]");
-}
-
-static
-void tracer_print_dynamic(const struct side_arg *item, bool print_brackets)
-{
-	if (print_brackets)
-		printf("{ ");
-	switch (side_enum_get(item->type)) {
-		/* Dynamic basic types */
-	case SIDE_TYPE_DYNAMIC_NULL:
-		tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_null.attr),
-			item->u.side_dynamic.side_null.nr_attr);
-		printf("<NULL TYPE>");
-		break;
-	case SIDE_TYPE_DYNAMIC_BOOL:
-		tracer_print_type_bool("::", &item->u.side_dynamic.side_bool.type, &item->u.side_dynamic.side_bool.value, 0);
-		break;
-	case SIDE_TYPE_DYNAMIC_INTEGER:
-		tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
-				TRACER_DISPLAY_BASE_10);
-		break;
-	case SIDE_TYPE_DYNAMIC_BYTE:
-		tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_byte.type.attr), item->u.side_dynamic.side_byte.type.nr_attr);
-		printf("0x%" PRIx8, item->u.side_dynamic.side_byte.value);
-		break;
-	case SIDE_TYPE_DYNAMIC_POINTER:
-		tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
-				TRACER_DISPLAY_BASE_16);
-		break;
-	case SIDE_TYPE_DYNAMIC_FLOAT:
-		tracer_print_type_float("::", &item->u.side_dynamic.side_float.type,
-					&item->u.side_dynamic.side_float.value);
-		break;
-	case SIDE_TYPE_DYNAMIC_STRING:
-		tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_string.type.attr), item->u.side_dynamic.side_string.type.nr_attr);
-		tracer_print_string((const char *)(uintptr_t) item->u.side_dynamic.side_string.value,
-				item->u.side_dynamic.side_string.type.unit_size,
-				side_enum_get(item->u.side_dynamic.side_string.type.byte_order), NULL);
-		break;
-
-		/* Dynamic compound types */
-	case SIDE_TYPE_DYNAMIC_STRUCT:
-		tracer_print_dynamic_struct(side_ptr_get(item->u.side_dynamic.side_dynamic_struct));
-		break;
-	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
-		tracer_print_dynamic_struct_visitor(item);
-		break;
-	case SIDE_TYPE_DYNAMIC_VLA:
-		tracer_print_dynamic_vla(side_ptr_get(item->u.side_dynamic.side_dynamic_vla));
-		break;
-	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
-		tracer_print_dynamic_vla_visitor(item);
-		break;
-	default:
-		fprintf(stderr, "<UNKNOWN TYPE>\n");
-		abort();
-	}
-	if (print_brackets)
-		printf(" }");
-}
-
-static
-void tracer_print_static_fields(const struct side_event_description *desc,
+void tracer_print_event(enum side_type_visitor_location loc,
+		const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
-		uint32_t *nr_items, void *caller_addr)
+		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)),
+		void *caller_addr, void *priv __attribute__((unused)))
 {
-	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
-	uint32_t i, side_sav_len = side_arg_vec->len;
+	uint32_t side_sav_len = side_arg_vec->len;
 
-	if (print_caller)
-		printf("caller: [%p], ", caller_addr);
-	printf("provider: %s, event: %s",
-		side_ptr_get(desc->provider_name),
-		side_ptr_get(desc->event_name));
 	if (desc->nr_fields != side_sav_len) {
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments\n");
 		abort();
 	}
-	print_attributes(", attr", ":", side_ptr_get(desc->attr), desc->nr_attr);
-	printf("%s", side_sav_len ? ", fields: { " : "");
-	for (i = 0; i < side_sav_len; i++) {
-		printf("%s", i ? ", " : "");
-		tracer_print_field(&side_ptr_get(desc->fields)[i], &sav[i]);
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		if (print_caller)
+			printf("caller: [%p], ", caller_addr);
+		printf("provider: %s, event: %s",
+			side_ptr_get(desc->provider_name),
+			side_ptr_get(desc->event_name));
+		print_attributes(", attr", ":", side_ptr_get(desc->attr), desc->nr_attr);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		printf("\n");
+		break;
 	}
-	if (nr_items)
-		*nr_items = i;
-	if (side_sav_len)
-		printf(" }");
 }
+
+static
+void tracer_print_static_fields(enum side_type_visitor_location loc,
+		const struct side_arg_vec *side_arg_vec,
+		void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+	uint32_t side_sav_len = side_arg_vec->len;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		printf("%s", side_sav_len ? ", fields: {" : "");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		if (side_sav_len)
+			printf(" }");
+		break;
+	}
+}
+
+static
+void tracer_print_variadic_fields(enum side_type_visitor_location loc,
+		const struct side_arg_dynamic_struct *var_struct,
+		void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+	uint32_t var_struct_len = var_struct->len;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes(", attr ", "::", side_ptr_get(var_struct->attr), var_struct->nr_attr);
+		printf("%s", var_struct_len ? ", fields:: {" : "");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		if (var_struct_len)
+			printf(" }");
+		break;
+	}
+}
+
+static
+void tracer_print_field(enum side_type_visitor_location loc, const struct side_event_field *item_desc, void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		if (get_nested_item_nr(ctx) != 0)
+			printf(",");
+		printf(" %s: { ", side_ptr_get(item_desc->field_name));
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		printf(" }");
+		inc_nested_item_nr(ctx);
+		break;
+	}
+}
+
+static
+void tracer_print_elem(enum side_type_visitor_location loc, const struct side_type *type_desc __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		if (get_nested_item_nr(ctx) != 0)
+			printf(", { ");
+		else
+			printf(" { ");
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		printf(" }");
+		inc_nested_item_nr(ctx);
+		break;
+	}
+}
+
+static
+void tracer_print_null(const struct side_type *type_desc,
+		const struct side_arg *item __attribute__((unused)),
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_header(":", side_ptr_get(type_desc->u.side_null.attr),
+		type_desc->u.side_null.nr_attr);
+	printf("<NULL TYPE>");
+}
+
+static
+void tracer_print_bool(const struct side_type *type_desc,
+		const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_bool(":", &type_desc->u.side_bool, &item->u.side_static.bool_value, 0);
+}
+
+static
+void tracer_print_integer(const struct side_type *type_desc,
+		const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.side_static.integer_value, 0, TRACER_DISPLAY_BASE_10);
+}
+
+static
+void tracer_print_byte(const struct side_type *type_desc __attribute__((unused)),
+		const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_header(":", side_ptr_get(type_desc->u.side_byte.attr), type_desc->u.side_byte.nr_attr);
+	printf("0x%" PRIx8, item->u.side_static.byte_value);
+}
+
+static
+void tracer_print_pointer(const struct side_type *type_desc,
+		const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_integer(":", &type_desc->u.side_integer, &item->u.side_static.integer_value, 0, TRACER_DISPLAY_BASE_16);
+}
+
+static
+void tracer_print_float(const struct side_type *type_desc,
+		const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_float(":", &type_desc->u.side_float, &item->u.side_static.float_value);
+}
+
+static
+void tracer_print_string(const struct side_type *type_desc,
+		const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_header(":", side_ptr_get(type_desc->u.side_string.attr), type_desc->u.side_string.nr_attr);
+	tracer_print_type_string(side_ptr_get(item->u.side_static.string_value),
+			type_desc->u.side_string.unit_size,
+			side_enum_get(type_desc->u.side_string.byte_order), NULL);
+}
+
+static
+void tracer_print_struct(enum side_type_visitor_location loc,
+	const struct side_type_struct *side_struct,
+	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes("attr", ":", side_ptr_get(side_struct->attr), side_struct->nr_attr);
+		printf("%s", side_struct->nr_attr ? ", " : "");
+		printf("fields: {");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		printf(" }");
+		break;
+	}
+}
+
+static
+void tracer_print_array(enum side_type_visitor_location loc,
+	const struct side_type_array *side_array,
+	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes("attr", ":", side_ptr_get(side_array->attr), side_array->nr_attr);
+		printf("%s", side_array->nr_attr ? ", " : "");
+		printf("elements: [");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		printf(" ]");
+		break;
+	}
+}
+
+static
+void tracer_print_vla(enum side_type_visitor_location loc,
+	const struct side_type_vla *side_vla,
+	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes("attr", ":", side_ptr_get(side_vla->attr), side_vla->nr_attr);
+		printf("%s", side_vla->nr_attr ? ", " : "");
+		printf("elements: [");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		printf(" ]");
+		break;
+	}
+}
+
+static
+void tracer_print_vla_visitor(enum side_type_visitor_location loc,
+	const struct side_type_vla_visitor *side_vla_visitor,
+	const struct side_arg_vla_visitor *side_arg_vla_visitor __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes("attr", ":", side_ptr_get(side_vla_visitor->attr), side_vla_visitor->nr_attr);
+		printf("%s", side_vla_visitor->nr_attr ? ", " : "");
+		printf("elements: [");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		printf(" ]");
+		break;
+	}
+}
+
+static void tracer_print_enum(const struct side_type *type_desc,
+	const struct side_arg *item, void *priv)
+{
+	const struct side_enum_mappings *mappings = side_ptr_get(type_desc->u.side_enum.mappings);
+	const struct side_type *elem_type = side_ptr_get(type_desc->u.side_enum.elem_type);
+	union int_value v;
+
+	if (side_enum_get(elem_type->type) != side_enum_get(item->type)) {
+		fprintf(stderr, "ERROR: Unexpected enum element type\n");
+		abort();
+	}
+	v = tracer_load_integer_value(&elem_type->u.side_integer,
+			&item->u.side_static.integer_value, 0, NULL);
+	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
+	printf("%s", mappings->nr_attr ? ", " : "");
+	printf("{ ");
+	tracer_print_integer(elem_type, item, priv);
+	printf(" }");
+	print_enum_labels(mappings, v);
+}
+
+static void tracer_print_enum_bitmap(const struct side_type *type_desc,
+	const struct side_arg *item, void *priv __attribute__((unused)))
+{
+	const struct side_enum_bitmap_mappings *side_enum_mappings = side_ptr_get(type_desc->u.side_enum_bitmap.mappings);
+	const struct side_type *enum_elem_type = side_ptr_get(type_desc->u.side_enum_bitmap.elem_type), *elem_type;
+	uint32_t i, print_count = 0, stride_bit, nr_items;
+	const struct side_arg *array_item;
+
+	switch (side_enum_get(enum_elem_type->type)) {
+	case SIDE_TYPE_U8:		/* Fall-through */
+	case SIDE_TYPE_BYTE:		/* Fall-through */
+	case SIDE_TYPE_U16:		/* Fall-through */
+	case SIDE_TYPE_U32:		/* Fall-through */
+	case SIDE_TYPE_U64:		/* Fall-through */
+	case SIDE_TYPE_U128:		/* Fall-through */
+	case SIDE_TYPE_S8:		/* Fall-through */
+	case SIDE_TYPE_S16:		/* Fall-through */
+	case SIDE_TYPE_S32:		/* Fall-through */
+	case SIDE_TYPE_S64:		/* Fall-through */
+	case SIDE_TYPE_S128:
+		elem_type = enum_elem_type;
+		array_item = item;
+		nr_items = 1;
+		break;
+	case SIDE_TYPE_ARRAY:
+		elem_type = side_ptr_get(enum_elem_type->u.side_array.elem_type);
+		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_array)->sav);
+		nr_items = type_desc->u.side_array.length;
+		break;
+	case SIDE_TYPE_VLA:
+		elem_type = side_ptr_get(enum_elem_type->u.side_vla.elem_type);
+		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_vla)->sav);
+		nr_items = side_ptr_get(item->u.side_static.side_vla)->len;
+		break;
+	default:
+		fprintf(stderr, "ERROR: Unexpected enum element type\n");
+		abort();
+	}
+	stride_bit = elem_type_to_stride(elem_type);
+
+	print_attributes("attr", ":", side_ptr_get(side_enum_mappings->attr), side_enum_mappings->nr_attr);
+	printf("%s", side_enum_mappings->nr_attr ? ", " : "");
+	printf("labels: [ ");
+	for (i = 0; i < side_enum_mappings->nr_mappings; i++) {
+		const struct side_enum_bitmap_mapping *mapping = &side_ptr_get(side_enum_mappings->mappings)[i];
+		bool match = false;
+		uint64_t bit;
+
+		if (mapping->range_end < mapping->range_begin) {
+			fprintf(stderr, "ERROR: Unexpected enum bitmap range: %" PRIu64 "-%" PRIu64 "\n",
+				mapping->range_begin, mapping->range_end);
+			abort();
+		}
+		for (bit = mapping->range_begin; bit <= mapping->range_end; bit++) {
+			if (bit > (nr_items * stride_bit) - 1)
+				break;
+			if (side_enum_get(elem_type->type) == SIDE_TYPE_BYTE) {
+				uint8_t v = array_item[bit / 8].u.side_static.byte_value;
+				if (v & (1ULL << (bit % 8))) {
+					match = true;
+					goto match;
+				}
+			} else {
+				union int_value v = {};
+
+				v = tracer_load_integer_value(&elem_type->u.side_integer,
+						&array_item[bit / stride_bit].u.side_static.integer_value,
+						0, NULL);
+				side_check_value_u64(v);
+				if (v.u[SIDE_INTEGER128_SPLIT_LOW] & (1ULL << (bit % stride_bit))) {
+					match = true;
+					goto match;
+				}
+			}
+		}
+match:
+		if (match) {
+			printf("%s", print_count++ ? ", " : "");
+			tracer_print_type_string(side_ptr_get(mapping->label.p), mapping->label.unit_size,
+				side_enum_get(mapping->label.byte_order), NULL);
+		}
+	}
+	if (!print_count)
+		printf("<NO LABEL>");
+	printf(" ]");
+}
+
+static
+void tracer_print_gather_bool(const struct side_type_gather_bool *type,
+	const union side_bool_value *value,
+	void *priv __attribute__((unused)))
+{
+	tracer_print_type_bool(":", &type->type, value, type->offset_bits);
+}
+
+static
+void tracer_print_gather_byte(const struct side_type_gather_byte *type,
+	const uint8_t *_ptr,
+	void *priv __attribute__((unused)))
+{
+	tracer_print_type_header(":", side_ptr_get(type->type.attr),
+			type->type.nr_attr);
+	printf("0x%" PRIx8, *_ptr);
+}
+
+static
+void tracer_print_gather_integer(const struct side_type_gather_integer *type,
+	const union side_integer_value *value,
+	void *priv __attribute__((unused)))
+{
+	tracer_print_type_integer(":", &type->type, value, type->offset_bits, TRACER_DISPLAY_BASE_10);
+}
+
+static
+void tracer_print_gather_pointer(const struct side_type_gather_integer *type,
+	const union side_integer_value *value,
+	void *priv __attribute__((unused)))
+{
+	tracer_print_type_integer(":", &type->type, value, type->offset_bits, TRACER_DISPLAY_BASE_16);
+}
+
+static
+void tracer_print_gather_float(const struct side_type_gather_float *type,
+	const union side_float_value *value,
+	void *priv __attribute__((unused)))
+{
+	tracer_print_type_float(":", &type->type, value);
+}
+
+static
+void tracer_print_gather_string(const struct side_type_gather_string *type,
+	const void *p, uint8_t unit_size,
+	enum side_type_label_byte_order byte_order,
+	size_t strlen_with_null __attribute__((unused)),
+	void *priv __attribute__((unused)))
+{
+	//TODO use strlen_with_null input
+	tracer_print_type_header(":", side_ptr_get(type->type.attr),
+			type->type.nr_attr);
+	tracer_print_type_string(p, unit_size, byte_order, NULL);
+}
+
+static
+void tracer_print_gather_struct(enum side_type_visitor_location loc,
+	const struct side_type_struct *side_struct,
+	void *priv)
+{
+	tracer_print_struct(loc, side_struct, NULL, priv);
+}
+
+static
+void tracer_print_gather_array(enum side_type_visitor_location loc,
+	const struct side_type_array *side_array,
+	void *priv)
+{
+	tracer_print_array(loc, side_array, NULL, priv);
+}
+
+static
+void tracer_print_gather_vla(enum side_type_visitor_location loc,
+	const struct side_type_vla *side_vla,
+	uint32_t length __attribute__((unused)),
+	void *priv)
+{
+	tracer_print_vla(loc, side_vla, NULL, priv);
+}
+
+static
+void tracer_print_gather_enum(const struct side_type_gather_enum *type,
+	const union side_integer_value *value,
+	void *priv __attribute__((unused)))
+{
+	const struct side_enum_mappings *mappings = side_ptr_get(type->mappings);
+	const struct side_type *enum_elem_type = side_ptr_get(type->elem_type);
+	const struct side_type_gather_integer *side_integer = &enum_elem_type->u.side_gather.u.side_integer;
+	union int_value v;
+
+	v = tracer_load_integer_value(&side_integer->type, value, 0, NULL);
+	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
+	printf("%s", mappings->nr_attr ? ", " : "");
+	printf("{ ");
+	tracer_print_type_integer(":", &side_integer->type, value, 0, TRACER_DISPLAY_BASE_10);
+	printf(" }");
+	print_enum_labels(mappings, v);
+}
+
+static
+void tracer_print_dynamic_field(enum side_type_visitor_location loc, const struct side_arg_dynamic_field *field, void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		if (get_nested_item_nr(ctx) != 0)
+			printf(",");
+		printf(" %s:: { ", side_ptr_get(field->field_name));
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		printf(" }");
+		inc_nested_item_nr(ctx);
+		break;
+	}
+}
+
+static
+void tracer_print_dynamic_elem(enum side_type_visitor_location loc,
+	const struct side_arg *dynamic_item __attribute__((unused)), void *priv)
+{
+	tracer_print_elem(loc, NULL, priv);
+}
+
+static
+void tracer_print_dynamic_null(const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_null.attr),
+		item->u.side_dynamic.side_null.nr_attr);
+	printf("<NULL TYPE>");
+}
+
+static
+void tracer_print_dynamic_bool(const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_bool("::", &item->u.side_dynamic.side_bool.type, &item->u.side_dynamic.side_bool.value, 0);
+}
+
+static
+void tracer_print_dynamic_integer(const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
+			TRACER_DISPLAY_BASE_10);
+}
+
+static
+void tracer_print_dynamic_byte(const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_byte.type.attr), item->u.side_dynamic.side_byte.type.nr_attr);
+	printf("0x%" PRIx8, item->u.side_dynamic.side_byte.value);
+}
+
+static
+void tracer_print_dynamic_pointer(const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_integer("::", &item->u.side_dynamic.side_integer.type, &item->u.side_dynamic.side_integer.value, 0,
+			TRACER_DISPLAY_BASE_16);
+}
+
+static
+void tracer_print_dynamic_float(const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_float("::", &item->u.side_dynamic.side_float.type,
+			&item->u.side_dynamic.side_float.value);
+}
+
+static
+void tracer_print_dynamic_string(const struct side_arg *item,
+		void *priv __attribute__((unused)))
+{
+	tracer_print_type_header("::", side_ptr_get(item->u.side_dynamic.side_string.type.attr), item->u.side_dynamic.side_string.type.nr_attr);
+	tracer_print_type_string((const char *)(uintptr_t) item->u.side_dynamic.side_string.value,
+			item->u.side_dynamic.side_string.type.unit_size,
+			side_enum_get(item->u.side_dynamic.side_string.type.byte_order), NULL);
+}
+
+static
+void tracer_print_dynamic_struct(enum side_type_visitor_location loc,
+	const struct side_arg_dynamic_struct *dynamic_struct,
+	void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes("attr", "::", side_ptr_get(dynamic_struct->attr), dynamic_struct->nr_attr);
+		printf("%s", dynamic_struct->nr_attr ? ", " : "");
+		printf("fields:: {");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		printf(" }");
+		break;
+	}
+}
+
+static
+void tracer_print_dynamic_struct_visitor(enum side_type_visitor_location loc,
+	const struct side_arg *item,
+	void *priv)
+{
+	struct side_arg_dynamic_struct_visitor *dynamic_struct_visitor;
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	dynamic_struct_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor);
+	if (!dynamic_struct_visitor)
+		abort();
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes("attr", "::", side_ptr_get(dynamic_struct_visitor->attr), dynamic_struct_visitor->nr_attr);
+		printf("%s", dynamic_struct_visitor->nr_attr ? ", " : "");
+		printf("fields:: {");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		printf(" }");
+		break;
+	}
+}
+
+static
+void tracer_print_dynamic_vla(enum side_type_visitor_location loc,
+	const struct side_arg_dynamic_vla *dynamic_vla,
+	void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes("attr", "::", side_ptr_get(dynamic_vla->attr), dynamic_vla->nr_attr);
+		printf("%s", dynamic_vla->nr_attr ? ", " : "");
+		printf("elements:: [");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		printf(" ]");
+		break;
+	}
+}
+
+static
+void tracer_print_dynamic_vla_visitor(enum side_type_visitor_location loc,
+	const struct side_arg *item,
+	void *priv)
+{
+	struct side_arg_dynamic_vla_visitor *dynamic_vla_visitor;
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	dynamic_vla_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor);
+	if (!dynamic_vla_visitor)
+		abort();
+
+	switch (loc) {
+	case SIDE_TYPE_VISITOR_BEFORE:
+		print_attributes("attr", "::", side_ptr_get(dynamic_vla_visitor->attr), dynamic_vla_visitor->nr_attr);
+		printf("%s", dynamic_vla_visitor->nr_attr ? ", " : "");
+		printf("elements:: [");
+		push_nesting(ctx);
+		break;
+	case SIDE_TYPE_VISITOR_AFTER:
+		pop_nesting(ctx);
+		printf(" ]");
+		break;
+	}
+}
+
+static struct side_type_visitor type_visitor = {
+	.event_func = tracer_print_event,
+	.static_fields_func = tracer_print_static_fields,
+	.variadic_fields_func = tracer_print_variadic_fields,
+
+	/* Stack-copy basic types. */
+	.field_func = tracer_print_field,
+	.elem_func = tracer_print_elem,
+	.null_type_func = tracer_print_null,
+	.bool_type_func = tracer_print_bool,
+	.integer_type_func = tracer_print_integer,
+	.byte_type_func = tracer_print_byte,
+	.pointer_type_func = tracer_print_pointer,
+	.float_type_func = tracer_print_float,
+	.string_type_func = tracer_print_string,
+
+	/* Stack-copy compound types. */
+	.struct_type_func = tracer_print_struct,
+	.array_type_func = tracer_print_array,
+	.vla_type_func = tracer_print_vla,
+	.vla_visitor_type_func = tracer_print_vla_visitor,
+
+	/* Stack-copy enumeration types. */
+	.enum_type_func = tracer_print_enum,
+	.enum_bitmap_type_func = tracer_print_enum_bitmap,
+
+	/* Gather basic types. */
+	.gather_bool_type_func = tracer_print_gather_bool,
+	.gather_byte_type_func = tracer_print_gather_byte,
+	.gather_integer_type_func = tracer_print_gather_integer,
+	.gather_pointer_type_func = tracer_print_gather_pointer,
+	.gather_float_type_func = tracer_print_gather_float,
+	.gather_string_type_func = tracer_print_gather_string,
+
+	/* Gather compound types. */
+	.gather_struct_type_func = tracer_print_gather_struct,
+	.gather_array_type_func = tracer_print_gather_array,
+	.gather_vla_type_func = tracer_print_gather_vla,
+
+	/* Gather enumeration types. */
+	.gather_enum_type_func = tracer_print_gather_enum,
+
+	/* Dynamic basic types. */
+	.dynamic_field_func = tracer_print_dynamic_field,
+	.dynamic_elem_func = tracer_print_dynamic_elem,
+
+	.dynamic_null_func = tracer_print_dynamic_null,
+	.dynamic_bool_func = tracer_print_dynamic_bool,
+	.dynamic_integer_func = tracer_print_dynamic_integer,
+	.dynamic_byte_func = tracer_print_dynamic_byte,
+	.dynamic_pointer_func = tracer_print_dynamic_pointer,
+	.dynamic_float_func = tracer_print_dynamic_float,
+	.dynamic_string_func = tracer_print_dynamic_string,
+
+	/* Dynamic compound types. */
+	.dynamic_struct_func = tracer_print_dynamic_struct,
+	.dynamic_struct_visitor_func = tracer_print_dynamic_struct_visitor,
+	.dynamic_vla_func = tracer_print_dynamic_vla,
+	.dynamic_vla_visitor_func = tracer_print_dynamic_vla_visitor,
+};
 
 static
 void tracer_call(const struct side_event_description *desc,
@@ -2064,10 +1699,9 @@ void tracer_call(const struct side_event_description *desc,
 		void *priv __attribute__((unused)),
 		void *caller_addr)
 {
-	uint32_t nr_fields = 0;
+	struct print_ctx ctx = {};
 
-	tracer_print_static_fields(desc, side_arg_vec, &nr_fields, caller_addr);
-	printf("\n");
+	type_visitor_event(&type_visitor, desc, side_arg_vec, NULL, caller_addr, &ctx);
 }
 
 static
@@ -2077,24 +1711,9 @@ void tracer_call_variadic(const struct side_event_description *desc,
 		void *priv __attribute__((unused)),
 		void *caller_addr)
 {
-	uint32_t nr_fields = 0, i, var_struct_len = var_struct->len;
+	struct print_ctx ctx = {};
 
-	tracer_print_static_fields(desc, side_arg_vec, &nr_fields, caller_addr);
-
-	if (side_unlikely(!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))) {
-		fprintf(stderr, "ERROR: unexpected non-variadic event description\n");
-		abort();
-	}
-	print_attributes(", attr ", "::", side_ptr_get(var_struct->attr), var_struct->nr_attr);
-	printf("%s", var_struct_len ? ", fields:: { " : "");
-	for (i = 0; i < var_struct_len; i++, nr_fields++) {
-		printf("%s", i ? ", " : "");
-		printf("%s:: ", side_ptr_get(side_ptr_get(var_struct->fields)[i].field_name));
-		tracer_print_dynamic(&side_ptr_get(var_struct->fields)[i].elem, true);
-	}
-	if (i)
-		printf(" }");
-	printf("\n");
+	type_visitor_event(&type_visitor, desc, side_arg_vec, var_struct, caller_addr, &ctx);
 }
 
 static
