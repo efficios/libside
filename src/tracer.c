@@ -65,7 +65,7 @@ static
 uint32_t tracer_print_gather_vla(const struct side_type_gather *type_gather, const void *_ptr,
 		const void *_length_ptr);
 static
-void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item);
+void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item, bool print_brackets);
 
 static
 void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
@@ -598,7 +598,7 @@ void tracer_print_enum(const struct side_type *type_desc, const struct side_arg 
 			&item->u.side_static.integer_value, 0, NULL);
 	print_attributes("attr", ":", side_ptr_get(mappings->attr), mappings->nr_attr);
 	printf("%s", mappings->nr_attr ? ", " : "");
-	tracer_print_type(elem_type, item);
+	tracer_print_type(elem_type, item, true);
 	print_enum_labels(mappings, v);
 }
 
@@ -1095,7 +1095,7 @@ void tracer_print_type_float(const char *separator,
 }
 
 static
-void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item)
+void tracer_print_type(const struct side_type *type_desc, const struct side_arg *item, bool print_brackets)
 {
 	enum side_type_label type;
 
@@ -1183,7 +1183,8 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	else
 		type = side_enum_get(item->type);
 
-	printf("{ ");
+	if (print_brackets)
+		printf("{ ");
 	switch (type) {
 		/* Stack-copy basic types */
 	case SIDE_TYPE_NULL:
@@ -1319,14 +1320,15 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 		fprintf(stderr, "<UNKNOWN TYPE>\n");
 		abort();
 	}
-	printf(" }");
+	if (print_brackets)
+		printf(" }");
 }
 
 static
 void tracer_print_field(const struct side_event_field *item_desc, const struct side_arg *item)
 {
 	printf("%s: ", side_ptr_get(item_desc->field_name));
-	tracer_print_type(&item_desc->side_type, item);
+	tracer_print_type(&item_desc->side_type, item, true);
 }
 
 static
@@ -1385,7 +1387,7 @@ void tracer_print_variant(const struct side_type *type_desc, const struct side_a
 		const struct side_variant_option *option = &side_ptr_get(side_type_variant->options)[i];
 
 		if (v.s[SIDE_INTEGER128_SPLIT_LOW] >= option->range_begin && v.s[SIDE_INTEGER128_SPLIT_LOW] <= option->range_end) {
-			tracer_print_type(&option->side_type, &side_arg_variant->option);
+			tracer_print_type(&option->side_type, &side_arg_variant->option, false);
 			return;
 		}
 	}
@@ -1409,7 +1411,7 @@ void tracer_print_array(const struct side_type *type_desc, const struct side_arg
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_type(side_ptr_get(type_desc->u.side_array.elem_type), &sav[i]);
+		tracer_print_type(side_ptr_get(type_desc->u.side_array.elem_type), &sav[i], true);
 	}
 	printf(" ]");
 }
@@ -1426,7 +1428,7 @@ void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_v
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_type(side_ptr_get(type_desc->u.side_vla.elem_type), &sav[i]);
+		tracer_print_type(side_ptr_get(type_desc->u.side_vla.elem_type), &sav[i], true);
 	}
 	printf(" ]");
 }
@@ -1794,7 +1796,7 @@ enum side_visitor_status tracer_write_elem_cb(const struct side_tracer_visitor_c
 	struct tracer_visitor_priv *tracer_priv = (struct tracer_visitor_priv *) tracer_ctx->priv;
 
 	printf("%s", tracer_priv->i++ ? ", " : "");
-	tracer_print_type(tracer_priv->elem_type, elem);
+	tracer_print_type(tracer_priv->elem_type, elem, true);
 	return SIDE_VISITOR_STATUS_OK;
 }
 
