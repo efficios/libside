@@ -22,7 +22,9 @@ libside_la_SOURCES = \
 	list.h \
 	rculist.h \
 	side.c \
-	tracer.c
+	tracer.c \
+	visit-arg-vec.c \
+	visit-arg-vec.h
 
 libside_la_LDFLAGS = -no-undefined -version-info $(SIDE_LIBRARY_VERSION)
 libside_la_LIBADD = \
