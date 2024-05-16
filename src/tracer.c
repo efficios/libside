@@ -13,6 +13,9 @@
 
 #include <side/trace.h>
 
+/* TODO: optionally print caller address. */
+static bool print_caller = false;
+
 enum tracer_display_base {
 	TRACER_DISPLAY_BASE_2,
 	TRACER_DISPLAY_BASE_8,
@@ -40,7 +43,7 @@ void tracer_print_vla(const struct side_type *type_desc, const struct side_arg_v
 static
 void tracer_print_vla_visitor(const struct side_type *type_desc, struct side_arg_vla_visitor *vla_visitor);
 static
-void tracer_print_dynamic(const struct side_arg *dynamic_item);
+void tracer_print_dynamic(const struct side_arg *dynamic_item, bool print_brackets);
 static
 uint32_t tracer_print_gather_bool_type(const struct side_type_gather *type_gather, const void *_ptr);
 static
@@ -1310,7 +1313,7 @@ void tracer_print_type(const struct side_type *type_desc, const struct side_arg 
 	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
 	case SIDE_TYPE_DYNAMIC_VLA:
 	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
-		tracer_print_dynamic(item);
+		tracer_print_dynamic(item, false);
 		break;
 	default:
 		fprintf(stderr, "<UNKNOWN TYPE>\n");
@@ -1842,7 +1845,7 @@ void tracer_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_s
 	for (i = 0; i < len; i++) {
 		printf("%s", i ? ", " : "");
 		printf("%s:: ", side_ptr_get(fields[i].field_name));
-		tracer_print_dynamic(&fields[i].elem);
+		tracer_print_dynamic(&fields[i].elem, true);
 	}
 	printf(" ]");
 }
@@ -1861,7 +1864,7 @@ enum side_visitor_status tracer_dynamic_struct_write_elem_cb(
 
 	printf("%s", tracer_priv->i++ ? ", " : "");
 	printf("%s:: ", side_ptr_get(dynamic_field->field_name));
-	tracer_print_dynamic(&dynamic_field->elem);
+	tracer_print_dynamic(&dynamic_field->elem, true);
 	return SIDE_VISITOR_STATUS_OK;
 }
 
@@ -1910,7 +1913,7 @@ void tracer_print_dynamic_vla(const struct side_arg_dynamic_vla *vla)
 	printf("[ ");
 	for (i = 0; i < side_sav_len; i++) {
 		printf("%s", i ? ", " : "");
-		tracer_print_dynamic(&sav[i]);
+		tracer_print_dynamic(&sav[i], true);
 	}
 	printf(" ]");
 }
@@ -1928,7 +1931,7 @@ enum side_visitor_status tracer_dynamic_vla_write_elem_cb(
 		(struct tracer_dynamic_vla_visitor_priv *) tracer_ctx->priv;
 
 	printf("%s", tracer_priv->i++ ? ", " : "");
-	tracer_print_dynamic(elem);
+	tracer_print_dynamic(elem, true);
 	return SIDE_VISITOR_STATUS_OK;
 }
 
@@ -1966,9 +1969,10 @@ void tracer_print_dynamic_vla_visitor(const struct side_arg *item)
 }
 
 static
-void tracer_print_dynamic(const struct side_arg *item)
+void tracer_print_dynamic(const struct side_arg *item, bool print_brackets)
 {
-	printf("{ ");
+	if (print_brackets)
+		printf("{ ");
 	switch (side_enum_get(item->type)) {
 		/* Dynamic basic types */
 	case SIDE_TYPE_DYNAMIC_NULL:
@@ -2019,7 +2023,8 @@ void tracer_print_dynamic(const struct side_arg *item)
 		fprintf(stderr, "<UNKNOWN TYPE>\n");
 		abort();
 	}
-	printf(" }");
+	if (print_brackets)
+		printf(" }");
 }
 
 static
@@ -2030,7 +2035,9 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	printf("caller: [%p], provider: %s, event: %s", caller_addr,
+	if (print_caller)
+		printf("caller: [%p] ", caller_addr);
+	printf("provider: %s, event: %s",
 		side_ptr_get(desc->provider_name),
 		side_ptr_get(desc->event_name));
 	if (desc->nr_fields != side_sav_len) {
@@ -2081,7 +2088,7 @@ void tracer_call_variadic(const struct side_event_description *desc,
 	for (i = 0; i < var_struct_len; i++, nr_fields++) {
 		printf("%s", i ? ", " : "");
 		printf("%s:: ", side_ptr_get(side_ptr_get(var_struct->fields)[i].field_name));
-		tracer_print_dynamic(&side_ptr_get(var_struct->fields)[i].elem);
+		tracer_print_dynamic(&side_ptr_get(var_struct->fields)[i].elem, true);
 	}
 	if (i)
 		printf(" ]");
