@@ -2036,7 +2036,7 @@ void tracer_print_static_fields(const struct side_event_description *desc,
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
 	if (print_caller)
-		printf("caller: [%p] ", caller_addr);
+		printf("caller: [%p], ", caller_addr);
 	printf("provider: %s, event: %s",
 		side_ptr_get(desc->provider_name),
 		side_ptr_get(desc->event_name));
