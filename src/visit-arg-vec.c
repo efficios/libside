@@ -223,21 +223,21 @@ size_t type_visitor_strlen(const void *p, uint8_t unit_size)
 static
 void side_visit_elem(const struct side_type_visitor *type_visitor, const struct side_type *type_desc, const struct side_arg *item, void *priv)
 {
-	if (type_visitor->elem_func)
-		type_visitor->elem_func(SIDE_TYPE_VISITOR_BEFORE, type_desc, priv);
+	if (type_visitor->before_elem_func)
+		type_visitor->before_elem_func(type_desc, priv);
 	side_visit_type(type_visitor, type_desc, item, priv);
-	if (type_visitor->elem_func)
-		type_visitor->elem_func(SIDE_TYPE_VISITOR_AFTER, type_desc, priv);
+	if (type_visitor->after_elem_func)
+		type_visitor->after_elem_func(type_desc, priv);
 }
 
 static
 void side_visit_field(const struct side_type_visitor *type_visitor, const struct side_event_field *item_desc, const struct side_arg *item, void *priv)
 {
-	if (type_visitor->field_func)
-		type_visitor->field_func(SIDE_TYPE_VISITOR_BEFORE, item_desc, priv);
+	if (type_visitor->before_field_func)
+		type_visitor->before_field_func(item_desc, priv);
 	side_visit_type(type_visitor, &item_desc->side_type, item, priv);
-	if (type_visitor->field_func)
-		type_visitor->field_func(SIDE_TYPE_VISITOR_AFTER, item_desc, priv);
+	if (type_visitor->after_field_func)
+		type_visitor->after_field_func(item_desc, priv);
 }
 
 static
@@ -251,12 +251,12 @@ void type_visitor_struct(const struct side_type_visitor *type_visitor, const str
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments of structure\n");
 		abort();
 	}
-	if (type_visitor->struct_type_func)
-		type_visitor->struct_type_func(SIDE_TYPE_VISITOR_BEFORE, side_struct, side_arg_vec, priv);
+	if (type_visitor->before_struct_type_func)
+		type_visitor->before_struct_type_func(side_struct, side_arg_vec, priv);
 	for (i = 0; i < side_sav_len; i++)
 		side_visit_field(type_visitor, &side_ptr_get(side_struct->fields)[i], &sav[i], priv);
-	if (type_visitor->struct_type_func)
-		type_visitor->struct_type_func(SIDE_TYPE_VISITOR_AFTER, side_struct, side_arg_vec, priv);
+	if (type_visitor->after_struct_type_func)
+		type_visitor->after_struct_type_func(side_struct, side_arg_vec, priv);
 }
 
 static
@@ -312,12 +312,12 @@ void type_visitor_array(const struct side_type_visitor *type_visitor, const stru
 		fprintf(stderr, "ERROR: length mismatch between description and arguments of array\n");
 		abort();
 	}
-	if (type_visitor->array_type_func)
-		type_visitor->array_type_func(SIDE_TYPE_VISITOR_BEFORE, &type_desc->u.side_array, side_arg_vec, priv);
+	if (type_visitor->before_array_type_func)
+		type_visitor->before_array_type_func(&type_desc->u.side_array, side_arg_vec, priv);
 	for (i = 0; i < side_sav_len; i++)
 		side_visit_elem(type_visitor, side_ptr_get(type_desc->u.side_array.elem_type), &sav[i], priv);
-	if (type_visitor->array_type_func)
-		type_visitor->array_type_func(SIDE_TYPE_VISITOR_AFTER, &type_desc->u.side_array, side_arg_vec, priv);
+	if (type_visitor->after_array_type_func)
+		type_visitor->after_array_type_func(&type_desc->u.side_array, side_arg_vec, priv);
 }
 
 static
@@ -326,12 +326,12 @@ void type_visitor_vla(const struct side_type_visitor *type_visitor, const struct
 	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	if (type_visitor->vla_type_func)
-		type_visitor->vla_type_func(SIDE_TYPE_VISITOR_BEFORE, &type_desc->u.side_vla, side_arg_vec, priv);
+	if (type_visitor->before_vla_type_func)
+		type_visitor->before_vla_type_func(&type_desc->u.side_vla, side_arg_vec, priv);
 	for (i = 0; i < side_sav_len; i++)
 		side_visit_elem(type_visitor, side_ptr_get(type_desc->u.side_vla.elem_type), &sav[i], priv);
-	if (type_visitor->vla_type_func)
-		type_visitor->vla_type_func(SIDE_TYPE_VISITOR_AFTER, &type_desc->u.side_vla, side_arg_vec, priv);
+	if (type_visitor->after_vla_type_func)
+		type_visitor->after_vla_type_func(&type_desc->u.side_vla, side_arg_vec, priv);
 }
 
 struct tracer_visitor_priv {
@@ -370,8 +370,8 @@ void type_visitor_vla_visitor(const struct side_type_visitor *type_visitor, cons
 
 	if (!vla_visitor)
 		abort();
-	if (type_visitor->vla_visitor_type_func)
-		type_visitor->vla_visitor_type_func(SIDE_TYPE_VISITOR_BEFORE, side_ptr_get(type_desc->u.side_vla_visitor), vla_visitor, priv);
+	if (type_visitor->before_vla_visitor_type_func)
+		type_visitor->before_vla_visitor_type_func(side_ptr_get(type_desc->u.side_vla_visitor), vla_visitor, priv);
 	app_ctx = side_ptr_get(vla_visitor->app_ctx);
 	func = side_ptr_get(side_ptr_get(type_desc->u.side_vla_visitor)->visitor);
 	status = func(&tracer_ctx, app_ctx);
@@ -382,8 +382,8 @@ void type_visitor_vla_visitor(const struct side_type_visitor *type_visitor, cons
 		fprintf(stderr, "ERROR: Visitor error\n");
 		abort();
 	}
-	if (type_visitor->vla_visitor_type_func)
-		type_visitor->vla_visitor_type_func(SIDE_TYPE_VISITOR_AFTER, side_ptr_get(type_desc->u.side_vla_visitor), vla_visitor, priv);
+	if (type_visitor->after_vla_visitor_type_func)
+		type_visitor->after_vla_visitor_type_func(side_ptr_get(type_desc->u.side_vla_visitor), vla_visitor, priv);
 }
 
 static
@@ -432,11 +432,11 @@ union int_value tracer_load_gather_integer_value(const struct side_type_gather_i
 static
 void visit_gather_field(const struct side_type_visitor *type_visitor, const struct side_event_field *field, const void *ptr, void *priv)
 {
-	if (type_visitor->field_func)
-		type_visitor->field_func(SIDE_TYPE_VISITOR_BEFORE, field, priv);
+	if (type_visitor->before_field_func)
+		type_visitor->before_field_func(field, priv);
 	(void) visit_gather_type(type_visitor, &field->side_type, ptr, priv);
-	if (type_visitor->field_func)
-		type_visitor->field_func(SIDE_TYPE_VISITOR_AFTER, field, priv);
+	if (type_visitor->after_field_func)
+		type_visitor->after_field_func(field, priv);
 }
 
 static
@@ -447,13 +447,13 @@ uint32_t type_visitor_gather_struct(const struct side_type_visitor *type_visitor
 	const char *ptr = (const char *) _ptr;
 	uint32_t i;
 
-	if (type_visitor->gather_struct_type_func)
-		type_visitor->gather_struct_type_func(SIDE_TYPE_VISITOR_BEFORE, side_struct, priv);
+	if (type_visitor->before_gather_struct_type_func)
+		type_visitor->before_gather_struct_type_func(side_struct, priv);
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_struct.offset);
 	for (i = 0; i < side_struct->nr_fields; i++)
 		visit_gather_field(type_visitor, &side_ptr_get(side_struct->fields)[i], ptr, priv);
-	if (type_visitor->gather_struct_type_func)
-		type_visitor->gather_struct_type_func(SIDE_TYPE_VISITOR_AFTER, side_struct, priv);
+	if (type_visitor->after_gather_struct_type_func)
+		type_visitor->after_gather_struct_type_func(side_struct, priv);
 	return tracer_gather_size(access_mode, type_gather->u.side_struct.size);
 }
 
@@ -465,8 +465,8 @@ uint32_t type_visitor_gather_array(const struct side_type_visitor *type_visitor,
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	uint32_t i;
 
-	if (type_visitor->gather_array_type_func)
-		type_visitor->gather_array_type_func(SIDE_TYPE_VISITOR_BEFORE, side_array, priv);
+	if (type_visitor->before_gather_array_type_func)
+		type_visitor->before_gather_array_type_func(side_array, priv);
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_array.offset);
 	orig_ptr = ptr;
 	for (i = 0; i < side_array->length; i++) {
@@ -481,8 +481,8 @@ uint32_t type_visitor_gather_array(const struct side_type_visitor *type_visitor,
 		}
 		ptr += visit_gather_elem(type_visitor, elem_type, ptr, priv);
 	}
-	if (type_visitor->gather_array_type_func)
-		type_visitor->gather_array_type_func(SIDE_TYPE_VISITOR_AFTER, side_array, priv);
+	if (type_visitor->after_gather_array_type_func)
+		type_visitor->after_gather_array_type_func(side_array, priv);
 	return tracer_gather_size(access_mode, ptr - orig_ptr);
 }
 
@@ -512,8 +512,8 @@ uint32_t type_visitor_gather_vla(const struct side_type_visitor *type_visitor, c
 		abort();
 	}
 	length = (uint32_t) v.u[SIDE_INTEGER128_SPLIT_LOW];
-	if (type_visitor->gather_vla_type_func)
-		type_visitor->gather_vla_type_func(SIDE_TYPE_VISITOR_BEFORE, side_vla, length, priv);
+	if (type_visitor->before_gather_vla_type_func)
+		type_visitor->before_gather_vla_type_func(side_vla, length, priv);
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
 	orig_ptr = ptr;
 	for (i = 0; i < length; i++) {
@@ -528,8 +528,8 @@ uint32_t type_visitor_gather_vla(const struct side_type_visitor *type_visitor, c
 		}
 		ptr += visit_gather_elem(type_visitor, elem_type, ptr, priv);
 	}
-	if (type_visitor->gather_vla_type_func)
-		type_visitor->gather_vla_type_func(SIDE_TYPE_VISITOR_AFTER, side_vla, length, priv);
+	if (type_visitor->after_gather_vla_type_func)
+		type_visitor->after_gather_vla_type_func(side_vla, length, priv);
 	return tracer_gather_size(access_mode, ptr - orig_ptr);
 }
 
@@ -704,11 +704,11 @@ uint32_t visit_gather_elem(const struct side_type_visitor *type_visitor, const s
 {
 	uint32_t len;
 
-	if (type_visitor->elem_func)
-		type_visitor->elem_func(SIDE_TYPE_VISITOR_BEFORE, type_desc, priv);
+	if (type_visitor->before_elem_func)
+		type_visitor->before_elem_func(type_desc, priv);
 	len = visit_gather_type(type_visitor, type_desc, ptr, priv);
-	if (type_visitor->elem_func)
-		type_visitor->elem_func(SIDE_TYPE_VISITOR_AFTER, type_desc, priv);
+	if (type_visitor->after_elem_func)
+		type_visitor->after_elem_func(type_desc, priv);
 	return len;
 }
 
@@ -742,11 +742,11 @@ uint32_t type_visitor_gather_enum(const struct side_type_visitor *type_visitor, 
 static
 void visit_dynamic_field(const struct side_type_visitor *type_visitor, const struct side_arg_dynamic_field *field, void *priv)
 {
-	if (type_visitor->dynamic_field_func)
-		type_visitor->dynamic_field_func(SIDE_TYPE_VISITOR_BEFORE, field, priv);
+	if (type_visitor->before_dynamic_field_func)
+		type_visitor->before_dynamic_field_func(field, priv);
 	visit_dynamic_type(type_visitor, &field->elem, priv);
-	if (type_visitor->dynamic_field_func)
-		type_visitor->dynamic_field_func(SIDE_TYPE_VISITOR_AFTER, field, priv);
+	if (type_visitor->after_dynamic_field_func)
+		type_visitor->after_dynamic_field_func(field, priv);
 }
 
 static
@@ -755,12 +755,12 @@ void type_visitor_dynamic_struct(const struct side_type_visitor *type_visitor, c
 	const struct side_arg_dynamic_field *fields = side_ptr_get(dynamic_struct->fields);
 	uint32_t i, len = dynamic_struct->len;
 
-	if (type_visitor->dynamic_struct_func)
-		type_visitor->dynamic_struct_func(SIDE_TYPE_VISITOR_BEFORE, dynamic_struct, priv);
+	if (type_visitor->before_dynamic_struct_func)
+		type_visitor->before_dynamic_struct_func(dynamic_struct, priv);
 	for (i = 0; i < len; i++)
 		visit_dynamic_field(type_visitor, &fields[i], priv);
-	if (type_visitor->dynamic_struct_func)
-		type_visitor->dynamic_struct_func(SIDE_TYPE_VISITOR_AFTER, dynamic_struct, priv);
+	if (type_visitor->after_dynamic_struct_func)
+		type_visitor->after_dynamic_struct_func(dynamic_struct, priv);
 }
 
 struct tracer_dynamic_struct_visitor_priv {
@@ -797,8 +797,8 @@ void type_visitor_dynamic_struct_visitor(const struct side_type_visitor *type_vi
 	enum side_visitor_status status;
 	void *app_ctx;
 
-	if (type_visitor->dynamic_struct_visitor_func)
-		type_visitor->dynamic_struct_visitor_func(SIDE_TYPE_VISITOR_BEFORE, item, priv);
+	if (type_visitor->before_dynamic_struct_visitor_func)
+		type_visitor->before_dynamic_struct_visitor_func(item, priv);
 	dynamic_struct_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor);
 	if (!dynamic_struct_visitor)
 		abort();
@@ -811,8 +811,8 @@ void type_visitor_dynamic_struct_visitor(const struct side_type_visitor *type_vi
 		fprintf(stderr, "ERROR: Visitor error\n");
 		abort();
 	}
-	if (type_visitor->dynamic_struct_visitor_func)
-		type_visitor->dynamic_struct_visitor_func(SIDE_TYPE_VISITOR_AFTER, item, priv);
+	if (type_visitor->after_dynamic_struct_visitor_func)
+		type_visitor->after_dynamic_struct_visitor_func(item, priv);
 }
 
 static
@@ -821,12 +821,12 @@ void type_visitor_dynamic_vla(const struct side_type_visitor *type_visitor, cons
 	const struct side_arg *sav = side_ptr_get(vla->sav);
 	uint32_t i, side_sav_len = vla->len;
 
-	if (type_visitor->dynamic_vla_func)
-		type_visitor->dynamic_vla_func(SIDE_TYPE_VISITOR_BEFORE, vla, priv);
+	if (type_visitor->before_dynamic_vla_func)
+		type_visitor->before_dynamic_vla_func(vla, priv);
 	for (i = 0; i < side_sav_len; i++)
 		visit_dynamic_elem(type_visitor, &sav[i], priv);
-	if (type_visitor->dynamic_vla_func)
-		type_visitor->dynamic_vla_func(SIDE_TYPE_VISITOR_AFTER, vla, priv);
+	if (type_visitor->after_dynamic_vla_func)
+		type_visitor->after_dynamic_vla_func(vla, priv);
 }
 
 struct tracer_dynamic_vla_visitor_priv {
@@ -863,8 +863,8 @@ void type_visitor_dynamic_vla_visitor(const struct side_type_visitor *type_visit
 	enum side_visitor_status status;
 	void *app_ctx;
 
-	if (type_visitor->dynamic_vla_visitor_func)
-		type_visitor->dynamic_vla_visitor_func(SIDE_TYPE_VISITOR_BEFORE, item, priv);
+	if (type_visitor->before_dynamic_vla_visitor_func)
+		type_visitor->before_dynamic_vla_visitor_func(item, priv);
 	dynamic_vla_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor);
 	if (!dynamic_vla_visitor)
 		abort();
@@ -877,8 +877,8 @@ void type_visitor_dynamic_vla_visitor(const struct side_type_visitor *type_visit
 		fprintf(stderr, "ERROR: Visitor error\n");
 		abort();
 	}
-	if (type_visitor->dynamic_vla_visitor_func)
-		type_visitor->dynamic_vla_visitor_func(SIDE_TYPE_VISITOR_AFTER, item, priv);
+	if (type_visitor->after_dynamic_vla_visitor_func)
+		type_visitor->after_dynamic_vla_visitor_func(item, priv);
 }
 
 static
@@ -937,11 +937,11 @@ void visit_dynamic_type(const struct side_type_visitor *type_visitor, const stru
 static
 void visit_dynamic_elem(const struct side_type_visitor *type_visitor, const struct side_arg *dynamic_item, void *priv)
 {
-	if (type_visitor->elem_func)
-		type_visitor->dynamic_elem_func(SIDE_TYPE_VISITOR_BEFORE, dynamic_item, priv);
+	if (type_visitor->before_dynamic_elem_func)
+		type_visitor->before_dynamic_elem_func(dynamic_item, priv);
 	visit_dynamic_type(type_visitor, dynamic_item, priv);
-	if (type_visitor->elem_func)
-		type_visitor->dynamic_elem_func(SIDE_TYPE_VISITOR_AFTER, dynamic_item, priv);
+	if (type_visitor->after_dynamic_elem_func)
+		type_visitor->after_dynamic_elem_func(dynamic_item, priv);
 }
 
 void side_visit_type(const struct side_type_visitor *type_visitor, const struct side_type *type_desc, const struct side_arg *item, void *priv)
@@ -1175,26 +1175,26 @@ void type_visitor_event(const struct side_type_visitor *type_visitor,
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments\n");
 		abort();
 	}
-	if (type_visitor->event_func)
-		type_visitor->event_func(SIDE_TYPE_VISITOR_BEFORE, desc, side_arg_vec, var_struct, caller_addr, priv);
+	if (type_visitor->before_event_func)
+		type_visitor->before_event_func(desc, side_arg_vec, var_struct, caller_addr, priv);
 	if (side_sav_len) {
-		if (type_visitor->static_fields_func)
-			type_visitor->static_fields_func(SIDE_TYPE_VISITOR_BEFORE, side_arg_vec, priv);
+		if (type_visitor->before_static_fields_func)
+			type_visitor->before_static_fields_func(side_arg_vec, priv);
 		for (i = 0; i < side_sav_len; i++)
 			side_visit_field(type_visitor, &side_ptr_get(desc->fields)[i], &sav[i], priv);
-		if (type_visitor->static_fields_func)
-			type_visitor->static_fields_func(SIDE_TYPE_VISITOR_AFTER, side_arg_vec, priv);
+		if (type_visitor->after_static_fields_func)
+			type_visitor->after_static_fields_func(side_arg_vec, priv);
 	}
 	if (var_struct) {
 		uint32_t var_struct_len = var_struct->len;
 
-		if (type_visitor->variadic_fields_func)
-			type_visitor->variadic_fields_func(SIDE_TYPE_VISITOR_BEFORE, var_struct, priv);
+		if (type_visitor->before_variadic_fields_func)
+			type_visitor->before_variadic_fields_func(var_struct, priv);
 		for (i = 0; i < var_struct_len; i++)
 			visit_dynamic_field(type_visitor, &side_ptr_get(var_struct->fields)[i], priv);
-		if (type_visitor->variadic_fields_func)
-			type_visitor->variadic_fields_func(SIDE_TYPE_VISITOR_AFTER, var_struct, priv);
+		if (type_visitor->after_variadic_fields_func)
+			type_visitor->after_variadic_fields_func(var_struct, priv);
 	}
-	if (type_visitor->event_func)
-		type_visitor->event_func(SIDE_TYPE_VISITOR_AFTER, desc, side_arg_vec, var_struct, caller_addr, priv);
+	if (type_visitor->after_event_func)
+		type_visitor->after_event_func(desc, side_arg_vec, var_struct, caller_addr, priv);
 }

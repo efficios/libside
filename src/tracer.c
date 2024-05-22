@@ -997,8 +997,7 @@ void inc_nested_item_nr(struct print_ctx *ctx)
 }
 
 static
-void tracer_print_event(enum side_type_visitor_location loc,
-		const struct side_event_description *desc,
+void tracer_before_print_event(const struct side_event_description *desc,
 		const struct side_arg_vec *side_arg_vec,
 		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)),
 		void *caller_addr, void *priv __attribute__((unused)))
@@ -1010,99 +1009,105 @@ void tracer_print_event(enum side_type_visitor_location loc,
 		abort();
 	}
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		if (print_caller)
-			printf("caller: [%p], ", caller_addr);
-		printf("provider: %s, event: %s",
-			side_ptr_get(desc->provider_name),
-			side_ptr_get(desc->event_name));
-		print_attributes(", attr", ":", side_ptr_get(desc->attr), desc->nr_attr);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		printf("\n");
-		break;
-	}
+	if (print_caller)
+		printf("caller: [%p], ", caller_addr);
+	printf("provider: %s, event: %s",
+		side_ptr_get(desc->provider_name),
+		side_ptr_get(desc->event_name));
+	print_attributes(", attr", ":", side_ptr_get(desc->attr), desc->nr_attr);
 }
 
 static
-void tracer_print_static_fields(enum side_type_visitor_location loc,
-		const struct side_arg_vec *side_arg_vec,
-		void *priv)
+void tracer_after_print_event(const struct side_event_description *desc __attribute__((unused)),
+		const struct side_arg_vec *side_arg_vec __attribute__((unused)),
+		const struct side_arg_dynamic_struct *var_struct __attribute__((unused)),
+		void *caller_addr __attribute__((unused)), void *priv __attribute__((unused)))
+{
+	printf("\n");
+}
+
+static
+void tracer_before_print_static_fields(const struct side_arg_vec *side_arg_vec, void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 	uint32_t side_sav_len = side_arg_vec->len;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		printf("%s", side_sav_len ? ", fields: {" : "");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		if (side_sav_len)
-			printf(" }");
-		break;
-	}
+	printf("%s", side_sav_len ? ", fields: {" : "");
+	push_nesting(ctx);
+}
+
+
+static
+void tracer_after_print_static_fields(const struct side_arg_vec *side_arg_vec, void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+	uint32_t side_sav_len = side_arg_vec->len;
+
+	pop_nesting(ctx);
+	if (side_sav_len)
+		printf(" }");
 }
 
 static
-void tracer_print_variadic_fields(enum side_type_visitor_location loc,
-		const struct side_arg_dynamic_struct *var_struct,
+void tracer_before_print_variadic_fields(const struct side_arg_dynamic_struct *var_struct,
 		void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 	uint32_t var_struct_len = var_struct->len;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes(", attr ", "::", side_ptr_get(var_struct->attr), var_struct->nr_attr);
-		printf("%s", var_struct_len ? ", fields:: {" : "");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		if (var_struct_len)
-			printf(" }");
-		break;
-	}
+	print_attributes(", attr ", "::", side_ptr_get(var_struct->attr), var_struct->nr_attr);
+	printf("%s", var_struct_len ? ", fields:: {" : "");
+	push_nesting(ctx);
 }
 
 static
-void tracer_print_field(enum side_type_visitor_location loc, const struct side_event_field *item_desc, void *priv)
+void tracer_after_print_variadic_fields(const struct side_arg_dynamic_struct *var_struct, void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
+	uint32_t var_struct_len = var_struct->len;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		if (get_nested_item_nr(ctx) != 0)
-			printf(",");
-		printf(" %s: { ", side_ptr_get(item_desc->field_name));
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
+	pop_nesting(ctx);
+	if (var_struct_len)
 		printf(" }");
-		inc_nested_item_nr(ctx);
-		break;
-	}
 }
 
 static
-void tracer_print_elem(enum side_type_visitor_location loc, const struct side_type *type_desc __attribute__((unused)), void *priv)
+void tracer_before_print_field(const struct side_event_field *item_desc, void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		if (get_nested_item_nr(ctx) != 0)
-			printf(", { ");
-		else
-			printf(" { ");
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		printf(" }");
-		inc_nested_item_nr(ctx);
-		break;
-	}
+	if (get_nested_item_nr(ctx) != 0)
+		printf(",");
+	printf(" %s: { ", side_ptr_get(item_desc->field_name));
+}
+
+static
+void tracer_after_print_field(const struct side_event_field *item_desc __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	printf(" }");
+	inc_nested_item_nr(ctx);
+}
+
+static
+void tracer_before_print_elem(const struct side_type *type_desc __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	if (get_nested_item_nr(ctx) != 0)
+		printf(", { ");
+	else
+		printf(" { ");
+}
+
+static
+void tracer_after_print_elem(const struct side_type *type_desc __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	printf(" }");
+	inc_nested_item_nr(ctx);
 }
 
 static
@@ -1168,71 +1173,75 @@ void tracer_print_string(const struct side_type *type_desc,
 }
 
 static
-void tracer_print_struct(enum side_type_visitor_location loc,
-	const struct side_type_struct *side_struct,
+void tracer_before_print_struct(const struct side_type_struct *side_struct,
 	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes("attr", ":", side_ptr_get(side_struct->attr), side_struct->nr_attr);
-		printf("%s", side_struct->nr_attr ? ", " : "");
-		printf("fields: {");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		printf(" }");
-		break;
-	}
+	print_attributes("attr", ":", side_ptr_get(side_struct->attr), side_struct->nr_attr);
+	printf("%s", side_struct->nr_attr ? ", " : "");
+	printf("fields: {");
+	push_nesting(ctx);
 }
 
+
 static
-void tracer_print_array(enum side_type_visitor_location loc,
-	const struct side_type_array *side_array,
+void tracer_after_print_struct(const struct side_type_struct *side_struct __attribute__((unused)),
 	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes("attr", ":", side_ptr_get(side_array->attr), side_array->nr_attr);
-		printf("%s", side_array->nr_attr ? ", " : "");
-		printf("elements: [");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		printf(" ]");
-		break;
-	}
+	pop_nesting(ctx);
+	printf(" }");
 }
 
 static
-void do_tracer_print_vla(enum side_type_visitor_location loc,
-	const struct side_type_vla *side_vla,
+void tracer_before_print_array(const struct side_type_array *side_array,
 	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes("attr", ":", side_ptr_get(side_vla->attr), side_vla->nr_attr);
-		printf("%s", side_vla->nr_attr ? ", " : "");
-		printf("elements: [");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		printf(" ]");
-		break;
-	}
+	print_attributes("attr", ":", side_ptr_get(side_array->attr), side_array->nr_attr);
+	printf("%s", side_array->nr_attr ? ", " : "");
+	printf("elements: [");
+	push_nesting(ctx);
 }
 
 static
-void tracer_print_vla(enum side_type_visitor_location loc,
-	const struct side_type_vla *side_vla,
+void tracer_after_print_array(const struct side_type_array *side_array __attribute__((unused)),
+	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	pop_nesting(ctx);
+	printf(" ]");
+}
+
+static
+void do_tracer_before_print_vla(const struct side_type_vla *side_vla,
+	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	print_attributes("attr", ":", side_ptr_get(side_vla->attr), side_vla->nr_attr);
+	printf("%s", side_vla->nr_attr ? ", " : "");
+	printf("elements: [");
+	push_nesting(ctx);
+}
+
+
+static
+void do_tracer_after_print_vla(const struct side_type_vla *side_vla __attribute__((unused)),
+	const struct side_arg_vec *side_arg_vec __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	pop_nesting(ctx);
+	printf(" ]");
+}
+
+static
+void tracer_before_print_vla(const struct side_type_vla *side_vla,
 	const struct side_arg_vec *side_arg_vec, void *priv)
 {
 	switch (side_enum_get(side_ptr_get(side_vla->length_type)->type)) {
@@ -1251,12 +1260,18 @@ void tracer_print_vla(enum side_type_visitor_location loc,
 		fprintf(stderr, "ERROR: Unexpected vla length type\n");
 		abort();
 	}
-	do_tracer_print_vla(loc, side_vla, side_arg_vec, priv);
+	do_tracer_before_print_vla(side_vla, side_arg_vec, priv);
 }
 
 static
-void tracer_print_vla_visitor(enum side_type_visitor_location loc,
-	const struct side_type_vla_visitor *side_vla_visitor,
+void tracer_after_print_vla(const struct side_type_vla *side_vla,
+	const struct side_arg_vec *side_arg_vec, void *priv)
+{
+	do_tracer_after_print_vla(side_vla, side_arg_vec, priv);
+}
+
+static
+void tracer_before_print_vla_visitor(const struct side_type_vla_visitor *side_vla_visitor,
 	const struct side_arg_vla_visitor *side_arg_vla_visitor __attribute__((unused)), void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
@@ -1278,18 +1293,20 @@ void tracer_print_vla_visitor(enum side_type_visitor_location loc,
 		abort();
 	}
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes("attr", ":", side_ptr_get(side_vla_visitor->attr), side_vla_visitor->nr_attr);
-		printf("%s", side_vla_visitor->nr_attr ? ", " : "");
-		printf("elements: [");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		printf(" ]");
-		break;
-	}
+	print_attributes("attr", ":", side_ptr_get(side_vla_visitor->attr), side_vla_visitor->nr_attr);
+	printf("%s", side_vla_visitor->nr_attr ? ", " : "");
+	printf("elements: [");
+	push_nesting(ctx);
+}
+
+static
+void tracer_after_print_vla_visitor(const struct side_type_vla_visitor *side_vla_visitor __attribute__((unused)),
+	const struct side_arg_vla_visitor *side_arg_vla_visitor __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	pop_nesting(ctx);
+	printf(" ]");
 }
 
 static void tracer_print_enum(const struct side_type *type_desc,
@@ -1456,26 +1473,32 @@ void tracer_print_gather_string(const struct side_type_gather_string *type,
 }
 
 static
-void tracer_print_gather_struct(enum side_type_visitor_location loc,
-	const struct side_type_struct *side_struct,
-	void *priv)
+void tracer_before_print_gather_struct(const struct side_type_struct *side_struct, void *priv)
 {
-	tracer_print_struct(loc, side_struct, NULL, priv);
+	tracer_before_print_struct(side_struct, NULL, priv);
 }
 
 static
-void tracer_print_gather_array(enum side_type_visitor_location loc,
-	const struct side_type_array *side_array,
-	void *priv)
+void tracer_after_print_gather_struct(const struct side_type_struct *side_struct, void *priv)
 {
-	tracer_print_array(loc, side_array, NULL, priv);
+	tracer_after_print_struct(side_struct, NULL, priv);
 }
 
 static
-void tracer_print_gather_vla(enum side_type_visitor_location loc,
-	const struct side_type_vla *side_vla,
-	uint32_t length __attribute__((unused)),
-	void *priv)
+void tracer_before_print_gather_array(const struct side_type_array *side_array, void *priv)
+{
+	tracer_before_print_array(side_array, NULL, priv);
+}
+
+static
+void tracer_after_print_gather_array(const struct side_type_array *side_array, void *priv)
+{
+	tracer_after_print_array(side_array, NULL, priv);
+}
+
+static
+void tracer_before_print_gather_vla(const struct side_type_vla *side_vla,
+	uint32_t length __attribute__((unused)), void *priv)
 {
 	switch (side_enum_get(side_ptr_get(side_vla->length_type)->type)) {
 	case SIDE_TYPE_GATHER_INTEGER:
@@ -1484,7 +1507,15 @@ void tracer_print_gather_vla(enum side_type_visitor_location loc,
 		fprintf(stderr, "ERROR: Unexpected vla length type\n");
 		abort();
 	}
-	do_tracer_print_vla(loc, side_vla, NULL, priv);
+	do_tracer_before_print_vla(side_vla, NULL, priv);
+}
+
+
+static
+void tracer_after_print_gather_vla(const struct side_type_vla *side_vla,
+	uint32_t length __attribute__((unused)), void *priv)
+{
+	do_tracer_after_print_vla(side_vla, NULL, priv);
 }
 
 static
@@ -1507,28 +1538,34 @@ void tracer_print_gather_enum(const struct side_type_gather_enum *type,
 }
 
 static
-void tracer_print_dynamic_field(enum side_type_visitor_location loc, const struct side_arg_dynamic_field *field, void *priv)
+void tracer_before_print_dynamic_field(const struct side_arg_dynamic_field *field, void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		if (get_nested_item_nr(ctx) != 0)
-			printf(",");
-		printf(" %s:: { ", side_ptr_get(field->field_name));
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		printf(" }");
-		inc_nested_item_nr(ctx);
-		break;
-	}
+	if (get_nested_item_nr(ctx) != 0)
+		printf(",");
+	printf(" %s:: { ", side_ptr_get(field->field_name));
 }
 
 static
-void tracer_print_dynamic_elem(enum side_type_visitor_location loc,
-	const struct side_arg *dynamic_item __attribute__((unused)), void *priv)
+void tracer_after_print_dynamic_field(const struct side_arg_dynamic_field *field __attribute__((unused)), void *priv)
 {
-	tracer_print_elem(loc, NULL, priv);
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	printf(" }");
+	inc_nested_item_nr(ctx);
+}
+
+static
+void tracer_before_print_dynamic_elem(const struct side_arg *dynamic_item __attribute__((unused)), void *priv)
+{
+	tracer_before_print_elem(NULL, priv);
+}
+
+static
+void tracer_after_print_dynamic_elem(const struct side_arg *dynamic_item __attribute__((unused)), void *priv)
+{
+	tracer_after_print_elem(NULL, priv);
 }
 
 static
@@ -1590,30 +1627,29 @@ void tracer_print_dynamic_string(const struct side_arg *item,
 }
 
 static
-void tracer_print_dynamic_struct(enum side_type_visitor_location loc,
-	const struct side_arg_dynamic_struct *dynamic_struct,
+void tracer_before_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_struct,
 	void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes("attr", "::", side_ptr_get(dynamic_struct->attr), dynamic_struct->nr_attr);
-		printf("%s", dynamic_struct->nr_attr ? ", " : "");
-		printf("fields:: {");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		printf(" }");
-		break;
-	}
+	print_attributes("attr", "::", side_ptr_get(dynamic_struct->attr), dynamic_struct->nr_attr);
+	printf("%s", dynamic_struct->nr_attr ? ", " : "");
+	printf("fields:: {");
+	push_nesting(ctx);
 }
 
 static
-void tracer_print_dynamic_struct_visitor(enum side_type_visitor_location loc,
-	const struct side_arg *item,
+void tracer_after_print_dynamic_struct(const struct side_arg_dynamic_struct *dynamic_struct __attribute__((unused)),
 	void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	pop_nesting(ctx);
+	printf(" }");
+}
+
+static
+void tracer_before_print_dynamic_struct_visitor(const struct side_arg *item, void *priv)
 {
 	struct side_arg_dynamic_struct_visitor *dynamic_struct_visitor;
 	struct print_ctx *ctx = (struct print_ctx *) priv;
@@ -1622,45 +1658,48 @@ void tracer_print_dynamic_struct_visitor(enum side_type_visitor_location loc,
 	if (!dynamic_struct_visitor)
 		abort();
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes("attr", "::", side_ptr_get(dynamic_struct_visitor->attr), dynamic_struct_visitor->nr_attr);
-		printf("%s", dynamic_struct_visitor->nr_attr ? ", " : "");
-		printf("fields:: {");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		printf(" }");
-		break;
-	}
+	print_attributes("attr", "::", side_ptr_get(dynamic_struct_visitor->attr), dynamic_struct_visitor->nr_attr);
+	printf("%s", dynamic_struct_visitor->nr_attr ? ", " : "");
+	printf("fields:: {");
+	push_nesting(ctx);
 }
 
 static
-void tracer_print_dynamic_vla(enum side_type_visitor_location loc,
-	const struct side_arg_dynamic_vla *dynamic_vla,
-	void *priv)
+void tracer_after_print_dynamic_struct_visitor(const struct side_arg *item, void *priv)
+{
+	struct side_arg_dynamic_struct_visitor *dynamic_struct_visitor;
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	dynamic_struct_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor);
+	if (!dynamic_struct_visitor)
+		abort();
+
+	pop_nesting(ctx);
+	printf(" }");
+}
+
+static
+void tracer_before_print_dynamic_vla(const struct side_arg_dynamic_vla *dynamic_vla, void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes("attr", "::", side_ptr_get(dynamic_vla->attr), dynamic_vla->nr_attr);
-		printf("%s", dynamic_vla->nr_attr ? ", " : "");
-		printf("elements:: [");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		printf(" ]");
-		break;
-	}
+	print_attributes("attr", "::", side_ptr_get(dynamic_vla->attr), dynamic_vla->nr_attr);
+	printf("%s", dynamic_vla->nr_attr ? ", " : "");
+	printf("elements:: [");
+	push_nesting(ctx);
 }
 
 static
-void tracer_print_dynamic_vla_visitor(enum side_type_visitor_location loc,
-	const struct side_arg *item,
-	void *priv)
+void tracer_after_print_dynamic_vla(const struct side_arg_dynamic_vla *dynamic_vla __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	pop_nesting(ctx);
+	printf(" ]");
+}
+
+static
+void tracer_before_print_dynamic_vla_visitor(const struct side_arg *item, void *priv)
 {
 	struct side_arg_dynamic_vla_visitor *dynamic_vla_visitor;
 	struct print_ctx *ctx = (struct print_ctx *) priv;
@@ -1669,28 +1708,39 @@ void tracer_print_dynamic_vla_visitor(enum side_type_visitor_location loc,
 	if (!dynamic_vla_visitor)
 		abort();
 
-	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
-		print_attributes("attr", "::", side_ptr_get(dynamic_vla_visitor->attr), dynamic_vla_visitor->nr_attr);
-		printf("%s", dynamic_vla_visitor->nr_attr ? ", " : "");
-		printf("elements:: [");
-		push_nesting(ctx);
-		break;
-	case SIDE_TYPE_VISITOR_AFTER:
-		pop_nesting(ctx);
-		printf(" ]");
-		break;
-	}
+	print_attributes("attr", "::", side_ptr_get(dynamic_vla_visitor->attr), dynamic_vla_visitor->nr_attr);
+	printf("%s", dynamic_vla_visitor->nr_attr ? ", " : "");
+	printf("elements:: [");
+	push_nesting(ctx);
+}
+
+static
+void tracer_after_print_dynamic_vla_visitor(const struct side_arg *item, void *priv)
+{
+	struct side_arg_dynamic_vla_visitor *dynamic_vla_visitor;
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	dynamic_vla_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor);
+	if (!dynamic_vla_visitor)
+		abort();
+
+	pop_nesting(ctx);
+	printf(" ]");
 }
 
 static struct side_type_visitor type_visitor = {
-	.event_func = tracer_print_event,
-	.static_fields_func = tracer_print_static_fields,
-	.variadic_fields_func = tracer_print_variadic_fields,
+	.before_event_func = tracer_before_print_event,
+	.after_event_func = tracer_after_print_event,
+	.before_static_fields_func = tracer_before_print_static_fields,
+	.after_static_fields_func = tracer_after_print_static_fields,
+	.before_variadic_fields_func = tracer_before_print_variadic_fields,
+	.after_variadic_fields_func = tracer_after_print_variadic_fields,
 
 	/* Stack-copy basic types. */
-	.field_func = tracer_print_field,
-	.elem_func = tracer_print_elem,
+	.before_field_func = tracer_before_print_field,
+	.after_field_func = tracer_after_print_field,
+	.before_elem_func = tracer_before_print_elem,
+	.after_elem_func = tracer_after_print_elem,
 	.null_type_func = tracer_print_null,
 	.bool_type_func = tracer_print_bool,
 	.integer_type_func = tracer_print_integer,
@@ -1700,10 +1750,14 @@ static struct side_type_visitor type_visitor = {
 	.string_type_func = tracer_print_string,
 
 	/* Stack-copy compound types. */
-	.struct_type_func = tracer_print_struct,
-	.array_type_func = tracer_print_array,
-	.vla_type_func = tracer_print_vla,
-	.vla_visitor_type_func = tracer_print_vla_visitor,
+	.before_struct_type_func = tracer_before_print_struct,
+	.after_struct_type_func = tracer_after_print_struct,
+	.before_array_type_func = tracer_before_print_array,
+	.after_array_type_func = tracer_after_print_array,
+	.before_vla_type_func = tracer_before_print_vla,
+	.after_vla_type_func = tracer_after_print_vla,
+	.before_vla_visitor_type_func = tracer_before_print_vla_visitor,
+	.after_vla_visitor_type_func = tracer_after_print_vla_visitor,
 
 	/* Stack-copy enumeration types. */
 	.enum_type_func = tracer_print_enum,
@@ -1718,16 +1772,21 @@ static struct side_type_visitor type_visitor = {
 	.gather_string_type_func = tracer_print_gather_string,
 
 	/* Gather compound types. */
-	.gather_struct_type_func = tracer_print_gather_struct,
-	.gather_array_type_func = tracer_print_gather_array,
-	.gather_vla_type_func = tracer_print_gather_vla,
+	.before_gather_struct_type_func = tracer_before_print_gather_struct,
+	.after_gather_struct_type_func = tracer_after_print_gather_struct,
+	.before_gather_array_type_func = tracer_before_print_gather_array,
+	.after_gather_array_type_func = tracer_after_print_gather_array,
+	.before_gather_vla_type_func = tracer_before_print_gather_vla,
+	.after_gather_vla_type_func = tracer_after_print_gather_vla,
 
 	/* Gather enumeration types. */
 	.gather_enum_type_func = tracer_print_gather_enum,
 
 	/* Dynamic basic types. */
-	.dynamic_field_func = tracer_print_dynamic_field,
-	.dynamic_elem_func = tracer_print_dynamic_elem,
+	.before_dynamic_field_func = tracer_before_print_dynamic_field,
+	.after_dynamic_field_func = tracer_after_print_dynamic_field,
+	.before_dynamic_elem_func = tracer_before_print_dynamic_elem,
+	.after_dynamic_elem_func = tracer_after_print_dynamic_elem,
 
 	.dynamic_null_func = tracer_print_dynamic_null,
 	.dynamic_bool_func = tracer_print_dynamic_bool,
@@ -1738,10 +1797,14 @@ static struct side_type_visitor type_visitor = {
 	.dynamic_string_func = tracer_print_dynamic_string,
 
 	/* Dynamic compound types. */
-	.dynamic_struct_func = tracer_print_dynamic_struct,
-	.dynamic_struct_visitor_func = tracer_print_dynamic_struct_visitor,
-	.dynamic_vla_func = tracer_print_dynamic_vla,
-	.dynamic_vla_visitor_func = tracer_print_dynamic_vla_visitor,
+	.before_dynamic_struct_func = tracer_before_print_dynamic_struct,
+	.after_dynamic_struct_func = tracer_after_print_dynamic_struct,
+	.before_dynamic_struct_visitor_func = tracer_before_print_dynamic_struct_visitor,
+	.after_dynamic_struct_visitor_func = tracer_after_print_dynamic_struct_visitor,
+	.before_dynamic_vla_func = tracer_before_print_dynamic_vla,
+	.after_dynamic_vla_func = tracer_after_print_dynamic_vla,
+	.before_dynamic_vla_visitor_func = tracer_before_print_dynamic_vla_visitor,
+	.after_dynamic_vla_visitor_func = tracer_after_print_dynamic_vla_visitor,
 };
 
 static
@@ -1773,11 +1836,11 @@ void print_description_event(enum side_description_visitor_location loc,
 		void *priv __attribute__((unused)))
 {
 	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
+	case SIDE_DESCRIPTION_VISITOR_BEFORE:
 		printf("event description: provider: %s, event: %s", side_ptr_get(desc->provider_name), side_ptr_get(desc->event_name));
 		print_attributes(", attr", ":", side_ptr_get(desc->attr), desc->nr_attr);
 		break;
-	case SIDE_TYPE_VISITOR_AFTER:
+	case SIDE_DESCRIPTION_VISITOR_AFTER:
 		if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 			printf(", <variadic fields>");
 		printf("\n");
@@ -1794,11 +1857,11 @@ void print_description_static_fields(enum side_description_visitor_location loc,
 	uint32_t len = desc->nr_fields;
 
 	switch (loc) {
-	case SIDE_TYPE_VISITOR_BEFORE:
+	case SIDE_DESCRIPTION_VISITOR_BEFORE:
 		printf("%s", len ? ", fields: {" : "");
 		push_nesting(ctx);
 		break;
-	case SIDE_TYPE_VISITOR_AFTER:
+	case SIDE_DESCRIPTION_VISITOR_AFTER:
 		pop_nesting(ctx);
 		if (len)
 			printf(" }");
