@@ -444,34 +444,46 @@
 #define side_field_array(_name, _elem_type, _length, _attr...) \
 	_side_field(_name, side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_vla(_elem_type, _attr...) \
+#define side_type_vla(_elem_type, _length_type, _attr...) \
 	{ \
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA), \
 		.u = { \
 			.side_vla = { \
 				.elem_type = SIDE_PTR_INIT(_elem_type), \
+				.length_type = SIDE_PTR_INIT(_length_type), \
 				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
 	}
-#define side_field_vla(_name, _elem_type, _attr...) \
-	_side_field(_name, side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_vla(_name, _elem_type, _length_type, _attr...) \
+	_side_field(_name, side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM(_length_type), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_vla_visitor(_elem_type, _visitor, _attr...) \
+#define _side_type_vla_visitor_define(_elem_type, _length_type, _visitor, _attr...) \
+	{ \
+		.elem_type = SIDE_PTR_INIT(_elem_type), \
+		.length_type = SIDE_PTR_INIT(_length_type), \
+		.visitor = SIDE_PTR_INIT(_visitor), \
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+	}
+
+#define side_define_vla_visitor(_identifier, _elem_type, _length_type, _visitor, _attr...) \
+	const struct side_type_struct _identifier = _side_type_struct_define(SIDE_PARAM(_elem_type), SIDE_PARAM(_length_type), SIDE_PARAM(_visitor), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+
+#define side_vla_visitor_literal(_elem_type, _length_type, _visitor, _attr...) \
+	SIDE_COMPOUND_LITERAL(const struct side_type_vla_visitor, \
+		_side_type_vla_visitor_define(SIDE_PARAM(_elem_type), SIDE_PARAM(_length_type), SIDE_PARAM(_visitor), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+
+#define side_type_vla_visitor(_vla_visitor) \
 	{ \
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA_VISITOR), \
 		.u = { \
-			.side_vla_visitor = { \
-				.elem_type = SIDE_PTR_INIT(_elem_type), \
-				.visitor = SIDE_PTR_INIT(_visitor), \
-				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-			}, \
+			.side_vla_visitor = SIDE_PTR_INIT(_vla_visitor), \
 		}, \
 	}
-#define side_field_vla_visitor(_name, _elem_type, _visitor, _attr...) \
-	_side_field(_name, side_type_vla_visitor(SIDE_PARAM(_elem_type), _visitor, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+#define side_field_vla_visitor(_name, _vla_visitor) \
+	_side_field(_name, side_type_vla_visitor(SIDE_PARAM(_vla_visitor)))
 
 /* Gather field and type definitions */
 
@@ -483,7 +495,7 @@
 				.u = { \
 					.side_byte = { \
 						.offset = _offset, \
-						.access_mode = _access_mode, \
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -504,7 +516,7 @@
 				.u = { \
 					.side_bool = { \
 						.offset = _offset, \
-						.access_mode = _access_mode, \
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -541,7 +553,7 @@
 				.u = { \
 					.side_integer = { \
 						.offset = _offset, \
-						.access_mode = _access_mode, \
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -619,7 +631,7 @@
 				.u = { \
 					.side_float = { \
 						.offset = _offset, \
-						.access_mode = _access_mode, \
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -654,7 +666,7 @@
 				.u = { \
 					.side_string = { \
 						.offset = _offset, \
-						.access_mode = _access_mode, \
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -720,7 +732,7 @@
 				.u = { \
 					.side_struct = { \
 						.offset = _offset, \
-						.access_mode = _access_mode, \
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = SIDE_PTR_INIT(_struct_gather), \
 						.size = _size, \
 					}, \
@@ -739,7 +751,7 @@
 				.u = { \
 					.side_array = { \
 						.offset = _offset, \
-						.access_mode = _access_mode, \
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -761,11 +773,11 @@
 			.side_gather = { \
 				.u = { \
 					.side_vla = { \
-						.length_type = SIDE_PTR_INIT(_length_type_gather), \
 						.offset = _offset, \
-						.access_mode = _access_mode, \
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
+							.length_type = SIDE_PTR_INIT(_length_type_gather), \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 						}, \

@@ -357,7 +357,7 @@ void type_visitor_vla_visitor(const struct side_type_visitor *type_visitor, cons
 	struct tracer_visitor_priv tracer_priv = {
 		.type_visitor = type_visitor,
 		.priv = priv,
-		.elem_type = side_ptr_get(type_desc->u.side_vla_visitor.elem_type),
+		.elem_type = side_ptr_get(side_ptr_get(type_desc->u.side_vla_visitor)->elem_type),
 		.i = 0,
 	};
 	const struct side_tracer_visitor_ctx tracer_ctx = {
@@ -371,9 +371,9 @@ void type_visitor_vla_visitor(const struct side_type_visitor *type_visitor, cons
 	if (!vla_visitor)
 		abort();
 	if (type_visitor->vla_visitor_type_func)
-		type_visitor->vla_visitor_type_func(SIDE_TYPE_VISITOR_BEFORE, &type_desc->u.side_vla_visitor, vla_visitor, priv);
+		type_visitor->vla_visitor_type_func(SIDE_TYPE_VISITOR_BEFORE, side_ptr_get(type_desc->u.side_vla_visitor), vla_visitor, priv);
 	app_ctx = side_ptr_get(vla_visitor->app_ctx);
-	func = side_ptr_get(type_desc->u.side_vla_visitor.visitor);
+	func = side_ptr_get(side_ptr_get(type_desc->u.side_vla_visitor)->visitor);
 	status = func(&tracer_ctx, app_ctx);
 	switch (status) {
 	case SIDE_VISITOR_STATUS_OK:
@@ -383,7 +383,7 @@ void type_visitor_vla_visitor(const struct side_type_visitor *type_visitor, cons
 		abort();
 	}
 	if (type_visitor->vla_visitor_type_func)
-		type_visitor->vla_visitor_type_func(SIDE_TYPE_VISITOR_AFTER, &type_desc->u.side_vla_visitor, vla_visitor, priv);
+		type_visitor->vla_visitor_type_func(SIDE_TYPE_VISITOR_AFTER, side_ptr_get(type_desc->u.side_vla_visitor), vla_visitor, priv);
 }
 
 static
@@ -418,8 +418,7 @@ static
 union int_value tracer_load_gather_integer_value(const struct side_type_gather_integer *side_integer,
 		const void *_ptr)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) side_integer->access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(side_integer->access_mode);
 	uint32_t integer_size_bytes = side_integer->type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
@@ -443,8 +442,7 @@ void visit_gather_field(const struct side_type_visitor *type_visitor, const stru
 static
 uint32_t type_visitor_gather_struct(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, void *priv)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_struct.access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_struct.access_mode);
 	const struct side_type_struct *side_struct = side_ptr_get(type_gather->u.side_struct.type);
 	const char *ptr = (const char *) _ptr;
 	uint32_t i;
@@ -462,8 +460,7 @@ uint32_t type_visitor_gather_struct(const struct side_type_visitor *type_visitor
 static
 uint32_t type_visitor_gather_array(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, void *priv)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_array.access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_array.access_mode);
 	const struct side_type_array *side_array = &type_gather->u.side_array.type;
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	uint32_t i;
@@ -492,10 +489,9 @@ uint32_t type_visitor_gather_array(const struct side_type_visitor *type_visitor,
 static
 uint32_t type_visitor_gather_vla(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, const void *_length_ptr, void *priv)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_vla.access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_vla.access_mode);
 	const struct side_type_vla *side_vla = &type_gather->u.side_vla.type;
-	const struct side_type *length_type = side_ptr_get(type_gather->u.side_vla.length_type);
+	const struct side_type *length_type = side_ptr_get(type_gather->u.side_vla.type.length_type);
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	const char *length_ptr = (const char *) _length_ptr;
 	union int_value v = {};
@@ -540,8 +536,7 @@ uint32_t type_visitor_gather_vla(const struct side_type_visitor *type_visitor, c
 static
 uint32_t type_visitor_gather_bool(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, void *priv)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_bool.access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_bool.access_mode);
 	uint32_t bool_size_bytes = type_gather->u.side_bool.type.bool_size;
 	const char *ptr = (const char *) _ptr;
 	union side_bool_value value;
@@ -565,8 +560,7 @@ uint32_t type_visitor_gather_bool(const struct side_type_visitor *type_visitor, 
 static
 uint32_t type_visitor_gather_byte(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, void *priv)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_byte.access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_byte.access_mode);
 	const char *ptr = (const char *) _ptr;
 	uint8_t value;
 
@@ -581,8 +575,7 @@ static
 uint32_t type_visitor_gather_integer(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr,
 		enum side_type_label integer_type, void *priv)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_integer.access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_integer.access_mode);
 	uint32_t integer_size_bytes = type_gather->u.side_integer.type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;
@@ -618,8 +611,7 @@ uint32_t type_visitor_gather_integer(const struct side_type_visitor *type_visito
 static
 uint32_t type_visitor_gather_float(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, void *priv)
 {
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_float.access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_float.access_mode);
 	uint32_t float_size_bytes = type_gather->u.side_float.type.float_size;
 	const char *ptr = (const char *) _ptr;
 	union side_float_value value;
@@ -644,8 +636,7 @@ static
 uint32_t type_visitor_gather_string(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, void *priv)
 {
 
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) type_gather->u.side_string.access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_string.access_mode);
 	enum side_type_label_byte_order byte_order = side_enum_get(type_gather->u.side_string.type.byte_order);
 	uint8_t unit_size = type_gather->u.side_string.type.unit_size;
 	const char *ptr = (const char *) _ptr;
@@ -726,8 +717,7 @@ uint32_t type_visitor_gather_enum(const struct side_type_visitor *type_visitor, 
 {
 	const struct side_type *enum_elem_type = side_ptr_get(type_gather->u.side_enum.elem_type);
 	const struct side_type_gather_integer *side_integer = &enum_elem_type->u.side_gather.u.side_integer;
-	enum side_type_gather_access_mode access_mode =
-		(enum side_type_gather_access_mode) side_integer->access_mode;
+	enum side_type_gather_access_mode access_mode = side_enum_get(side_integer->access_mode);
 	uint32_t integer_size_bytes = side_integer->type.integer_size;
 	const char *ptr = (const char *) _ptr;
 	union side_integer_value value;

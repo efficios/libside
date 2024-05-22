@@ -133,7 +133,7 @@ void test_array(void)
 
 side_static_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vla", side_elem(side_type_u32())),
+		side_field_vla("vla", side_elem(side_type_u32()), side_elem(side_type_u32())),
 		side_field_s64("v"),
 	)
 );
@@ -173,7 +173,13 @@ static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
 side_static_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla_visitor("vlavisit", side_elem(side_type_u32()), test_visitor),
+		side_field_vla_visitor("vlavisit",
+			side_vla_visitor_literal(
+				side_elem(side_type_u32()),
+				side_elem(side_type_u32()),
+				test_visitor
+			)
+		),
 		side_field_s64("v"),
 	)
 );
@@ -247,12 +253,20 @@ static uint32_t testarray2d[][2] = {
 side_static_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_vla_visitor("vlavisit2d",
-			side_elem(
-				side_type_vla_visitor(
-					side_elem(side_type_u32()),
-					test_inner_visitor
-				)
-			), test_outer_visitor),
+			side_vla_visitor_literal(
+				side_elem(
+					side_type_vla_visitor(
+						side_vla_visitor_literal(
+							side_elem(side_type_u32()),
+							side_elem(side_type_u32()),
+							test_inner_visitor
+						)
+					)
+				),
+				side_elem(side_type_u32()),
+				test_outer_visitor
+			)
+		),
 		side_field_s64("v"),
 	)
 );
@@ -1094,7 +1108,7 @@ side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitma
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
 			side_elem(side_type_array(side_elem(side_type_u32()), 5))),
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_vla(side_elem(side_type_u32())))),
+			side_elem(side_type_vla(side_elem(side_type_u32()), side_elem(side_type_u32())))),
 		side_field_enum_bitmap("bit_2_be", &myenum_bitmap, side_elem(side_type_u32_be())),
 		side_field_enum_bitmap("bit_2_le", &myenum_bitmap, side_elem(side_type_u32_le())),
 	)

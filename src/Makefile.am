@@ -24,7 +24,9 @@ libside_la_SOURCES = \
 	side.c \
 	tracer.c \
 	visit-arg-vec.c \
-	visit-arg-vec.h
+	visit-arg-vec.h \
+	visit-description.c \
+	visit-description.h
 
 libside_la_LDFLAGS = -no-undefined -version-info $(SIDE_LIBRARY_VERSION)
 libside_la_LIBADD = \

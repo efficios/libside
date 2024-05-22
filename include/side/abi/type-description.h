@@ -260,18 +260,20 @@ side_check_size(struct side_type_array, 40);
 
 struct side_type_vla {
 	side_ptr_t(const struct side_type) elem_type;
+	side_ptr_t(const struct side_type) length_type;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
-side_check_size(struct side_type_vla, 36);
+side_check_size(struct side_type_vla, 52);
 
 struct side_type_vla_visitor {
 	side_ptr_t(const struct side_type) elem_type;
+	side_ptr_t(const struct side_type) length_type;
 	side_func_ptr_t(side_visitor_func) visitor;
 	side_ptr_t(const struct side_attr) attr;
 	uint32_t nr_attr;
 } SIDE_PACKED;
-side_check_size(struct side_type_vla_visitor, 52);
+side_check_size(struct side_type_vla_visitor, 68);
 
 struct side_type_enum {
 	side_ptr_t(const struct side_enum_mappings) mappings;
@@ -288,14 +290,14 @@ side_check_size(struct side_type_enum_bitmap, 32);
 struct side_type_gather_bool {
 	uint64_t offset;	/* bytes */
 	uint16_t offset_bits;	/* bits */
-	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
 	struct side_type_bool type;
 } SIDE_PACKED;
 side_check_size(struct side_type_gather_bool, 11 + sizeof(struct side_type_bool));
 
 struct side_type_gather_byte {
 	uint64_t offset;	/* bytes */
-	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
 	struct side_type_byte type;
 } SIDE_PACKED;
 side_check_size(struct side_type_gather_byte, 9 + sizeof(struct side_type_byte));
@@ -303,21 +305,21 @@ side_check_size(struct side_type_gather_byte, 9 + sizeof(struct side_type_byte))
 struct side_type_gather_integer {
 	uint64_t offset;	/* bytes */
 	uint16_t offset_bits;	/* bits */
-	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
 	struct side_type_integer type;
 } SIDE_PACKED;
 side_check_size(struct side_type_gather_integer, 11 + sizeof(struct side_type_integer));
 
 struct side_type_gather_float {
 	uint64_t offset;	/* bytes */
-	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
 	struct side_type_float type;
 } SIDE_PACKED;
 side_check_size(struct side_type_gather_float, 9 + sizeof(struct side_type_float));
 
 struct side_type_gather_string {
 	uint64_t offset;	/* bytes */
-	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
 	struct side_type_string type;
 } SIDE_PACKED;
 side_check_size(struct side_type_gather_string, 9 + sizeof(struct side_type_string));
@@ -331,25 +333,25 @@ side_check_size(struct side_type_gather_enum, 32);
 struct side_type_gather_struct {
 	side_ptr_t(const struct side_type_struct) type;
 	uint64_t offset;	/* bytes */
-	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
 	uint32_t size;		/* bytes */
 } SIDE_PACKED;
 side_check_size(struct side_type_gather_struct, 29);
 
 struct side_type_gather_array {
 	uint64_t offset;	/* bytes */
-	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
 	struct side_type_array type;
 } SIDE_PACKED;
 side_check_size(struct side_type_gather_array, 9 + sizeof(struct side_type_array));
 
 struct side_type_gather_vla {
-	side_ptr_t(const struct side_type) length_type;	/* side_length() */
 	uint64_t offset;	/* bytes */
-	uint8_t access_mode;	/* enum side_type_gather_access_mode */
+	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
+	/* Use side_length() for type->length_type. */
 	struct side_type_vla type;
 } SIDE_PACKED;
-side_check_size(struct side_type_gather_vla, 25 + sizeof(struct side_type_vla));
+side_check_size(struct side_type_gather_vla, 9 + sizeof(struct side_type_vla));
 
 struct side_type_gather {
 	union {
@@ -381,7 +383,7 @@ struct side_type {
 		/* Stack-copy compound types */
 		struct side_type_array side_array;
 		struct side_type_vla side_vla;
-		struct side_type_vla_visitor side_vla_visitor;
+		side_ptr_t(const struct side_type_vla_visitor) side_vla_visitor;
 		side_ptr_t(const struct side_type_struct) side_struct;
 		side_ptr_t(const struct side_type_variant) side_variant;
 
