@@ -188,7 +188,7 @@ void _side_call(const struct side_event_state *event_state, const struct side_ar
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_SHARED_MASK)) {
 		if ((enabled & SIDE_EVENT_ENABLED_SHARED_USER_EVENT_MASK) &&
 		    (key == SIDE_KEY_MATCH_ALL || key == SIDE_KEY_USER_EVENT)) {
-			// TODO: call kernel write.
+			// TODO: User event integration: call kernel write.
 		}
 		if ((enabled & SIDE_EVENT_ENABLED_SHARED_PTRACE_MASK) &&
 		    (key == SIDE_KEY_MATCH_ALL || key == SIDE_KEY_PTRACE))
@@ -239,7 +239,7 @@ void _side_call_variadic(const struct side_event_state *event_state,
 	if (side_unlikely(enabled & SIDE_EVENT_ENABLED_SHARED_MASK)) {
 		if ((enabled & SIDE_EVENT_ENABLED_SHARED_USER_EVENT_MASK) &&
 		    (key == SIDE_KEY_MATCH_ALL || key == SIDE_KEY_USER_EVENT)) {
-			// TODO: call kernel write.
+			// TODO: User event integration: call kernel write.
 		}
 		if ((enabled & SIDE_EVENT_ENABLED_SHARED_PTRACE_MASK) &&
 		    (key == SIDE_KEY_MATCH_ALL || key == SIDE_KEY_PTRACE))
@@ -464,7 +464,7 @@ struct side_events_register_handle *side_events_register(struct side_event_descr
 			events, nr_events, tracer_handle->priv);
 	}
 	pthread_mutex_unlock(&side_event_lock);
-	//TODO: call event batch register ioctl
+	//TODO: User event integration: call event batch register ioctl
 	return events_handle;
 }
 
@@ -529,7 +529,7 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 		side_event_remove_callbacks(event);
 	}
 	pthread_mutex_unlock(&side_event_lock);
-	//TODO: call event batch unregister ioctl
+	//TODO: User event integration: call event batch unregister ioctl
 	free(events_handle);
 }
 
