@@ -9,6 +9,16 @@ RFC - SIDE ABI
 The purpose of the SIDE ABI is to allow kernel and user-space tracers to
 attach to static and dynamic instrumentation of user-space applications.
 
+The SIDE ABI key characteristics:
+
+- runtime and language agnostic,
+- supports multiple concurrent tracers,
+- instrumentation is not specific to a tracer, so there is no need
+  to rebuild applications if using a different tracer,
+- instrumentation can be either static or dynamic,
+- supports complex and nested types,
+- supports both static and dynamic types.
+
 The SIDE ABI expresses the instrumentation description as data (no
 generated code). Instrumentation arguments are passed on the stack as an
 array of typed items, along with a reference to the instrumentation
