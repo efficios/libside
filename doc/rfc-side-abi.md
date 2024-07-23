@@ -1,10 +1,15 @@
+<!--
+SPDX-FileCopyrightText: 2024 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 
-RFC - SIDE ABI
+SPDX-License-Identifier: CC-BY-4.0
+-->
 
-[ This document is under heavy construction. Please beware of the
-  potholes as you wander through it. ]
+# RFC - SIDE ABI
 
-* Introduction
+*This document is under heavy construction. Please beware of the
+  potholes as you wander through it.*
+
+## Introduction
 
 The purpose of the SIDE ABI is to allow kernel and user-space tracers to
 attach to static and dynamic instrumentation of user-space applications.
@@ -55,7 +60,7 @@ A set of macros is provided with the libside C API for convenience of
 C/C++ application instrumentation.
 
 
-* Genesis
+## Genesis
 
 The SIDE ABI and libside library learn from the user feedback about
 experience with LTTng-UST and Linux kernel tracepoints, and therefore
@@ -96,7 +101,7 @@ tracepoints.
       callsite.
 
 
-* Desiderata
+## Desiderata
 
 - Common instrumentation for kernel and purely userspace tracers,
   - Instrumentation is self-described,
@@ -175,7 +180,7 @@ tracepoints.
   types.
 
 
-* Design / Architecture
+## Design / Architecture
 
 - Compiler error messages are easy to understand because it is a simple
   header file without any repeated inclusion tricks.
