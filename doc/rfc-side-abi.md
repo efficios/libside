@@ -4,17 +4,27 @@ SPDX-FileCopyrightText: 2024 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 SPDX-License-Identifier: CC-BY-4.0
 -->
 
-# RFC - SIDE ABI
+# SIDE-SPECRC-1.0 SIDE Instrumentation ABI Specification
 
 *This document is under heavy construction. Please beware of the
   potholes as you wander through it.*
 
+**RFC 2119**: The key words *MUST*, *MUST NOT*, *REQUIRED*, *SHOULD*,
+*SHOULD NOT*, *MAY*, and *OPTIONAL* in this document, when emphasized,
+are to be interpreted as described in
+[RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119).
+
+**Document identification**: The name of this document (CTF2‑SPECRC‑1.0)
+follows the specification of
+[CTF2‑DOCID‑2.0](https://diamon.org/ctf/CTF2-DOCID-2.0.html).
+
 ## Introduction
 
-The purpose of the SIDE ABI is to allow kernel and user-space tracers to
-attach to static and dynamic instrumentation of user-space applications.
+The purpose of the SIDE instrumentation ABI specification is to allow
+kernel and user-space tracers to attach to static and dynamic
+instrumentation of user-space applications.
 
-The SIDE ABI key characteristics:
+The SIDE instrumentation ABI key characteristics:
 
 - runtime and language agnostic,
 - supports multiple concurrent tracers,
@@ -24,10 +34,10 @@ The SIDE ABI key characteristics:
 - supports complex and nested types,
 - supports both static and dynamic types.
 
-The SIDE ABI expresses the instrumentation description as data (no
-generated code). Instrumentation arguments are passed on the stack as an
-array of typed items, along with a reference to the instrumentation
-description.
+The SIDE instrumentation ABI expresses the instrumentation description
+as data (no generated code). Instrumentation arguments are passed on the
+stack as an array of typed items, along with a reference to the
+instrumentation description.
 
 The following ABIs are introduced to let applications declare their
 instrumentation and insert instrumentation calls:
@@ -62,11 +72,14 @@ C/C++ application instrumentation.
 
 ## Genesis
 
-The SIDE ABI and libside library learn from the user feedback about
-experience with LTTng-UST and Linux kernel tracepoints, and therefore
-they introduce significant changes (and vast simplifications) to the way
-instrumentation is done compared to LTTng-UST and Linux kernel
-tracepoints.
+The SIDE instrumentaion ABI and libside library learn from the user
+feedback about experience with LTTng-UST and Linux kernel tracepoints,
+and therefore they introduce significant changes (and vast
+simplifications) to the way instrumentation is done compared to
+LTTng-UST and Linux kernel tracepoints.
+
+Here is a list of pre-existing userspace instrumentation facilities
+along with a discussion of their pros/cons:
 
 - Linux kernel User Events ABI
   - Exposes a stable ABI allowing applications to register their event
