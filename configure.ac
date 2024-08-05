@@ -204,7 +204,6 @@ AC_SUBST(AM_CXXFLAGS)
 
 AC_CONFIG_FILES([
 	Makefile
-	doc/Makefile
 	include/Makefile
 	src/Makefile
 	src/libside.pc
