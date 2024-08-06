@@ -285,6 +285,173 @@
 #define side_field_string32(_name, _attr...)		_side_field(_name, side_type_string32(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 #define side_field_dynamic(_name)			_side_field(_name, side_type_dynamic())
 
+/* C native types. */
+
+/*
+ * The SIDE ABI specifies fixed sizes integers and floating points.  However, as
+ * a convenience for C/C++, the SIDE C API supports C native types (e.g. char)
+ * which are translated to their equivalent.
+ *
+ * Note that the translation of C * native types is toolchain dependent and
+ * therefore could produce different * results.
+ *
+ * The main use case is for auto-generating SIDE events for public API of shared
+ * libraries.
+ */
+
+#ifdef __CHAR_UNSIGNED__
+#  define side_field_char(_name, _attr...) side_field_uchar(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_char(_args...) side_arg_uchar(_args)
+#else
+#  define side_field_char(_name, _attr...) side_field_schar(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_char(_args...) side_arg_schar(_args)
+#endif
+
+#define side_field_schar(_name, _attr...) side_field_s8(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_schar(_args...) side_arg_s8(_args)
+
+#define side_field_uchar(_name, _attr...) side_field_u8(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#define side_arg_uchar(_args...) side_arg_u8(_args)
+
+#if __SIZEOF_SHORT__ <= 2
+#  define side_field_short(_name, _attr...) side_field_s16(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_short(_args...) side_arg_s16(_args)
+#  define side_field_ushort(_name, _attr...) side_field_u16(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_ushort(_args...) side_arg_u16(_args)
+#elif __SIZEOF_SHORT__ <= 4
+#  define side_field_short(_name, _attr...) side_field_s32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_short(_args...) side_arg_s32(_args)
+#  define side_field_ushort(_name, _attr...) side_field_u32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_ushort(_args...) side_arg_u32(_args)
+#elif __SIZEOF_SHORT__ <= 8
+#  define side_field_short(_name, _attr...) side_field_s64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_short(_args...) side_arg_s64(_args)
+#  define side_field_ushort(_name, _attr...) side_field_u64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_ushort(_args...) side_arg_u64(_args)
+#else
+#  define side_field_short(...)					\
+	side_static_assert(0, "Type `signed short int' is not supported", type__signed_short_int__is_not_supported)
+#  define side_arg_short(...)					\
+	side_static_assert(0, "Type `signed short int' is not supported", type__signed_short_int__is_not_supported)
+#  define side_field_ushort(...)					\
+	side_static_assert(0, "Type `unsigned short int' is not supported", type__unsigned_short_int__is_not_supported)
+#  define side_arg_ushort(...)						\
+	side_static_assert(0, "Type `unsigned short int' is not supported", type__unsigned_short_int__is_not_supported)
+#endif
+
+#if __SIZEOF_INT__ <= 2
+#  define side_field_int(_name, _attr...) side_field_s16(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_int(_args...) side_arg_s16(_args)
+#  define side_field_uint(_name, _attr...) side_field_u16(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_uint(_args...) side_arg_u16(_args)
+#elif __SIZEOF_INT__ <= 4
+#  define side_field_int(_name, _attr...) side_field_s32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_int(_args...) side_arg_s32(_args)
+#  define side_field_uint(_name, _attr...) side_field_u32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_uint(_args...) side_arg_u32(_args)
+#elif __SIZEOF_INT__ <= 8
+#  define side_field_int(_name, _attr...) side_field_s64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_int(_args...) side_arg_s64(_args)
+#  define side_field_uint(_name, _attr...) side_field_u64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_uint(_args...) side_arg_u64(_args)
+#else
+#  define side_field_int(...)						\
+	side_static_assert(0, "Type `signed int' is not supported", type__signed_int__is_not_supported)
+#  define side_arg_int(...)						\
+	side_static_assert(0, "Type `signed int' is not supported", type__signed_int__is_not_supported)
+#  define side_field_uint(...)						\
+	side_static_assert(0, "Type `unsigned int' is not supported", type__unsigned_int__is_not_supported)
+#  define side_arg_uint(...)						\
+	side_static_assert(0, "Type `unsigned int' is not supported", type__unsigned_int__is_not_supported)
+#endif
+
+#if __SIZEOF_LONG__ <= 4
+#  define side_field_long(_name, _attr...) side_field_s32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_long(_args...) side_arg_s32(_args)
+#  define side_field_ulong(_name, _attr...) side_field_u32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_ulong(_args...) side_arg_u32(_args)
+#elif __SIZEOF_LONG__ <= 8
+#  define side_field_long(_name, _attr...) side_field_s64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_long(_args...) side_arg_s64(_args)
+#  define side_field_ulong(_name, _attr...) side_field_u64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_ulong(_args...) side_arg_u64(_args)
+#else
+#  define side_field_long(...)						\
+	side_static_assert(0, "Type `signed long int' is not supported", type__signed_long_int__is_not_supported)
+#  define side_arg_long(...)					\
+	side_static_assert(0, "Type `signed long int' is not supported", type__signed_long_int__is_not_supported)
+#  define side_field_ulong(...)					\
+	side_static_assert(0, "Type `unsigned long int' is not supported", type__unsigned_long_int__is_not_supported)
+#  define side_arg_ulong(...)						\
+	side_static_assert(0, "Type `unsigned long int' is not supported", type__unsigned_long_int__is_not_supported)
+#endif
+
+#if __SIZEOF_LONG_LONG__ <= 8
+#  define side_field_long_long(_name, _attr...) side_field_s64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_long_long(_args...) side_arg_s64(_args)
+#  define side_field_ulong_long(_name, _attr...) side_field_u64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_ulong_long(_args...) side_arg_u64(_args)
+#else
+#  define side_field_long_long(...)					\
+	side_static_assert(0, "Type `signed long long int' is not supported", type__signed_long_long_int__is_not_supported)
+#  define side_arg_long_long(...)					\
+	side_static_assert(0, "Type `signed long long int' is not supported", type__signed_long_long_int__is_not_supported)
+#  define side_field_long_long(...)					\
+	side_static_assert(0, "Type `unsigned long long int' is not supported", type__unsigned_long_long_int__is_not_supported)
+#  define side_arg_long_long(...)					\
+	side_static_assert(0, "Type `unsigned long long int' is not supported", type__unsigned_long_long_int__is_not_supported)
+#endif
+
+#if __SIZEOF_FLOAT__ <= 4 && __HAVE_FLOAT32
+#  define side_field_float(_name, _attr...) side_field_float_binary32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_float(_args...) side_arg_float_binary32(_args)
+#elif __SIZEOF_FLOAT__ <= 8 && __HAVE_FLOAT64
+#  define side_field_float(_name, _attr...) side_field_float_binary64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_float(_args...) side_arg_float_binary64(_args)
+#elif __SIZEOF_FLOAT__ <= 16 && __HAVE_FLOAT128
+#  define side_field_float(_name, _attr...) side_field_float_binary128(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_float(_args...) side_arg_float_binary128(_args)
+#else
+#  define side_field_float(...)					\
+	side_static_assert(0, "Type `float' is not supported", type__float__is_not_supported)
+#  define side_arg_float(...)					\
+	side_static_assert(0, "Type `float' is not supported", type__float__is_not_supported)
+#endif
+
+#if __SIZEOF_DOUBLE__ <= 4 && __HAVE_FLOAT32
+#  define side_field_double(_name, _attr...) side_field_float_binary32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_double(_args...) side_arg_float_binary32(_args)
+#elif __SIZEOF_DOUBLE__ <= 8 && __HAVE_FLOAT64
+#  define side_field_double(_name, _attr...) side_field_float_binary64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_double(_args...) side_arg_float_binary64(_args)
+#elif __SIZEOF_DOUBLE__ <= 16 && __HAVE_FLOAT128
+#  define side_field_double(_name, _attr...) side_field_double_binary128(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#  define side_arg_double(_args...) side_arg_float_binary128(_args)
+#else
+#  define side_field_double(...)					\
+	side_static_assert(0, "Type `double' is not supported", type__double__is_not_supported)
+#  define side_arg_double(...)					\
+	side_static_assert(0, "Type `double' is not supported", type__double__is_not_supported)
+#endif
+
+#ifdef __SIZEOF_LONG_DOUBLE__
+#  if __SIZEOF_LONG_DOUBLE__ <= 4 && __HAVE_FLOAT32
+#    define side_field_long_double(_name, _attr...) side_field_float_binary32(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#    define side_arg_long_double(_args...) side_arg_float_binary32(_args)
+#  elif __SIZEOF_LONG_DOUBLE__ <= 8 && __HAVE_FLOAT64
+#    define side_field_long_double(_name, _attr...) side_field_float_binary64(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#    define side_arg_long_double(_args...) side_arg_float_binary64(_args)
+#  elif __SIZEOF_LONG_DOUBLE__ <= 16 && __HAVE_FLOAT128
+#    define side_field_long_double(_name, _attr...) side_field_float_binary128(_name, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+#    define side_arg_long_double(_args...) side_arg_float_binary128(_args)
+#  else
+#    define side_field_long_double(...)					\
+	side_static_assert(0, "Type `long double' is not supported", type__long_double__is_not_supported)
+#    define side_arg_long_double(...)					\
+	side_static_assert(0, "Type `long double' is not supported", type__long_double__is_not_supported)
+#  endif
+#endif	/* __SIZEOF_LONG_DOUBLE__ */
+
 /* Little endian */
 #define side_type_u16_le(_attr...)			_side_type_integer(SIDE_TYPE_U16, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 #define side_type_u32_le(_attr...)			_side_type_integer(SIDE_TYPE_U32, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))

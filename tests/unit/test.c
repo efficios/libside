@@ -2262,6 +2262,33 @@ void test_integer128(void)
 #endif
 
 
+#define X(_type, _value, _field)					\
+	side_static_event(c_native_types_ ## _field, "c-native-types", #_type, SIDE_LOGLEVEL_DEBUG, \
+			side_field_list(				\
+				side_field_##_field("x"),		\
+			)						\
+		)
+#include "c-native-types.h"
+#undef X
+
+static
+void test_c_native_types(void)
+{
+
+#define X(_type, _value, _field)				\
+	({							\
+		_type x = _value;				\
+		side_event(c_native_types_ ## _field,		\
+			side_arg_list(				\
+				side_arg_##_field(x),		\
+			)					\
+		);						\
+	})
+#include "c-native-types.h"
+#undef X
+}
+
+
 int main()
 {
 	test_fields();
@@ -2315,5 +2342,6 @@ int main()
 	test_string_utf();
 	test_variant();
 	test_integer128();
+	test_c_native_types();
 	return 0;
 }
