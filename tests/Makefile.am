@@ -15,6 +15,7 @@ TAP_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' \
 noinst_PROGRAMS = \
 	regression/side-rcu-test \
 	unit/test \
+	unit/test-cxx \
 	unit/demo \
 	unit/statedump
 
@@ -27,6 +28,12 @@ regression_side_rcu_test_LDADD = \
 
 unit_test_SOURCES = unit/test.c
 unit_test_LDADD = \
+	$(top_builddir)/src/libside.la \
+	$(top_builddir)/tests/utils/libtap.la \
+	$(RSEQ_LIBS)
+
+unit_test_cxx_SOURCES = unit/test-cxx.cpp
+unit_test_cxx_LDADD = \
 	$(top_builddir)/src/libside.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
