@@ -28,6 +28,11 @@ struct side_arg_dynamic_field;
 struct side_tracer_visitor_ctx;
 struct side_tracer_dynamic_struct_visitor_ctx;
 
+enum side_visitor_status {
+	SIDE_VISITOR_STATUS_OK = 0,
+	SIDE_VISITOR_STATUS_ERROR = -1,
+};
+
 typedef enum side_visitor_status (*side_write_elem_func)(
 		const struct side_tracer_visitor_ctx *tracer_ctx,
 		const struct side_arg *elem);

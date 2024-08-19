@@ -196,6 +196,7 @@
 #define side_type_dynamic() \
 	{ \
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC), \
+		.u = { }				   \
 	}
 
 #define _side_type_integer(_type, _signedness, _byte_order, _integer_size, _len_bits, _attr) \
@@ -579,13 +580,13 @@
 #define side_field_variant(_name, _variant) \
 	_side_field(_name, side_type_variant(SIDE_PARAM(_variant)))
 
-#define _side_type_variant_define(_selector, _options, _attr) \
-	{ \
-		.selector = _selector, \
-		.options = SIDE_PTR_INIT(_options), \
-		.attr = SIDE_PTR_INIT(_attr), \
+#define _side_type_variant_define(_selector, _options, _attr)	     \
+	{							     \
+		.options = SIDE_PTR_INIT(_options),		     \
+		.attr = SIDE_PTR_INIT(_attr),			     \
 		.nr_options = SIDE_ARRAY_SIZE(SIDE_PARAM(_options)), \
-		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)),	     \
+		.selector = _selector,				     \
 	}
 
 #define side_define_variant(_identifier, _selector, _options, _attr...) \
@@ -683,6 +684,7 @@
 				.u = { \
 					.side_bool = { \
 						.offset = _offset, \
+						.offset_bits = _offset_bits, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -691,7 +693,6 @@
 							.len_bits = _len_bits, \
 							.byte_order = SIDE_ENUM_INIT(_byte_order), \
 						}, \
-						.offset_bits = _offset_bits, \
 					}, \
 				}, \
 			}, \
@@ -720,6 +721,7 @@
 				.u = { \
 					.side_integer = { \
 						.offset = _offset, \
+						.offset_bits = _offset_bits, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
@@ -729,7 +731,6 @@
 							.signedness = _signedness, \
 							.byte_order = SIDE_ENUM_INIT(_byte_order), \
 						}, \
-						.offset_bits = _offset_bits, \
 					}, \
 				}, \
 			}, \
@@ -898,9 +899,9 @@
 			.side_gather = { \
 				.u = { \
 					.side_struct = { \
+						.type = SIDE_PTR_INIT(_struct_gather), \
 						.offset = _offset, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.type = SIDE_PTR_INIT(_struct_gather), \
 						.size = _size, \
 					}, \
 				}, \
@@ -970,7 +971,7 @@
 
 /* Stack-copy field arguments */
 
-#define side_arg_null(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_NULL), .flags = 0, }
+#define side_arg_null(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_NULL), .flags = 0, .u = { .side_static = {  } } }
 #define side_arg_bool(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_BOOL), .flags = 0, .u = { .side_static = { .bool_value = { .side_bool8 = !!(_val) } } } }
 #define side_arg_byte(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_BYTE), .flags = 0, .u = { .side_static = { .byte_value = (_val) } } }
 #define side_arg_string(_val)		{ .type = SIDE_ENUM_INIT(SIDE_TYPE_STRING_UTF8), .flags = 0, .u = { .side_static = { .string_value = SIDE_PTR_INIT(_val) } } }
@@ -1433,64 +1434,118 @@
 #define side_statedump_event_call_variadic(_identifier, _key, _sav, _var_fields, _attr...) \
 	_side_statedump_event_call_variadic(side_statedump_call_variadic, _identifier, _key, SIDE_PARAM(_sav), SIDE_PARAM(_var_fields), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define _side_define_event(_linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
-	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
-			_identifier; \
+
+/*
+ * The forward declaration linkage is always the same in C. In C++ however, it
+ * is necessary to not use the same linkage as the declaration.
+ */
+#define _side_define_event(_forward_decl_linkage, _linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
+	_forward_decl_linkage struct side_event_description __attribute__((section("side_event_description"))) \
+		_identifier;							\
+	_forward_decl_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
+		side_event_state__##_identifier;				\
 	_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
-			side_event_state__##_identifier = { \
-		.parent = { \
-			.version = SIDE_EVENT_STATE_ABI_VERSION, \
-		}, \
-		.nr_callbacks = 0, \
-		.enabled = 0, \
+		side_event_state__##_identifier = {			\
+		.parent = {						\
+			.version = SIDE_EVENT_STATE_ABI_VERSION,	\
+		},							\
+		.nr_callbacks = 0,					\
+		.enabled = 0,						\
 		.callbacks = (const struct side_callback *) &side_empty_callback[0], \
-		.desc = &(_identifier), \
-	}; \
+		.desc = &(_identifier),					\
+	};								\
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
-			_identifier = { \
+		_identifier = {						\
 		.struct_size = offsetof(struct side_event_description, end), \
-		.version = SIDE_EVENT_DESCRIPTION_ABI_VERSION, \
+		.version = SIDE_EVENT_DESCRIPTION_ABI_VERSION,		\
 		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier.parent)), \
-		.provider_name = SIDE_PTR_INIT(_provider), \
-		.event_name = SIDE_PTR_INIT(_event), \
-		.fields = SIDE_PTR_INIT(_fields), \
+		.provider_name = SIDE_PTR_INIT(_provider),		\
+		.event_name = SIDE_PTR_INIT(_event),			\
+		.fields = SIDE_PTR_INIT(_fields),			\
 		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-		.flags = (_flags), \
-		.nr_side_type_label = _NR_SIDE_TYPE_LABEL, \
-		.nr_side_attr_type = _NR_SIDE_ATTR_TYPE, \
-		.loglevel = SIDE_ENUM_INIT(_loglevel), \
-		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
+		.flags = (_flags),					\
+		.nr_side_type_label = _NR_SIDE_TYPE_LABEL,		\
+		.nr_side_attr_type = _NR_SIDE_ATTR_TYPE,		\
+		.loglevel = SIDE_ENUM_INIT(_loglevel),			\
+		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)),	\
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-	}; \
-	static const struct side_event_description *side_event_ptr__##_identifier \
-		__attribute__((section("side_event_description_ptr"), used)) = &(_identifier);
+		.end = {}						\
+	};								\
+	static const struct side_event_description __attribute__((section("side_event_description_ptr"), used)) \
+			*side_event_ptr__##_identifier = &(_identifier)
+
+/*
+ * In C++, it is not possible to forward declare a static variable.  Use
+ * anonymous namespace with external linkage instead.
+ */
+#ifdef __cplusplus
+#define _side_cxx_define_event(_namespace, _linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
+	_namespace {							\
+		_side_define_event(extern, _linkage, _identifier, _provider, _event, _loglevel, \
+				SIDE_PARAM(_fields), _flags, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())); \
+	}
 
 #define side_static_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
-	_side_define_event(static, _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
-			0, ##_attr)
+	_side_cxx_define_event(namespace, , _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_static_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
-	_side_define_event(static, _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+	_side_cxx_define_event(namespace, , _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
 			SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_hidden_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
-	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, \
+	_side_cxx_define_event(extern "C", __attribute__((visibility("hidden"))), _identifier, _provider, _event, \
 			_loglevel, SIDE_PARAM(_fields), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_hidden_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
-	_side_define_event(__attribute__((visibility("hidden"))), _identifier, _provider, _event, \
+	_side_cxx_define_event(extern "C", __attribute__((visibility("hidden"))), _identifier, _provider, _event, \
 			_loglevel, SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_export_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
-	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, \
+	_side_cxx_define_event(extern "C", __attribute__((visibility("default"))), _identifier, _provider, _event, \
 			_loglevel, SIDE_PARAM(_fields), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_export_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
-	_side_define_event(__attribute__((visibility("default"))), _identifier, _provider, _event, \
+	_side_cxx_define_event(extern "C", __attribute__((visibility("default"))), _identifier, _provider, _event, \
+			_loglevel, SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+
+#define side_declare_event(_identifier)					\
+	extern "C" struct side_event_description _identifier;		\
+	extern "C" struct side_event_state_0 side_event_state_##_identifier
+#else
+
+
+#define side_static_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
+	_side_define_event(static, static, _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+
+#define side_static_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
+	_side_define_event(static, static, _identifier, _provider, _event, _loglevel, SIDE_PARAM(_fields), \
+			SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+
+#define side_hidden_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
+	_side_define_event(__attribute__((visibility("hidden"))), __attribute__((visibility("hidden"))), \
+			   _identifier, _provider, _event,		\
+			_loglevel, SIDE_PARAM(_fields), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+
+#define side_hidden_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
+	_side_define_event(__attribute__((visibility("hidden"))), __attribute__((visibility("hidden"))), \
+			   _identifier, _provider, _event,		\
+			_loglevel, SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+
+#define side_export_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
+	_side_define_event(__attribute__((visibility("default"))), __attribute__((visibility("default"))), \
+			   _identifier, _provider, _event,		\
+			_loglevel, SIDE_PARAM(_fields), 0, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
+
+#define side_export_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
+	_side_define_event(__attribute__((visibility("default"))), __attribute__((visibility("default"))), \
+			   _identifier, _provider, _event,		\
 			_loglevel, SIDE_PARAM(_fields), SIDE_EVENT_FLAG_VARIADIC, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_declare_event(_identifier) \
 	extern struct side_event_state_0 side_event_state_##_identifier; \
 	extern struct side_event_description _identifier
+#endif	/* __cplusplus */
 
 #endif /* SIDE_INSTRUMENTATION_C_API_H */

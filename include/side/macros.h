@@ -216,9 +216,23 @@
 #define side_ptr_t(_type)	side_raw_ptr_t(_type *)
 #define side_func_ptr_t(_type)	side_raw_ptr_t(_type)
 
+/*
+ * In C++, it is not possible to declare types in expressions within a sizeof.
+ */
+#ifdef __cplusplus
+namespace side {
+	namespace macros {
+		using side_ptr_t_int = side_ptr_t(int);
+		side_static_assert(sizeof(side_ptr_t_int) == 16,
+				"Unexpected size for side_ptr_t",
+				unexpected_size_side_ptr_t);
+	};
+};
+#else
 side_static_assert(sizeof(side_ptr_t(int)) == 16,
 	"Unexpected size for side_ptr_t",
 	unexpected_size_side_ptr_t);
+#endif
 
 /*
  * side_enum_t allows defining fixed-sized enumerations while preserving

@@ -122,8 +122,12 @@ AE_IF_FEATURE_ENABLED([Werror], [WARN_CXXFLAGS="${WARN_CXXFLAGS} -Werror"])
 ## C++ compiler checks ##
 ##                     ##
 
-# Require a C++11 compiler without GNU extensions (-std=c++11)
-AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
+# Require a C++11 compiler with GNU extensions (-std=gnu++11).
+#
+# A compiler with GNU extensions is mandatory because of the usage of
+# preprocessor `##' comma deletion with empty `__VA_ARGS__' in the public header
+# files.
+AX_CXX_COMPILE_STDCXX([11], [ext], [mandatory])
 
 
 ##               ##

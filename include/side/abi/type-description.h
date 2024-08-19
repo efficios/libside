@@ -154,10 +154,6 @@ enum side_type_label {
 	_NR_SIDE_TYPE_LABEL,	/* Last entry. */
 };
 
-enum side_visitor_status {
-	SIDE_VISITOR_STATUS_OK = 0,
-	SIDE_VISITOR_STATUS_ERROR = -1,
-};
 
 enum side_type_gather_access_mode {
 	SIDE_TYPE_GATHER_ACCESS_DIRECT,
