@@ -38,7 +38,7 @@
 
 #include <side/abi/event-description.h>
 #include <side/abi/type-argument.h>
-#include <side/instrumentation-c-api.h>
+#include <side/api.h>
 
 enum side_error {
 	SIDE_ERROR_OK = 0,

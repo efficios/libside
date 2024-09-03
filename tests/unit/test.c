@@ -69,29 +69,6 @@ void test_event_export(void)
 	side_event(my_provider_event_export, side_arg_list(side_arg_u32(2)));
 }
 
-side_static_event(my_provider_event_struct_literal, "myprovider", "myeventstructliteral", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_struct("structliteral",
-			side_struct_literal(
-				side_field_list(
-					side_field_u32("x"),
-					side_field_s64("y"),
-				)
-			)
-		),
-		side_field_u8("z"),
-	)
-);
-
-static
-void test_struct_literal(void)
-{
-	if (side_event_enabled(my_provider_event_struct_literal)) {
-		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
-		side_event_call(my_provider_event_struct_literal, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
-	}
-}
-
 static side_define_struct(mystructdef,
 	side_field_list(
 		side_field_u32("x"),
@@ -101,7 +78,7 @@ static side_define_struct(mystructdef,
 
 side_static_event(my_provider_event_struct, "myprovider", "myeventstruct", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_struct("struct", &mystructdef),
+		side_field_struct("struct", mystructdef),
 		side_field_u8("z"),
 	)
 );
@@ -110,8 +87,8 @@ static
 void test_struct(void)
 {
 	if (side_event_enabled(my_provider_event_struct)) {
-		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
-		side_event_call(my_provider_event_struct, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
+		side_arg_define_struct(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
+		side_event_call(my_provider_event_struct, side_arg_list(side_arg_struct(mystruct), side_arg_u8(55)));
 	}
 }
 
@@ -122,7 +99,7 @@ static side_define_array(my_array_u32_3,
 
 side_static_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_array("arr", &my_array_u32_3),
+		side_field_array("arr", my_array_u32_3),
 		side_field_s64("v"),
 	)
 );
@@ -131,8 +108,8 @@ static
 void test_array(void)
 {
 	if (side_event_enabled(my_provider_event_array)) {
-		side_arg_define_vec(myarray, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
-		side_event_call(my_provider_event_array, side_arg_list(side_arg_array(&myarray), side_arg_s64(42)));
+		side_arg_define_array(myarray, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
+		side_event_call(my_provider_event_array, side_arg_list(side_arg_array(myarray), side_arg_s64(42)));
 	}
 }
 
@@ -143,7 +120,7 @@ static side_define_vla(my_vla_u32,
 
 side_static_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vla", &my_vla_u32),
+		side_field_vla("vla", my_vla_u32),
 		side_field_s64("v"),
 	)
 );
@@ -152,26 +129,24 @@ static
 void test_vla(void)
 {
 	if (side_event_enabled(my_provider_event_vla)) {
-		side_arg_define_vec(myvla, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
-		side_event_call(my_provider_event_vla, side_arg_list(side_arg_vla(&myvla), side_arg_s64(42)));
+		side_arg_define_vla(myvla, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
+		side_event_call(my_provider_event_vla, side_arg_list(side_arg_vla(myvla), side_arg_s64(42)));
 	}
 }
 
 /* 1D array visitor */
-
 struct app_visitor_ctx {
 	const uint32_t *ptr;
 	uint32_t length;
 };
 
 static
-enum side_visitor_status test_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+enum side_visitor_status test_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, struct app_visitor_ctx *ctx)
 {
-	struct app_visitor_ctx *ctx = (struct app_visitor_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_arg_u32(ctx->ptr[i]);
+		const struct side_arg elem = side_visit_dynamic_arg(side_arg_u32, ctx->ptr[i]);
 
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
@@ -181,15 +156,13 @@ enum side_visitor_status test_visitor(const struct side_tracer_visitor_ctx *trac
 
 static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
+side_define_static_vla_visitor(my_vla_visitor_1d,
+			side_elem(side_type_u32()), side_elem(side_type_u32()),
+			test_visitor, struct app_visitor_ctx);
+
 side_static_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla_visitor("vlavisit",
-			side_vla_visitor_literal(
-				side_elem(side_type_u32()),
-				side_elem(side_type_u32()),
-				test_visitor
-			)
-		),
+		side_field_vla_visitor("vlavisit", my_vla_visitor_1d),
 		side_field_s64("v"),
 	)
 );
@@ -204,7 +177,7 @@ void test_vla_visitor(void)
 		};
 		side_arg_define_vla_visitor(side_visitor, &ctx);
 		side_event_call(my_provider_event_vla_visitor,
-			side_arg_list(side_arg_vla_visitor(&side_visitor), side_arg_s64(42)));
+			side_arg_list(side_arg_vla_visitor(side_visitor), side_arg_s64(42)));
 	}
 }
 
@@ -216,13 +189,13 @@ struct app_visitor_2d_inner_ctx {
 };
 
 static
-enum side_visitor_status test_inner_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+enum side_visitor_status test_inner_visitor(const struct side_tracer_visitor_ctx *tracer_ctx,
+					struct app_visitor_2d_inner_ctx *ctx)
 {
-	struct app_visitor_2d_inner_ctx *ctx = (struct app_visitor_2d_inner_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_arg_u32(ctx->ptr[i]);
+		const struct side_arg elem = side_visit_dynamic_arg(side_arg_u32, ctx->ptr[i]);
 
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
@@ -230,15 +203,19 @@ enum side_visitor_status test_inner_visitor(const struct side_tracer_visitor_ctx
 	return SIDE_VISITOR_STATUS_OK;
 }
 
+side_define_static_vla_visitor(my_vla_visitor_2d_inner,
+			side_elem(side_type_u32()), side_elem(side_type_u32()),
+			test_inner_visitor, struct app_visitor_2d_inner_ctx);
+
 struct app_visitor_2d_outer_ctx {
 	const uint32_t (*ptr)[2];
 	uint32_t length;
 };
 
 static
-enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
+enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx *tracer_ctx,
+					struct app_visitor_2d_outer_ctx *ctx)
 {
-	struct app_visitor_2d_outer_ctx *ctx = (struct app_visitor_2d_outer_ctx *) _ctx;
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
@@ -247,12 +224,16 @@ enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx
 			.length = 2,
 		};
 		side_arg_define_vla_visitor(side_inner_visitor, &inner_ctx);
-		const struct side_arg elem = side_arg_vla_visitor(&side_inner_visitor);
+		const struct side_arg elem = side_visit_dynamic_arg(side_arg_vla_visitor, side_inner_visitor);
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
 	}
 	return SIDE_VISITOR_STATUS_OK;
 }
+
+side_define_static_vla_visitor(my_vla_visitor_2d_outer,
+			side_elem(side_type_vla_visitor(my_vla_visitor_2d_inner)), side_elem(side_type_u32()),
+			test_outer_visitor, struct app_visitor_2d_outer_ctx);
 
 static uint32_t testarray2d[][2] = {
 	{ 1, 2 },
@@ -262,21 +243,7 @@ static uint32_t testarray2d[][2] = {
 
 side_static_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla_visitor("vlavisit2d",
-			side_vla_visitor_literal(
-				side_elem(
-					side_type_vla_visitor(
-						side_vla_visitor_literal(
-							side_elem(side_type_u32()),
-							side_elem(side_type_u32()),
-							test_inner_visitor
-						)
-					)
-				),
-				side_elem(side_type_u32()),
-				test_outer_visitor
-			)
-		),
+		side_field_vla_visitor("vlavisit2d", my_vla_visitor_2d_outer),
 		side_field_s64("v"),
 	)
 );
@@ -291,7 +258,7 @@ void test_vla_visitor_2d(void)
 		};
 		side_arg_define_vla_visitor(side_outer_visitor, &ctx);
 		side_event_call(my_provider_event_vla_visitor2d,
-			side_arg_list(side_arg_vla_visitor(&side_outer_visitor), side_arg_s64(42)));
+			side_arg_list(side_arg_vla_visitor(side_outer_visitor), side_arg_s64(42)));
 	}
 }
 
@@ -608,7 +575,7 @@ enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_visit
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_arg_dynamic_u32(ctx->ptr[i]);
+		const struct side_arg elem = side_visit_dynamic_arg(side_arg_dynamic_u32, ctx->ptr[i]);
 		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
 	}
@@ -628,7 +595,7 @@ void test_dynamic_vla_with_visitor(void)
 		side_arg_dynamic_define_vla_visitor(myvlavisitor, test_dynamic_vla_visitor, &ctx);
 		side_event_call(my_provider_event_dynamic_vla_visitor,
 			side_arg_list(
-				side_arg_dynamic_vla_visitor(&myvlavisitor)
+				side_arg_dynamic_vla_visitor(myvlavisitor)
 			)
 		);
 	}
@@ -658,9 +625,7 @@ enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dy
 	uint32_t length = ctx->length, i;
 
 	for (i = 0; i < length; i++) {
-		struct side_arg_dynamic_field dynamic_field =
-			side_arg_dynamic_field(ctx->ptr[i].name,
-				side_arg_dynamic_u32(ctx->ptr[i].value));
+		struct side_arg_dynamic_field dynamic_field = side_visit_dynamic_field(side_arg_dynamic_u32, ctx->ptr[i].name, ctx->ptr[i].value);
 		if (tracer_ctx->write_field(tracer_ctx, &dynamic_field) != SIDE_VISITOR_STATUS_OK)
 			return SIDE_VISITOR_STATUS_ERROR;
 	}
@@ -822,7 +787,7 @@ void test_variadic_struct_attr(void)
 		side_event_call_variadic(my_provider_event_variadic_struct_attr,
 			side_arg_list(),
 			side_arg_list(
-				side_arg_dynamic_field("a", side_arg_dynamic_struct(&mystruct)),
+				side_arg_dynamic_field("my-field", side_arg_dynamic_struct(&mystruct)),
 			)
 		);
 	}
@@ -1104,7 +1069,7 @@ static side_define_enum_bitmap(myenum_bitmap,
 	)
 );
 
-static side_define_array(my_array_u32_5,
+static side_define_array(my_array_u32_5_for_bitmap,
 	side_elem(side_type_u32()),
 	5
 );
@@ -1125,10 +1090,8 @@ side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitma
 		side_field_enum_bitmap("bit_63", &myenum_bitmap, side_elem(side_type_u64())),
 		side_field_enum_bitmap("bits_1+63", &myenum_bitmap, side_elem(side_type_u64())),
 		side_field_enum_bitmap("byte_bit_2", &myenum_bitmap, side_elem(side_type_byte())),
-		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_array(&my_array_u32_5))),
-		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_vla(&my_vla_u32_for_bitmap))),
+		side_field_enum_bitmap("bit_159", &myenum_bitmap, side_elem(side_type_array(my_array_u32_5_for_bitmap))),
+		side_field_enum_bitmap("bit_159", &myenum_bitmap, side_elem(side_type_vla(my_vla_u32_for_bitmap))),
 		side_field_enum_bitmap("bit_2_be", &myenum_bitmap, side_elem(side_type_u32_be())),
 		side_field_enum_bitmap("bit_2_le", &myenum_bitmap, side_elem(side_type_u32_le())),
 	)
@@ -1138,7 +1101,7 @@ static
 void test_enum_bitmap(void)
 {
 	if (side_event_enabled(my_provider_event_enum_bitmap)) {
-		side_arg_define_vec(myarray,
+		side_arg_define_array(myarray,
 			side_arg_list(
 				side_arg_u32(0),
 				side_arg_u32(0),
@@ -1147,6 +1110,12 @@ void test_enum_bitmap(void)
 				side_arg_u32(0x80000000),	/* bit 159 */
 			)
 		);
+		side_arg_define_vla(myvla,
+			side_arg_list(
+				side_arg_u32(0x80000000)
+			)
+		);
+
 		side_event_call(my_provider_event_enum_bitmap,
 			side_arg_list(
 				side_arg_u32(1U << 0),
@@ -1158,8 +1127,8 @@ void test_enum_bitmap(void)
 				side_arg_u64(1ULL << 63),
 				side_arg_u64((1ULL << 1) | (1ULL << 63)),
 				side_arg_byte(1U << 2),
-				side_arg_array(&myarray),
-				side_arg_vla(&myarray),
+				side_arg_array(myarray),
+				side_arg_vla(myvla),
 #if SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN
 				side_arg_u32(side_bswap_32(1U << 2)),
 				side_arg_u32(1U << 2),
@@ -1180,7 +1149,7 @@ static side_define_array(my_array_byte,
 side_static_event_variadic(my_provider_event_blob, "myprovider", "myeventblob", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_byte("blobfield"),
-		side_field_array("arrayblob", &my_array_byte),
+		side_field_array("arrayblob", my_array_byte),
 	)
 );
 
@@ -1188,7 +1157,7 @@ static
 void test_blob(void)
 {
 	if (side_event_enabled(my_provider_event_blob)) {
-		side_arg_define_vec(myarray, side_arg_list(side_arg_byte(1), side_arg_byte(2), side_arg_byte(3)));
+		side_arg_define_array(myarray, side_arg_list(side_arg_byte(1), side_arg_byte(2), side_arg_byte(3)));
 		side_arg_dynamic_define_vec(myvla,
 			side_arg_list(
 				side_arg_dynamic_byte(0x22),
@@ -1198,7 +1167,7 @@ void test_blob(void)
 		side_event_call_variadic(my_provider_event_blob,
 			side_arg_list(
 				side_arg_byte(0x55),
-				side_arg_array(&myarray),
+				side_arg_array(myarray),
 			),
 			side_arg_list(
 				side_arg_dynamic_field("varblobfield",
@@ -1442,7 +1411,7 @@ static side_define_struct(mystructgatherdef,
 		side_field_gather_signed_integer("j", offsetof(struct test, j),
 			side_struct_field_sizeof(struct test, j), 63, 1,
 			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
-		side_field_gather_signed_integer("k", offsetof(struct test, k), 
+		side_field_gather_signed_integer("k", offsetof(struct test, k),
 			side_struct_field_sizeof(struct test, k), 1, 63,
 			SIDE_TYPE_GATHER_ACCESS_DIRECT, side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
 		side_field_gather_unsigned_integer_le("test", offsetof(struct test, test),
@@ -1459,7 +1428,7 @@ static side_define_struct(mystructgatherdef,
 
 side_static_event(my_provider_event_structgather, "myprovider", "myeventstructgather", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_struct("structgather", &mystructgatherdef, 0, sizeof(struct test),
+		side_field_gather_struct("structgather", mystructgatherdef, 0, sizeof(struct test),
 				SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_signed_integer("intgather", 0, sizeof(int32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT,
 			side_attr_list(side_attr("std.integer.base", side_attr_u8(10)))),
@@ -1530,7 +1499,7 @@ static side_define_struct(mystructgathernest1,
 		side_field_gather_unsigned_integer("b", offsetof(struct testnest1, b),
 			side_struct_field_sizeof(struct testnest1, b), 0, 0,
 			SIDE_TYPE_GATHER_ACCESS_DIRECT),
-		side_field_gather_struct("nest2", &mystructgathernest2,
+		side_field_gather_struct("nest2", mystructgathernest2,
 			offsetof(struct testnest1, nest), sizeof(struct testnest2),
 			SIDE_TYPE_GATHER_ACCESS_POINTER),
 	)
@@ -1541,7 +1510,7 @@ static side_define_struct(mystructgathernest0,
 		side_field_gather_unsigned_integer("a", offsetof(struct testnest0, a),
 			side_struct_field_sizeof(struct testnest0, a), 0, 0,
 			SIDE_TYPE_GATHER_ACCESS_DIRECT),
-		side_field_gather_struct("nest1", &mystructgathernest1,
+		side_field_gather_struct("nest1", mystructgathernest1,
 			offsetof(struct testnest0, nest), sizeof(struct testnest1),
 			SIDE_TYPE_GATHER_ACCESS_POINTER),
 	)
@@ -1550,7 +1519,7 @@ static side_define_struct(mystructgathernest0,
 side_static_event(my_provider_event_structgather_nest,
 	"myprovider", "myeventstructgathernest", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_struct("nest0", &mystructgathernest0, 0,
+		side_field_gather_struct("nest0", mystructgathernest0, 0,
 			sizeof(struct testnest0), SIDE_TYPE_GATHER_ACCESS_DIRECT),
 	)
 );
@@ -1617,7 +1586,7 @@ static side_define_struct(mystructgatherfloat,
 side_static_event(my_provider_event_structgatherfloat,
 	"myprovider", "myeventstructgatherfloat", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_struct("structgatherfloat", &mystructgatherfloat, 0,
+		side_field_gather_struct("structgatherfloat", mystructgatherfloat, 0,
 			sizeof(struct testfloat), SIDE_TYPE_GATHER_ACCESS_DIRECT),
 	)
 );
@@ -1671,7 +1640,7 @@ static side_define_struct(mystructgatherarray,
 side_static_event(my_provider_event_structgatherarray,
 	"myprovider", "myeventstructgatherarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_struct("structgatherarray", &mystructgatherarray, 0,
+		side_field_gather_struct("structgatherarray", mystructgatherarray, 0,
 				sizeof(struct testarray), SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("array2",
 			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint16_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
@@ -1717,7 +1686,7 @@ static side_define_struct(mystructgatherstructnest1,
 			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("c",
 			side_elem(
-				side_type_gather_signed_integer(0, sizeof(uint32_t), 0, 0, 
+				side_type_gather_signed_integer(0, sizeof(uint32_t), 0, 0,
 					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			),
 			TESTSGNESTARRAY_LEN,
@@ -1731,13 +1700,13 @@ static side_define_struct(mystructgatherstructnest0,
 		side_field_gather_signed_integer("a", offsetof(struct testgatherstructnest0, a),
 			side_struct_field_sizeof(struct testgatherstructnest0, a), 0, 0,
 			SIDE_TYPE_GATHER_ACCESS_DIRECT),
-		side_field_gather_struct("structnest0", &mystructgatherstructnest1,
+		side_field_gather_struct("structnest0", mystructgatherstructnest1,
 			offsetof(struct testgatherstructnest0, nest),
 			sizeof(struct testgatherstructnest1),
 			SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_array("nestarray",
 			side_elem(
-				side_type_gather_struct(&mystructgatherstructnest1,
+				side_type_gather_struct(mystructgatherstructnest1,
 					0,
 					sizeof(struct testgatherstructnest1),
 					SIDE_TYPE_GATHER_ACCESS_DIRECT)
@@ -1751,7 +1720,7 @@ static side_define_struct(mystructgatherstructnest0,
 side_static_event(my_provider_event_gatherstructnest,
 	"myprovider", "myeventgatherstructnest", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_struct("structgather", &mystructgatherstructnest0, 0,
+		side_field_gather_struct("structgather", mystructgatherstructnest0, 0,
 				sizeof(struct testgatherstructnest0), SIDE_TYPE_GATHER_ACCESS_DIRECT),
 	)
 );
@@ -1813,7 +1782,7 @@ static side_define_struct(mystructgathervla,
 side_static_event(my_provider_event_gathervla,
 	"myprovider", "myeventgathervla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_struct("structgathervla", &mystructgathervla, 0,
+		side_field_gather_struct("structgathervla", mystructgathervla, 0,
 				sizeof(struct testgathervla), SIDE_TYPE_GATHER_ACCESS_DIRECT),
 		side_field_gather_vla("vla",
 			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
@@ -1863,7 +1832,7 @@ static side_define_struct(mystructgathervlaflex,
 side_static_event(my_provider_event_gathervlaflex,
 	"myprovider", "myeventgathervlaflex", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_struct("structgathervlaflex", &mystructgathervlaflex, 0,
+		side_field_gather_struct("structgathervlaflex", mystructgathervlaflex, 0,
 				sizeof(struct testgathervlaflex), SIDE_TYPE_GATHER_ACCESS_DIRECT)
 	)
 );
@@ -2001,37 +1970,37 @@ static side_define_enum(myenumgather,
 
 side_static_event(my_provider_event_enum_gather, "myprovider", "myeventenumgather", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_gather_enum("5", &myenumgather,
+		side_field_gather_enum("5", myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0,
 					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
-		side_field_gather_enum("400", &myenumgather,
+		side_field_gather_enum("400", myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0,
 					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
-		side_field_gather_enum("200", &myenumgather,
+		side_field_gather_enum("200", myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer(0, sizeof(uint8_t), 0, 0,
 					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
-		side_field_gather_enum("-100", &myenumgather,
+		side_field_gather_enum("-100", myenumgather,
 			side_elem(
 				side_type_gather_signed_integer(0, sizeof(int8_t), 0, 0,
 					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
-		side_field_gather_enum("6_be", &myenumgather,
+		side_field_gather_enum("6_be", myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer_be(0, sizeof(uint32_t), 0, 0,
 					SIDE_TYPE_GATHER_ACCESS_DIRECT)
 			)
 		),
-		side_field_gather_enum("6_le", &myenumgather,
+		side_field_gather_enum("6_le", myenumgather,
 			side_elem(
 				side_type_gather_unsigned_integer_le(0, sizeof(uint32_t), 0, 0,
 					SIDE_TYPE_GATHER_ACCESS_DIRECT)
@@ -2167,8 +2136,8 @@ static side_define_variant(myvariantdef,
 
 side_static_event(my_provider_event_variant, "myprovider", "myeventvariant", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_variant("variant1", &myvariantdef),
-		side_field_variant("variant2", &myvariantdef),
+		side_field_variant("variant1", myvariantdef),
+		side_field_variant("variant2", myvariantdef),
 		side_field_u8("z"),
 	)
 );
@@ -2182,8 +2151,8 @@ void test_variant(void)
 
 		side_event_call(my_provider_event_variant,
 			side_arg_list(
-				side_arg_variant(&myvariant1),
-				side_arg_variant(&myvariant2),
+				side_arg_variant(myvariant1),
+				side_arg_variant(myvariant2),
 				side_arg_u8(55),
 			)
 		);
@@ -2317,7 +2286,7 @@ static side_define_optional(my_optional, side_elem(side_type_string()));
 
 side_static_event(my_provider_event_optional, "myprovider", "myeventoptional", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_optional("a", &my_optional),
+		side_field_optional("a", my_optional),
 		side_field_optional_literal("b", side_elem(side_type_string())),
 	)
 );
@@ -2332,10 +2301,64 @@ void test_optional(void)
 
 		side_event_call(my_provider_event_optional,
 			side_arg_list(
-				side_arg_optional(&present),
-				side_arg_optional(&absent),
+				side_arg_optional(present),
+				side_arg_optional(absent),
 			)
 		);
+	}
+}
+
+static side_define_struct(my_struct_inner,
+	side_field_list(
+		side_field_u32("x"),
+	)
+);
+
+static side_define_struct(my_struct_outter,
+	side_field_list(
+		side_field_struct("inner", my_struct_inner),
+	)
+);
+
+side_static_event(event_nested_struct, "myprovider", "nestedstruct", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_struct("struct", my_struct_outter),
+	)
+);
+
+static void test_nested_struct(void)
+{
+	if (side_event_enabled(event_nested_struct)) {
+		side_arg_define_struct(my_inner_struct, side_arg_list(side_arg_u32(21)));
+		side_arg_define_struct(my_outter_struct, side_arg_list(side_arg_struct(my_inner_struct)));
+		side_event_call(event_nested_struct, side_arg_list(side_arg_struct(my_outter_struct)));
+	}
+}
+
+static side_define_struct(my_struct_for_vla,
+	side_field_list(
+		side_field_u32("x"),
+	)
+);
+
+static side_define_vla(my_vla_of_struct,
+	side_elem(side_type_struct(my_struct_for_vla)),
+	side_elem(side_type_u32())
+);
+
+side_static_event(event_vla_of_struct, "myprovider", "nestedstruct", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_vla("vla", my_vla_of_struct),
+	)
+);
+
+static void test_vla_of_struct(void)
+{
+	if (side_event_enabled(event_nested_struct)) {
+		side_arg_define_struct(mystruct1, side_arg_list(side_arg_u32(21)));
+		side_arg_define_struct(mystruct2, side_arg_list(side_arg_u32(21)));
+		side_arg_define_vla(myvla, side_arg_list(side_arg_struct(mystruct1), side_arg_struct(mystruct2)));
+		side_event_call(event_vla_of_struct, side_arg_list(side_arg_vla(myvla)));
 	}
 }
 
@@ -2344,7 +2367,6 @@ int main()
 	test_fields();
 	test_event_hidden();
 	test_event_export();
-	test_struct_literal();
 	test_struct();
 	test_array();
 	test_vla();
@@ -2394,5 +2416,7 @@ int main()
 	test_integer128();
 	test_c_native_types();
 	test_optional();
+	test_nested_struct();
+	test_vla_of_struct();
 	return 0;
 }
