@@ -12,4 +12,5 @@ nobase_include_HEADERS = \
 	side/endian.h \
 	side/instrumentation-c-api.h \
 	side/macros.h \
+	side/static-check.h \
 	side/trace.h

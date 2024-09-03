@@ -580,4 +580,12 @@
 #define side_export_event_variadic _side_export_event_variadic
 #define side_declare_event _side_declare_event
 
+/*
+ * Static checking is opt-in because it might not work on specific
+ * compilers and it slows down the preprocessor.
+ */
+#ifdef SIDE_STATIC_CHECK_ENABLE
+# include <side/static-check.h>
+#endif /* SIDE_STATIC_CHECK_ENABLE */
+
 #endif	/* _SIDE_API_H */
