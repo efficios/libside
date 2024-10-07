@@ -18,6 +18,9 @@ X(unsigned long long, ULLONG_MAX, ulong_long);
 X(float, FLT_MIN, float);
 X(double, DBL_MIN, double);
 
-#ifdef __SIZEOF_LONG_DOUBLE__
+#if defined(__SIZEOF_LONG_DOUBLE) &&				\
+	((__SIZEOF_LONG_DOUBLE__ <= 4 && __HAVE_FLOAT32) ||	\
+	 (__SIZEOF_LONG_DOUBLE__ <= 8 && __HAVE_FLOAT64) ||	\
+	 (__SIZEOF_LONG_DOUBLE__ <= 16 && __HAVE_FLOAT128))
 X(long double, LDBL_MIN, long_double);
 #endif

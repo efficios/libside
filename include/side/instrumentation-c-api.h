@@ -1478,8 +1478,15 @@
 /*
  * The forward declaration linkage is always the same in C. In C++ however, it
  * is necessary to not use the same linkage as the declaration.
+ *
+ * Rationale for disabled diagnostics:
+ *
+ *   -Wsection:
+ *      Clang complains about redeclared sections.
  */
 #define _side_define_event(_forward_decl_linkage, _linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
+	SIDE_PUSH_DIAGNOSTIC()						\
+	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
 	_forward_decl_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 		_identifier;							\
 	_forward_decl_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
@@ -1512,7 +1519,8 @@
 		.end = {}						\
 	};								\
 	static const struct side_event_description __attribute__((section("side_event_description_ptr"), used)) \
-			*side_event_ptr__##_identifier = &(_identifier)
+	*side_event_ptr__##_identifier = &(_identifier);		\
+	SIDE_POP_DIAGNOSTIC() SIDE_ACCEPT_COMMA()
 
 /*
  * In C++, it is not possible to forward declare a static variable.  Use

@@ -490,7 +490,7 @@ void side_event_remove_callbacks(struct side_event_description *desc)
 	 * unreachable.
 	 */
 	es0->nr_callbacks = 0;
-	side_rcu_assign_pointer(es0->callbacks, &side_empty_callback);
+	side_rcu_assign_pointer(es0->callbacks, (struct side_callback *)&side_empty_callback);
 	/*
 	 * No need to wait for grace period because instrumentation is
 	 * unreachable.

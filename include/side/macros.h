@@ -26,6 +26,40 @@
 /* Same as SIDE_CAT, but can expand SIDE_CAT within the expansion itself. */
 #define SIDE_CAT2_PRIMITIVE(x, y...) x ## y
 #define SIDE_CAT2(x, y...) SIDE_CAT2_PRIMITIVE(x, y)
+
+/* Accept a trailing comma. */
+#define SIDE_ACCEPT_COMMA(...) side_static_assert(1, "", _)
+
+/*
+ * The diagnostic macros can be used to turn-off warnings using inline _Pragma.
+ */
+#if defined(__clang__)
+
+#  define SIDE_DIAGNOSTIC(x)			\
+	_Pragma(SIDE_STR(clang diagnostic x))
+
+#elif defined(__GNUC__)
+
+#  define SIDE_DIAGNOSTIC(x)			\
+	_Pragma(SIDE_STR(GCC diagnostic x))
+
+#endif
+
+#ifdef __cplusplus
+#  define SIDE_DIAGNOSTIC_C(...)
+#  define SIDE_DIAGNOSTIC_CXX SIDE_DIAGNOSTIC
+#else
+#  define SIDE_DIAGNOSTIC_C SIDE_DIAGNOSTIC
+#  define SIDE_DIAGNOSTIC_CXX(...)
+#endif
+
+#define SIDE_PUSH_DIAGNOSTIC()						\
+	SIDE_DIAGNOSTIC(push)						\
+	SIDE_DIAGNOSTIC(ignored "-Wpragmas")
+
+#define SIDE_POP_DIAGNOSTIC()			\
+    SIDE_DIAGNOSTIC(pop)
+
 /*
  * Define a unique identifier in the compilation unit.
  */
@@ -216,20 +250,20 @@
 #  define SIDE_PTR_INIT(...)					\
 	{							\
 		.v = {						\
-			[0] = (__VA_ARGS__),			\
-			[1] = 0,				\
-			[2] = 0,				\
-			[3] = 0,				\
+			(__VA_ARGS__),				\
+			0,					\
+			0,					\
+			0,					\
 		},						\
 	}
 # else
 #  define SIDE_PTR_INIT(...)					\
 	{							\
 		.v = {						\
-			[0] = 0,				\
-			[1] = 0,				\
-			[2] = 0,				\
-			[3] = (__VA_ARGS__),			\
+			0,					\
+			0,					\
+			0,					\
+			(__VA_ARGS__),				\
 		},						\
 	}
 # endif
@@ -245,16 +279,16 @@
 #  define SIDE_PTR_INIT(...)					\
 	{							\
 		.v = {						\
-			[0] = (__VA_ARGS__),			\
-			[1] = 0,				\
+			(__VA_ARGS__),				\
+			0,					\
 		},						\
 	}
 # else
 #  define SIDE_PTR_INIT(...)					\
 	{							\
 		.v = {						\
-			[0] = 0,				\
-			[1] = (__VA_ARGS__),			\
+			 0,					\
+			(__VA_ARGS__),				\
 		},						\
 	}
 # endif
@@ -267,7 +301,7 @@
 # define SIDE_PTR_INIT(...)					\
 	{							\
 		.v = {						\
-			[0] = (__VA_ARGS__),			\
+			(__VA_ARGS__),				\
 		},						\
 	}
 #else

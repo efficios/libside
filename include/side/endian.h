@@ -40,12 +40,9 @@
 #endif
 
 #if (defined(__linux__) || defined(__CYGWIN__))
-#include <endian.h>
-#include <byteswap.h>
-
-#define side_bswap_16(x)		bswap_16(x)
-#define side_bswap_32(x)		bswap_32(x)
-#define side_bswap_64(x)		bswap_64(x)
+#define side_bswap_16(x)		__builtin_bswap16(x)
+#define side_bswap_32(x)		__builtin_bswap32(x)
+#define side_bswap_64(x)		__builtin_bswap64(x)
 
 #define SIDE_BYTE_ORDER			__BYTE_ORDER
 #define SIDE_LITTLE_ENDIAN		__LITTLE_ENDIAN
