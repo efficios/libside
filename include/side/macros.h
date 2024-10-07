@@ -15,6 +15,22 @@
 
 #define SIDE_ARRAY_SIZE(arr)	(sizeof(arr) / sizeof((arr)[0]))
 
+/* Stringify X after expansion. */
+#define SIDE_STR_PRIMITIVE(x...) #x
+#define SIDE_STR(x...) SIDE_STR_PRIMITIVE(x)
+
+/* Concatenate X with Y after expansion. */
+#define SIDE_CAT_PRIMITIVE(x, y...) x ## y
+#define SIDE_CAT(x, y...) SIDE_CAT_PRIMITIVE(x, y)
+
+/* Same as SIDE_CAT, but can expand SIDE_CAT within the expansion itself. */
+#define SIDE_CAT2_PRIMITIVE(x, y...) x ## y
+#define SIDE_CAT2(x, y...) SIDE_CAT2_PRIMITIVE(x, y)
+/*
+ * Define a unique identifier in the compilation unit.
+ */
+#define SIDE_MAKE_ID(prefix)					\
+    SIDE_CAT(libside_gensym_, SIDE_CAT(prefix, __COUNTER__))
 /*
  * Compound literals with static storage are needed by SIDE
  * instrumentation.
@@ -26,6 +42,51 @@
  * static struct mystruct *var = LTTNG_UST_COMPOUND_LITERAL(struct mystruct, { 1, 2, 3 });
  */
 #define SIDE_COMPOUND_LITERAL(type, ...)   (type[]) { __VA_ARGS__ }
+
+/*
+ * Dynamic compound literals are used in function scopes, i.e., the storage is
+ * on the stack. C++ does not support them well.
+ *
+ * To overcome this issue, the compound literals is memcpy onto an allocated
+ * buffer on the stack using alloca(3).
+ *
+ * See the following paragraphes taken from GCC documentation for the rationale:
+ *
+ * In C, a compound literal designates an unnamed object with static or
+ * automatic storage duration. In C++, a compound literal designates a temporary
+ * object that only lives until the end of its full-expression. As a result,
+ * well-defined C code that takes the address of a subobject of a compound
+ * literal can be undefined in C++, so G++ rejects the conversion of a temporary
+ * array to a pointer. For instance, if the array compound literal example above
+ * appeared inside a function, any subsequent use of foo in C++ would have
+ * undefined behavior because the lifetime of the array ends after the
+ * declaration of foo.
+ *
+ * As an optimization, G++ sometimes gives array compound literals longer
+ * lifetimes: when the array either appears outside a function or has a
+ * const-qualified type. If foo and its initializer had elements of type char
+ * *const rather than char *, or if foo were a global variable, the array would
+ * have static storage duration. But it is probably safest just to avoid the use
+ * of array compound literals in C++ code.
+ */
+#ifdef __cplusplus
+
+#define SIDE_DYNAMIC_COMPOUND_LITERAL_PRIMITIVE(id, type, ...)		\
+	({								\
+		size_t SIDE_CAT(id, _size) = sizeof(SIDE_COMPOUND_LITERAL(type, __VA_ARGS__)); \
+		type *id = (type*)__builtin_alloca(SIDE_CAT(id, _size)); \
+		__builtin_memcpy((void*)id, (void*)SIDE_COMPOUND_LITERAL(type, __VA_ARGS__), \
+				SIDE_CAT(id, _size));			\
+		id;							\
+	})
+
+#  define SIDE_DYNAMIC_COMPOUND_LITERAL(type, ...)	\
+	SIDE_DYNAMIC_COMPOUND_LITERAL_PRIMITIVE(SIDE_MAKE_ID(dynamic_compound_literal_), \
+						type, __VA_ARGS__)
+
+#else
+#  define SIDE_DYNAMIC_COMPOUND_LITERAL SIDE_COMPOUND_LITERAL
+#endif
 
 #define side_likely(x)		__builtin_expect(!!(x), 1)
 #define side_unlikely(x)	__builtin_expect(!!(x), 0)
