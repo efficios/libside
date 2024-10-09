@@ -86,7 +86,7 @@ side_static_event(my_provider_event_struct_literal, "myprovider", "myeventstruct
 static
 void test_struct_literal(void)
 {
-	side_event_cond(my_provider_event_struct_literal) {
+	if (side_event_enabled(my_provider_event_struct_literal)) {
 		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
 		side_event_call(my_provider_event_struct_literal, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
 	}
@@ -109,7 +109,7 @@ side_static_event(my_provider_event_struct, "myprovider", "myeventstruct", SIDE_
 static
 void test_struct(void)
 {
-	side_event_cond(my_provider_event_struct) {
+	if (side_event_enabled(my_provider_event_struct)) {
 		side_arg_define_vec(mystruct, side_arg_list(side_arg_u32(21), side_arg_s64(22)));
 		side_event_call(my_provider_event_struct, side_arg_list(side_arg_struct(&mystruct), side_arg_u8(55)));
 	}
@@ -125,7 +125,7 @@ side_static_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVE
 static
 void test_array(void)
 {
-	side_event_cond(my_provider_event_array) {
+	if (side_event_enabled(my_provider_event_array)) {
 		side_arg_define_vec(myarray, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
 		side_event_call(my_provider_event_array, side_arg_list(side_arg_array(&myarray), side_arg_s64(42)));
 	}
@@ -141,7 +141,7 @@ side_static_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DE
 static
 void test_vla(void)
 {
-	side_event_cond(my_provider_event_vla) {
+	if (side_event_enabled(my_provider_event_vla)) {
 		side_arg_define_vec(myvla, side_arg_list(side_arg_u32(1), side_arg_u32(2), side_arg_u32(3)));
 		side_event_call(my_provider_event_vla, side_arg_list(side_arg_vla(&myvla), side_arg_s64(42)));
 	}
@@ -187,7 +187,7 @@ side_static_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SID
 static
 void test_vla_visitor(void)
 {
-	side_event_cond(my_provider_event_vla_visitor) {
+	if (side_event_enabled(my_provider_event_vla_visitor)) {
 		struct app_visitor_ctx ctx = {
 			.ptr = testarray,
 			.length = SIDE_ARRAY_SIZE(testarray),
@@ -274,7 +274,7 @@ side_static_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d",
 static
 void test_vla_visitor_2d(void)
 {
-	side_event_cond(my_provider_event_vla_visitor2d) {
+	if (side_event_enabled(my_provider_event_vla_visitor2d)) {
 		struct app_visitor_2d_outer_ctx ctx = {
 			.ptr = testarray2d,
 			.length = SIDE_ARRAY_SIZE(testarray2d),
@@ -610,7 +610,7 @@ static uint32_t testarray_dynamic_vla[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 static
 void test_dynamic_vla_with_visitor(void)
 {
-	side_event_cond(my_provider_event_dynamic_vla_visitor) {
+	if (side_event_enabled(my_provider_event_dynamic_vla_visitor)) {
 		struct app_dynamic_vla_visitor_ctx ctx = {
 			.ptr = testarray_dynamic_vla,
 			.length = SIDE_ARRAY_SIZE(testarray_dynamic_vla),
@@ -667,7 +667,7 @@ static struct struct_visitor_pair testarray_dynamic_struct[] = {
 static
 void test_dynamic_struct_with_visitor(void)
 {
-	side_event_cond(my_provider_event_dynamic_struct_visitor) {
+	if (side_event_enabled(my_provider_event_dynamic_struct_visitor)) {
 		struct app_dynamic_struct_visitor_ctx ctx = {
 			.ptr = testarray_dynamic_struct,
 			.length = SIDE_ARRAY_SIZE(testarray_dynamic_struct),
@@ -792,7 +792,7 @@ side_static_event_variadic(my_provider_event_variadic_struct_attr,
 static
 void test_variadic_struct_attr(void)
 {
-	side_event_cond(my_provider_event_variadic_struct_attr) {
+	if (side_event_enabled(my_provider_event_variadic_struct_attr)) {
 		side_arg_dynamic_define_struct(mystruct,
 			side_arg_list(
 				side_arg_dynamic_field("a",
@@ -1117,7 +1117,7 @@ side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitma
 static
 void test_enum_bitmap(void)
 {
-	side_event_cond(my_provider_event_enum_bitmap) {
+	if (side_event_enabled(my_provider_event_enum_bitmap)) {
 		side_arg_define_vec(myarray,
 			side_arg_list(
 				side_arg_u32(0),
@@ -1162,7 +1162,7 @@ side_static_event_variadic(my_provider_event_blob, "myprovider", "myeventblob", 
 static
 void test_blob(void)
 {
-	side_event_cond(my_provider_event_blob) {
+	if (side_event_enabled(my_provider_event_blob)) {
 		side_arg_define_vec(myarray, side_arg_list(side_arg_byte(1), side_arg_byte(2), side_arg_byte(3)));
 		side_arg_dynamic_define_vec(myvla,
 			side_arg_list(
@@ -1198,7 +1198,7 @@ side_static_event_variadic(my_provider_event_format_string,
 static
 void test_fmt_string(void)
 {
-	side_event_cond(my_provider_event_format_string) {
+	if (side_event_enabled(my_provider_event_format_string)) {
 		side_arg_dynamic_define_vec(args,
 			side_arg_list(
 				side_arg_dynamic_string("blah"),
@@ -1447,7 +1447,7 @@ side_static_event(my_provider_event_structgather, "myprovider", "myeventstructga
 static
 void test_struct_gather(void)
 {
-	side_event_cond(my_provider_event_structgather) {
+	if (side_event_enabled(my_provider_event_structgather)) {
 		struct test mystruct = {
 			.a = 55,
 			.b = 123,
@@ -1533,7 +1533,7 @@ side_static_event(my_provider_event_structgather_nest,
 static
 void test_struct_gather_nest_ptr(void)
 {
-	side_event_cond(my_provider_event_structgather_nest) {
+	if (side_event_enabled(my_provider_event_structgather_nest)) {
 		struct testnest2 mystruct2 = {
 			.c = 77,
 		};
@@ -1600,7 +1600,7 @@ side_static_event(my_provider_event_structgatherfloat,
 static
 void test_struct_gather_float(void)
 {
-	side_event_cond(my_provider_event_structgatherfloat) {
+	if (side_event_enabled(my_provider_event_structgatherfloat)) {
 		struct testfloat mystruct = {
 #if __HAVE_FLOAT16
 			.f16 = 1.1,
@@ -1659,7 +1659,7 @@ side_static_event(my_provider_event_structgatherarray,
 static
 void test_array_gather(void)
 {
-	side_event_cond(my_provider_event_structgatherarray) {
+	if (side_event_enabled(my_provider_event_structgatherarray)) {
 		struct testarray mystruct = {
 			.a = 55,
 			.ptr = mygatherarray,
@@ -1734,7 +1734,7 @@ side_static_event(my_provider_event_gatherstructnest,
 static
 void test_gather_structnest(void)
 {
-	side_event_cond(my_provider_event_gatherstructnest) {
+	if (side_event_enabled(my_provider_event_gatherstructnest)) {
 		struct testgatherstructnest0 mystruct = {
 			.nest = {
 				.b = 66,
@@ -1801,7 +1801,7 @@ side_static_event(my_provider_event_gathervla,
 static
 void test_gather_vla(void)
 {
-	side_event_cond(my_provider_event_gathervla) {
+	if (side_event_enabled(my_provider_event_gathervla)) {
 		struct testgathervla mystruct = {
 			.a = 55,
 			.len = SIDE_ARRAY_SIZE(gathervla),
@@ -1847,7 +1847,7 @@ side_static_event(my_provider_event_gathervlaflex,
 static
 void test_gather_vla_flex(void)
 {
-	side_event_cond(my_provider_event_gathervlaflex) {
+	if (side_event_enabled(my_provider_event_gathervlaflex)) {
 		struct testgathervlaflex *mystruct =
 			(struct testgathervlaflex *) malloc(sizeof(*mystruct) + VLAFLEXLEN * sizeof(uint64_t));
 
@@ -1882,7 +1882,7 @@ side_static_event(my_provider_event_gatherbyte,
 static
 void test_gather_byte(void)
 {
-	side_event_cond(my_provider_event_gatherbyte) {
+	if (side_event_enabled(my_provider_event_gatherbyte)) {
 		uint8_t v = 0x44;
 		uint8_t array[3] = { 0x1, 0x2, 0x3 };
 
@@ -1920,7 +1920,7 @@ side_static_event(my_provider_event_gatherbool,
 static
 void test_gather_bool(void)
 {
-	side_event_cond(my_provider_event_structgatherarray) {
+	if (side_event_enabled(my_provider_event_structgatherarray)) {
 		bool v1 = true;
 		bool v2 = false;
 		uint16_t v3 = 1U << 1;
@@ -1952,7 +1952,7 @@ side_static_event(my_provider_event_gatherpointer,
 static
 void test_gather_pointer(void)
 {
-	side_event_cond(my_provider_event_structgatherarray) {
+	if (side_event_enabled(my_provider_event_structgatherarray)) {
 		void *v = (void *)0x44;
 		void *array[3] = { (void *)0x1, (void *)0x2, (void *)0x3 };
 
@@ -2060,7 +2060,7 @@ side_static_event(my_provider_event_gatherstring,
 static
 void test_gather_string(void)
 {
-	side_event_cond(my_provider_event_gatherstring) {
+	if (side_event_enabled(my_provider_event_gatherstring)) {
 		const char *str1 = "abcdef";
 		const char *ptrarray[3] = {
 			"abc",
@@ -2151,7 +2151,7 @@ side_static_event(my_provider_event_variant, "myprovider", "myeventvariant", SID
 static
 void test_variant(void)
 {
-	side_event_cond(my_provider_event_variant) {
+	if (side_event_enabled(my_provider_event_variant)) {
 		side_arg_define_variant(myvariant1, side_arg_u32(2), side_arg_u16(4));
 		side_arg_define_variant(myvariant2, side_arg_u32(5), side_arg_string("abc"));
 
@@ -2182,7 +2182,7 @@ side_static_event(my_provider_event_integer128, "myprovider", "myevent_integer12
 static
 void test_integer128(void)
 {
-	side_event_cond(my_provider_event_integer128) {
+	if (side_event_enabled(my_provider_event_integer128)) {
 		__int128 s_v128 = 0;
 		unsigned __int128 u_v128;
 
@@ -2205,7 +2205,7 @@ void test_integer128(void)
 			)
 		);
 	}
-	side_event_cond(my_provider_event_integer128) {
+	if (side_event_enabled(my_provider_event_integer128)) {
 		__int128 s_v128 = 0;
 		unsigned __int128 u_v128;
 
@@ -2228,7 +2228,7 @@ void test_integer128(void)
 			)
 		);
 	}
-	side_event_cond(my_provider_event_integer128) {
+	if (side_event_enabled(my_provider_event_integer128)) {
 		__int128 s_v128 = 0;
 		unsigned __int128 u_v128;
 

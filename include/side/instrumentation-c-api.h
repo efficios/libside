@@ -1188,9 +1188,9 @@
 
 #define side_arg_list(...)	__VA_ARGS__
 
-#define side_event_cond(_identifier) \
-	if (side_unlikely(__atomic_load_n(&side_event_state__##_identifier.enabled, \
-					__ATOMIC_RELAXED)))
+#define side_event_enabled(_identifier) \
+	side_unlikely(__atomic_load_n(&side_event_state__##_identifier.enabled, \
+					__ATOMIC_RELAXED))
 
 #define _side_event_call(_call, _identifier, _sav) \
 	{ \
@@ -1206,7 +1206,7 @@
 	_side_event_call(side_call, _identifier, SIDE_PARAM(_sav))
 
 #define side_event(_identifier, _sav) \
-	side_event_cond(_identifier) \
+	if (side_event_enabled(_identifier)) \
 		side_event_call(_identifier, SIDE_PARAM(_sav))
 
 #define _side_event_call_variadic(_call, _identifier, _sav, _var_fields, _attr...) \
@@ -1230,7 +1230,7 @@
 	_side_event_call_variadic(side_call_variadic, _identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var_fields), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define side_event_variadic(_identifier, _sav, _var, _attr...) \
-	side_event_cond(_identifier) \
+	if (side_event_enabled(_identifier)) \
 		side_event_call_variadic(_identifier, SIDE_PARAM(_sav), SIDE_PARAM(_var), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
 #define _side_statedump_event_call(_call, _identifier, _key, _sav) \
