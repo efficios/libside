@@ -631,9 +631,27 @@
 	const struct side_type_variant _identifier = \
 		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list()))
 
-#define side_variant_literal(_selector, _options, _attr...) \
-	SIDE_COMPOUND_LITERAL(const struct side_type_variant, \
-		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+enum {
+	SIDE_OPTIONAL_DISABLED = 0,
+	SIDE_OPTIONAL_ENABLED = 1,
+};
+
+#define side_type_optional(_type)				\
+	{							\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_OPTIONAL),	\
+		.u = {						\
+			.side_optional = SIDE_PTR_INIT(_type),	\
+		},						\
+	}
+
+#define side_define_optional(_identifier, _type)	\
+	const struct side_type _identifier = side_type_optional(SIDE_PARAM(_type))
+
+#define side_field_optional(_name, _identifier)	\
+	_side_field(_name, side_type_optional(_identifier))
+
+#define side_field_optional_literal(_name, _type)			\
+	_side_field(_name, side_type_optional(SIDE_PARAM(_type)))
 
 #define side_type_array(_elem_type, _length, _attr...) \
 	{ \
@@ -1048,6 +1066,24 @@
 				.side_variant = SIDE_PTR_INIT(_side_variant), \
 			}, \
 		}, \
+	}
+
+
+#define side_arg_define_optional(_identifier, _value, _selector)	\
+	const struct side_arg_optional _identifier = {			\
+		.side_static = _value,					\
+		.selector = _selector,					\
+	}
+
+#define side_arg_optional(_identifier)					\
+	{								\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_OPTIONAL),		\
+		.flags = 0,						\
+		.u = {							\
+			.side_static = {				\
+				.side_optional = SIDE_PTR_INIT(_identifier) \
+			},						\
+		},							\
 	}
 
 #define side_arg_array(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_ARRAY), .flags = 0, .u = { .side_static = { .side_array = SIDE_PTR_INIT(_side_type) } } }

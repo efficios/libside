@@ -2288,6 +2288,31 @@ void test_c_native_types(void)
 #undef X
 }
 
+static side_define_optional(my_optional, side_elem(side_type_string()));
+
+side_static_event(my_provider_event_optional, "myprovider", "myeventoptional", SIDE_LOGLEVEL_DEBUG,
+	side_field_list(
+		side_field_optional("a", &my_optional),
+		side_field_optional_literal("b", side_elem(side_type_string())),
+	)
+);
+
+
+static
+void test_optional(void)
+{
+	if (side_event_enabled(my_provider_event_optional)) {
+		side_arg_define_optional(present, side_arg_string("present"), SIDE_OPTIONAL_ENABLED);
+		side_arg_define_optional(absent, side_arg_string("absent"), SIDE_OPTIONAL_DISABLED);
+
+		side_event_call(my_provider_event_optional,
+			side_arg_list(
+				side_arg_optional(&present),
+				side_arg_optional(&absent),
+			)
+		);
+	}
+}
 
 int main()
 {
@@ -2343,5 +2368,6 @@ int main()
 	test_variant();
 	test_integer128();
 	test_c_native_types();
+	test_optional();
 	return 0;
 }

@@ -44,6 +44,8 @@ struct side_description_visitor {
 	void (*before_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
 	void (*after_length_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
 	void (*after_element_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
+	void (*before_optional_type_func)(const struct side_type *optional, void *priv);
+	void (*after_optional_type_func)(const struct side_type *optional, void *priv);
 
 	/* Stack-copy enumeration types. */
 	void (*before_enum_type_func)(const struct side_type *type_desc, void *priv);

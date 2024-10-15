@@ -79,6 +79,7 @@ union side_arg_static {
 	/* Stack-copy compound types */
 	side_ptr_t(const struct side_arg_vec) side_struct;
 	side_ptr_t(const struct side_arg_variant) side_variant;
+	side_ptr_t(const struct side_arg_optional) side_optional;
 	side_ptr_t(const struct side_arg_vec) side_array;
 	side_ptr_t(const struct side_arg_vec) side_vla;
 	/* Pointer to non-const structure. Content modified by libside. */
@@ -191,6 +192,12 @@ struct side_arg_variant {
 	struct side_arg option;
 } SIDE_PACKED;
 side_check_size(struct side_arg_variant, 128);
+
+struct side_arg_optional {
+	struct side_arg side_static;
+	uint8_t selector;
+} SIDE_PACKED;
+side_check_size(struct side_arg_optional, 65);
 
 struct side_arg_vec {
 	side_ptr_t(const struct side_arg) sav;

@@ -2058,6 +2058,25 @@ void after_print_description_variant(const struct side_type_variant *side_varian
 }
 
 static
+void before_print_description_optional(const struct side_type *optional __attribute__((unused)),
+				void *priv __attribute__((unused)))
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	printf("type: optional {");
+	push_nesting(ctx);
+}
+
+static
+void after_print_description_optional(const struct side_type *optional __attribute__((unused)), void *priv)
+{
+	struct print_ctx *ctx = (struct print_ctx *) priv;
+
+	pop_nesting(ctx);
+	printf(" } }");
+}
+
+static
 void before_print_description_array(const struct side_type_array *side_array, void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
@@ -2495,6 +2514,8 @@ struct side_description_visitor description_visitor = {
 	.before_vla_visitor_type_func = before_print_description_vla_visitor,
 	.after_length_vla_visitor_type_func = after_length_print_description_vla_visitor,
 	.after_element_vla_visitor_type_func = after_element_print_description_vla_visitor,
+	.before_optional_type_func = before_print_description_optional,
+	.after_optional_type_func = after_print_description_optional,
 
 	/* Stack-copy enumeration types. */
 	.before_enum_type_func = before_print_description_enum,

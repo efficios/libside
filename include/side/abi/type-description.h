@@ -109,6 +109,7 @@ enum side_type_label {
 	/* Stack-copy compound types */
 	SIDE_TYPE_STRUCT,
 	SIDE_TYPE_VARIANT,
+	SIDE_TYPE_OPTIONAL,
 	SIDE_TYPE_ARRAY,
 	SIDE_TYPE_VLA,
 	SIDE_TYPE_VLA_VISITOR,
@@ -382,6 +383,7 @@ struct side_type {
 		side_ptr_t(const struct side_type_vla_visitor) side_vla_visitor;
 		side_ptr_t(const struct side_type_struct) side_struct;
 		side_ptr_t(const struct side_type_variant) side_variant;
+		side_ptr_t(const struct side_type) side_optional;
 
 		/* Stack-copy enumeration types */
 		struct side_type_enum side_enum;

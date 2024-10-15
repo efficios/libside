@@ -17,6 +17,7 @@ enum context_type {
 	CONTEXT_FIELD,
 	CONTEXT_ARRAY,
 	CONTEXT_STRUCT,
+	CONTEXT_OPTIONAL,
 };
 
 struct visit_context {
@@ -335,6 +336,26 @@ void type_visitor_variant(const struct side_type_visitor *type_visitor, const st
 	}
 	fprintf(stderr, "ERROR: Variant selector value unknown %" PRId64 "\n", v.s[SIDE_INTEGER128_SPLIT_LOW]);
 	abort();
+}
+
+static
+void type_visitor_optional(const struct side_type_visitor *type_visitor, const struct visit_context *ctx,
+			const struct side_type *type_desc, const struct side_arg_optional *side_arg_optional, void *priv)
+{
+	const struct side_type *type;
+	const struct side_arg *arg;
+	struct visit_context new_ctx = {
+		.type = CONTEXT_OPTIONAL,
+		.parent = ctx,
+	};
+
+	if (side_arg_optional->selector == SIDE_OPTIONAL_DISABLED)
+		return;
+
+	type = side_ptr_get(type_desc->u.side_optional);
+	arg = &side_arg_optional->side_static;
+
+	side_visit_type(type_visitor, &new_ctx, type, arg, priv);
 }
 
 static
@@ -1022,6 +1043,9 @@ static size_t unwind_context(const struct visit_context *ctx, size_t indent)
 	case CONTEXT_ARRAY:
 		fprintf(stderr, "index: %zu", ctx->array_index);
 		break;
+	case CONTEXT_OPTIONAL:
+		fprintf(stderr, "optional");
+		break;
 	case CONTEXT_NAMESPACE:	/* Fallthrough */
 	default:
 		abort();
@@ -1327,6 +1351,12 @@ void side_visit_type(const struct side_type_visitor *type_visitor,
 	case SIDE_TYPE_DYNAMIC_VLA:		/* Fallthrough */
 	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
 		visit_dynamic_type(type_visitor, item, priv);
+		break;
+
+	case SIDE_TYPE_OPTIONAL:
+		type_visitor_optional(type_visitor, ctx, type_desc,
+				side_ptr_get(item->u.side_static.side_optional),
+				priv);
 		break;
 
 	default:
