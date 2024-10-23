@@ -212,6 +212,7 @@ AC_CONFIG_FILES([
 	src/Makefile
 	src/libside.pc
 	tests/Makefile
+	tests/static-checker/Makefile
 	tests/utils/Makefile
 ])
 

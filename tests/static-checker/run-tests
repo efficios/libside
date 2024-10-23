@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+CURDIR=$(dirname "$0")/
+TESTDIR=$CURDIR/..
+SRCDIR=$CURDIR/../..
+
+SH_TAP=1
+source "$TESTDIR/utils/utils.sh"
+
+command -v gcc > /dev/null
+
+HAVE_GCC=$(($? == 0))
+
+command -v clang > /dev/null
+
+HAVE_CLANG=$(($? == 0))
+
+function run_test() {
+	if [ $HAVE_GCC -eq 1 ]; then
+		cat prologue.c "$1" | gcc -I "$SRCDIR/include" -xc /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
+		ok $? "gcc $1"
+		cat prologue.c "$1" | gcc -I "$SRCDIR/include" -xc++ /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
+		ok $? "g++ $1"
+	else
+		skip 0 "gcc not present" 2
+	fi
+
+	if [ $HAVE_CLANG -eq 1 ]; then
+		cat prologue.c "$1" | clang -I "$SRCDIR/include" -xc /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
+		ok $? "clang $1"
+		cat prologue.c "$1" | clang -I "$SRCDIR/include" -xc++ /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
+		ok $? "clang++ $1"
+	else
+		skip 0 "clang not present" 2
+	fi
+}
+
+cd "${TESTDIR}/static-checker"
+
+TEST=6
+
+plan_tests $((4*TEST))
+
+run_test null-field.c "Null field name"
+run_test duplicated-fields.c "Duplicated field names"
+run_test argument-array-types-incompatible.c "Types incompatible"
+run_test argument-vla-types-incompatible.c "Types incompatible"
+run_test static-event-call-mismatch.c "error: conflicting types | error: invalid conversion | error: cannot initialize a variable of type"
+run_test optional-mismatch.c "error: conflicting types | error: invalid conversion | error: cannot initialize a variable of type"

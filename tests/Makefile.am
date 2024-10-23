@@ -3,11 +3,10 @@
 
 AM_CPPFLAGS += -I$(top_srcdir)/tests/utils
 
-SUBDIRS = utils
+SUBDIRS = utils static-checker
 
-TEST_EXTENSIONS = .tap
-TAP_LOG_DRIVER_FLAGS = --merge --comments
-TAP_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' \
+LOG_DRIVER_FLAGS = --merge --comments
+LOG_DRIVER = env AM_TAP_AWK='$(AWK)' \
 	SIDE_TESTS_SRCDIR='$(abs_top_srcdir)/tests' \
 	SIDE_TESTS_BUILDDIR='$(abs_top_builddir)/tests' \
 	$(SHELL) $(srcdir)/utils/tap-driver.sh
@@ -16,6 +15,8 @@ noinst_PROGRAMS = \
 	regression/side-rcu-test \
 	unit/test \
 	unit/test-cxx \
+	unit/test-sc \
+	unit/test-sc-cxx \
 	unit/demo \
 	unit/statedump
 
@@ -38,6 +39,18 @@ unit_test_cxx_LDADD = \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
+unit_test_sc_SOURCES = unit/test-sc.c
+unit_test_sc_LDADD = \
+	$(top_builddir)/src/libside.la \
+	$(top_builddir)/tests/utils/libtap.la \
+	$(RSEQ_LIBS)
+
+unit_test_sc_cxx_SOURCES = unit/test-sc-cxx.cpp
+unit_test_sc_cxx_LDADD = \
+	$(top_builddir)/src/libside.la \
+	$(top_builddir)/tests/utils/libtap.la \
+	$(RSEQ_LIBS)
+
 unit_demo_SOURCES = unit/demo.c
 unit_demo_LDADD = \
 	$(top_builddir)/src/libside.la \
@@ -51,4 +64,4 @@ unit_statedump_LDADD = \
 	$(RSEQ_LIBS)
 
 # Currently no tap tests to run
-TESTS =
+TESTS =	static-checker/run-tests
