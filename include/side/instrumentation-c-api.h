@@ -590,6 +590,7 @@
 			.side_struct = SIDE_PTR_INIT(_struct), \
 		}, \
 	}
+
 #define side_field_struct(_name, _struct) \
 	_side_field(_name, side_type_struct(SIDE_PARAM(_struct)))
 
@@ -653,35 +654,43 @@ enum {
 #define side_field_optional_literal(_name, _type)			\
 	_side_field(_name, side_type_optional(SIDE_PARAM(_type)))
 
-#define side_type_array(_elem_type, _length, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_ARRAY), \
-		.u = { \
-			.side_array = { \
-				.elem_type = SIDE_PTR_INIT(_elem_type), \
-				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-				.length = _length, \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-			}, \
-		}, \
+#define side_type_array(_array)					\
+	{							\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_ARRAY),	\
+		.u = {						\
+			.side_array = SIDE_PTR_INIT(_array)	\
+		}						\
 	}
-#define side_field_array(_name, _elem_type, _length, _attr...) \
-	_side_field(_name, side_type_array(SIDE_PARAM(_elem_type), _length, SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
 
-#define side_type_vla(_elem_type, _length_type, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA), \
-		.u = { \
-			.side_vla = { \
-				.elem_type = SIDE_PTR_INIT(_elem_type), \
-				.length_type = SIDE_PTR_INIT(_length_type), \
-				.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-			}, \
-		}, \
+#define side_field_array(_name, _array) \
+	_side_field(_name, side_type_array(_array))
+
+#define side_define_array(_identifier, _elem_type, _length, _attr...)	\
+	const struct side_type_array _identifier = {			\
+		.elem_type = SIDE_PTR_INIT(SIDE_PARAM(_elem_type)),	\
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+		.length = _length,					\
+		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 	}
-#define side_field_vla(_name, _elem_type, _length_type, _attr...) \
-	_side_field(_name, side_type_vla(SIDE_PARAM(_elem_type), SIDE_PARAM(_length_type), SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())))
+
+#define side_type_vla(_vla)					\
+	{							\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA),		\
+		.u = {						\
+			.side_vla = SIDE_PTR_INIT(_vla),	\
+		},						\
+	}
+
+#define side_field_vla(_name, _vla) \
+	_side_field(_name, side_type_vla(_vla))
+
+#define side_define_vla(_identifier, _elem_type, _length_type, _attr...) \
+	const struct side_type_vla _identifier = {			\
+		.elem_type = SIDE_PTR_INIT(SIDE_PARAM(_elem_type)),	\
+		.length_type = SIDE_PTR_INIT(SIDE_PARAM(_length_type)),	\
+		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+	}
 
 #define _side_type_vla_visitor_define(_elem_type, _length_type, _visitor, _attr...) \
 	{ \

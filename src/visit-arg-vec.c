@@ -365,22 +365,22 @@ void type_visitor_array(const struct side_type_visitor *type_visitor, const stru
 	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	if (type_desc->u.side_array.length != side_sav_len) {
+	if (side_ptr_get(type_desc->u.side_array)->length != side_sav_len) {
 		fprintf(stderr, "ERROR: length mismatch between description and arguments of array\n");
 		abort();
 	}
 	if (type_visitor->before_array_type_func)
-		type_visitor->before_array_type_func(&type_desc->u.side_array, side_arg_vec, priv);
+		type_visitor->before_array_type_func(side_ptr_get(type_desc->u.side_array), side_arg_vec, priv);
 	for (i = 0; i < side_sav_len; i++) {
 		struct visit_context new_ctx = {
 			.type = CONTEXT_ARRAY,
 			.array_index = i,
 			.parent = ctx
 		};
-		side_visit_elem(type_visitor, &new_ctx, side_ptr_get(type_desc->u.side_array.elem_type), &sav[i], priv);
+		side_visit_elem(type_visitor, &new_ctx, side_ptr_get(side_ptr_get(type_desc->u.side_array)->elem_type), &sav[i], priv);
 	}
 	if (type_visitor->after_array_type_func)
-		type_visitor->after_array_type_func(&type_desc->u.side_array, side_arg_vec, priv);
+		type_visitor->after_array_type_func(side_ptr_get(type_desc->u.side_array), side_arg_vec, priv);
 }
 
 static
@@ -391,17 +391,17 @@ void type_visitor_vla(const struct side_type_visitor *type_visitor, const struct
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
 	if (type_visitor->before_vla_type_func)
-		type_visitor->before_vla_type_func(&type_desc->u.side_vla, side_arg_vec, priv);
+		type_visitor->before_vla_type_func(side_ptr_get(type_desc->u.side_vla), side_arg_vec, priv);
 	for (i = 0; i < side_sav_len; i++) {
 		struct visit_context new_ctx = {
 			.type = CONTEXT_ARRAY,
 			.array_index = i,
 			.parent = ctx
 		};
-		side_visit_elem(type_visitor, &new_ctx, side_ptr_get(type_desc->u.side_vla.elem_type), &sav[i], priv);
+		side_visit_elem(type_visitor, &new_ctx, side_ptr_get(side_ptr_get(type_desc->u.side_vla)->elem_type), &sav[i], priv);
 	}
 	if (type_visitor->after_vla_type_func)
-		type_visitor->after_vla_type_func(&type_desc->u.side_vla, side_arg_vec, priv);
+		type_visitor->after_vla_type_func(side_ptr_get(type_desc->u.side_vla), side_arg_vec, priv);
 }
 
 struct tracer_visitor_priv {

@@ -115,9 +115,14 @@ void test_struct(void)
 	}
 }
 
+static side_define_array(my_array_u32_3,
+	side_elem(side_type_u32()),
+	3
+);
+
 side_static_event(my_provider_event_array, "myprovider", "myarray", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_array("arr", side_elem(side_type_u32()), 3),
+		side_field_array("arr", &my_array_u32_3),
 		side_field_s64("v"),
 	)
 );
@@ -131,9 +136,14 @@ void test_array(void)
 	}
 }
 
+static side_define_vla(my_vla_u32,
+	side_elem(side_type_u32()),
+	side_elem(side_type_u32())
+);
+
 side_static_event(my_provider_event_vla, "myprovider", "myvla", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_vla("vla", side_elem(side_type_u32()), side_elem(side_type_u32())),
+		side_field_vla("vla", &my_vla_u32),
 		side_field_s64("v"),
 	)
 );
@@ -1094,6 +1104,16 @@ static side_define_enum_bitmap(myenum_bitmap,
 	)
 );
 
+static side_define_array(my_array_u32_5,
+	side_elem(side_type_u32()),
+	5
+);
+
+static side_define_vla(my_vla_u32_for_bitmap,
+	side_elem(side_type_u32()),
+	side_elem(side_type_u32())
+);
+
 side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitmap", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_enum_bitmap("bit_0", &myenum_bitmap, side_elem(side_type_u32())),
@@ -1106,9 +1126,9 @@ side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitma
 		side_field_enum_bitmap("bits_1+63", &myenum_bitmap, side_elem(side_type_u64())),
 		side_field_enum_bitmap("byte_bit_2", &myenum_bitmap, side_elem(side_type_byte())),
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_array(side_elem(side_type_u32()), 5))),
+			side_elem(side_type_array(&my_array_u32_5))),
 		side_field_enum_bitmap("bit_159", &myenum_bitmap,
-			side_elem(side_type_vla(side_elem(side_type_u32()), side_elem(side_type_u32())))),
+			side_elem(side_type_vla(&my_vla_u32_for_bitmap))),
 		side_field_enum_bitmap("bit_2_be", &myenum_bitmap, side_elem(side_type_u32_be())),
 		side_field_enum_bitmap("bit_2_le", &myenum_bitmap, side_elem(side_type_u32_le())),
 	)
@@ -1152,10 +1172,15 @@ void test_enum_bitmap(void)
 	}
 }
 
+static side_define_array(my_array_byte,
+	side_elem(side_type_byte()),
+	3
+);
+
 side_static_event_variadic(my_provider_event_blob, "myprovider", "myeventblob", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
 		side_field_byte("blobfield"),
-		side_field_array("arrayblob", side_elem(side_type_byte()), 3),
+		side_field_array("arrayblob", &my_array_byte),
 	)
 );
 

@@ -378,8 +378,8 @@ struct side_type {
 		struct side_type_float side_float;
 
 		/* Stack-copy compound types */
-		struct side_type_array side_array;
-		struct side_type_vla side_vla;
+		side_ptr_t(const struct side_type_array) side_array;
+		side_ptr_t(const struct side_type_vla) side_vla;
 		side_ptr_t(const struct side_type_vla_visitor) side_vla_visitor;
 		side_ptr_t(const struct side_type_struct) side_struct;
 		side_ptr_t(const struct side_type_variant) side_variant;

@@ -139,23 +139,23 @@ static
 void description_visitor_array(const struct side_description_visitor *description_visitor, const struct side_type *type_desc, void *priv)
 {
 	if (description_visitor->before_array_type_func)
-		description_visitor->before_array_type_func(&type_desc->u.side_array, priv);
-	side_visit_elem(description_visitor, side_ptr_get(type_desc->u.side_array.elem_type), priv);
+		description_visitor->before_array_type_func(side_ptr_get(type_desc->u.side_array), priv);
+	side_visit_elem(description_visitor, side_ptr_get(side_ptr_get(type_desc->u.side_array)->elem_type), priv);
 	if (description_visitor->after_array_type_func)
-		description_visitor->after_array_type_func(&type_desc->u.side_array, priv);
+		description_visitor->after_array_type_func(side_ptr_get(type_desc->u.side_array), priv);
 }
 
 static
 void description_visitor_vla(const struct side_description_visitor *description_visitor, const struct side_type *type_desc, void *priv)
 {
 	if (description_visitor->before_vla_type_func)
-		description_visitor->before_vla_type_func(&type_desc->u.side_vla, priv);
-	side_visit_elem(description_visitor, side_ptr_get(type_desc->u.side_vla.length_type), priv);
+		description_visitor->before_vla_type_func(side_ptr_get(type_desc->u.side_vla), priv);
+	side_visit_elem(description_visitor, side_ptr_get(side_ptr_get(type_desc->u.side_vla)->length_type), priv);
 	if (description_visitor->after_length_vla_type_func)
-		description_visitor->after_length_vla_type_func(&type_desc->u.side_vla, priv);
-	side_visit_elem(description_visitor, side_ptr_get(type_desc->u.side_vla.elem_type), priv);
+		description_visitor->after_length_vla_type_func(side_ptr_get(type_desc->u.side_vla), priv);
+	side_visit_elem(description_visitor, side_ptr_get(side_ptr_get(type_desc->u.side_vla)->elem_type), priv);
 	if (description_visitor->after_element_vla_type_func)
-		description_visitor->after_element_vla_type_func(&type_desc->u.side_vla, priv);
+		description_visitor->after_element_vla_type_func(side_ptr_get(type_desc->u.side_vla), priv);
 }
 
 static
