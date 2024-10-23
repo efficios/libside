@@ -65,6 +65,7 @@ dkms.conf
 /tests/unit/.dirstamp
 /tests/unit/demo
 /tests/unit/test
+/tests/unit/test-cxx
 /tests/unit/statedump
 
 #automake
