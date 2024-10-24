@@ -1135,15 +1135,18 @@ void type_mismatch(const struct visit_context *ctx,
 	abort();
 }
 
-void side_visit_type(const struct side_type_visitor *type_visitor,
-		const struct visit_context *ctx,
-		const struct side_type *type_desc, const struct side_arg *item, void *priv)
+static void ensure_types_compatible(const struct visit_context *ctx,
+				const struct side_type *type_desc,
+				const struct side_arg *item)
 {
-	enum side_type_label type;
+	enum side_type_label want, got;
 
-	switch (side_enum_get(type_desc->type)) {
+	want = side_enum_get(type_desc->type);
+	got = side_enum_get(item->type);
+
+	switch (want) {
 	case SIDE_TYPE_ENUM:
-		switch (side_enum_get(item->type)) {
+		switch (got) {
 		case SIDE_TYPE_U8:
 		case SIDE_TYPE_U16:
 		case SIDE_TYPE_U32:
@@ -1156,15 +1159,13 @@ void side_visit_type(const struct side_type_visitor *type_visitor,
 		case SIDE_TYPE_S128:
 			break;
 		default:
-			type_mismatch(ctx,
-				side_enum_get(type_desc->type),
-				side_enum_get(item->type));
+			type_mismatch(ctx, want, got);
 			break;
 		}
 		break;
 
 	case SIDE_TYPE_ENUM_BITMAP:
-		switch (side_enum_get(item->type)) {
+		switch (got) {
 		case SIDE_TYPE_U8:
 		case SIDE_TYPE_BYTE:
 		case SIDE_TYPE_U16:
@@ -1175,27 +1176,23 @@ void side_visit_type(const struct side_type_visitor *type_visitor,
 		case SIDE_TYPE_VLA:
 			break;
 		default:
-			type_mismatch(ctx,
-				side_enum_get(type_desc->type),
-				side_enum_get(item->type));
+			type_mismatch(ctx, want, got);
 			break;
 		}
 		break;
 
 	case SIDE_TYPE_GATHER_ENUM:
-		switch (side_enum_get(item->type)) {
+		switch (got) {
 		case SIDE_TYPE_GATHER_INTEGER:
 			break;
 		default:
-			type_mismatch(ctx,
-				side_enum_get(type_desc->type),
-				side_enum_get(item->type));
+			type_mismatch(ctx, want, got);
 			break;
 		}
 		break;
 
 	case SIDE_TYPE_DYNAMIC:
-		switch (side_enum_get(item->type)) {
+		switch (got) {
 		case SIDE_TYPE_DYNAMIC_NULL:
 		case SIDE_TYPE_DYNAMIC_BOOL:
 		case SIDE_TYPE_DYNAMIC_INTEGER:
@@ -1215,15 +1212,21 @@ void side_visit_type(const struct side_type_visitor *type_visitor,
 			break;
 		}
 		break;
-
 	default:
-		if (side_enum_get(type_desc->type) != side_enum_get(item->type)) {
-			type_mismatch(ctx,
-				side_enum_get(type_desc->type),
-				side_enum_get(item->type));
+		if (want != got) {
+			type_mismatch(ctx, want, got);
 		}
 		break;
 	}
+}
+
+void side_visit_type(const struct side_type_visitor *type_visitor,
+		const struct visit_context *ctx,
+		const struct side_type *type_desc, const struct side_arg *item, void *priv)
+{
+	enum side_type_label type;
+
+	ensure_types_compatible(ctx, type_desc, item);
 
 	if (side_enum_get(type_desc->type) == SIDE_TYPE_ENUM || side_enum_get(type_desc->type) == SIDE_TYPE_ENUM_BITMAP || side_enum_get(type_desc->type) == SIDE_TYPE_GATHER_ENUM)
 		type = side_enum_get(type_desc->type);
