@@ -2610,6 +2610,19 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 				SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list())); \
 	SIDE_SC_CHECK_EVENT_CALL_VARIADIC(_identifier, _sav)
 
+/* Dispatch: statedump_event_call */
+#undef side_statedump_event_call
+#define side_statedump_event_call(_identifier, _key, _sav, _attr...)	\
+	_side_statedump_event_call(side_statedump_call, _identifier, _key, SIDE_SC_EMIT_##_sav); \
+	SIDE_SC_CHECK_EVENT_CALL(_identifier, _sav)
+
+/* Dispatch: statedump_event_call */
+#undef side_statedump_event_call_variadic
+#define side_statedump_event_call_variadic(_identifier, _key, _sav, _var_fields, _attr...) \
+	_side_statedump_event_call_variadic(side_statedump_call_variadic, _identifier, _key, SIDE_SC_EMIT_##_sav, SIDE_SC_EMIT_##_var_fields, \
+				SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list())); \
+	SIDE_SC_CHECK_EVENT_CALL_VARIADIC(_identifier, _sav)
+
 /* Dispatch: event */
 #undef side_event
 #define side_event(_identifier, _sav)					\
@@ -2625,9 +2638,30 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #define side_event_variadic(_identifier, _sav, _var, _attr...)		\
 	do {								\
 		if (side_event_enabled(_identifier)) {			\
-			SIDE_SC_CHECK_EVENT_CALL_VARIADIC(_identifier, _sav); \
 			_side_event_call_variadic(side_call_variadic, _identifier, SIDE_SC_EMIT_##_sav, SIDE_SC_EMIT_##_var, \
 						SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list())); \
+			SIDE_SC_CHECK_EVENT_CALL_VARIADIC(_identifier, _sav); \
+		}							\
+	} while(0)
+
+/* Dispatch: statedump_event */
+#undef side_statedump_event
+#define side_statedump_event(_identifier, _key, _sav)			\
+	do {								\
+		if (side_event_enabled(_identifier)) {			\
+			_side_statedump_event_call(side_call, _identifier, _key, SIDE_SC_EMIT_##_sav); \
+			SIDE_SC_CHECK_EVENT_CALL(_identifier, _sav);	\
+		}							\
+	} while(0)
+
+/* Dispatch: statedump_event_variadic */
+#undef side_statedump_event_variadic
+#define side_statedump_event_variadic(_identifier, _key, _sav, _var, _attr...) \
+	do {								\
+		if (side_event_enabled(_identifier)) {			\
+			_side_statedump_event_call_variadic(side_call_variadic, _identifier, _key, SIDE_SC_EMIT_##_sav, SIDE_SC_EMIT_##_var, \
+						SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list())); \
+			SIDE_SC_CHECK_EVENT_CALL_VARIADIC(_identifier, _sav); \
 		}							\
 	} while(0)
 
