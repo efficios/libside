@@ -414,6 +414,8 @@ side_check_size(struct side_type_variant, 40 + sizeof(const struct side_type));
 
 struct side_type_optional {
 	side_ptr_t(const struct side_type) elem_type;
+	side_ptr_t(const struct side_attr) attr;
+	uint32_t nr_attr;
 };
 
 struct side_event_field {

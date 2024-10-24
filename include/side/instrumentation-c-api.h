@@ -642,19 +642,22 @@ enum {
 		}							\
 	}
 
-#define _side_type_optional_define(_elem_type)		\
-	{						\
-		.elem_type = SIDE_PTR_INIT(_elem_type),	\
+#define _side_type_optional_define(_elem_type, _attr...)		\
+	{								\
+		.elem_type = SIDE_PTR_INIT(_elem_type),			\
+		.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())),	\
+		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 	}
 
-#define _side_define_optional(_identifier, _elem_type)	\
-	const struct side_type_optional _identifier = _side_type_optional_define(SIDE_PARAM(_elem_type))
+#define _side_define_optional(_identifier, _elem_type, _attr...)	\
+	const struct side_type_optional _identifier = _side_type_optional_define(SIDE_PARAM(_elem_type), \
+										SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 
 #define _side_field_optional(_name, _identifier)		\
 	_side_field(_name, _side_type_optional(SIDE_PARAM(&(_identifier))))
 
-#define _side_field_optional_literal(_name, _elem_type)			\
-	_side_field(_name, _side_type_optional(SIDE_COMPOUND_LITERAL(struct side_type_optional, _side_type_optional_define(SIDE_PARAM(_elem_type)))))
+#define _side_field_optional_literal(_name, _elem_type, _attr...)		\
+	_side_field(_name, _side_type_optional(SIDE_COMPOUND_LITERAL(struct side_type_optional, _side_type_optional_define(SIDE_PARAM(_elem_type), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))))
 
 #define _side_type_array(_array)				\
 	{							\
