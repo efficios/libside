@@ -252,7 +252,7 @@
 		}, \
 	}
 
-#define _side_type_float(_type, _byte_order, _float_size, _attr) \
+#define __side_type_float(_type, _byte_order, _float_size, _attr) \
 	{ \
 		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
@@ -293,10 +293,10 @@
 #define _side_type_s64(_attr...)				_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(int64_t), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_s128(_attr...)			_side_type_integer(SIDE_TYPE_S128, true, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(__int128), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_pointer(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uintptr_t), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary16(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float16), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary32(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float32), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary64(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float64), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary128(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float128), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary16(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float16), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary32(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float32), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary64(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float64), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary128(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_FLOAT_WORD_ORDER_HOST, sizeof(_Float128), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_string(_attr...)			__side_type_string(SIDE_TYPE_STRING_UTF8, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_string16(_attr...) 			__side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint16_t), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_string32(_attr...)		 	__side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint32_t), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
@@ -341,135 +341,183 @@
 #ifdef __CHAR_UNSIGNED__
 #  define _side_field_char(_name, _attr...) _side_field_uchar(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_char(_args...) _side_arg_uchar(_args)
+#  define _side_type_char _side_type_uchar
 #else
 #  define _side_field_char(_name, _attr...) _side_field_schar(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_char(_args...) _side_arg_schar(_args)
+#  define _side_type_char _side_type_schar
 #endif
 
 #define _side_field_schar(_name, _attr...) _side_field_s8(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_arg_schar(_args...) _side_arg_s8(_args)
+#define _side_type_schar _side_type_s8
 
 #define _side_field_uchar(_name, _attr...) _side_field_u8(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_arg_uchar(_args...) _side_arg_u8(_args)
+#define _side_type_uchar _side_type_u8
 
 #if __SIZEOF_SHORT__ <= 2
 #  define _side_field_short(_name, _attr...) _side_field_s16(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_short(_args...) _side_arg_s16(_args)
+#  define _side_type_short _side_type_s16
 #  define _side_field_ushort(_name, _attr...) _side_field_u16(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_ushort(_args...) _side_arg_u16(_args)
+#  define _side_type_ushort _side_type_u16
 #elif __SIZEOF_SHORT__ <= 4
 #  define _side_field_short(_name, _attr...) _side_field_s32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_short(_args...) _side_arg_s32(_args)
+#  define _side_type_short _side_type_s32
 #  define _side_field_ushort(_name, _attr...) _side_field_u32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_ushort(_args...) _side_arg_u32(_args)
+#  define _side_type_ushort _side_type_u32
 #elif __SIZEOF_SHORT__ <= 8
 #  define _side_field_short(_name, _attr...) _side_field_s64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_short(_args...) _side_arg_s64(_args)
+#  define _side_type_short _side_type_s64
 #  define _side_field_ushort(_name, _attr...) _side_field_u64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_ushort(_args...) _side_arg_u64(_args)
+#  define _side_type_ushort _side_type_u64
 #else
 #  define _side_field_short(...)					\
 	side_static_assert(0, "Type `signed short int' is not supported", type__signed_short_int__is_not_supported)
 #  define _side_arg_short(...)					\
 	side_static_assert(0, "Type `signed short int' is not supported", type__signed_short_int__is_not_supported)
+#  define _side_type_short(...)					\
+	side_static_assert(0, "Type `signed short int' is not supported", type__signed_short_int__is_not_supported)
 #  define _side_field_ushort(...)					\
 	side_static_assert(0, "Type `unsigned short int' is not supported", type__unsigned_short_int__is_not_supported)
 #  define _side_arg_ushort(...)						\
+	side_static_assert(0, "Type `unsigned short int' is not supported", type__unsigned_short_int__is_not_supported)
+#  define _side_type_ushort(...)					\
 	side_static_assert(0, "Type `unsigned short int' is not supported", type__unsigned_short_int__is_not_supported)
 #endif
 
 #if __SIZEOF_INT__ <= 2
 #  define _side_field_int(_name, _attr...) _side_field_s16(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_int(_args...) _side_arg_s16(_args)
+#  define _side_type_int _side_type_s16
 #  define _side_field_uint(_name, _attr...) _side_field_u16(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_uint(_args...) _side_arg_u16(_args)
+#  define _side_type_uint _side_type_u16
 #elif __SIZEOF_INT__ <= 4
 #  define _side_field_int(_name, _attr...) _side_field_s32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_int(_args...) _side_arg_s32(_args)
+#  define _side_type_int _side_type_s32
 #  define _side_field_uint(_name, _attr...) _side_field_u32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_uint(_args...) _side_arg_u32(_args)
+#  define _side_type_uint _side_type_u32
 #elif __SIZEOF_INT__ <= 8
 #  define _side_field_int(_name, _attr...) _side_field_s64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_int(_args...) _side_arg_s64(_args)
+#  define _side_type_int _side_type_s64
 #  define _side_field_uint(_name, _attr...) _side_field_u64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_uint(_args...) _side_arg_u64(_args)
+#  define _side_type_uint _side_type_u64
 #else
 #  define _side_field_int(...)						\
 	side_static_assert(0, "Type `signed int' is not supported", type__signed_int__is_not_supported)
 #  define _side_arg_int(...)						\
 	side_static_assert(0, "Type `signed int' is not supported", type__signed_int__is_not_supported)
+#  define _side_type_int(...)						\
+	side_static_assert(0, "Type `signed int' is not supported", type__signed_int__is_not_supported)
 #  define _side_field_uint(...)						\
 	side_static_assert(0, "Type `unsigned int' is not supported", type__unsigned_int__is_not_supported)
 #  define _side_arg_uint(...)						\
+	side_static_assert(0, "Type `unsigned int' is not supported", type__unsigned_int__is_not_supported)
+#  define _side_type_uint(...)						\
 	side_static_assert(0, "Type `unsigned int' is not supported", type__unsigned_int__is_not_supported)
 #endif
 
 #if __SIZEOF_LONG__ <= 4
 #  define _side_field_long(_name, _attr...) _side_field_s32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_long(_args...) _side_arg_s32(_args)
+#  define _side_type_long _side_type_s32
 #  define _side_field_ulong(_name, _attr...) _side_field_u32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_ulong(_args...) _side_arg_u32(_args)
+#  define _side_type_ulong _side_type_u32
 #elif __SIZEOF_LONG__ <= 8
 #  define _side_field_long(_name, _attr...) _side_field_s64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_long(_args...) _side_arg_s64(_args)
+#  define _side_type_long _side_type_s64
 #  define _side_field_ulong(_name, _attr...) _side_field_u64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_ulong(_args...) _side_arg_u64(_args)
+#  define _side_type_ulong _side_type_u64
 #else
 #  define _side_field_long(...)						\
 	side_static_assert(0, "Type `signed long int' is not supported", type__signed_long_int__is_not_supported)
 #  define _side_arg_long(...)					\
 	side_static_assert(0, "Type `signed long int' is not supported", type__signed_long_int__is_not_supported)
+#  define _side_type_long(...)					\
+	side_static_assert(0, "Type `signed long int' is not supported", type__signed_long_int__is_not_supported)
 #  define _side_field_ulong(...)					\
 	side_static_assert(0, "Type `unsigned long int' is not supported", type__unsigned_long_int__is_not_supported)
 #  define _side_arg_ulong(...)						\
+	side_static_assert(0, "Type `unsigned long int' is not supported", type__unsigned_long_int__is_not_supported)
+#  define _side_type_ulong(...)						\
 	side_static_assert(0, "Type `unsigned long int' is not supported", type__unsigned_long_int__is_not_supported)
 #endif
 
 #if __SIZEOF_LONG_LONG__ <= 8
 #  define _side_field_long_long(_name, _attr...) _side_field_s64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_long_long(_args...) _side_arg_s64(_args)
+#  define _side_type_long_long _side_type_s64
 #  define _side_field_ulong_long(_name, _attr...) _side_field_u64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_ulong_long(_args...) _side_arg_u64(_args)
+#  define _side_type_ulong_long _side_type_u64
 #else
 #  define _side_field_long_long(...)					\
 	side_static_assert(0, "Type `signed long long int' is not supported", type__signed_long_long_int__is_not_supported)
 #  define _side_arg_long_long(...)					\
 	side_static_assert(0, "Type `signed long long int' is not supported", type__signed_long_long_int__is_not_supported)
-#  define _side_field_long_long(...)					\
+#  define _side_type_long_long(...)					\
+	side_static_assert(0, "Type `signed long long int' is not supported", type__signed_long_long_int__is_not_supported)
+#  define _side_field_ulong_long(...)					\
 	side_static_assert(0, "Type `unsigned long long int' is not supported", type__unsigned_long_long_int__is_not_supported)
-#  define _side_arg_long_long(...)					\
+#  define _side_arg_ulong_long(...)					\
+	side_static_assert(0, "Type `unsigned long long int' is not supported", type__unsigned_long_long_int__is_not_supported)
+#  define _side_arg_ulong_long(...)					\
 	side_static_assert(0, "Type `unsigned long long int' is not supported", type__unsigned_long_long_int__is_not_supported)
 #endif
 
 #if __SIZEOF_FLOAT__ <= 4 && __HAVE_FLOAT32
 #  define _side_field_float(_name, _attr...) _side_field_float_binary32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_float(_args...) _side_arg_float_binary32(_args)
+#  define _side_type_float _side_type_float_binary32
 #elif __SIZEOF_FLOAT__ <= 8 && __HAVE_FLOAT64
 #  define _side_field_float(_name, _attr...) _side_field_float_binary64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_float(_args...) _side_arg_float_binary64(_args)
+#  define _side_type_float _side_type_float_binary64
 #elif __SIZEOF_FLOAT__ <= 16 && __HAVE_FLOAT128
 #  define _side_field_float(_name, _attr...) _side_field_float_binary128(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_float(_args...) _side_arg_float_binary128(_args)
+#  define _side_type_float _side_type_float_binary128
 #else
 #  define _side_field_float(...)					\
 	side_static_assert(0, "Type `float' is not supported", type__float__is_not_supported)
 #  define _side_arg_float(...)					\
+	side_static_assert(0, "Type `float' is not supported", type__float__is_not_supported)
+#  define _side_type_float(...)					\
 	side_static_assert(0, "Type `float' is not supported", type__float__is_not_supported)
 #endif
 
 #if __SIZEOF_DOUBLE__ <= 4 && __HAVE_FLOAT32
 #  define _side_field_double(_name, _attr...) _side_field_float_binary32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_double(_args...) _side_arg_float_binary32(_args)
+#  define _side_type_double _side_type_float_binary32
 #elif __SIZEOF_DOUBLE__ <= 8 && __HAVE_FLOAT64
 #  define _side_field_double(_name, _attr...) _side_field_float_binary64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_double(_args...) _side_arg_float_binary64(_args)
+#  define _side_type_double _side_type_float_binary64
 #elif __SIZEOF_DOUBLE__ <= 16 && __HAVE_FLOAT128
 #  define _side_field_double(_name, _attr...) _side_field_double_binary128(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #  define _side_arg_double(_args...) _side_arg_float_binary128(_args)
+#  define _side_type_double _side_type_float_binary128
 #else
 #  define _side_field_double(...)					\
 	side_static_assert(0, "Type `double' is not supported", type__double__is_not_supported)
-#  define _side_arg_double(...)					\
+#  define _side_arg_double(...)						\
+	side_static_assert(0, "Type `double' is not supported", type__double__is_not_supported)
+#  define _side_type_double(...)					\
 	side_static_assert(0, "Type `double' is not supported", type__double__is_not_supported)
 #endif
 
@@ -477,16 +525,21 @@
 #  if __SIZEOF_LONG_DOUBLE__ <= 4 && __HAVE_FLOAT32
 #    define _side_field_long_double(_name, _attr...) _side_field_float_binary32(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #    define _side_arg_long_double(_args...) _side_arg_float_binary32(_args)
+#    define _side_type_long_double _side_type_float_binary32
 #  elif __SIZEOF_LONG_DOUBLE__ <= 8 && __HAVE_FLOAT64
 #    define _side_field_long_double(_name, _attr...) _side_field_float_binary64(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #    define _side_arg_long_double(_args...) _side_arg_float_binary64(_args)
+#    define _side_type_long_double _side_type_float_binary64
 #  elif __SIZEOF_LONG_DOUBLE__ <= 16 && __HAVE_FLOAT128
 #    define _side_field_long_double(_name, _attr...) _side_field_float_binary128(_name, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #    define _side_arg_long_double(_args...) _side_arg_float_binary128(_args)
+#    define _side_type_long_double _side_type_float_binary128
 #  else
 #    define _side_field_long_double(...)					\
 	side_static_assert(0, "Type `long double' is not supported", type__long_double__is_not_supported)
 #    define _side_arg_long_double(...)					\
+	side_static_assert(0, "Type `long double' is not supported", type__long_double__is_not_supported)
+#    define _side_type_long_double(...)					\
 	side_static_assert(0, "Type `long double' is not supported", type__long_double__is_not_supported)
 #  endif
 #endif	/* __SIZEOF_LONG_DOUBLE__ */
@@ -501,10 +554,10 @@
 #define _side_type_s64_le(_attr...)			_side_type_integer(SIDE_TYPE_S64, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(int64_t), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_s128_le(_attr...)			_side_type_integer(SIDE_TYPE_S128, true, SIDE_TYPE_BYTE_ORDER_LE, sizeof(__int128), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_pointer_le(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uintptr_t), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary16_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float16), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary32_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float32), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary64_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float64), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary128_le(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float128), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary16_le(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float16), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary32_le(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float32), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary64_le(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float64), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary128_le(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_BYTE_ORDER_LE, sizeof(_Float128), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_string16_le(_attr...) 		__side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint16_t), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_string32_le(_attr...)		 	__side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_LE, sizeof(uint32_t), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 
@@ -534,10 +587,10 @@
 #define _side_type_s64_be(_attr...)			_side_type_integer(SIDE_TYPE_S64, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(int64_t), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_s128_be(_attr...)			_side_type_integer(SIDE_TYPE_S128, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(__int128), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_pointer_be(_attr...)			_side_type_integer(SIDE_TYPE_POINTER, false, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uintptr_t), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary16_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float16), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary32_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float32), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary64_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float64), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
-#define _side_type_float_binary128_be(_attr...)		_side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float128), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary16_be(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float16), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary32_be(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float32), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary64_be(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY64, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float64), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+#define _side_type_float_binary128_be(_attr...)		__side_type_float(SIDE_TYPE_FLOAT_BINARY128, SIDE_TYPE_BYTE_ORDER_BE, sizeof(_Float128), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_string16_be(_attr...) 		__side_type_string(SIDE_TYPE_STRING_UTF16, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint16_t), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_string32_be(_attr...)		 	__side_type_string(SIDE_TYPE_STRING_UTF32, SIDE_TYPE_BYTE_ORDER_BE, sizeof(uint32_t), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 

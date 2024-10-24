@@ -406,6 +406,21 @@
 #define side_type_pointer _side_type_pointer
 #define side_type_dynamic _side_type_dynamic
 
+#define side_type_char _side_type_char
+#define side_type_uchar _side_type_uchar
+#define side_type_schar _side_type_schar
+#define side_type_short _side_type_short
+#define side_type_ushort _side_type_ushort
+#define side_type_int _side_type_int
+#define side_type_uint _side_type_uint
+#define side_type_long _side_type_long
+#define side_type_ulong _side_type_ulong
+#define side_type_long_long _side_type_long_long
+#define side_type_ulong_long _side_type_ulong_long
+#define side_type_float(...) _side_type_float(__VA_ARGS__)
+#define side_type_double _side_type_double
+#define side_type_long_double _side_type_long_double
+
 #define side_type_u8 _side_type_u8
 #define side_type_u16 _side_type_u16
 #define side_type_u32 _side_type_u32
