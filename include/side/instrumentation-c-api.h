@@ -639,17 +639,22 @@ enum {
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_OPTIONAL),		\
 		.u = {							\
 			.side_optional = SIDE_PTR_INIT(_optional),	\
-		},							\
+		}							\
+	}
+
+#define _side_type_optional_define(_elem_type)		\
+	{						\
+		.elem_type = SIDE_PTR_INIT(_elem_type),	\
 	}
 
 #define _side_define_optional(_identifier, _elem_type)	\
-	const struct side_type _identifier = _side_type_optional(SIDE_PARAM(_elem_type))
+	const struct side_type_optional _identifier = _side_type_optional_define(SIDE_PARAM(_elem_type))
 
 #define _side_field_optional(_name, _identifier)		\
-	_side_field(_name, _side_type_optional(&(_identifier)))
+	_side_field(_name, _side_type_optional(SIDE_PARAM(&(_identifier))))
 
 #define _side_field_optional_literal(_name, _elem_type)			\
-	_side_field(_name, _side_type_optional(SIDE_PARAM(_elem_type)))
+	_side_field(_name, _side_type_optional(SIDE_COMPOUND_LITERAL(struct side_type_optional, _side_type_optional_define(SIDE_PARAM(_elem_type)))))
 
 #define _side_type_array(_array)				\
 	{							\

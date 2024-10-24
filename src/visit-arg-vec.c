@@ -352,7 +352,7 @@ void type_visitor_optional(const struct side_type_visitor *type_visitor, const s
 	if (side_arg_optional->selector == SIDE_OPTIONAL_DISABLED)
 		return;
 
-	type = side_ptr_get(type_desc->u.side_optional);
+	type = side_ptr_get(side_ptr_get(type_desc->u.side_optional)->elem_type);
 	arg = &side_arg_optional->side_static;
 
 	side_visit_type(type_visitor, &new_ctx, type, arg, priv);

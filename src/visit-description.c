@@ -124,15 +124,15 @@ void description_visitor_variant(const struct side_description_visitor *descript
 
 static
 void description_visitor_optional(const struct side_description_visitor *description_visitor,
-				const struct side_type *type_desc, void *priv)
+				const struct side_type_optional *optional, void *priv)
 {
-	const struct side_type *optional = side_ptr_get(type_desc->u.side_optional);
+	const struct side_type *type_desc = side_ptr_get(optional->elem_type);
 
 	if (description_visitor->before_optional_type_func)
-		description_visitor->before_optional_type_func(optional, priv);
-	side_visit_type(description_visitor, optional, priv);
+		description_visitor->before_optional_type_func(type_desc, priv);
+	side_visit_type(description_visitor, type_desc, priv);
 	if (description_visitor->after_optional_type_func)
-		description_visitor->after_optional_type_func(optional, priv);
+		description_visitor->after_optional_type_func(type_desc, priv);
 }
 
 static
@@ -482,7 +482,7 @@ void side_visit_type(const struct side_description_visitor *description_visitor,
 		break;
 
 	case SIDE_TYPE_OPTIONAL:
-		description_visitor_optional(description_visitor, type_desc, priv);
+		description_visitor_optional(description_visitor, side_ptr_get(type_desc->u.side_optional), priv);
 		break;
 
 	default:

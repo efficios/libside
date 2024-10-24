@@ -383,7 +383,7 @@ struct side_type {
 		side_ptr_t(const struct side_type_vla_visitor) side_vla_visitor;
 		side_ptr_t(const struct side_type_struct) side_struct;
 		side_ptr_t(const struct side_type_variant) side_variant;
-		side_ptr_t(const struct side_type) side_optional;
+		side_ptr_t(const struct side_type_optional) side_optional;
 
 		/* Stack-copy enumeration types */
 		struct side_type_enum side_enum;
@@ -411,6 +411,10 @@ struct side_type_variant {
 	const struct side_type selector;
 } SIDE_PACKED;
 side_check_size(struct side_type_variant, 40 + sizeof(const struct side_type));
+
+struct side_type_optional {
+	side_ptr_t(const struct side_type) elem_type;
+};
 
 struct side_event_field {
 	side_ptr_t(const char) field_name;
