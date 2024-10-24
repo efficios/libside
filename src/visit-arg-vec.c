@@ -1083,6 +1083,7 @@ const char *side_type_label_to_string(enum side_type_label label)
 	case SIDE_TYPE_STRING_UTF32: return "SIDE_TYPE_STRING_UTF32";
 	case SIDE_TYPE_STRUCT: return "SIDE_TYPE_STRUCT";
 	case SIDE_TYPE_VARIANT: return "SIDE_TYPE_VARIANT";
+	case SIDE_TYPE_OPTIONAL: return "SIDE_TYPE_OPTIONAL";
 	case SIDE_TYPE_ARRAY: return "SIDE_TYPE_ARRAY";
 	case SIDE_TYPE_VLA: return "SIDE_TYPE_VLA";
 	case SIDE_TYPE_VLA_VISITOR: return "SIDE_TYPE_VLA_VISITOR";
@@ -1111,7 +1112,7 @@ const char *side_type_label_to_string(enum side_type_label label)
 	case SIDE_TYPE_DYNAMIC_VLA: return "SIDE_TYPE_DYNAMIC_VLA";
 	case SIDE_TYPE_DYNAMIC_VLA_VISITOR: return "SIDE_TYPE_DYNAMIC_VLA_VISITOR";
 	default:
-		abort();
+		return "<UNKNOWN>";
 	}
 }
 
