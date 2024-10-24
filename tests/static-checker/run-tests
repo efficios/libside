@@ -2,7 +2,7 @@
 
 CURDIR=$(dirname "$0")/
 TESTDIR=$CURDIR/..
-SRCDIR=$CURDIR/../..
+SRCINCLUDEDIR=$SIDE_TESTS_SRCDIR/../include
 
 SH_TAP=1
 source "$TESTDIR/utils/utils.sh"
@@ -17,18 +17,18 @@ HAVE_CLANG=$(($? == 0))
 
 function run_test() {
 	if [ $HAVE_GCC -eq 1 ]; then
-		cat prologue.c "$1" | gcc -I "$SRCDIR/include" -xc /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
+		cat prologue.c "$1" | gcc -I "$SRCINCLUDEDIR" -xc /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
 		ok $? "gcc $1"
-		cat prologue.c "$1" | gcc -I "$SRCDIR/include" -xc++ /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
+		cat prologue.c "$1" | gcc -I "$SRCINCLUDEDIR" -xc++ /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
 		ok $? "g++ $1"
 	else
 		skip 0 "gcc not present" 2
 	fi
 
 	if [ $HAVE_CLANG -eq 1 ]; then
-		cat prologue.c "$1" | clang -I "$SRCDIR/include" -xc /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
+		cat prologue.c "$1" | clang -I "$SRCINCLUDEDIR" -xc /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
 		ok $? "clang $1"
-		cat prologue.c "$1" | clang -I "$SRCDIR/include" -xc++ /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
+		cat prologue.c "$1" | clang -I "$SRCINCLUDEDIR" -xc++ /dev/stdin -o /dev/null 2>&1 | grep --quiet -E "$2"
 		ok $? "clang++ $1"
 	else
 		skip 0 "clang not present" 2
