@@ -1612,7 +1612,7 @@ enum {
 	};								\
 	static const struct side_event_description __attribute__((section("side_event_description_ptr"), used)) \
 	*side_event_ptr__##_identifier = &(_identifier);		\
-	SIDE_POP_DIAGNOSTIC() SIDE_ACCEPT_COMMA()
+	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
 
 /*
  * In C++, it is not possible to forward declare a static variable.  Use

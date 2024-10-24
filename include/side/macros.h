@@ -27,8 +27,8 @@
 #define SIDE_CAT2_PRIMITIVE(x, y...) x ## y
 #define SIDE_CAT2(x, y...) SIDE_CAT2_PRIMITIVE(x, y)
 
-/* Accept a trailing comma. */
-#define SIDE_ACCEPT_COMMA(...) side_static_assert(1, "", _)
+/* Expect a trailing semicolon. */
+#define SIDE_EXPECT_SEMICOLON(...) side_static_assert(1, "", _)
 
 /*
  * The diagnostic macros can be used to turn-off warnings using inline _Pragma.
