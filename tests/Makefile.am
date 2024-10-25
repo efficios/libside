@@ -15,8 +15,8 @@ noinst_PROGRAMS = \
 	regression/side-rcu-test \
 	unit/test \
 	unit/test-cxx \
-	unit/test-sc \
-	unit/test-sc-cxx \
+	unit/test-no-sc \
+	unit/test-no-sc-cxx \
 	unit/demo \
 	unit/statedump
 
@@ -39,14 +39,14 @@ unit_test_cxx_LDADD = \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
-unit_test_sc_SOURCES = unit/test-sc.c
-unit_test_sc_LDADD = \
+unit_test_no_sc_SOURCES = unit/test-no-sc.c
+unit_test_no_sc_LDADD = \
 	$(top_builddir)/src/libside.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
-unit_test_sc_cxx_SOURCES = unit/test-sc-cxx.cpp
-unit_test_sc_cxx_LDADD = \
+unit_test_no_sc_cxx_SOURCES = unit/test-no-sc-cxx.cpp
+unit_test_no_sc_cxx_LDADD = \
 	$(top_builddir)/src/libside.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
