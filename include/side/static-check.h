@@ -133,6 +133,44 @@
 /* User configuration. */
 
 /*
+ * SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS: Disable checking of duplicated
+ * fields names and null fields names.  The macro must be defined as an object
+ * macro with void expansion before the code where the check must be disabled.
+ * The macro can then be undefined for allowing the check again.
+ *
+ * The intent of this tunable is to allow big list of fields.  Indeed, the
+ * static checker ensures by default that no duplicated fields exist in a list of
+ * fields.  This is a combinatory problem where the number of expansion required
+ * for doing so is quadratic.
+ *
+ * In fact, given N fields, the number of expansions required is binomial(N, 2).
+ * See `SIDE_SC_MAP_COMB'.
+ *
+ * The tunable can be used around the following forms:
+ *
+ *	- side_define_struct()
+ *	- side_export_event()
+ *	- side_export_event_variadic()
+ *	- side_hidden_event()
+ *	- side_hidden_event_variadic()
+ *	- side_static_event()
+ *	- side_static_event_variadic()
+ *
+ * Example:
+ *
+ *	// The following duplicated fields won't be caught by
+ *	// the static checker.
+ *	#define SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS
+ *	static side_define_struct(my_struct,
+ *		side_field_list(
+ *			side_field_u32("x"),
+ *			side_field_s64("x"),
+ *		)
+ *	);
+ *	#undef SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS
+ */
+
+/*
  * SIDE_STATIC_CHECK_MAX_EVAL_LEVEL: Determine the maximum level of expansion by
  * the static checker.  Each level allow for 4 more time expansions.  Therefore,
  * the number of possible expansion with a `EVAL()' form is 4^N - 1, where N is
@@ -480,8 +518,38 @@ template <typename T, typename U>
  *
  *	side_field_list(side_field_*(...) ...)
  */
-#define SIDE_SC_CHECK_FIELD_NAMES(_fields)				\
+#define SIDE_SC_CHECK_FIELD_NAMES_SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS(_fields) \
 	SIDE_SC_CHECK_FIELDS_NAMES_PRIMITIVE(_fields, SIDE_SC_NAME_OF_##_fields)
+
+#define SIDE_SC_CHECK_FIELD_NAMES_(...) SIDE_EXPECT_SEMICOLON()
+
+#define SIDE_SC_MAYBE_CHECK_FIELD_NAMES(fn, ...)	\
+	fn(__VA_ARGS__)
+
+/*
+ * This looks counter intuitive.
+ *
+ * Let's define `SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS' as the `tunable'
+ * for clarity.
+ *
+ * When the tunable is defined, the user ask to not check the fields names.
+ * This is done by concatenating the expansion of `SIDE_SC_CHECK_FIELD_NAMES_'
+ * and the tunable, resulting in `SIDE_SC_CHECK_FIELD_NAMES_' again, which is a
+ * function macro, thus no further expansion is done yet.  Parentheses are
+ * introduced in `SIDE_SC_MAYBE_CHECK_FIELD_NAMES`, to call the function macro,
+ * in this case resulting in the expansion of `SIDE_EXPECT_SEMICOLON'.
+ *
+ * When the tunable is not defined, then the resulting function-token passed to
+ * `SIDE_SC_CHECK_FIELD_NAMES_' will be
+ * `SIDE_SC_CHECK_FIELD_NAMES_SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS`.
+ * When applied with the list of fields, this macro does the static check of
+ * fields names.
+ *
+ * This is all confusing because the macro with the word `DISABLE' is actually
+ * used when the check is done.
+ */
+#define SIDE_SC_CHECK_FIELD_NAMES(...)					\
+	SIDE_SC_MAYBE_CHECK_FIELD_NAMES(SIDE_SC_CAT(SIDE_SC_CHECK_FIELD_NAMES_, SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS), ##__VA_ARGS__)
 
 /*
  * Used by SIDE_SC_NAME_OF_* macros to extract field name of the form
