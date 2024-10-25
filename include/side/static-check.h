@@ -484,48 +484,61 @@ template <typename T, typename U>
 	(0 != __builtin_strcmp(SIDE_SC_STR(x), SIDE_SC_STR(y))) &&
 
 /*
- * Implementation of check for duplicated/null field names.
- *
- * Since the expansion of the fields has been done at the previous level,
- * `_names' is now of the form:
- *
- *	"...", ...
- *
- * The first assertion check that all fields are not the empty string (null)
- * using a currying map.
- *
- * The second assertion check that all fields are different.
- *
- * The trailing ones are the right operands of the last `&&' of the map
- * expansions.
- */
-#define SIDE_SC_CHECK_FIELDS_NAMES_PRIMITIVE2(_expr, _names...)		\
-	side_static_assert(SIDE_SC_MAP_CURRYING(SIDE_SC_STRNEQ, "", ##_names) 1, \
-			"Null field name <" SIDE_SC_SOURCE_LOCATION() ">: " SIDE_SC_STR(_expr), \
-			null_field_name);				\
-	side_static_assert(SIDE_SC_MAP_COMB(SIDE_SC_STRNEQ, _names, "") 1, \
-			"Duplicated field names <" SIDE_SC_SOURCE_LOCATION() ">: " SIDE_SC_STR(_expr), \
-			duplicated_field_names)
-
-
-#define SIDE_SC_CHECK_FIELDS_NAMES_PRIMITIVE(_expr, _names...)		\
-	SIDE_SC_CHECK_FIELDS_NAMES_PRIMITIVE2(_expr, SIDE_SC_SKIP_1(_names))
-
-/*
- * Check for duplicated/null field names.
+ * Check for null and duplicated field names.
  *
  * `_fields' is of the form:
  *
  *	side_field_list(side_field_*(...) ...)
+ *
+ * Extracting fields names before passing to second level of expansion.
+ *
+ * This macro expects a semicolon.
  */
-#define SIDE_SC_CHECK_FIELD_NAMES_SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS(_fields) \
+#define SIDE_SC_CHECK_FIELDS_NAMES(_fields)				\
 	SIDE_SC_CHECK_FIELDS_NAMES_PRIMITIVE(_fields, SIDE_SC_NAME_OF_##_fields)
 
-#define SIDE_SC_CHECK_FIELD_NAMES_(...) SIDE_EXPECT_SEMICOLON()
+/*
+ * Second level of expansion.
+ *
+ * `_fields' is of the form:
+ *
+ * 	,"..." ...
+ *
+ * Skip the first element which is empty before passing to third level of expansion.
+ *
+ * This macro expects a semicolon.
+ */
+#define SIDE_SC_CHECK_FIELDS_NAMES_PRIMITIVE(_expr, _names...)		\
+	SIDE_SC_CHECK_FIELDS_NAMES_PRIMITIVE2(_expr, SIDE_SC_SKIP_1(_names))
 
-#define SIDE_SC_MAYBE_CHECK_FIELD_NAMES(fn, ...)	\
-	fn(__VA_ARGS__)
+/*
+ * Third level of expansion.
+ *
+ * `_names' is of the form:
+ *
+ * 	"...", ...
+ *
+ * Dispatch to null check of names and duplicated names.
+ *
+ * This macro expects a semicolon.
+ */
+#define SIDE_SC_CHECK_FIELDS_NAMES_PRIMITIVE2(_expr, _names...)		\
+	SIDE_SC_CHECK_NULL_FIELDS_NAMES(_expr, _names);			\
+	SIDE_SC_CHECK_DUPLICATED_FIELDS_NAMES(_expr, _names)
 
+/*
+ * Check if at least one name in `_names' is the empty string "".
+ *
+ * This works by calling the `SIDE_SC_STRNEQ' function with currying partial
+ * evaluation of "".  The trailing 1 is necessary to complete the boolean
+ * chaining in `SIDE_SC_STRNEQ'.
+ *
+ * This macro expects a semicolon.
+ */
+#define SIDE_SC_CHECK_NULL_FIELDS_NAMES(_expr, _names...)		\
+	side_static_assert(SIDE_SC_MAP_CURRYING(SIDE_SC_STRNEQ, "", ##_names) 1, \
+			"Null field name <" SIDE_SC_SOURCE_LOCATION() ">: " SIDE_SC_STR(_expr), \
+			null_field_name)
 /*
  * This looks counter intuitive.
  *
@@ -533,23 +546,57 @@ template <typename T, typename U>
  * for clarity.
  *
  * When the tunable is defined, the user ask to not check the fields names.
- * This is done by concatenating the expansion of `SIDE_SC_CHECK_FIELD_NAMES_'
- * and the tunable, resulting in `SIDE_SC_CHECK_FIELD_NAMES_' again, which is a
+ * This is done by concatenating the expansion of `SIDE_SC_CHECK_FIELDS_NAMES_'
+ * and the tunable, resulting in `SIDE_SC_CHECK_FIELDS_NAMES_' again, which is a
  * function macro, thus no further expansion is done yet.  Parentheses are
- * introduced in `SIDE_SC_MAYBE_CHECK_FIELD_NAMES`, to call the function macro,
+ * introduced in `SIDE_SC_MAYBE_CHECK_FIELDS_NAMES`, to call the function macro,
  * in this case resulting in the expansion of `SIDE_EXPECT_SEMICOLON'.
  *
  * When the tunable is not defined, then the resulting function-token passed to
- * `SIDE_SC_CHECK_FIELD_NAMES_' will be
- * `SIDE_SC_CHECK_FIELD_NAMES_SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS`.
+ * `SIDE_SC_CHECK_FIELDS_NAMES_' will be
+ * `SIDE_SC_CHECK_FIELDS_NAMES_SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS`.
  * When applied with the list of fields, this macro does the static check of
  * fields names.
  *
  * This is all confusing because the macro with the word `DISABLE' is actually
  * used when the check is done.
+ *
+ * This macro expects a semicolon.
  */
-#define SIDE_SC_CHECK_FIELD_NAMES(...)					\
-	SIDE_SC_MAYBE_CHECK_FIELD_NAMES(SIDE_SC_CAT(SIDE_SC_CHECK_FIELD_NAMES_, SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS), ##__VA_ARGS__)
+#define SIDE_SC_CHECK_DUPLICATED_FIELDS_NAMES(...)			\
+	SIDE_SC_MAYBE_CHECK_DUPLICATED_FIELDS_NAMES(SIDE_SC_CAT(SIDE_SC_CHECK_DUPLICATED_FIELDS_NAMES_, SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS), ##__VA_ARGS__)
+
+/*
+ * Dispatch to `fn' with rest of arguments.
+ *
+ * This macro expects a semicolon.
+ */
+#define SIDE_SC_MAYBE_CHECK_DUPLICATED_FIELDS_NAMES(fn, ...)	\
+	fn(__VA_ARGS__)
+
+/*
+ * Expanded when the check is enabled.  See the comment of
+ * `SIDE_SC_CHECK_FIELDS_NAMES_DUPLICATED' for explanations.
+ *
+ * This works by calling the `SIDE_SC_STRNEQ' function with combinatory
+ * expansion.  The extra empty string is requird to support list with not enough
+ * element in them for combination.  The trailing 1 is necessary to complete the
+ * boolean chaining in `SIDE_SC_STRNEQ'.
+ *
+ * This macro expects a semicolon.
+ */
+#define SIDE_SC_CHECK_DUPLICATED_FIELDS_NAMES_SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS(_expr, _names...) \
+	side_static_assert(SIDE_SC_MAP_COMB(SIDE_SC_STRNEQ, _names, "") 1, \
+			"Duplicated field names <" SIDE_SC_SOURCE_LOCATION() ">: " SIDE_SC_STR(_expr), \
+			duplicated_field_names)				\
+
+/*
+ * Expanded when the check is disabled.  See the comment of
+ * `SIDE_SC_CHECK_FIELDS_NAMES_DUPLICATED' for explanations.
+ *
+ * This macro expects a semicolon.
+ */
+#define SIDE_SC_CHECK_DUPLICATED_FIELDS_NAMES_(...) SIDE_EXPECT_SEMICOLON()
 
 /*
  * Used by SIDE_SC_NAME_OF_* macros to extract field name of the form
@@ -2613,7 +2660,7 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #define side_define_struct(_identifier, _fields, _attr...)		\
 	_side_define_struct(_identifier, SIDE_SC_EMIT_##_fields,	\
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
-	SIDE_SC_CHECK_FIELD_NAMES(_fields);				\
+	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
 	SIDE_SC_DEFINE_STRUCT(_identifier, SIDE_SC_CHECK_##_fields)
 
 #define SIDE_SC_DEFINE_STRUCT(_identifier, _fields)			\
@@ -2738,42 +2785,42 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #define side_static_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_static_event(_identifier, _provider, _event, _loglevel, SIDE_SC_EMIT_##_fields, \
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
-	SIDE_SC_CHECK_FIELD_NAMES(_fields);				\
+	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
 	SIDE_SC_CHECK_EVENT(_identifier, _fields)
 
 #undef side_static_event_variadic
 #define side_static_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_static_event_variadic(_identifier, _provider, _event, _loglevel, SIDE_SC_EMIT_##_fields, \
 				SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
-	SIDE_SC_CHECK_FIELD_NAMES(_fields);				\
+	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
 	SIDE_SC_CHECK_EVENT_VARIADIC(_identifier, _fields)
 
 #undef side_hidden_event
 #define side_hidden_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_hidden_event(_identifier, _provider, _event, _loglevel, SIDE_SC_EMIT_##_fields, \
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
-	SIDE_SC_CHECK_FIELD_NAMES(_fields);				\
+	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
 	SIDE_SC_CHECK_EVENT(_identifier, _fields)
 
 #undef side_hidden_event_variadic
 #define side_hidden_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_hidden_event_variadic(_identifier, _provider, _event, _loglevel, SIDE_SC_EMIT_##_fields, \
 				SIDE_DEFAULT_ATTR(_, ##_attr, side_dattr_list())); \
-	SIDE_SC_CHECK_FIELD_NAMES(_fields);				\
+	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
 	SIDE_SC_CHECK_EVENT_VARIADIC(_identifier, _fields)
 
 #undef side_export_event
 #define side_export_event(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_export_event(_identifier, _provider, _event, _loglevel, SIDE_SC_EMIT_##_fields, \
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
-	SIDE_SC_CHECK_FIELD_NAMES(_fields);				\
+	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
 	SIDE_SC_CHECK_EVENT(_identifier, _fields)
 
 #undef side_export_event_variadic
 #define side_export_event_variadic(_identifier, _provider, _event, _loglevel, _fields, _attr...) \
 	_side_export_event_variadic(_identifier, _provider, _event, _loglevel, SIDE_SC_EMIT_##_fields, \
 				SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
-	SIDE_SC_CHECK_FIELD_NAMES(_fields);				\
+	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
 	SIDE_SC_CHECK_EVENT_VARIADIC(_identifier, _fields)
 
 #endif	/* _SIDE_STATIC_CHECK_H */
