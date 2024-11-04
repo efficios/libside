@@ -43,7 +43,7 @@ static struct side_tracer_handle *tracer_handle;
 
 static uint64_t tracer_key;
 
-static struct side_description_visitor description_visitor;
+static struct side_description_visitor_callbacks description_visitor_callbacks;
 
 static
 void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
@@ -2470,7 +2470,7 @@ void print_description_dynamic(const struct side_type *type_desc __attribute__((
 }
 
 static
-struct side_description_visitor description_visitor = {
+struct side_description_visitor_callbacks description_visitor_callbacks = {
 	.before_event_func = before_print_description_event,
 	.after_event_func = after_print_description_event,
 	.before_static_fields_func = before_print_description_static_fields,
@@ -2542,8 +2542,12 @@ static
 void print_event_description(const struct side_event_description *desc)
 {
 	struct print_ctx ctx = {};
+	struct side_description_visitor visitor = {
+		.callbacks = &description_visitor_callbacks,
+		.priv = &ctx,
+	};
 
-	description_visitor_event(&description_visitor, desc, &ctx);
+	visit_event_description(&visitor, desc);
 }
 
 static

@@ -9,7 +9,7 @@
 #include <side/abi/event-description.h>
 #include <side/abi/type-description.h>
 
-struct side_description_visitor {
+struct side_description_visitor_callbacks {
 	void (*before_event_func)(const struct side_event_description *desc, void *priv);
 	void (*after_event_func)(const struct side_event_description *desc, void *priv);
 
@@ -77,9 +77,16 @@ struct side_description_visitor {
 
 	/* Dynamic types. */
 	void (*dynamic_type_func)(const struct side_type *type_desc, void *priv);
+
+	void *(*resolve_pointer_func)(void *pointer, void *priv);
 };
 
-void description_visitor_event(const struct side_description_visitor *description_visitor,
-		const struct side_event_description *desc, void *priv);
+struct side_description_visitor {
+	const struct side_description_visitor_callbacks *callbacks;
+	void *priv;
+};
+
+void visit_event_description(const struct side_description_visitor *visitor,
+			const struct side_event_description *desc);
 
 #endif /* LIBSIDE_TOOLS_VISIT_EVENT_DESCRIPTION_H */
