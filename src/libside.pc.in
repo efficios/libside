@@ -6,8 +6,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: Restartable sequence
-Description: Restartable sequence library
+Name: Static Instrumentation Dynamically Enabled
+Description: Instrumentation library
 Version: @PACKAGE_VERSION@
 Requires:
 Libs: -L${libdir} -lside
