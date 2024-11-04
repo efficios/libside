@@ -15,8 +15,9 @@
 #include <sys/syscall.h>
 #include <linux/membarrier.h>
 
+#include "libsmp/smp.h"
+
 #include "rcu.h"
-#include "smp.h"
 
 /*
  * If both rseq (with glibc support) and membarrier system calls are

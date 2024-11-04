@@ -22,44 +22,49 @@ noinst_PROGRAMS = \
 
 regression_side_rcu_test_SOURCES = regression/side-rcu-test.c
 regression_side_rcu_test_LDADD = \
-	$(top_builddir)/src/librcu.la \
-	$(top_builddir)/src/libsmp.la \
+	$(top_builddir)/src/lib/librcu/librcu.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
 unit_test_SOURCES = unit/test.c
 unit_test_LDADD = \
-	$(top_builddir)/src/libside.la \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
 unit_test_cxx_SOURCES = unit/test-cxx.cpp
 unit_test_cxx_LDADD = \
-	$(top_builddir)/src/libside.la \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
 unit_test_no_sc_SOURCES = unit/test-no-sc.c
 unit_test_no_sc_LDADD = \
-	$(top_builddir)/src/libside.la \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
 unit_test_no_sc_cxx_SOURCES = unit/test-no-sc-cxx.cpp
 unit_test_no_sc_cxx_LDADD = \
-	$(top_builddir)/src/libside.la \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
 unit_demo_SOURCES = unit/demo.c
 unit_demo_LDADD = \
-	$(top_builddir)/src/libside.la \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
 unit_statedump_SOURCES = unit/statedump.c
 unit_statedump_LDADD = \
-	$(top_builddir)/src/libside.la \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 

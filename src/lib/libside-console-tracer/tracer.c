@@ -13,8 +13,9 @@
 
 #include <side/trace.h>
 
-#include "visit-arg-vec.h"
 #include "visit-description.h"
+#include "visit-arg-vec.h"
+
 
 /* TODO: optionally print caller address. */
 static bool print_caller = false;

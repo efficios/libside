@@ -210,7 +210,13 @@ AC_CONFIG_FILES([
 	Makefile
 	include/Makefile
 	src/Makefile
-	src/libside.pc
+	src/lib/Makefile
+	src/lib/librcu/Makefile
+	src/lib/libside/Makefile
+	src/lib/libside-console-tracer/Makefile
+	src/lib/libsmp/Makefile
+	src/lib/pkgconfig/libside.pc
+	src/lib/pkgconfig/Makefile
 	tests/Makefile
 	tests/static-checker/Makefile
 	tests/utils/Makefile

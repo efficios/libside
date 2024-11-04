@@ -10,8 +10,9 @@
 #include <unistd.h>
 #include <poll.h>
 
+#include "librcu/rcu.h"
+
 #include "compiler.h"
-#include "rcu.h"
 #include "list.h"
 #include "rculist.h"
 

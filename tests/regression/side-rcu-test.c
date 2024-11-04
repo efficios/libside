@@ -18,7 +18,7 @@ struct thread_ctx {
 	uint64_t count;
 };
 
-#include "../../src/rcu.h"
+#include "../../src/lib/librcu/rcu.h"
 
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 

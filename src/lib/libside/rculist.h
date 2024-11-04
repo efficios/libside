@@ -6,8 +6,9 @@
 #ifndef _SIDE_RCULIST_H
 #define _SIDE_RCULIST_H
 
+#include "librcu/rcu.h"
+
 #include "list_types.h"
-#include "rcu.h"
 
 static inline
 void side_list_insert_node_tail_rcu(struct side_list_head *head, struct side_list_node *node)
