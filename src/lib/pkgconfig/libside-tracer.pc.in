@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2022 EfficiOS Inc.
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: Static Instrumentation Dynamically Enabled Console Ttracer
+Description: Console tracer for libside.
+Version: @PACKAGE_VERSION@
+Requires:
+Libs: -L${libdir} -lside-tracer
+

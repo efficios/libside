@@ -216,6 +216,7 @@ AC_CONFIG_FILES([
 	src/lib/libside-console-tracer/Makefile
 	src/lib/libsmp/Makefile
 	src/lib/pkgconfig/libside.pc
+	src/lib/pkgconfig/libside-tracer.pc
 	src/lib/pkgconfig/Makefile
 	tests/Makefile
 	tests/static-checker/Makefile
