@@ -3,7 +3,14 @@
  * Copyright 2022-2024 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <side/api.h>
 
 #include "visit-arg-vec.h"
 

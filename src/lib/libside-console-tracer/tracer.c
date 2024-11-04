@@ -13,8 +13,8 @@
 
 #include <side/trace.h>
 
-#include "visit-description.h"
-#include "visit-arg-vec.h"
+#include "libside-tools/visit-description.h"
+#include "libside-tools/visit-arg-vec.h"
 
 
 /* TODO: optionally print caller address. */

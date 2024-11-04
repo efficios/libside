@@ -3,10 +3,11 @@
  * Copyright 2024 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef _VISIT_DESCRIPTION_H
-#define _VISIT_DESCRIPTION_H
+#ifndef LIBSIDE_TOOLS_VISIT_EVENT_DESCRIPTION_H
+#define LIBSIDE_TOOLS_VISIT_EVENT_DESCRIPTION_H
 
-#include <side/trace.h>
+#include <side/abi/event-description.h>
+#include <side/abi/type-description.h>
 
 struct side_description_visitor {
 	void (*before_event_func)(const struct side_event_description *desc, void *priv);
@@ -81,4 +82,4 @@ struct side_description_visitor {
 void description_visitor_event(const struct side_description_visitor *description_visitor,
 		const struct side_event_description *desc, void *priv);
 
-#endif /* _VISIT_DESCRIPTION_H */
+#endif /* LIBSIDE_TOOLS_VISIT_EVENT_DESCRIPTION_H */

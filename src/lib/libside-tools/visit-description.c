@@ -3,6 +3,8 @@
  * Copyright 2022-2024 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "visit-description.h"

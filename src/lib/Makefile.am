@@ -5,5 +5,6 @@ SUBDIRS = \
 	libsmp \
 	librcu \
 	libside \
+	libside-tools \
 	libside-console-tracer \
 	pkgconfig

@@ -3,10 +3,12 @@
  * Copyright 2024 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef _VISIT_ARG_VEC_H
-#define _VISIT_ARG_VEC_H
+#ifndef LIBSIDE_TOOLS_VISIT_ARG_VEC_H
+#define LIBSIDE_TOOLS_VISIT_ARG_VEC_H
 
-#include <side/trace.h>
+#include <side/abi/event-description.h>
+#include <side/abi/type-argument.h>
+#include <side/abi/type-description.h>
 
 struct side_type_visitor {
 	void (*before_event_func)(const struct side_event_description *desc,
@@ -103,4 +105,4 @@ void type_visitor_event(const struct side_type_visitor *type_visitor,
 		const struct side_arg_dynamic_struct *var_struct,
 		void *caller_addr, void *priv);
 
-#endif /* _VISIT_ARG_VEC_H */
+#endif /* LIBSIDE_TOOLS_VISIT_ARG_VEC_H */
