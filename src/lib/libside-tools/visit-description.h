@@ -24,18 +24,19 @@ struct side_description_visitor_callbacks {
 	void (*before_option_func)(const struct side_variant_option *option_desc, void *priv);
 	void (*after_option_func)(const struct side_variant_option *option_desc, void *priv);
 
-	void (*null_type_func)(const struct side_type *type_desc, void *priv);
-	void (*bool_type_func)(const struct side_type *type_desc, void *priv);
-	void (*integer_type_func)(const struct side_type *type_desc, void *priv);
-	void (*byte_type_func)(const struct side_type *type_desc, void *priv);
-	void (*pointer_type_func)(const struct side_type *type_desc, void *priv);
-	void (*float_type_func)(const struct side_type *type_desc, void *priv);
-	void (*string_type_func)(const struct side_type *type_desc, void *priv);
+	void (*null_type_func)(const struct side_type_null *type_desc, void *priv);
+	void (*bool_type_func)(const struct side_type_bool *type_desc, void *priv);
+	void (*integer_type_func)(const struct side_type_integer *type_desc, void *priv);
+	void (*byte_type_func)(const struct side_type_byte *type_desc, void *priv);
+	void (*pointer_type_func)(const struct side_type_integer *type_desc, void *priv);
+	void (*float_type_func)(const struct side_type_float *type_desc, void *priv);
+	void (*string_type_func)(const struct side_type_string *type_desc, void *priv);
 
 	/* Stack-copy compound types. */
 	void (*before_struct_type_func)(const struct side_type_struct *side_struct, void *priv);
 	void (*after_struct_type_func)(const struct side_type_struct *side_struct, void *priv);
 	void (*before_variant_type_func)(const struct side_type_variant *side_variant, void *priv);
+	void (*after_variant_selector_type_func)(const struct side_type *side_type, void *priv);
 	void (*after_variant_type_func)(const struct side_type_variant *side_variant, void *priv);
 	void (*before_array_type_func)(const struct side_type_array *side_array, void *priv);
 	void (*after_array_type_func)(const struct side_type_array *side_array, void *priv);
@@ -45,14 +46,14 @@ struct side_description_visitor_callbacks {
 	void (*before_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
 	void (*after_length_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
 	void (*after_element_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
-	void (*before_optional_type_func)(const struct side_type *optional, void *priv);
-	void (*after_optional_type_func)(const struct side_type *optional, void *priv);
+	void (*before_optional_type_func)(const struct side_type_optional *optional, void *priv);
+	void (*after_optional_type_func)(const struct side_type_optional *optional, void *priv);
 
 	/* Stack-copy enumeration types. */
-	void (*before_enum_type_func)(const struct side_type *type_desc, void *priv);
-	void (*after_enum_type_func)(const struct side_type *type_desc, void *priv);
-	void (*before_enum_bitmap_type_func)(const struct side_type *type_desc, void *priv);
-	void (*after_enum_bitmap_type_func)(const struct side_type *type_desc, void *priv);
+	void (*before_enum_type_func)(const struct side_type_enum *type_desc, void *priv);
+	void (*after_enum_type_func)(const struct side_type_enum *type_desc, void *priv);
+	void (*before_enum_bitmap_type_func)(const struct side_type_enum_bitmap *type_desc, void *priv);
+	void (*after_enum_bitmap_type_func)(const struct side_type_enum_bitmap *type_desc, void *priv);
 
 	/* Gather basic types. */
 	void (*gather_bool_type_func)(const struct side_type_gather_bool *type, void *priv);

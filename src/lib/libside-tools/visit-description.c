@@ -73,27 +73,27 @@ void side_visit_option(const struct side_description_visitor *visitor, const str
 }
 
 static
-void description_visitor_enum(const struct side_description_visitor *visitor, const struct side_type *type_desc)
+void description_visitor_enum(const struct side_description_visitor *visitor, const struct side_type_enum *type)
 {
-	const struct side_type *elem_type = visit_side_pointer(visitor, type_desc->u.side_enum.elem_type);
+	const struct side_type *elem_type = visit_side_pointer(visitor, type->elem_type);
 
 	if (visitor->callbacks->before_enum_type_func)
-		visitor->callbacks->before_enum_type_func(type_desc, visitor->priv);
+		visitor->callbacks->before_enum_type_func(type, visitor->priv);
 	side_visit_elem(visitor, elem_type);
 	if (visitor->callbacks->after_enum_type_func)
-		visitor->callbacks->after_enum_type_func(type_desc, visitor->priv);
+		visitor->callbacks->after_enum_type_func(type, visitor->priv);
 }
 
 static
-void description_visitor_enum_bitmap(const struct side_description_visitor *visitor, const struct side_type *type_desc)
+void description_visitor_enum_bitmap(const struct side_description_visitor *visitor, const struct side_type_enum_bitmap *type)
 {
-	const struct side_type *elem_type = visit_side_pointer(visitor, type_desc->u.side_enum_bitmap.elem_type);
+	const struct side_type *elem_type = visit_side_pointer(visitor, type->elem_type);
 
 	if (visitor->callbacks->before_enum_bitmap_type_func)
-		visitor->callbacks->before_enum_bitmap_type_func(type_desc, visitor->priv);
+		visitor->callbacks->before_enum_bitmap_type_func(type, visitor->priv);
 	side_visit_elem(visitor, elem_type);
 	if (visitor->callbacks->after_enum_bitmap_type_func)
-		visitor->callbacks->after_enum_bitmap_type_func(type_desc, visitor->priv);
+		visitor->callbacks->after_enum_bitmap_type_func(type, visitor->priv);
 }
 
 static
@@ -137,6 +137,9 @@ void description_visitor_variant(const struct side_description_visitor *visitor,
 	}
 	if (visitor->callbacks->before_variant_type_func)
 		visitor->callbacks->before_variant_type_func(side_type_variant, visitor->priv);
+	side_visit_type(visitor, selector_type);
+	if (visitor->callbacks->after_variant_selector_type_func)
+		visitor->callbacks->after_variant_selector_type_func(selector_type, visitor->priv);
 	for (i = 0; i < len; i++)
 		side_visit_option(visitor, side_array_at(&options, i));
 	if (visitor->callbacks->after_variant_type_func)
@@ -149,10 +152,10 @@ void description_visitor_optional(const struct side_description_visitor *visitor
 	const struct side_type *type_desc = visit_side_pointer(visitor, optional->elem_type);
 
 	if (visitor->callbacks->before_optional_type_func)
-		visitor->callbacks->before_optional_type_func(type_desc, visitor->priv);
+		visitor->callbacks->before_optional_type_func(optional, visitor->priv);
 	side_visit_type(visitor, type_desc);
 	if (visitor->callbacks->after_optional_type_func)
-		visitor->callbacks->after_optional_type_func(type_desc, visitor->priv);
+		visitor->callbacks->after_optional_type_func(optional, visitor->priv);
 }
 
 static
@@ -396,11 +399,11 @@ void side_visit_type(const struct side_description_visitor *visitor, const struc
 		/* Stack-copy basic types */
 	case SIDE_TYPE_NULL:
 		if (visitor->callbacks->null_type_func)
-			visitor->callbacks->null_type_func(type_desc, visitor->priv);
+			visitor->callbacks->null_type_func(&type_desc->u.side_null, visitor->priv);
 		break;
 	case SIDE_TYPE_BOOL:
 		if (visitor->callbacks->bool_type_func)
-			visitor->callbacks->bool_type_func(type_desc, visitor->priv);
+			visitor->callbacks->bool_type_func(&type_desc->u.side_bool, visitor->priv);
 		break;
 	case SIDE_TYPE_U8:		/* Fallthrough */
 	case SIDE_TYPE_U16:		/* Fallthrough */
@@ -413,34 +416,34 @@ void side_visit_type(const struct side_description_visitor *visitor, const struc
 	case SIDE_TYPE_S64:		/* Fallthrough */
 	case SIDE_TYPE_S128:
 		if (visitor->callbacks->integer_type_func)
-			visitor->callbacks->integer_type_func(type_desc, visitor->priv);
+			visitor->callbacks->integer_type_func(&type_desc->u.side_integer, visitor->priv);
 		break;
 	case SIDE_TYPE_BYTE:
 		if (visitor->callbacks->byte_type_func)
-			visitor->callbacks->byte_type_func(type_desc, visitor->priv);
+			visitor->callbacks->byte_type_func(&type_desc->u.side_byte, visitor->priv);
 		break;
 	case SIDE_TYPE_POINTER:
 		if (visitor->callbacks->pointer_type_func)
-			visitor->callbacks->pointer_type_func(type_desc, visitor->priv);
+			visitor->callbacks->pointer_type_func(&type_desc->u.side_integer, visitor->priv);
 		break;
 	case SIDE_TYPE_FLOAT_BINARY16:	/* Fallthrough */
 	case SIDE_TYPE_FLOAT_BINARY32:	/* Fallthrough */
 	case SIDE_TYPE_FLOAT_BINARY64:	/* Fallthrough */
 	case SIDE_TYPE_FLOAT_BINARY128:
 		if (visitor->callbacks->float_type_func)
-			visitor->callbacks->float_type_func(type_desc, visitor->priv);
+			visitor->callbacks->float_type_func(&type_desc->u.side_float, visitor->priv);
 		break;
 	case SIDE_TYPE_STRING_UTF8:	/* Fallthrough */
 	case SIDE_TYPE_STRING_UTF16:	/* Fallthrough */
 	case SIDE_TYPE_STRING_UTF32:
 		if (visitor->callbacks->string_type_func)
-			visitor->callbacks->string_type_func(type_desc, visitor->priv);
+			visitor->callbacks->string_type_func(&type_desc->u.side_string, visitor->priv);
 		break;
 	case SIDE_TYPE_ENUM:
-		description_visitor_enum(visitor, type_desc);
+		description_visitor_enum(visitor, &type_desc->u.side_enum);
 		break;
 	case SIDE_TYPE_ENUM_BITMAP:
-		description_visitor_enum_bitmap(visitor, type_desc);
+		description_visitor_enum_bitmap(visitor, &type_desc->u.side_enum_bitmap);
 		break;
 
 		/* Stack-copy compound types */
