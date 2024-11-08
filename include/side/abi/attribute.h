@@ -70,7 +70,7 @@ struct side_attr_value {
 		union side_float_value float_value;
 		side_padding(32);
 	} SIDE_PACKED u;
-};
+} SIDE_PACKED;
 side_check_size(struct side_attr_value, 36);
 
 struct side_attr {
