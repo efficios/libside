@@ -117,7 +117,7 @@
 #define side_define_enum(_identifier, _mappings, _attr...) \
 	const struct side_enum_mappings _identifier = { \
 		.mappings = SIDE_PTR_INIT(_mappings), \
-		.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 	}
@@ -150,7 +150,7 @@
 #define _side_define_enum_bitmap(_identifier, _mappings, _attr...) \
 	const struct side_enum_bitmap_mappings _identifier = { \
 		.mappings = SIDE_PTR_INIT(_mappings), \
-		.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 	}
@@ -187,7 +187,7 @@
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_NULL), \
 		.u = { \
 			.side_null = { \
-				.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+				.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
@@ -198,7 +198,7 @@
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_BOOL), \
 		.u = { \
 			.side_bool = { \
-				.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+				.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 				.bool_size = sizeof(uint8_t), \
 				.len_bits = 0, \
@@ -212,7 +212,7 @@
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_BYTE), \
 		.u = { \
 			.side_byte = { \
-				.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+				.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 				.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 			}, \
 		}, \
@@ -698,7 +698,7 @@ enum {
 #define _side_type_optional_define(_elem_type, _attr...)		\
 	{								\
 		.elem_type = SIDE_PTR_INIT(_elem_type),			\
-		.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())),	\
+		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL),	\
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 	}
 
@@ -755,7 +755,7 @@ enum {
 		.elem_type = SIDE_PTR_INIT(_elem_type), \
 		.length_type = SIDE_PTR_INIT(_length_type), \
 		.visitor = SIDE_PTR_INIT(_visitor), \
-		.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 	}
 
@@ -781,7 +781,7 @@ enum {
 						.offset = _offset, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 						}, \
 					}, \
@@ -803,7 +803,7 @@ enum {
 						.offset_bits = _offset_bits, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 							.bool_size = _bool_size, \
 							.len_bits = _len_bits, \
@@ -840,7 +840,7 @@ enum {
 						.offset_bits = _offset_bits, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 							.integer_size = _integer_size, \
 							.len_bits = _len_bits, \
@@ -917,7 +917,7 @@ enum {
 						.offset = _offset, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 							.float_size = _float_size, \
 							.byte_order = SIDE_ENUM_INIT(_byte_order), \
@@ -952,7 +952,7 @@ enum {
 						.offset = _offset, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 							.unit_size = _unit_size, \
 							.byte_order = SIDE_ENUM_INIT(_byte_order), \
@@ -1038,7 +1038,7 @@ enum {
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
-							.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 							.length = _length, \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 						}, \
@@ -1062,7 +1062,7 @@ enum {
 						.type = { \
 							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
 							.length_type = SIDE_PTR_INIT(_length_type_gather), \
-							.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
 						}, \
 					}, \
@@ -1601,7 +1601,7 @@ enum {
 		.provider_name = SIDE_PTR_INIT(_provider),		\
 		.event_name = SIDE_PTR_INIT(_event),			\
 		.fields = SIDE_PTR_INIT(_fields),			\
-		.attr = SIDE_PTR_INIT(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 		.flags = (_flags),					\
 		.nr_side_type_label = _NR_SIDE_TYPE_LABEL,		\
 		.nr_side_attr_type = _NR_SIDE_ATTR_TYPE,		\
