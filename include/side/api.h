@@ -492,8 +492,14 @@
 #define side_type_gather_string32_le _side_type_gather_string32_le
 #define side_type_gather_string32_be _side_type_gather_string32_be
 #define side_type_gather_struct(...)  _side_type_gather_struct(__VA_ARGS__)
-#define side_type_gather_array(...) _side_type_gather_array(__VA_ARGS__)
-#define side_type_gather_vla(...) _side_type_gather_vla(__VA_ARGS__)
+
+#define side_type_gather_array(_elem_type_gather, _length, _offset, _access_mode, _attr...) \
+	_side_type_gather_array(SIDE_PARAM(_elem_type_gather), _length, _offset, _access_mode, \
+				SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+
+#define side_type_gather_vla(_elem_type_gather, _offset, _access_mode, _length_type_gather, _attr...) \
+	_side_type_gather_vla(SIDE_PARAM(_elem_type_gather), _offset, _access_mode, \
+			      SIDE_PARAM(_length_type_gather), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 
 /* Variant. */
 #define side_define_variant _side_define_variant
