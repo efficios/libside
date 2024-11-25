@@ -163,14 +163,12 @@ enum side_type_gather_access_mode {
 
 /* Type descriptions */
 struct side_type_null {
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_type_null, 20);
 
 struct side_type_bool {
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 	uint16_t bool_size;		/* bytes */
 	uint16_t len_bits;		/* bits. 0 for (bool_size * CHAR_BITS) */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
@@ -178,22 +176,19 @@ struct side_type_bool {
 side_check_size(struct side_type_bool, 25);
 
 struct side_type_byte {
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_type_byte, 20);
 
 struct side_type_string {
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
 side_check_size(struct side_type_string, 22);
 
 struct side_type_integer {
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 	uint16_t integer_size;		/* bytes */
 	uint16_t len_bits;		/* bits. 0 for (integer_size * CHAR_BITS) */
 	uint8_t signedness;		/* true/false */
@@ -202,8 +197,7 @@ struct side_type_integer {
 side_check_size(struct side_type_integer, 26);
 
 struct side_type_float {
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 	uint16_t float_size;		/* bytes */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
@@ -217,10 +211,8 @@ struct side_enum_mapping {
 side_check_size(struct side_enum_mapping, 16 + sizeof(struct side_type_raw_string));
 
 struct side_enum_mappings {
-	side_ptr_t(const struct side_enum_mapping) mappings;
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_mappings;
-	uint32_t nr_attr;
+	side_array_t(const struct side_enum_mapping) mappings;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_enum_mappings, 40);
 
@@ -232,34 +224,28 @@ struct side_enum_bitmap_mapping {
 side_check_size(struct side_enum_bitmap_mapping, 16 + sizeof(struct side_type_raw_string));
 
 struct side_enum_bitmap_mappings {
-	side_ptr_t(const struct side_enum_bitmap_mapping) mappings;
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_mappings;
-	uint32_t nr_attr;
+	side_array_t(const struct side_enum_bitmap_mapping) mappings;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_enum_bitmap_mappings, 40);
 
 struct side_type_struct {
-	side_ptr_t(const struct side_event_field) fields;
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_fields;
-	uint32_t nr_attr;
+	side_array_t(const struct side_event_field) fields;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_type_struct, 40);
 
 struct side_type_array {
 	side_ptr_t(const struct side_type) elem_type;
-	side_ptr_t(const struct side_attr) attr;
 	uint32_t length;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_type_array, 40);
 
 struct side_type_vla {
 	side_ptr_t(const struct side_type) elem_type;
 	side_ptr_t(const struct side_type) length_type;
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_type_vla, 52);
 
@@ -267,8 +253,7 @@ struct side_type_vla_visitor {
 	side_ptr_t(const struct side_type) elem_type;
 	side_ptr_t(const struct side_type) length_type;
 	side_func_ptr_t(side_visitor_func) visitor;
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_type_vla_visitor, 68);
 
@@ -404,18 +389,15 @@ struct side_variant_option {
 side_check_size(struct side_variant_option, 16 + sizeof(const struct side_type));
 
 struct side_type_variant {
-	side_ptr_t(const struct side_variant_option) options;
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_options;
-	uint32_t nr_attr;
+	side_array_t(const struct side_variant_option) options;
 	const struct side_type selector;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_type_variant, 40 + sizeof(const struct side_type));
 
 struct side_type_optional {
 	side_ptr_t(const struct side_type) elem_type;
-	side_ptr_t(const struct side_attr) attr;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 };
 
 struct side_event_field {

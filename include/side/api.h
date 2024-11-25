@@ -34,6 +34,7 @@
 
 #define side_attr(_name, ...) _side_attr(_name, SIDE_PARAM(__VA_ARGS__))
 #define side_attr_list _side_attr_list
+#define side_dynamic_attr_list _side_dynamic_attr_list
 #define side_attr_bool _side_attr_bool
 #define side_attr_u8 _side_attr_u8
 #define side_attr_u16 _side_attr_u16

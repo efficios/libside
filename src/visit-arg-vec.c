@@ -276,7 +276,7 @@ void type_visitor_struct(const struct side_type_visitor *type_visitor, const str
 	const struct side_type_struct *side_struct = side_ptr_get(type_desc->u.side_struct);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	if (side_struct->nr_fields != side_sav_len) {
+	if (side_array_length(&side_struct->fields) != side_sav_len) {
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments of structure\n");
 		abort();
 	}
@@ -288,7 +288,7 @@ void type_visitor_struct(const struct side_type_visitor *type_visitor, const str
 			.type = CONTEXT_STRUCT,
 			.parent = ctx
 		};
-		side_visit_field(type_visitor, &new_ctx, &side_ptr_get(side_struct->fields)[i], &sav[i], priv);
+		side_visit_field(type_visitor, &new_ctx, side_array_at(&side_struct->fields, i), &sav[i], priv);
 	}
 	if (type_visitor->after_struct_type_func)
 		type_visitor->after_struct_type_func(side_struct, side_arg_vec, priv);
@@ -300,8 +300,8 @@ void type_visitor_variant(const struct side_type_visitor *type_visitor, const st
 {
 	const struct side_type_variant *side_type_variant = side_ptr_get(type_desc->u.side_variant);
 	const struct side_type *selector_type = &side_type_variant->selector;
+	const struct side_variant_option *option;
 	union int_value v;
-	uint32_t i;
 
 	if (side_enum_get(selector_type->type) != side_enum_get(side_arg_variant->selector.type)) {
 		fprintf(stderr, "ERROR: Unexpected variant selector type\n");
@@ -326,9 +326,7 @@ void type_visitor_variant(const struct side_type_visitor *type_visitor, const st
 	v = tracer_load_integer_value(&selector_type->u.side_integer,
 			&side_arg_variant->selector.u.side_static.integer_value, 0, NULL);
 	side_check_value_u64(v);
-	for (i = 0; i < side_type_variant->nr_options; i++) {
-		const struct side_variant_option *option = &side_ptr_get(side_type_variant->options)[i];
-
+	side_for_each_element_in_array(option, &side_type_variant->options) {
 		if (v.s[SIDE_INTEGER128_SPLIT_LOW] >= option->range_begin && v.s[SIDE_INTEGER128_SPLIT_LOW] <= option->range_end) {
 			side_visit_type(type_visitor, ctx, &option->side_type, &side_arg_variant->option, priv);
 			return;
@@ -523,8 +521,8 @@ uint32_t type_visitor_gather_struct(const struct side_type_visitor *type_visitor
 	if (type_visitor->before_gather_struct_type_func)
 		type_visitor->before_gather_struct_type_func(side_struct, priv);
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_struct.offset);
-	for (i = 0; i < side_struct->nr_fields; i++)
-		visit_gather_field(type_visitor, &side_ptr_get(side_struct->fields)[i], ptr, priv);
+	for (i = 0; i < side_array_length(&side_struct->fields); i++)
+		visit_gather_field(type_visitor, side_array_at(&side_struct->fields, i), ptr, priv);
 	if (type_visitor->after_gather_struct_type_func)
 		type_visitor->after_gather_struct_type_func(side_struct, priv);
 	return tracer_gather_size(access_mode, type_gather->u.side_struct.size);
@@ -1385,7 +1383,7 @@ void type_visitor_event(const struct side_type_visitor *type_visitor,
 		},
 	};
 
-	if (desc->nr_fields != side_sav_len) {
+	if (side_array_length(&desc->fields) != side_sav_len) {
 		fprintf(stderr, "ERROR: number of fields mismatch between description and arguments\n");
 		abort();
 	}
@@ -1395,7 +1393,7 @@ void type_visitor_event(const struct side_type_visitor *type_visitor,
 		if (type_visitor->before_static_fields_func)
 			type_visitor->before_static_fields_func(side_arg_vec, priv);
 		for (i = 0; i < side_sav_len; i++)
-			side_visit_field(type_visitor, &ctx, &side_ptr_get(desc->fields)[i], &sav[i], priv);
+			side_visit_field(type_visitor, &ctx, side_array_at(&desc->fields, i), &sav[i], priv);
 		if (type_visitor->after_static_fields_func)
 			type_visitor->after_static_fields_func(side_arg_vec, priv);
 	}

@@ -802,20 +802,13 @@ SIDE_SC_DEFINE_TYPE(variadic);
 #define SIDE_SC_EMIT_side_attr_list(_attr...)				\
 	_side_attr_list(SIDE_SC_MAP_LIST_SUB_SUB_SUB(SIDE_SC_EMIT_THIS_SUB_SUB_SUB, _attr))
 
-#define SIDE_SC_EMIT_side_dynamic_attr_list(_attr...)	\
-	SIDE_SC_side_dynamic_attr_list(_attr)
-
-#define _side_allocate_dynamic_SIDE_SC_side_dynamic_attr_list(...)	\
-	SIDE_DYNAMIC_COMPOUND_LITERAL(const struct side_attr,		\
-				SIDE_SC_MAP_LIST_SUB_SUB_SUB(SIDE_SC_EMIT_THIS_SUB_SUB_SUB, __VA_ARGS__))
-
-#define _side_allocate_static_SIDE_SC_side_dynamic_attr_list(...)	\
-	SIDE_COMPOUND_LITERAL(const struct side_attr,			\
-			SIDE_SC_MAP_LIST_SUB_SUB_SUB(SIDE_SC_EMIT_THIS_SUB_SUB_SUB, __VA_ARGS__))
-
 #define SIDE_SC_EMIT_SUB_side_attr_list SIDE_SC_EMIT_side_attr_list
 #define SIDE_SC_EMIT_SUB_SUB_side_attr_list SIDE_SC_EMIT_side_attr_list
 #define SIDE_SC_EMIT_SUB_SUB_SUB_side_attr_list SIDE_SC_EMIT_side_attr_list
+
+#undef side_dynamic_attr_list
+#define SIDE_SC_EMIT_side_dynamic_attr_list(_attr...)				\
+	_side_dynamic_attr_list(SIDE_SC_MAP_LIST_SUB_SUB_SUB(SIDE_SC_EMIT_THIS_SUB_SUB_SUB, _attr))
 
 #define SIDE_SC_EMIT_SUB_side_dynamic_attr_list SIDE_SC_EMIT_side_dynamic_attr_list
 #define SIDE_SC_EMIT_SUB_SUB_side_dynamic_attr_list SIDE_SC_EMIT_side_dynamic_attr_list

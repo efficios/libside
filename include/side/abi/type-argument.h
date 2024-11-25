@@ -105,37 +105,33 @@ side_check_size(union side_arg_static, 32);
 
 struct side_arg_dynamic_vla {
 	side_ptr_t(const struct side_arg) sav;
-	side_ptr_t(const struct side_attr) attr;
 	uint32_t len;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_arg_dynamic_vla, 40);
 
 struct side_arg_dynamic_struct {
 	side_ptr_t(const struct side_arg_dynamic_field) fields;
-	side_ptr_t(const struct side_attr) attr;
 	uint32_t len;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_arg_dynamic_struct, 40);
 
 struct side_arg_dynamic_struct_visitor {
 	side_func_ptr_t(side_dynamic_struct_visitor_func) visitor;
 	side_ptr_t(void) app_ctx;
-	side_ptr_t(const struct side_attr) attr;
 	/* libside argument cache, initialize to NULL. */
 	side_ptr_t(struct side_arg) cached_arg;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_arg_dynamic_struct_visitor, 68);
 
 struct side_arg_dynamic_vla_visitor {
 	side_func_ptr_t(side_visitor_func) visitor;
 	side_ptr_t(void) app_ctx;
-	side_ptr_t(const struct side_attr) attr;
 	/* libside argument cache, initialize to NULL. */
 	side_ptr_t(struct side_arg) cached_arg;
-	uint32_t nr_attr;
+	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_arg_dynamic_vla_visitor, 68);
 

@@ -39,45 +39,10 @@
 	}
 
 #define _side_attr_list(...)						\
-	SIDE_COMPOUND_LITERAL(const struct side_attr, __VA_ARGS__)
+	SIDE_LITERAL_ARRAY(const struct side_attr, __VA_ARGS__)
 
-/*
- * `side_dynamic_attr_list()' is actually not defined.  Instead, macro
- * dispatching is done to get the allocated array and its size independently.
- *
- * This is because C++ does not support well array compound literal that are not
- * static.  See the comment of `SIDE_DYNAMIC_COMPOUND_LITERAL'.
- *
- * Dispatching is done by concatenating a prefix that will expand to a defined
- * macro.
- */
-
-/*
- * Dispatch `_side_allocate_dynamic_' of `side_dynamic_attr_list()'.  Returns the
- * dynamic allocation for the list of attributes.
- *
- * In C, it expands to a regular compound literal.  In C++, the compound literal
- * is copied onto a `alloca(3)' buffer, thus bypassing the the lifetime of the
- * expression.
- *
- * Because `SIDE_DYNAMIC_COMPOUND_LITERAL' uses `SIDE_CAT' internally, this
- * dispatching must be done using `SIDE_CAT2'.
- */
-#define _side_allocate_dynamic_side_dynamic_attr_list(...)		\
-	SIDE_DYNAMIC_COMPOUND_LITERAL(const struct side_attr, __VA_ARGS__)
-
-/*
- * Dispatch `_side_allocate_static_' of `side_dynamic_attr_list()'.  Returns the
- * static allocation of the list of attributes.
- *
- * This variant is fine to be used in C++ if the only goal is to determine the
- * allocation size, since the lifetime of the allocation is bound to the
- * expression.
- *
- * This dispatching can be either done with `SIDE_CAT' or `SIDE_CAT2'.
- */
-#define _side_allocate_static_side_dynamic_attr_list(...)			\
-	SIDE_COMPOUND_LITERAL(const struct side_attr, __VA_ARGS__)
+#define _side_dynamic_attr_list(...)					\
+	SIDE_DYNAMIC_LITERAL_ARRAY(const struct side_attr, __VA_ARGS__)
 
 #define _side_attr_null(_val)		{ .type = SIDE_ATTR_TYPE_NULL }
 #define _side_attr_bool(_val)		{ .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_BOOL), .u = { .bool_value = !!(_val) } }
@@ -116,14 +81,12 @@
 
 #define side_define_enum(_identifier, _mappings, _attr...) \
 	const struct side_enum_mappings _identifier = { \
-		.mappings = SIDE_PTR_INIT(_mappings), \
-		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.mappings = _mappings, \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 	}
 
 #define side_enum_mapping_list(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_enum_mapping, __VA_ARGS__)
+	SIDE_LITERAL_ARRAY(const struct side_enum_mapping, __VA_ARGS__)
 
 #define side_enum_mapping_range(_label, _begin, _end) \
 	{ \
@@ -149,14 +112,12 @@
 
 #define _side_define_enum_bitmap(_identifier, _mappings, _attr...) \
 	const struct side_enum_bitmap_mappings _identifier = { \
-		.mappings = SIDE_PTR_INIT(_mappings), \
-		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-		.nr_mappings = SIDE_ARRAY_SIZE(SIDE_PARAM(_mappings)), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.mappings = _mappings, \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 	}
 
 #define side_enum_bitmap_mapping_list(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_enum_bitmap_mapping, __VA_ARGS__)
+	SIDE_LITERAL_ARRAY(const struct side_enum_bitmap_mapping, __VA_ARGS__)
 
 #define side_enum_bitmap_mapping_range(_label, _begin, _end) \
 	{ \
@@ -187,8 +148,7 @@
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_NULL), \
 		.u = { \
 			.side_null = { \
-				.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+				.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 			}, \
 		}, \
 	}
@@ -198,8 +158,7 @@
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_BOOL), \
 		.u = { \
 			.side_bool = { \
-				.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+				.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 				.bool_size = sizeof(uint8_t), \
 				.len_bits = 0, \
 				.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
@@ -212,8 +171,7 @@
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_BYTE), \
 		.u = { \
 			.side_byte = { \
-				.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+				.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 			}, \
 		}, \
 	}
@@ -223,8 +181,7 @@
 		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_string = { \
-				.attr = SIDE_PTR_INIT(_attr), \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.attributes = _attr, \
 				.unit_size = _unit_size, \
 				.byte_order = SIDE_ENUM_INIT(_byte_order), \
 			}, \
@@ -242,8 +199,7 @@
 		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_integer = { \
-				.attr = SIDE_PTR_INIT(_attr), \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.attributes = _attr, \
 				.integer_size = _integer_size, \
 				.len_bits = _len_bits, \
 				.signedness = _signedness, \
@@ -257,8 +213,7 @@
 		.type = SIDE_ENUM_INIT(_type), \
 		.u = { \
 			.side_float = { \
-				.attr = SIDE_PTR_INIT(_attr), \
-				.nr_attr = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+				.attributes = _attr, \
 				.float_size = _float_size, \
 				.byte_order = SIDE_ENUM_INIT(_byte_order), \
 			}, \
@@ -647,12 +602,10 @@
 #define _side_field_struct(_name, _struct) \
 	_side_field(_name, _side_type_struct(SIDE_PARAM(_struct)))
 
-#define _side_type_struct_define(_fields, _attr) \
-	{ \
-		.fields = SIDE_PTR_INIT(_fields), \
-		.attr = SIDE_PTR_INIT(_attr), \
-		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)), \
-		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)), \
+#define _side_type_struct_define(_fields, _attr)			\
+	{								\
+		.fields = _fields,				\
+		.attributes = _attr,				\
 	}
 
 #define _side_define_struct(_identifier, _fields, _attr...) \
@@ -671,11 +624,9 @@
 
 #define _side_type_variant_define(_selector, _options, _attr)	     \
 	{							     \
-		.options = SIDE_PTR_INIT(_options),		     \
-		.attr = SIDE_PTR_INIT(_attr),			     \
-		.nr_options = SIDE_ARRAY_SIZE(SIDE_PARAM(_options)), \
-		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM(_attr)),	     \
+		.options = _options,			     \
 		.selector = _selector,				     \
+		.attributes = _attr,			     \
 	}
 
 #define _side_define_variant(_identifier, _selector, _options, _attr...) \
@@ -698,8 +649,7 @@ enum {
 #define _side_type_optional_define(_elem_type, _attr...)		\
 	{								\
 		.elem_type = SIDE_PTR_INIT(_elem_type),			\
-		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL),	\
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.attributes = _attr,				\
 	}
 
 #define _side_define_optional(_identifier, _elem_type, _attr...)	\
@@ -726,9 +676,8 @@ enum {
 #define _side_define_array(_identifier, _elem_type, _length, _attr...)	\
 	const struct side_type_array _identifier = {			\
 		.elem_type = SIDE_PTR_INIT(SIDE_PARAM(_elem_type)),	\
-		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
 		.length = _length,					\
-		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 	}
 
 #define _side_type_vla(_vla)					\
@@ -746,8 +695,7 @@ enum {
 	const struct side_type_vla _identifier = {			\
 		.elem_type = SIDE_PTR_INIT(SIDE_PARAM(_elem_type)),	\
 		.length_type = SIDE_PTR_INIT(SIDE_PARAM(_length_type)),	\
-		.attr = SIDE_PTR_INIT(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
-		.nr_attr  = SIDE_ARRAY_SIZE(SIDE_PARAM_SELECT_ARG1(_, ##_attr, side_attr_list())), \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) \
 	}
 
 #define _side_type_vla_visitor_define(_elem_type, _length_type, _visitor, _attr...) \
@@ -755,8 +703,7 @@ enum {
 		.elem_type = SIDE_PTR_INIT(_elem_type), \
 		.length_type = SIDE_PTR_INIT(_length_type), \
 		.visitor = SIDE_PTR_INIT(_visitor), \
-		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 	}
 
 #define _side_type_vla_visitor(_vla_visitor) \
@@ -781,8 +728,7 @@ enum {
 						.offset = _offset, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+						.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 						}, \
 					}, \
 				}, \
@@ -803,8 +749,7 @@ enum {
 						.offset_bits = _offset_bits, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 							.bool_size = _bool_size, \
 							.len_bits = _len_bits, \
 							.byte_order = SIDE_ENUM_INIT(_byte_order), \
@@ -840,8 +785,7 @@ enum {
 						.offset_bits = _offset_bits, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 							.integer_size = _integer_size, \
 							.len_bits = _len_bits, \
 							.signedness = _signedness, \
@@ -917,8 +861,7 @@ enum {
 						.offset = _offset, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 							.float_size = _float_size, \
 							.byte_order = SIDE_ENUM_INIT(_byte_order), \
 						}, \
@@ -952,8 +895,7 @@ enum {
 						.offset = _offset, \
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
-							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 							.unit_size = _unit_size, \
 							.byte_order = SIDE_ENUM_INIT(_byte_order), \
 						}, \
@@ -1038,9 +980,8 @@ enum {
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.type = { \
 							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
-							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
 							.length = _length, \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 						}, \
 					}, \
 				}, \
@@ -1062,8 +1003,7 @@ enum {
 						.type = { \
 							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
 							.length_type = SIDE_PTR_INIT(_length_type_gather), \
-							.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
-							.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 						}, \
 					}, \
 				}, \
@@ -1080,10 +1020,10 @@ enum {
 	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
 
 #define _side_field_list(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_event_field, __VA_ARGS__)
+	SIDE_LITERAL_ARRAY(const struct side_event_field, __VA_ARGS__)
 
 #define _side_option_list(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_variant_option, __VA_ARGS__)
+	SIDE_LITERAL_ARRAY(const struct side_variant_option, __VA_ARGS__)
 
 /* Stack-copy field arguments */
 
@@ -1187,8 +1127,7 @@ enum {
 		.u = { \
 			.side_dynamic = { \
 				.side_null = { \
-					.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
-					.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+					.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()) \
 				}, \
 			}, \
 		}, \
@@ -1202,8 +1141,7 @@ enum {
 			.side_dynamic = { \
 				.side_bool = { \
 					.type = { \
-						.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+						.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 						.bool_size = sizeof(uint8_t), \
 						.len_bits = 0, \
 						.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
@@ -1224,8 +1162,7 @@ enum {
 			.side_dynamic = { \
 				.side_byte = { \
 					.type = { \
-						.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+						.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 					}, \
 					.value = (_val), \
 				}, \
@@ -1241,8 +1178,7 @@ enum {
 			.side_dynamic = { \
 				.side_string = { \
 					.type = { \
-						.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+						.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 						.unit_size = _unit_size, \
 						.byte_order = SIDE_ENUM_INIT(_byte_order), \
 					}, \
@@ -1275,8 +1211,7 @@ enum {
 			.side_dynamic = { \
 				.side_integer = { \
 					.type = { \
-						.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+						.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 						.integer_size = _integer_size, \
 						.len_bits = _len_bits, \
 						.signedness = _signedness, \
@@ -1325,8 +1260,7 @@ enum {
 			.side_dynamic = { \
 				.side_float = { \
 					.type = { \
-						.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
-						.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+						.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 						.float_size = _float_size, \
 						.byte_order = SIDE_ENUM_INIT(_byte_order), \
 					}, \
@@ -1440,36 +1374,32 @@ enum {
 	const struct side_arg _identifier##_vec[] = { _sav }; \
 	const struct side_arg_dynamic_vla _identifier = { \
 		.sav = SIDE_PTR_INIT(_identifier##_vec), \
-		.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
 		.len = SIDE_ARRAY_SIZE(_identifier##_vec), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 	}
 
 #define _side_arg_dynamic_define_struct(_identifier, _struct_fields, _attr...) \
 	const struct side_arg_dynamic_field _identifier##_fields[] = { _struct_fields }; \
 	const struct side_arg_dynamic_struct _identifier = { \
-		.fields = SIDE_PTR_INIT(_identifier##_fields), \
-		.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
-		.len = SIDE_ARRAY_SIZE(_identifier##_fields), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+		.fields = SIDE_PTR_INIT(_identifier##_fields),	\
+		.len = SIDE_ARRAY_SIZE(_identifier##_fields),		\
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 	}
 
 #define _side_arg_dynamic_define_struct_visitor(_identifier, _dynamic_struct_visitor, _ctx, _attr...) \
 	struct side_arg_dynamic_struct_visitor _identifier = { \
 		.visitor = SIDE_PTR_INIT(_dynamic_struct_visitor), \
 		.app_ctx = SIDE_PTR_INIT(_ctx), \
-		.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
 		.cached_arg = SIDE_PTR_INIT(NULL), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 	}
 
 #define _side_arg_dynamic_define_vla_visitor(_identifier, _dynamic_vla_visitor, _ctx, _attr...) \
 	struct side_arg_dynamic_vla_visitor _identifier = { \
 		.visitor = SIDE_PTR_INIT(_dynamic_vla_visitor), \
 		.app_ctx = SIDE_PTR_INIT(_ctx), \
-		.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
 		.cached_arg = SIDE_PTR_INIT(NULL), \
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 	}
 
 #define _side_arg_define_vec(_identifier, _sav) \
@@ -1526,9 +1456,8 @@ enum {
 		const struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
 		const struct side_arg_dynamic_struct var_struct = { \
 			.fields = SIDE_PTR_INIT(side_fields), \
-			.attr = SIDE_PTR_INIT(SIDE_CAT2(_side_allocate_dynamic_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
 			.len = SIDE_ARRAY_SIZE(side_fields), \
-			.nr_attr = SIDE_ARRAY_SIZE(SIDE_CAT2(_side_allocate_static_, SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))), \
+			.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 		}; \
 		_call(&(side_event_state__##_identifier.parent), &side_arg_vec, &var_struct); \
 	}
@@ -1556,15 +1485,14 @@ enum {
 		const struct side_arg_dynamic_field side_fields[] = { _var_fields }; \
 		const struct side_arg_dynamic_struct var_struct = { \
 			.fields = side_ptr_init(side_fields), \
-			.attr = side_ptr_init(_attr), \
 			.len = side_array_size(side_fields), \
-			.nr_attr = side_array_size(_attr), \
+			.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 		}; \
 		_call(&(side_event_state__##_identifier.parent), &side_arg_vec, &var_struct, _key); \
 	}
 
 #define side_statedump_event_call_variadic(_identifier, _key, _sav, _var_fields, _attr...) \
-	_side_statedump_event_call_variadic(side_statedump_call_variadic, _identifier, _key, SIDE_PARAM(_sav), SIDE_PARAM(_var_fields), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+	_side_statedump_event_call_variadic(side_statedump_call_variadic, _identifier, _key, SIDE_PARAM(_sav), SIDE_PARAM(_var_fields), SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))
 
 
 /*
@@ -1595,19 +1523,19 @@ enum {
 	};								\
 	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
 		_identifier = {						\
+		.side_begin_abi_tag_0 = {},				\
 		.struct_size = offsetof(struct side_event_description, end), \
 		.version = SIDE_EVENT_DESCRIPTION_ABI_VERSION,		\
 		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier.parent)), \
 		.provider_name = SIDE_PTR_INIT(_provider),		\
 		.event_name = SIDE_PTR_INIT(_event),			\
-		.fields = SIDE_PTR_INIT(_fields),			\
-		.attr = SIDE_PTR_INIT(SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) ? SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) : NULL), \
+		.fields = _fields,				\
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 		.flags = (_flags),					\
 		.nr_side_type_label = _NR_SIDE_TYPE_LABEL,		\
 		.nr_side_attr_type = _NR_SIDE_ATTR_TYPE,		\
 		.loglevel = SIDE_ENUM_INIT(_loglevel),			\
-		.nr_fields = SIDE_ARRAY_SIZE(SIDE_PARAM(_fields)),	\
-		.nr_attr = SIDE_ARRAY_SIZE(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())), \
+		.side_end_abi_tag_0 = {},				\
 		.end = {}						\
 	};								\
 	static const struct side_event_description __attribute__((section("side_event_description_ptr"), used)) \

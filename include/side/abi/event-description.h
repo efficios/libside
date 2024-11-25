@@ -42,25 +42,35 @@ enum side_loglevel {
 	SIDE_LOGLEVEL_DEBUG = 7,
 };
 
+#define SIDE_BEGIN_ABI(V)			\
+	char side_begin_abi_tag_##V [0]
+
+#define SIDE_END_ABI(V)				\
+	char side_end_abi_tag_##V [0]
+
 struct side_event_description {
+
+	SIDE_BEGIN_ABI(0);
+
 	uint32_t struct_size;	/* Size of this structure. */
 	uint32_t version;	/* Event description ABI version. */
 
 	side_ptr_t(struct side_event_state) state;
 	side_ptr_t(const char) provider_name;
 	side_ptr_t(const char) event_name;
-	side_ptr_t(const struct side_event_field) fields;
-	side_ptr_t(const struct side_attr) attr;
+	side_array_t(const struct side_event_field) fields;
+	side_array_t(const struct side_attr) attributes;
 	uint64_t flags;	/* Bitwise OR of enum side_event_flags */
 	uint16_t nr_side_type_label;
 	uint16_t nr_side_attr_type;
 	side_enum_t(enum side_loglevel, uint32_t) loglevel;
-	uint32_t nr_fields;
-	uint32_t nr_attr;
-#define side_event_description_orig_abi_last nr_attr
-	/* End of fields supported in the original ABI. */
+
+	SIDE_END_ABI(0);
 
 	char end[0];	/* End with a zero-sized array to account for extensibility. */
 } SIDE_PACKED;
+
+#define side_event_description_orig_abi_last	\
+	side_end_abi_tag_0
 
 #endif /* SIDE_ABI_EVENT_DESCRIPTION_H */

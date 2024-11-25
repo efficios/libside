@@ -81,12 +81,12 @@ static
 void description_visitor_struct(const struct side_description_visitor *description_visitor, const struct side_type *type_desc, void *priv)
 {
 	const struct side_type_struct *side_struct = side_ptr_get(type_desc->u.side_struct);
-	uint32_t i, len = side_struct->nr_fields;
+	uint32_t i, len = side_array_length(&side_struct->fields);
 
 	if (description_visitor->before_struct_type_func)
 		description_visitor->before_struct_type_func(side_struct, priv);
 	for (i = 0; i < len; i++)
-		side_visit_field(description_visitor, &side_ptr_get(side_struct->fields)[i], priv);
+		side_visit_field(description_visitor, side_array_at(&side_struct->fields, i), priv);
 	if (description_visitor->after_struct_type_func)
 		description_visitor->after_struct_type_func(side_struct, priv);
 }
@@ -96,7 +96,7 @@ void description_visitor_variant(const struct side_description_visitor *descript
 {
 	const struct side_type_variant *side_type_variant = side_ptr_get(type_desc->u.side_variant);
 	const struct side_type *selector_type = &side_type_variant->selector;
-	uint32_t i, len = side_type_variant->nr_options;
+	uint32_t i, len = side_array_length(&side_type_variant->options);
 
 	switch (side_enum_get(selector_type->type)) {
 	case SIDE_TYPE_U8:
@@ -117,7 +117,7 @@ void description_visitor_variant(const struct side_description_visitor *descript
 	if (description_visitor->before_variant_type_func)
 		description_visitor->before_variant_type_func(side_type_variant, priv);
 	for (i = 0; i < len; i++)
-		side_visit_option(description_visitor, &side_ptr_get(side_type_variant->options)[i], priv);
+		side_visit_option(description_visitor, side_array_at(&side_type_variant->options, i), priv);
 	if (description_visitor->after_variant_type_func)
 		description_visitor->after_variant_type_func(side_type_variant, priv);
 }
@@ -190,8 +190,8 @@ void description_visitor_gather_struct(const struct side_description_visitor *de
 
 	if (description_visitor->before_gather_struct_type_func)
 		description_visitor->before_gather_struct_type_func(side_gather_struct, priv);
-	for (i = 0; i < side_struct->nr_fields; i++)
-		visit_gather_field(description_visitor, &side_ptr_get(side_struct->fields)[i], priv);
+	for (i = 0; i < side_array_length(&side_struct->fields); i++)
+		visit_gather_field(description_visitor, side_array_at(&side_struct->fields, i), priv);
 	if (description_visitor->after_gather_struct_type_func)
 		description_visitor->after_gather_struct_type_func(side_gather_struct, priv);
 }
@@ -494,7 +494,7 @@ void side_visit_type(const struct side_description_visitor *description_visitor,
 void description_visitor_event(const struct side_description_visitor *description_visitor,
 		const struct side_event_description *desc, void *priv)
 {
-	uint32_t i, len = desc->nr_fields;
+	uint32_t i, len = side_array_length(&desc->fields);
 
 	if (description_visitor->before_event_func)
 		description_visitor->before_event_func(desc, priv);
@@ -502,7 +502,7 @@ void description_visitor_event(const struct side_description_visitor *descriptio
 		if (description_visitor->before_static_fields_func)
 			description_visitor->before_static_fields_func(desc, priv);
 		for (i = 0; i < len; i++)
-			side_visit_field(description_visitor, &side_ptr_get(desc->fields)[i], priv);
+			side_visit_field(description_visitor, side_array_at(&desc->fields, i), priv);
 		if (description_visitor->after_static_fields_func)
 			description_visitor->after_static_fields_func(desc, priv);
 	}
