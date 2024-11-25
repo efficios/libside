@@ -826,7 +826,7 @@ void test_float(void)
 		_Float16 f;
 		uint16_t u;
 	} float16 = {
-		.f = 1.1,
+		.f = 1.1f,
 	};
 #endif
 #if __HAVE_FLOAT32
@@ -834,7 +834,7 @@ void test_float(void)
 		_Float32 f;
 		uint32_t u;
 	} float32 = {
-		.f = 2.2,
+		.f = 2.2f,
 	};
 #endif
 #if __HAVE_FLOAT64
@@ -870,23 +870,23 @@ void test_float(void)
 	side_event(my_provider_event_float,
 		side_arg_list(
 #if __HAVE_FLOAT16
-			side_arg_float_binary16(1.1),
+			side_arg_float_binary16(1.1f),
 # if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_float_binary16(1.1),
+			side_arg_float_binary16(1.1f),
 			side_arg_float_binary16(float16.f),
 # else
 			side_arg_float_binary16(float16.f),
-			side_arg_float_binary16(1.1),
+			side_arg_float_binary16(1.1f),
 # endif
 #endif
 #if __HAVE_FLOAT32
-			side_arg_float_binary32(2.2),
+			side_arg_float_binary32(2.2f),
 # if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_float_binary32(2.2),
+			side_arg_float_binary32(2.2f),
 			side_arg_float_binary32(float32.f),
 # else
 			side_arg_float_binary32(float32.f),
-			side_arg_float_binary32(2.2),
+			side_arg_float_binary32(2.2f),
 # endif
 #endif
 #if __HAVE_FLOAT64
@@ -926,7 +926,7 @@ void test_variadic_float(void)
 		_Float16 f;
 		uint16_t u;
 	} float16 = {
-		.f = 1.1,
+		.f = 1.1f,
 	};
 #endif
 #if __HAVE_FLOAT32
@@ -934,7 +934,7 @@ void test_variadic_float(void)
 		_Float32 f;
 		uint32_t u;
 	} float32 = {
-		.f = 2.2,
+		.f = 2.2f,
 	};
 #endif
 #if __HAVE_FLOAT64
@@ -973,21 +973,21 @@ void test_variadic_float(void)
 #if __HAVE_FLOAT16
 			side_arg_dynamic_field("binary16", side_arg_dynamic_float_binary16(1.1)),
 # if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(1.1)),
+			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(1.1f)),
 			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(float16.f)),
 # else
 			side_arg_dynamic_field("binary16_le", side_arg_dynamic_float_binary16_le(float16.f)),
-			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(1.1)),
+			side_arg_dynamic_field("binary16_be", side_arg_dynamic_float_binary16_be(1.1f)),
 # endif
 #endif
 #if __HAVE_FLOAT32
-			side_arg_dynamic_field("binary32", side_arg_dynamic_float_binary32(2.2)),
+			side_arg_dynamic_field("binary32", side_arg_dynamic_float_binary32(2.2f)),
 # if SIDE_FLOAT_WORD_ORDER == SIDE_LITTLE_ENDIAN
-			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(2.2)),
+			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(2.2f)),
 			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(float32.f)),
 # else
 			side_arg_dynamic_field("binary32_le", side_arg_dynamic_float_binary32_le(float32.f)),
-			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(2.2)),
+			side_arg_dynamic_field("binary32_be", side_arg_dynamic_float_binary32_be(2.2f)),
 # endif
 #endif
 #if __HAVE_FLOAT64
@@ -1458,7 +1458,7 @@ void test_struct_gather(void)
 		};
 		int32_t val = -66;
 #if __HAVE_FLOAT32
-		_Float32 f32 = 1.1;
+		_Float32 f32 = 1.1f;
 #endif
 		side_event_call(my_provider_event_structgather,
 			side_arg_list(
@@ -1597,10 +1597,10 @@ void test_struct_gather_float(void)
 	if (side_event_enabled(my_provider_event_structgatherfloat)) {
 		struct testfloat mystruct = {
 #if __HAVE_FLOAT16
-			.f16 = 1.1,
+			.f16 = 1.1f,
 #endif
 #if __HAVE_FLOAT32
-			.f32 = 2.2,
+			.f32 = 2.2f,
 #endif
 #if __HAVE_FLOAT64
 			.f64 = 3.3,
