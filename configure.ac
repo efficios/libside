@@ -210,6 +210,8 @@ AC_CONFIG_FILES([
 	Makefile
 	include/Makefile
 	src/Makefile
+	src/bin/Makefile
+	src/bin/readside/Makefile
 	src/lib/Makefile
 	src/lib/librcu/Makefile
 	src/lib/libside/Makefile
