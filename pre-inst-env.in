@@ -1,0 +1,18 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (c) 2024 Olivier Dion <odion@efficios.com>
+
+srcdir=$(realpath "@abs_top_srcdir@")
+builddir=$(realpath "@abs_top_builddir@")
+bin="$builddir/src/bin"
+
+# Easy access to binaries.
+PATH="$bin/readside:$PATH"
+export PATH
+
+# Use local path to search manual pages.
+MANPATH="$builddir/doc/man"
+export MANPATH
+
+exec "$@"
