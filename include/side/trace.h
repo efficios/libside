@@ -223,7 +223,7 @@ void side_exit(void) __attribute__((destructor));
 /*
  * These weak symbols, the constructor, and destructor take care of
  * registering only _one_ instance of the side instrumentation per
- * shared-ojbect (or for the whole main program).
+ * shared-object (or for the whole main program).
  */
 extern struct side_event_description * __start_side_event_description_ptr[]
 	__attribute__((weak, visibility("hidden")));
