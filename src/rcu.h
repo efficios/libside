@@ -18,6 +18,10 @@
 #include <sys/syscall.h>
 #include <side/macros.h>
 
+#ifdef __NR_futex_time64
+# include <linux/time_types.h>
+#endif
+
 #define SIDE_CACHE_LINE_SIZE		256
 
 struct side_rcu_percpu_count {
@@ -50,6 +54,10 @@ static inline
 int futex(int32_t *uaddr, int op, int32_t val,
 	const struct timespec *timeout, int32_t *uaddr2, int32_t val3)
 {
+#ifdef __NR_futex_time64
+	if (sizeof(struct timespec) == sizeof(struct __kernel_timespec))
+		return syscall(__NR_futex_time64, uaddr, op, val, timeout, uaddr2, val3);
+#endif
 	return syscall(__NR_futex, uaddr, op, val, timeout, uaddr2, val3);
 }
 
