@@ -59,21 +59,24 @@ Mkfile.old
 dkms.conf
 
 /src/libside.pc
-/src/test
-/tests/regression/.dirstamp
+/src/bin/readside/readside
+/src/lib/pkgconfig/libside-tracer.pc
+/src/lib/pkgconfig/libside.pc
 /tests/regression/side-rcu-test
-/tests/unit/.dirstamp
 /tests/unit/demo
 /tests/unit/test
 /tests/unit/test-cxx
 /tests/unit/statedump
 /tests/unit/test-sc
 /tests/unit/test-sc-cxx
+/tests/unit/test-no-sc
+/tests/unit/test-no-sc-cxx
 
 #automake
 /include/config.h
 .deps/
 .libs/
+.dirstamp
 Makefile.in
 Makefile
 *.la
@@ -106,3 +109,4 @@ Makefile
 /config.status
 /autom4te.cache/
 /config
+/pre-inst-env
