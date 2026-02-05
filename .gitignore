@@ -60,7 +60,7 @@ dkms.conf
 
 /src/libside.pc
 /src/bin/readside/readside
-/src/lib/pkgconfig/libside-tracer.pc
+/src/lib/pkgconfig/libside-console-tracer.pc
 /src/lib/pkgconfig/libside.pc
 /tests/regression/side-rcu-test
 /tests/unit/demo

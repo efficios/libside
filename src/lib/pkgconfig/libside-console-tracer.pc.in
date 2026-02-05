@@ -10,5 +10,5 @@ Name: Static Instrumentation Dynamically Enabled Console Ttracer
 Description: Console tracer for libside.
 Version: @PACKAGE_VERSION@
 Requires:
-Libs: -L${libdir} -lside-tracer
+Libs: -L${libdir} -lside-console-tracer
 
