@@ -17,7 +17,7 @@
 #include <side/endian.h>
 
 /*
- * SIDE stands for "Software Instrumentation Dynamically Enabled"
+ * SIDE stands for "Specification for Instrumentation Data Encoding"
  *
  * This is an instrumentation ABI for Linux user-space, which exposes an
  * instrumentation type system and facilities allowing a kernel or

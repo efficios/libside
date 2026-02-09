@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2022 EfficiOS Inc.
 
 libside
 =======
-Software Instrumentation Dynamically Enabled
+Specification for Instrumentation Data Encoding
 
 Dependencies
 ------------
