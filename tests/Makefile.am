@@ -11,6 +11,11 @@ LOG_DRIVER = env AM_TAP_AWK='$(AWK)' \
 	SIDE_TESTS_BUILDDIR='$(abs_top_builddir)/tests' \
 	$(SHELL) $(srcdir)/utils/tap-driver.sh
 
+# The console tracer don't have any symbol used by the application, so
+# it requires "no-as-needed" for distributions which build with
+# "as-needed" by default.
+CONSOLE_TRACER_FLAGS = -Wl,--no-as-needed
+
 noinst_PROGRAMS = \
 	regression/side-rcu-test \
 	unit/test \
@@ -27,6 +32,7 @@ regression_side_rcu_test_LDADD = \
 	$(RSEQ_LIBS)
 
 unit_test_SOURCES = unit/test.c
+unit_test_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
 unit_test_LDADD = \
 	$(top_builddir)/src/lib/libside/libside.la \
 	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
@@ -34,6 +40,7 @@ unit_test_LDADD = \
 	$(RSEQ_LIBS)
 
 unit_test_cxx_SOURCES = unit/test-cxx.cpp
+unit_test_cxx_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
 unit_test_cxx_LDADD = \
 	$(top_builddir)/src/lib/libside/libside.la \
 	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
@@ -41,6 +48,7 @@ unit_test_cxx_LDADD = \
 	$(RSEQ_LIBS)
 
 unit_test_no_sc_SOURCES = unit/test-no-sc.c
+unit_test_no_sc_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
 unit_test_no_sc_LDADD = \
 	$(top_builddir)/src/lib/libside/libside.la \
 	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
@@ -48,6 +56,7 @@ unit_test_no_sc_LDADD = \
 	$(RSEQ_LIBS)
 
 unit_test_no_sc_cxx_SOURCES = unit/test-no-sc-cxx.cpp
+unit_test_no_sc_cxx_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
 unit_test_no_sc_cxx_LDADD = \
 	$(top_builddir)/src/lib/libside/libside.la \
 	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
@@ -55,6 +64,7 @@ unit_test_no_sc_cxx_LDADD = \
 	$(RSEQ_LIBS)
 
 unit_demo_SOURCES = unit/demo.c
+unit_demo_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
 unit_demo_LDADD = \
 	$(top_builddir)/src/lib/libside/libside.la \
 	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
@@ -62,6 +72,7 @@ unit_demo_LDADD = \
 	$(RSEQ_LIBS)
 
 unit_statedump_SOURCES = unit/statedump.c
+unit_statedump_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
 unit_statedump_LDADD = \
 	$(top_builddir)/src/lib/libside/libside.la \
 	$(top_builddir)/src/lib/libside-console-tracer/libside-console-tracer.la \
