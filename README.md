@@ -51,18 +51,20 @@ to stdout in a human-readable format.
 
 ### Usage
 
-Link your application with `-lside-console-tracer` in addition to `-lside`:
+Preload the console tracer at runtime using `LD_PRELOAD` without modifying or
+relinking the application:
 
-    gcc -o myapp myapp.c -lside -lside-console-tracer
+    LD_PRELOAD=libside-console-tracer.so ./myapp
+
+Or link your application with `-lside-console-tracer` in addition to `-lside`:
+
+    gcc -o myapp myapp.c -lside -Wl,--no-as-needed -lside-console-tracer
 
 Or use `pkg-config(1)`:
 
-    gcc -o myapp myapp.c $(pkg-config --cflags --libs libside-console-tracer)
-
-The console tracer can also be loaded at runtime using `LD_PRELOAD` without
-modifying or relinking the application:
-
-    LD_PRELOAD=libside-console-tracer.so ./myapp
+    gcc -o myapp myapp.c					\
+	$(pkg-config --cflags --libs libside)			\
+	$(pkg-config --cflags --libs libside-console-tracer)
 
 ### Example output
 
