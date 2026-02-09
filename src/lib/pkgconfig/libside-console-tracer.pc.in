@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2022 EfficiOS Inc.
 
+# The console tracer is not used by the application directly, but rather
+# indirectly by registering itself to libside from a library constructor.
+# It therefore requires the "no-as-needed" linker flag to ensure the
+# linker does not eliminate the console tracer library.
+
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
@@ -10,5 +15,5 @@ Name: Static Instrumentation Dynamically Enabled Console Ttracer
 Description: Console tracer for libside.
 Version: @PACKAGE_VERSION@
 Requires:
-Libs: -L${libdir} -lside-console-tracer
+Libs: -Wl,--push-state -Wl,--no-as-needed -L${libdir} -lside-console-tracer -Wl,--pop-state
 
