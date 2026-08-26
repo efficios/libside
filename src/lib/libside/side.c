@@ -327,7 +327,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		ret = SIDE_ERROR_NOMEM;
 		goto unlock;
 	}
-	memcpy(new_cb, old_cb, old_nr_cb);
+	memcpy(new_cb, old_cb, old_nr_cb * sizeof(struct side_callback));
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 		new_cb[old_nr_cb].u.call_variadic =
 			(side_tracer_callback_variadic_func) call;
@@ -869,7 +869,7 @@ int side_tracer_statedump_request(uint64_t key)
 	pthread_mutex_lock(&side_statedump_lock);
 	side_list_for_each_entry(handle, &side_statedump_list, node)
 		queue_statedump_pending(handle, key);
-	pthread_mutex_lock(&side_statedump_lock);
+	pthread_mutex_unlock(&side_statedump_lock);
 	return SIDE_ERROR_OK;
 }
 
@@ -885,7 +885,7 @@ int side_tracer_statedump_request_cancel(uint64_t key)
 	pthread_mutex_lock(&side_statedump_lock);
 	side_list_for_each_entry(handle, &side_statedump_list, node)
 		unqueue_statedump_pending(handle, key);
-	pthread_mutex_lock(&side_statedump_lock);
+	pthread_mutex_unlock(&side_statedump_lock);
 	return SIDE_ERROR_OK;
 }
 
