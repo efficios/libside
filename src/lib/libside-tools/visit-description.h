@@ -43,9 +43,6 @@ struct side_description_visitor_callbacks {
 	void (*before_vla_type_func)(const struct side_type_vla *side_vla, void *priv);
 	void (*after_length_vla_type_func)(const struct side_type_vla *side_vla, void *priv);
 	void (*after_element_vla_type_func)(const struct side_type_vla *side_vla, void *priv);
-	void (*before_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
-	void (*after_length_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
-	void (*after_element_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, void *priv);
 	void (*before_optional_type_func)(const struct side_type_optional *optional, void *priv);
 	void (*after_optional_type_func)(const struct side_type_optional *optional, void *priv);
 

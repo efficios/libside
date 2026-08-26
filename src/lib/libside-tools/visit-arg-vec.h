@@ -47,8 +47,6 @@ struct side_type_visitor {
 	void (*after_array_type_func)(const struct side_type_array *side_array, const struct side_arg_vec *side_arg_vec, void *priv);
 	void (*before_vla_type_func)(const struct side_type_vla *side_vla, const struct side_arg_vec *side_arg_vec, void *priv);
 	void (*after_vla_type_func)(const struct side_type_vla *side_vla, const struct side_arg_vec *side_arg_vec, void *priv);
-	void (*before_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, const struct side_arg_vla_visitor *side_arg_vla_visitor, void *priv);
-	void (*after_vla_visitor_type_func)(const struct side_type_vla_visitor *side_vla_visitor, const struct side_arg_vla_visitor *side_arg_vla_visitor, void *priv);
 
 	/* Stack-copy enumeration types. */
 	void (*enum_type_func)(const struct side_type *type_desc, const struct side_arg *item, void *priv);
@@ -91,12 +89,8 @@ struct side_type_visitor {
 	/* Dynamic compound types. */
 	void (*before_dynamic_struct_func)(const struct side_arg_dynamic_struct *dynamic_struct, void *priv);
 	void (*after_dynamic_struct_func)(const struct side_arg_dynamic_struct *dynamic_struct, void *priv);
-	void (*before_dynamic_struct_visitor_func)(const struct side_arg *item, void *priv);
-	void (*after_dynamic_struct_visitor_func)(const struct side_arg *item, void *priv);
 	void (*before_dynamic_vla_func)(const struct side_arg_dynamic_vla *vla, void *priv);
 	void (*after_dynamic_vla_func)(const struct side_arg_dynamic_vla *vla, void *priv);
-	void (*before_dynamic_vla_visitor_func)(const struct side_arg *item, void *priv);
-	void (*after_dynamic_vla_visitor_func)(const struct side_arg *item, void *priv);
 };
 
 void type_visitor_event(const struct side_type_visitor *type_visitor,

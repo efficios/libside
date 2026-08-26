@@ -182,19 +182,6 @@ void description_visitor_vla(const struct side_description_visitor *visitor, con
 }
 
 static
-void description_visitor_vla_visitor(const struct side_description_visitor *visitor, const struct side_type *type_desc)
-{
-	if (visitor->callbacks->before_vla_visitor_type_func)
-		visitor->callbacks->before_vla_visitor_type_func(visit_side_pointer(visitor, type_desc->u.side_vla_visitor), visitor->priv);
-	side_visit_elem(visitor, visit_side_pointer(visitor, visit_side_pointer(visitor, type_desc->u.side_vla_visitor)->length_type));
-	if (visitor->callbacks->after_length_vla_visitor_type_func)
-		visitor->callbacks->after_length_vla_visitor_type_func(visit_side_pointer(visitor, type_desc->u.side_vla_visitor), visitor->priv);
-	side_visit_elem(visitor, visit_side_pointer(visitor, visit_side_pointer(visitor, type_desc->u.side_vla_visitor)->elem_type));
-	if (visitor->callbacks->after_element_vla_visitor_type_func)
-		visitor->callbacks->after_element_vla_visitor_type_func(visit_side_pointer(visitor, type_desc->u.side_vla_visitor), visitor->priv);
-}
-
-static
 void visit_gather_field(const struct side_description_visitor *visitor, const struct side_event_field *field)
 {
 	if (visitor->callbacks->before_field_func)
@@ -458,9 +445,6 @@ void side_visit_type(const struct side_description_visitor *visitor, const struc
 		break;
 	case SIDE_TYPE_VLA:
 		description_visitor_vla(visitor, type_desc);
-		break;
-	case SIDE_TYPE_VLA_VISITOR:
-		description_visitor_vla_visitor(visitor, type_desc);
 		break;
 
 		/* Gather basic types */

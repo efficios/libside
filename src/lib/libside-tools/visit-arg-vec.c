@@ -409,61 +409,6 @@ void type_visitor_vla(const struct side_type_visitor *type_visitor, const struct
 		type_visitor->after_vla_type_func(side_ptr_get(type_desc->u.side_vla), side_arg_vec, priv);
 }
 
-struct tracer_visitor_priv {
-	const struct side_type_visitor *type_visitor;
-	const struct visit_context *ctx;
-	void *priv;
-	const struct side_type *elem_type;
-	int i;
-};
-
-static
-enum side_visitor_status tracer_write_elem_cb(const struct side_tracer_visitor_ctx *tracer_ctx,
-					const struct side_arg *elem)
-{
-	struct tracer_visitor_priv *tracer_priv = (struct tracer_visitor_priv *) tracer_ctx->priv;
-
-	side_visit_elem(tracer_priv->type_visitor, tracer_priv->ctx, tracer_priv->elem_type, elem, tracer_priv->priv);
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static
-void type_visitor_vla_visitor(const struct side_type_visitor *type_visitor, const struct visit_context *ctx,
-			const struct side_type *type_desc, struct side_arg_vla_visitor *vla_visitor, void *priv)
-{
-	struct tracer_visitor_priv tracer_priv = {
-		.type_visitor = type_visitor,
-		.priv = priv,
-		.elem_type = side_ptr_get(side_ptr_get(type_desc->u.side_vla_visitor)->elem_type),
-		.i = 0,
-		.ctx = ctx,
-	};
-	const struct side_tracer_visitor_ctx tracer_ctx = {
-		.write_elem = tracer_write_elem_cb,
-		.priv = &tracer_priv,
-	};
-	enum side_visitor_status status;
-	side_visitor_func func;
-	void *app_ctx;
-
-	if (!vla_visitor)
-		abort();
-	if (type_visitor->before_vla_visitor_type_func)
-		type_visitor->before_vla_visitor_type_func(side_ptr_get(type_desc->u.side_vla_visitor), vla_visitor, priv);
-	app_ctx = side_ptr_get(vla_visitor->app_ctx);
-	func = side_ptr_get(side_ptr_get(type_desc->u.side_vla_visitor)->visitor);
-	status = func(&tracer_ctx, app_ctx);
-	switch (status) {
-	case SIDE_VISITOR_STATUS_OK:
-		break;
-	case SIDE_VISITOR_STATUS_ERROR:
-		fprintf(stderr, "ERROR: Visitor error\n");
-		abort();
-	}
-	if (type_visitor->after_vla_visitor_type_func)
-		type_visitor->after_vla_visitor_type_func(side_ptr_get(type_desc->u.side_vla_visitor), vla_visitor, priv);
-}
-
 static
 const char *tracer_gather_access(enum side_type_gather_access_mode access_mode, const char *ptr)
 {
@@ -841,58 +786,6 @@ void type_visitor_dynamic_struct(const struct side_type_visitor *type_visitor, c
 		type_visitor->after_dynamic_struct_func(dynamic_struct, priv);
 }
 
-struct tracer_dynamic_struct_visitor_priv {
-	const struct side_type_visitor *type_visitor;
-	void *priv;
-	int i;
-};
-
-static
-enum side_visitor_status tracer_dynamic_struct_write_elem_cb(
-			const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx,
-			const struct side_arg_dynamic_field *dynamic_field)
-{
-	struct tracer_dynamic_struct_visitor_priv *tracer_priv =
-		(struct tracer_dynamic_struct_visitor_priv *) tracer_ctx->priv;
-
-	visit_dynamic_field(tracer_priv->type_visitor, dynamic_field, tracer_priv->priv);
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static
-void type_visitor_dynamic_struct_visitor(const struct side_type_visitor *type_visitor, const struct side_arg *item, void *priv)
-{
-	struct side_arg_dynamic_struct_visitor *dynamic_struct_visitor;
-	struct tracer_dynamic_struct_visitor_priv tracer_priv = {
-		.type_visitor = type_visitor,
-		.priv = priv,
-		.i = 0,
-	};
-	const struct side_tracer_dynamic_struct_visitor_ctx tracer_ctx = {
-		.write_field = tracer_dynamic_struct_write_elem_cb,
-		.priv = &tracer_priv,
-	};
-	enum side_visitor_status status;
-	void *app_ctx;
-
-	if (type_visitor->before_dynamic_struct_visitor_func)
-		type_visitor->before_dynamic_struct_visitor_func(item, priv);
-	dynamic_struct_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor);
-	if (!dynamic_struct_visitor)
-		abort();
-	app_ctx = side_ptr_get(dynamic_struct_visitor->app_ctx);
-	status = side_ptr_get(dynamic_struct_visitor->visitor)(&tracer_ctx, app_ctx);
-	switch (status) {
-	case SIDE_VISITOR_STATUS_OK:
-		break;
-	case SIDE_VISITOR_STATUS_ERROR:
-		fprintf(stderr, "ERROR: Visitor error\n");
-		abort();
-	}
-	if (type_visitor->after_dynamic_struct_visitor_func)
-		type_visitor->after_dynamic_struct_visitor_func(item, priv);
-}
-
 static
 void type_visitor_dynamic_vla(const struct side_type_visitor *type_visitor, const struct side_arg_dynamic_vla *vla, void *priv)
 {
@@ -905,58 +798,6 @@ void type_visitor_dynamic_vla(const struct side_type_visitor *type_visitor, cons
 		visit_dynamic_elem(type_visitor, &sav[i], priv);
 	if (type_visitor->after_dynamic_vla_func)
 		type_visitor->after_dynamic_vla_func(vla, priv);
-}
-
-struct tracer_dynamic_vla_visitor_priv {
-	const struct side_type_visitor *type_visitor;
-	void *priv;
-	int i;
-};
-
-static
-enum side_visitor_status tracer_dynamic_vla_write_elem_cb(
-			const struct side_tracer_visitor_ctx *tracer_ctx,
-			const struct side_arg *elem)
-{
-	struct tracer_dynamic_vla_visitor_priv *tracer_priv =
-		(struct tracer_dynamic_vla_visitor_priv *) tracer_ctx->priv;
-
-	visit_dynamic_elem(tracer_priv->type_visitor, elem, tracer_priv->priv);
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static
-void type_visitor_dynamic_vla_visitor(const struct side_type_visitor *type_visitor, const struct side_arg *item, void *priv)
-{
-	struct side_arg_dynamic_vla_visitor *dynamic_vla_visitor;
-	struct tracer_dynamic_vla_visitor_priv tracer_priv = {
-		.type_visitor = type_visitor,
-		.priv = priv,
-		.i = 0,
-	};
-	const struct side_tracer_visitor_ctx tracer_ctx = {
-		.write_elem = tracer_dynamic_vla_write_elem_cb,
-		.priv = &tracer_priv,
-	};
-	enum side_visitor_status status;
-	void *app_ctx;
-
-	if (type_visitor->before_dynamic_vla_visitor_func)
-		type_visitor->before_dynamic_vla_visitor_func(item, priv);
-	dynamic_vla_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor);
-	if (!dynamic_vla_visitor)
-		abort();
-	app_ctx = side_ptr_get(dynamic_vla_visitor->app_ctx);
-	status = side_ptr_get(dynamic_vla_visitor->visitor)(&tracer_ctx, app_ctx);
-	switch (status) {
-	case SIDE_VISITOR_STATUS_OK:
-		break;
-	case SIDE_VISITOR_STATUS_ERROR:
-		fprintf(stderr, "ERROR: Visitor error\n");
-		abort();
-	}
-	if (type_visitor->after_dynamic_vla_visitor_func)
-		type_visitor->after_dynamic_vla_visitor_func(item, priv);
 }
 
 static
@@ -997,14 +838,8 @@ void visit_dynamic_type(const struct side_type_visitor *type_visitor, const stru
 	case SIDE_TYPE_DYNAMIC_STRUCT:
 		type_visitor_dynamic_struct(type_visitor, side_ptr_get(dynamic_item->u.side_dynamic.side_dynamic_struct), priv);
 		break;
-	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
-		type_visitor_dynamic_struct_visitor(type_visitor, dynamic_item, priv);
-		break;
 	case SIDE_TYPE_DYNAMIC_VLA:
 		type_visitor_dynamic_vla(type_visitor, side_ptr_get(dynamic_item->u.side_dynamic.side_dynamic_vla), priv);
-		break;
-	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
-		type_visitor_dynamic_vla_visitor(type_visitor, dynamic_item, priv);
 		break;
 	default:
 		fprintf(stderr, "<UNKNOWN TYPE>\n");
@@ -1091,7 +926,6 @@ const char *side_type_label_to_string(enum side_type_label label)
 	case SIDE_TYPE_OPTIONAL: return "SIDE_TYPE_OPTIONAL";
 	case SIDE_TYPE_ARRAY: return "SIDE_TYPE_ARRAY";
 	case SIDE_TYPE_VLA: return "SIDE_TYPE_VLA";
-	case SIDE_TYPE_VLA_VISITOR: return "SIDE_TYPE_VLA_VISITOR";
 	case SIDE_TYPE_ENUM: return "SIDE_TYPE_ENUM";
 	case SIDE_TYPE_ENUM_BITMAP: return "SIDE_TYPE_ENUM_BITMAP";
 	case SIDE_TYPE_DYNAMIC: return "SIDE_TYPE_DYNAMIC";
@@ -1113,9 +947,7 @@ const char *side_type_label_to_string(enum side_type_label label)
 	case SIDE_TYPE_DYNAMIC_FLOAT: return "SIDE_TYPE_DYNAMIC_FLOAT";
 	case SIDE_TYPE_DYNAMIC_STRING: return "SIDE_TYPE_DYNAMIC_STRING";
 	case SIDE_TYPE_DYNAMIC_STRUCT: return "SIDE_TYPE_DYNAMIC_STRUCT";
-	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR: return "SIDE_TYPE_DYNAMIC_STRUCT_VISITOR";
 	case SIDE_TYPE_DYNAMIC_VLA: return "SIDE_TYPE_DYNAMIC_VLA";
-	case SIDE_TYPE_DYNAMIC_VLA_VISITOR: return "SIDE_TYPE_DYNAMIC_VLA_VISITOR";
 	default:
 		return "<UNKNOWN>";
 	}
@@ -1206,9 +1038,7 @@ static void ensure_types_compatible(const struct visit_context *ctx,
 		case SIDE_TYPE_DYNAMIC_FLOAT:
 		case SIDE_TYPE_DYNAMIC_STRING:
 		case SIDE_TYPE_DYNAMIC_STRUCT:
-		case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
 		case SIDE_TYPE_DYNAMIC_VLA:
-		case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
 			break;
 		default:
 			type_mismatch(ctx,
@@ -1304,9 +1134,6 @@ void side_visit_type(const struct side_type_visitor *type_visitor,
 	case SIDE_TYPE_VLA:
 		type_visitor_vla(type_visitor, ctx, type_desc, side_ptr_get(item->u.side_static.side_vla), priv);
 		break;
-	case SIDE_TYPE_VLA_VISITOR:
-		type_visitor_vla_visitor(type_visitor, ctx, type_desc, side_ptr_get(item->u.side_static.side_vla_visitor), priv);
-		break;
 
 		/* Gather basic types */
 	case SIDE_TYPE_GATHER_BOOL:
@@ -1356,9 +1183,7 @@ void side_visit_type(const struct side_type_visitor *type_visitor,
 
 	/* Dynamic compound types */
 	case SIDE_TYPE_DYNAMIC_STRUCT:		/* Fallthrough */
-	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:	/* Fallthrough */
 	case SIDE_TYPE_DYNAMIC_VLA:		/* Fallthrough */
-	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
 		visit_dynamic_type(type_visitor, item, priv);
 		break;
 
