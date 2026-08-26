@@ -65,19 +65,6 @@ static void side_type_optional_attributes(void *ctx, const struct side_type_opti
 	}
 }
 
-
-static void side_type_vla_visitor_attributes(void *ctx, const struct side_type_vla_visitor *type,
-					const struct side_attr **attr, u32 *nr_attr)
-{
-	if (type) {
-		*nr_attr = type->attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->attributes.elements) : NULL;
-	} else {
-		*attr = NULL;
-		*nr_attr = 0;
-	}
-}
-
 static void side_type_enum_attributes(void *ctx, const struct side_type_enum *type,
 				const struct side_attr **attr, u32 *nr_attr)
 {
@@ -194,11 +181,6 @@ void side_type_attributes(const struct side_type *type, void *ctx,
 					visit_side_pointer(ctx, type->u.side_optional),
 					attr, nr_attr);
 		break;
-	case SIDE_TYPE_VLA_VISITOR:
-		side_type_vla_visitor_attributes(ctx,
-						visit_side_pointer(ctx, type->u.side_vla_visitor),
-						attr, nr_attr);
-		break;
 	case SIDE_TYPE_ENUM:
 		side_type_enum_attributes(ctx, &type->u.side_enum,
 					attr, nr_attr);
@@ -293,8 +275,6 @@ const char *side_type_to_string(enum side_type_label label)
 		return "ARRAY";
 	case SIDE_TYPE_VLA:
 		return "VLA";
-	case SIDE_TYPE_VLA_VISITOR:
-		return "VLA_VISITOR";
 	case SIDE_TYPE_ENUM:
 		return "ENUM";
 	case SIDE_TYPE_ENUM_BITMAP:
@@ -337,12 +317,8 @@ const char *side_type_to_string(enum side_type_label label)
 		return "DYNAMIC_STRING";
 	case SIDE_TYPE_DYNAMIC_STRUCT:
 		return "DYNAMIC_STRUCT";
-	case SIDE_TYPE_DYNAMIC_STRUCT_VISITOR:
-		return "DYNAMIC_STRUCT_VISITOR";
 	case SIDE_TYPE_DYNAMIC_VLA:
 		return "DYNAMIC_VLA";
-	case SIDE_TYPE_DYNAMIC_VLA_VISITOR:
-		return "DYNAMIC_VLA_VISITOR";
 	default:
 		return "<UNKNOWN>";
 	}

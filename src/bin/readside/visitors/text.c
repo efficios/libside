@@ -418,25 +418,6 @@ static void after_gather_vla_element(const struct side_type_gather_vla *type, vo
 	pop_nest(ctx);
 }
 
-static void begin_vla_visitor(const struct side_type_vla_visitor *vla_visitor, void *ctx)
-{
-	(void) vla_visitor;
-
-	/*
-	 * TODO: Resolve visitor pointer to string if possible.
-	 */
-	printf_nest(ctx, "visitor: %p", visit_side_pointer(ctx, vla_visitor->visitor));
-	printf_nest(ctx, "length:");
-	push_nest(ctx);
-}
-
-static void after_vla_visitor_length(const struct side_type_vla_visitor *vla_visitor, void *ctx)
-{
-	(void) vla_visitor;
-
-	pop_nest(ctx);
-}
-
 static void begin_variant(const struct side_type_variant *variant, void *ctx)
 {
 	const struct side_type *selector = &variant->selector;
@@ -627,10 +608,6 @@ struct visitor text_visitor = {
 		.before_vla_type_func       = begin_vla,
 		.after_length_vla_type_func = after_vla_length,
 		// .after_element_vla_type_func
-
-		.before_vla_visitor_type_func = begin_vla_visitor,
-		.after_length_vla_visitor_type_func = after_vla_visitor_length,
-		// .after_element_vla_visitor_type_func
 
 		// .before_optional_type_func
 		// .after_optional_type_func
