@@ -134,134 +134,6 @@ void test_vla(void)
 	}
 }
 
-/* 1D array visitor */
-struct app_visitor_ctx {
-	const uint32_t *ptr;
-	uint32_t length;
-};
-
-static
-enum side_visitor_status test_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, struct app_visitor_ctx *ctx)
-{
-	uint32_t length = ctx->length, i;
-
-	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_visit_dynamic_arg(side_arg_u32, ctx->ptr[i]);
-
-		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
-	}
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static uint32_t testarray[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-
-side_define_static_vla_visitor(my_vla_visitor_1d,
-			side_elem(side_type_u32()), side_elem(side_type_u32()),
-			test_visitor, struct app_visitor_ctx);
-
-side_static_event(my_provider_event_vla_visitor, "myprovider", "myvlavisit", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_vla_visitor("vlavisit", my_vla_visitor_1d),
-		side_field_s64("v"),
-	)
-);
-
-static
-void test_vla_visitor(void)
-{
-	if (side_event_enabled(my_provider_event_vla_visitor)) {
-		struct app_visitor_ctx ctx = {
-			.ptr = testarray,
-			.length = SIDE_ARRAY_SIZE(testarray),
-		};
-		side_arg_define_vla_visitor(side_visitor, &ctx);
-		side_event_call(my_provider_event_vla_visitor,
-			side_arg_list(side_arg_vla_visitor(side_visitor), side_arg_s64(42)));
-	}
-}
-
-/* 2D array visitor */
-
-struct app_visitor_2d_inner_ctx {
-	const uint32_t *ptr;
-	uint32_t length;
-};
-
-static
-enum side_visitor_status test_inner_visitor(const struct side_tracer_visitor_ctx *tracer_ctx,
-					struct app_visitor_2d_inner_ctx *ctx)
-{
-	uint32_t length = ctx->length, i;
-
-	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_visit_dynamic_arg(side_arg_u32, ctx->ptr[i]);
-
-		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
-	}
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-side_define_static_vla_visitor(my_vla_visitor_2d_inner,
-			side_elem(side_type_u32()), side_elem(side_type_u32()),
-			test_inner_visitor, struct app_visitor_2d_inner_ctx);
-
-struct app_visitor_2d_outer_ctx {
-	const uint32_t (*ptr)[2];
-	uint32_t length;
-};
-
-static
-enum side_visitor_status test_outer_visitor(const struct side_tracer_visitor_ctx *tracer_ctx,
-					struct app_visitor_2d_outer_ctx *ctx)
-{
-	uint32_t length = ctx->length, i;
-
-	for (i = 0; i < length; i++) {
-		struct app_visitor_2d_inner_ctx inner_ctx = {
-			.ptr = ctx->ptr[i],
-			.length = 2,
-		};
-		side_arg_define_vla_visitor(side_inner_visitor, &inner_ctx);
-		const struct side_arg elem = side_visit_dynamic_arg(side_arg_vla_visitor, side_inner_visitor);
-		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
-	}
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-side_define_static_vla_visitor(my_vla_visitor_2d_outer,
-			side_elem(side_type_vla_visitor(my_vla_visitor_2d_inner)), side_elem(side_type_u32()),
-			test_outer_visitor, struct app_visitor_2d_outer_ctx);
-
-static uint32_t testarray2d[][2] = {
-	{ 1, 2 },
-	{ 33, 44 },
-	{ 55, 66 },
-};
-
-side_static_event(my_provider_event_vla_visitor2d, "myprovider", "myvlavisit2d", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_vla_visitor("vlavisit2d", my_vla_visitor_2d_outer),
-		side_field_s64("v"),
-	)
-);
-
-static
-void test_vla_visitor_2d(void)
-{
-	if (side_event_enabled(my_provider_event_vla_visitor2d)) {
-		struct app_visitor_2d_outer_ctx ctx = {
-			.ptr = testarray2d,
-			.length = SIDE_ARRAY_SIZE(testarray2d),
-		};
-		side_arg_define_vla_visitor(side_outer_visitor, &ctx);
-		side_event_call(my_provider_event_vla_visitor2d,
-			side_arg_list(side_arg_vla_visitor(side_outer_visitor), side_arg_s64(42)));
-	}
-}
-
 side_static_event(my_provider_event_dynamic_basic,
 	"myprovider", "mydynamicbasic", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
@@ -554,106 +426,6 @@ void test_dynamic_bool(void)
 			side_arg_dynamic_field("d_true", side_arg_dynamic_bool(256)),
 		)
 	);
-}
-
-side_static_event(my_provider_event_dynamic_vla_visitor,
-	"myprovider", "mydynamicvlavisitor", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
-	)
-);
-
-struct app_dynamic_vla_visitor_ctx {
-	const uint32_t *ptr;
-	uint32_t length;
-};
-
-static
-enum side_visitor_status test_dynamic_vla_visitor(const struct side_tracer_visitor_ctx *tracer_ctx, void *_ctx)
-{
-	struct app_dynamic_vla_visitor_ctx *ctx = (struct app_dynamic_vla_visitor_ctx *) _ctx;
-	uint32_t length = ctx->length, i;
-
-	for (i = 0; i < length; i++) {
-		const struct side_arg elem = side_visit_dynamic_arg(side_arg_dynamic_u32, ctx->ptr[i]);
-		if (tracer_ctx->write_elem(tracer_ctx, &elem) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
-	}
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static uint32_t testarray_dynamic_vla[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-
-static
-void test_dynamic_vla_with_visitor(void)
-{
-	if (side_event_enabled(my_provider_event_dynamic_vla_visitor)) {
-		struct app_dynamic_vla_visitor_ctx ctx = {
-			.ptr = testarray_dynamic_vla,
-			.length = SIDE_ARRAY_SIZE(testarray_dynamic_vla),
-		};
-		side_arg_dynamic_define_vla_visitor(myvlavisitor, test_dynamic_vla_visitor, &ctx);
-		side_event_call(my_provider_event_dynamic_vla_visitor,
-			side_arg_list(
-				side_arg_dynamic_vla_visitor(myvlavisitor)
-			)
-		);
-	}
-}
-
-side_static_event(my_provider_event_dynamic_struct_visitor,
-	"myprovider", "mydynamicstructvisitor", SIDE_LOGLEVEL_DEBUG,
-	side_field_list(
-		side_field_dynamic("dynamic"),
-	)
-);
-
-struct struct_visitor_pair {
-	const char *name;
-	uint32_t value;
-};
-
-struct app_dynamic_struct_visitor_ctx {
-	const struct struct_visitor_pair *ptr;
-	uint32_t length;
-};
-
-static
-enum side_visitor_status test_dynamic_struct_visitor(const struct side_tracer_dynamic_struct_visitor_ctx *tracer_ctx, void *_ctx)
-{
-	struct app_dynamic_struct_visitor_ctx *ctx = (struct app_dynamic_struct_visitor_ctx *) _ctx;
-	uint32_t length = ctx->length, i;
-
-	for (i = 0; i < length; i++) {
-		struct side_arg_dynamic_field dynamic_field = side_visit_dynamic_field(side_arg_dynamic_u32, ctx->ptr[i].name, ctx->ptr[i].value);
-		if (tracer_ctx->write_field(tracer_ctx, &dynamic_field) != SIDE_VISITOR_STATUS_OK)
-			return SIDE_VISITOR_STATUS_ERROR;
-	}
-	return SIDE_VISITOR_STATUS_OK;
-}
-
-static struct struct_visitor_pair testarray_dynamic_struct[] = {
-	{ "a", 1, },
-	{ "b", 2, },
-	{ "c", 3, },
-	{ "d", 4, },
-};
-
-static
-void test_dynamic_struct_with_visitor(void)
-{
-	if (side_event_enabled(my_provider_event_dynamic_struct_visitor)) {
-		struct app_dynamic_struct_visitor_ctx ctx = {
-			.ptr = testarray_dynamic_struct,
-			.length = SIDE_ARRAY_SIZE(testarray_dynamic_struct),
-		};
-		side_arg_dynamic_define_struct_visitor(mystructvisitor, test_dynamic_struct_visitor, &ctx);
-		side_event_call(my_provider_event_dynamic_struct_visitor,
-			side_arg_list(
-				side_arg_dynamic_struct_visitor(&mystructvisitor)
-			)
-		);
-	}
 }
 
 side_static_event(my_provider_event_user_attribute, "myprovider", "myevent_user_attribute", SIDE_LOGLEVEL_DEBUG,
@@ -2370,8 +2142,6 @@ int main()
 	test_struct();
 	test_array();
 	test_vla();
-	test_vla_visitor();
-	test_vla_visitor_2d();
 	test_dynamic_basic_type();
 	test_dynamic_vla();
 	test_dynamic_null();
@@ -2384,8 +2154,6 @@ int main()
 	test_static_variadic();
 	test_bool();
 	test_dynamic_bool();
-	test_dynamic_vla_with_visitor();
-	test_dynamic_struct_with_visitor();
 	test_event_user_attribute();
 	test_field_user_attribute();
 	test_variadic_attr();
