@@ -1271,45 +1271,6 @@ void tracer_after_print_vla(const struct side_type_vla *side_vla,
 	do_tracer_after_print_vla(side_vla, side_arg_vec, priv);
 }
 
-static
-void tracer_before_print_vla_visitor(const struct side_type_vla_visitor *side_vla_visitor,
-	const struct side_arg_vla_visitor *side_arg_vla_visitor __attribute__((unused)), void *priv)
-{
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	switch (side_enum_get(side_ptr_get(side_vla_visitor->length_type)->type)) {
-	case SIDE_TYPE_U8:		/* Fall-through */
-	case SIDE_TYPE_U16:		/* Fall-through */
-	case SIDE_TYPE_U32:		/* Fall-through */
-	case SIDE_TYPE_U64:		/* Fall-through */
-	case SIDE_TYPE_U128:		/* Fall-through */
-	case SIDE_TYPE_S8:		/* Fall-through */
-	case SIDE_TYPE_S16:		/* Fall-through */
-	case SIDE_TYPE_S32:		/* Fall-through */
-	case SIDE_TYPE_S64:		/* Fall-through */
-	case SIDE_TYPE_S128:
-		break;
-	default:
-		fprintf(stderr, "ERROR: Unexpected vla visitor length type\n");
-		abort();
-	}
-
-	print_attributes("attr", ":", side_array_elements(&side_vla_visitor->attributes), side_array_length(&side_vla_visitor->attributes));
-	printf("%s", side_array_length(&side_vla_visitor->attributes) ? ", " : "");
-	printf("elements: [");
-	push_nesting(ctx);
-}
-
-static
-void tracer_after_print_vla_visitor(const struct side_type_vla_visitor *side_vla_visitor __attribute__((unused)),
-	const struct side_arg_vla_visitor *side_arg_vla_visitor __attribute__((unused)), void *priv)
-{
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	pop_nesting(ctx);
-	printf(" ]");
-}
-
 static void tracer_print_enum(const struct side_type *type_desc,
 	const struct side_arg *item, void *priv)
 {
@@ -1651,36 +1612,6 @@ void tracer_after_print_dynamic_struct(const struct side_arg_dynamic_struct *dyn
 }
 
 static
-void tracer_before_print_dynamic_struct_visitor(const struct side_arg *item, void *priv)
-{
-	struct side_arg_dynamic_struct_visitor *dynamic_struct_visitor;
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	dynamic_struct_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor);
-	if (!dynamic_struct_visitor)
-		abort();
-
-	print_attributes("attr", "::", side_array_elements(&dynamic_struct_visitor->attributes), side_array_length(&dynamic_struct_visitor->attributes));
-	printf("%s", side_array_length(&dynamic_struct_visitor->attributes)? ", " : "");
-	printf("fields:: {");
-	push_nesting(ctx);
-}
-
-static
-void tracer_after_print_dynamic_struct_visitor(const struct side_arg *item, void *priv)
-{
-	struct side_arg_dynamic_struct_visitor *dynamic_struct_visitor;
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	dynamic_struct_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_struct_visitor);
-	if (!dynamic_struct_visitor)
-		abort();
-
-	pop_nesting(ctx);
-	printf(" }");
-}
-
-static
 void tracer_before_print_dynamic_vla(const struct side_arg_dynamic_vla *dynamic_vla, void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
@@ -1695,36 +1626,6 @@ static
 void tracer_after_print_dynamic_vla(const struct side_arg_dynamic_vla *dynamic_vla __attribute__((unused)), void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	pop_nesting(ctx);
-	printf(" ]");
-}
-
-static
-void tracer_before_print_dynamic_vla_visitor(const struct side_arg *item, void *priv)
-{
-	struct side_arg_dynamic_vla_visitor *dynamic_vla_visitor;
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	dynamic_vla_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor);
-	if (!dynamic_vla_visitor)
-		abort();
-
-	print_attributes("attr", "::", side_array_elements(&dynamic_vla_visitor->attributes), side_array_length(&dynamic_vla_visitor->attributes));
-	printf("%s", side_array_length(&dynamic_vla_visitor->attributes)? ", " : "");
-	printf("elements:: [");
-	push_nesting(ctx);
-}
-
-static
-void tracer_after_print_dynamic_vla_visitor(const struct side_arg *item, void *priv)
-{
-	struct side_arg_dynamic_vla_visitor *dynamic_vla_visitor;
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	dynamic_vla_visitor = side_ptr_get(item->u.side_dynamic.side_dynamic_vla_visitor);
-	if (!dynamic_vla_visitor)
-		abort();
 
 	pop_nesting(ctx);
 	printf(" ]");
@@ -1758,8 +1659,6 @@ static struct side_type_visitor type_visitor = {
 	.after_array_type_func = tracer_after_print_array,
 	.before_vla_type_func = tracer_before_print_vla,
 	.after_vla_type_func = tracer_after_print_vla,
-	.before_vla_visitor_type_func = tracer_before_print_vla_visitor,
-	.after_vla_visitor_type_func = tracer_after_print_vla_visitor,
 
 	/* Stack-copy enumeration types. */
 	.enum_type_func = tracer_print_enum,
@@ -1801,12 +1700,8 @@ static struct side_type_visitor type_visitor = {
 	/* Dynamic compound types. */
 	.before_dynamic_struct_func = tracer_before_print_dynamic_struct,
 	.after_dynamic_struct_func = tracer_after_print_dynamic_struct,
-	.before_dynamic_struct_visitor_func = tracer_before_print_dynamic_struct_visitor,
-	.after_dynamic_struct_visitor_func = tracer_after_print_dynamic_struct_visitor,
 	.before_dynamic_vla_func = tracer_before_print_dynamic_vla,
 	.after_dynamic_vla_func = tracer_after_print_dynamic_vla,
-	.before_dynamic_vla_visitor_func = tracer_before_print_dynamic_vla_visitor,
-	.after_dynamic_vla_visitor_func = tracer_after_print_dynamic_vla_visitor,
 };
 
 static
@@ -2129,36 +2024,6 @@ void after_length_print_description_vla(const struct side_type_vla *side_vla __a
 
 static
 void after_element_print_description_vla(const struct side_type_vla *side_vla __attribute__((unused)), void *priv)
-{
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	pop_nesting(ctx);
-	printf(" }");
-}
-
-static
-void before_print_description_vla_visitor(const struct side_type_vla_visitor *side_vla_visitor, void *priv)
-{
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	print_attributes("attr", ":", side_array_elements(&side_vla_visitor->attributes), side_array_length(&side_vla_visitor->attributes));
-	printf("%s", side_array_length(&side_vla_visitor->attributes)? ", " : "");
-	printf("type: vla_visitor { length:");
-	push_nesting(ctx);
-}
-
-static
-void after_length_print_description_vla_visitor(const struct side_type_vla_visitor *side_vla_visitor __attribute__((unused)), void *priv)
-{
-	struct print_ctx *ctx = (struct print_ctx *) priv;
-
-	pop_nesting(ctx);
-	printf(", element:");
-	push_nesting(ctx);
-}
-
-static
-void after_element_print_description_vla_visitor(const struct side_type_vla_visitor *side_vla_visitor __attribute__((unused)), void *priv)
 {
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
@@ -2514,9 +2379,6 @@ struct side_description_visitor_callbacks description_visitor_callbacks = {
 	.before_vla_type_func = before_print_description_vla,
 	.after_length_vla_type_func = after_length_print_description_vla,
 	.after_element_vla_type_func = after_element_print_description_vla,
-	.before_vla_visitor_type_func = before_print_description_vla_visitor,
-	.after_length_vla_visitor_type_func = after_length_print_description_vla_visitor,
-	.after_element_vla_visitor_type_func = after_element_print_description_vla_visitor,
 	.before_optional_type_func = before_print_description_optional,
 	.after_optional_type_func = after_print_description_optional,
 
