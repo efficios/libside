@@ -698,24 +698,6 @@ enum {
 		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) \
 	}
 
-#define _side_type_vla_visitor_define(_elem_type, _length_type, _visitor, _attr...) \
-	{ \
-		.elem_type = SIDE_PTR_INIT(_elem_type), \
-		.length_type = SIDE_PTR_INIT(_length_type), \
-		.visitor = SIDE_PTR_INIT(_visitor), \
-		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
-	}
-
-#define _side_type_vla_visitor(_vla_visitor) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA_VISITOR), \
-		.u = { \
-			.side_vla_visitor = SIDE_PTR_INIT(&_vla_visitor), \
-		}, \
-	}
-#define _side_field_vla_visitor(_name, _vla_visitor) \
-	_side_field(_name, _side_type_vla_visitor(SIDE_PARAM(_vla_visitor)))
-
 /* Gather field and type definitions */
 
 #define _side_type_gather_byte(_offset, _access_mode, _attr...) \
@@ -1089,22 +1071,6 @@ enum {
 #define _side_arg_array(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_ARRAY), .flags = 0, .u = { .side_static = { .side_array = SIDE_PTR_INIT(&_side_type) } } }
 
 #define _side_arg_vla(_side_type)	{ .type = SIDE_ENUM_INIT(SIDE_TYPE_VLA), .flags = 0, .u = { .side_static = { .side_vla = SIDE_PTR_INIT(&_side_type) } } }
-#define _side_arg_vla_visitor(_side_vla_visitor) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA_VISITOR), \
-		.flags = 0, \
-		.u = { \
-			.side_static = { \
-				.side_vla_visitor = SIDE_PTR_INIT(&_side_vla_visitor), \
-			 } \
-		 } \
-	}
-
-#define _side_arg_define_vla_visitor(_identifier, _ctx) \
-	struct side_arg_vla_visitor _identifier = { \
-		.app_ctx = SIDE_PTR_INIT(_ctx), \
-		.cached_arg = SIDE_PTR_INIT(NULL), \
-	}
 
 /* Gather field arguments */
 
@@ -1337,17 +1303,6 @@ enum {
 		}, \
 	}
 
-#define _side_arg_dynamic_vla_visitor(_dynamic_vla_visitor) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_VLA_VISITOR), \
-		.flags = 0, \
-		.u = { \
-			.side_dynamic = { \
-				.side_dynamic_vla_visitor = SIDE_PTR_INIT(&_dynamic_vla_visitor), \
-			}, \
-		}, \
-	}
-
 #define _side_arg_dynamic_struct(_struct) \
 	{ \
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_STRUCT), \
@@ -1355,17 +1310,6 @@ enum {
 		.u = { \
 			.side_dynamic = { \
 				.side_dynamic_struct = SIDE_PTR_INIT(_struct), \
-			}, \
-		}, \
-	}
-
-#define _side_arg_dynamic_struct_visitor(_dynamic_struct_visitor) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC_STRUCT_VISITOR), \
-		.flags = 0, \
-		.u = { \
-			.side_dynamic = { \
-				.side_dynamic_struct_visitor = SIDE_PTR_INIT(_dynamic_struct_visitor), \
 			}, \
 		}, \
 	}
@@ -1383,22 +1327,6 @@ enum {
 	const struct side_arg_dynamic_struct _identifier = { \
 		.fields = SIDE_PTR_INIT(_identifier##_fields),	\
 		.len = SIDE_ARRAY_SIZE(_identifier##_fields),		\
-		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
-	}
-
-#define _side_arg_dynamic_define_struct_visitor(_identifier, _dynamic_struct_visitor, _ctx, _attr...) \
-	struct side_arg_dynamic_struct_visitor _identifier = { \
-		.visitor = SIDE_PTR_INIT(_dynamic_struct_visitor), \
-		.app_ctx = SIDE_PTR_INIT(_ctx), \
-		.cached_arg = SIDE_PTR_INIT(NULL), \
-		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
-	}
-
-#define _side_arg_dynamic_define_vla_visitor(_identifier, _dynamic_vla_visitor, _ctx, _attr...) \
-	struct side_arg_dynamic_vla_visitor _identifier = { \
-		.visitor = SIDE_PTR_INIT(_dynamic_vla_visitor), \
-		.app_ctx = SIDE_PTR_INIT(_ctx), \
-		.cached_arg = SIDE_PTR_INIT(NULL), \
 		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()), \
 	}
 

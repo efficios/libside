@@ -1802,15 +1802,6 @@ SIDE_SC_DEFINE_TYPE(optional);
 #define SIDE_SC_CHECK_side_arg_struct(_identifier) ,SIDE_SC_TYPE(user_arg_define_struct__##_identifier)
 #define SIDE_SC_EMIT_side_arg_struct _side_arg_struct
 
-/* Dispatch: visitor */
-#undef side_field_vla_visitor
-#define SIDE_SC_CHECK_side_field_vla_visitor(_name, _identifier) ,SIDE_SC_TYPE(user_define_vla_visitor__##_identifier) *
-#define SIDE_SC_EMIT_side_field_vla_visitor _side_field_vla_visitor
-
-#undef side_arg_vla_visitor
-#define SIDE_SC_CHECK_side_arg_vla_visitor(_identifier) ,SIDE_SC_TYPE(user_arg_define_vla_visitor__##_identifier)
-#define SIDE_SC_EMIT_side_arg_vla_visitor _side_arg_vla_visitor
-
 /* Dispatch: enum */
 #undef side_field_enum
 #define SIDE_SC_CHECK_side_field_enum(_name, _mappings, _elem) SIDE_SC_CHECK_##_elem
@@ -2038,17 +2029,9 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #define SIDE_SC_CHECK_side_arg_dynamic_vla(...) ,SIDE_SC_TYPE(dynamic)
 #define SIDE_SC_EMIT_side_arg_dynamic_vla(...) _side_arg_dynamic_vla(__VA_ARGS__)
 
-#undef side_arg_dynamic_vla_visitor
-#define SIDE_SC_CHECK_side_arg_dynamic_vla_visitor(...) ,SIDE_SC_TYPE(dynamic)
-#define SIDE_SC_EMIT_side_arg_dynamic_vla_visitor(...) _side_arg_dynamic_vla_visitor(__VA_ARGS__)
-
 #undef side_arg_dynamic_struct
 #define SIDE_SC_CHECK_side_arg_dynamic_struct(...) ,SIDE_SC_TYPE(dynamic)
 #define SIDE_SC_EMIT_side_arg_dynamic_struct(...) _side_arg_dynamic_struct(__VA_ARGS__)
-
-#undef side_arg_dynamic_struct_visitor
-#define SIDE_SC_CHECK_side_arg_dynamic_struct_visitor(...) ,SIDE_SC_TYPE(dynamic)
-#define SIDE_SC_EMIT_side_arg_dynamic_struct_visitor(...) _side_arg_dynamic_struct_visitor(__VA_ARGS__)
 
 /* Dispatch: dynamic_field */
 #undef side_arg_dynamic_field
@@ -2115,10 +2098,6 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #undef side_type_dynamic
 #define SIDE_SC_CHECK_side_type_dynamic(...) ,SIDE_SC_TYPE(dynamic)
 #define SIDE_SC_EMIT_side_type_dynamic _side_type_dynamic
-
-/* Dispatch: type_vla_visitor */
-#undef side_type_vla_visitor
-#define SIDE_SC_EMIT_side_type_vla_visitor _side_type_vla_visitor
 
 /* Dispatch: type_pointer */
 #undef side_type_pointer
@@ -2680,30 +2659,6 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #undef side_visit_dynamic_field
 #define side_visit_dynamic_field(_what, _name, _expr...)		\
 	_side_arg_dynamic_field(_name, SIDE_SC_EMIT_##_what(_expr))
-
-/* Dispatch: define_static_vla_visitor */
-#undef side_define_static_vla_visitor
-#define side_define_static_vla_visitor(_identifier, _elem_type, _length_type, _func, _type, _attr...) \
-	static enum side_visitor_status _side_vla_visitor_func_##_identifier(const struct side_tracer_visitor_ctx *_side_tracer_ctx, \
-									void *_side_ctx) \
-	{								\
-		return _func(_side_tracer_ctx, (_type *)_side_ctx);	\
-	}								\
-	static const struct side_type_vla_visitor _identifier =		\
-		_side_type_vla_visitor_define(SIDE_SC_EMIT_##_elem_type, SIDE_SC_EMIT_##_length_type, \
-					_side_vla_visitor_func_##_identifier, \
-					SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
-	SIDE_SC_BEGIN_DIAGNOSTIC();					\
-	typedef _type SIDE_SC_TYPE(user_define_vla_visitor__##_identifier); \
-	SIDE_SC_END_DIAGNOSTIC()
-
-/* Dispatch: arg_define_vla_visitor */
-#undef side_arg_define_vla_visitor
-#define side_arg_define_vla_visitor(_identifier, _ctx)			\
-	_side_arg_define_vla_visitor(_identifier, _ctx);		\
-	SIDE_SC_BEGIN_DIAGNOSTIC();					\
-	typedef __typeof__(_ctx) SIDE_SC_TYPE(user_arg_define_vla_visitor__##_identifier); \
-				 SIDE_SC_END_DIAGNOSTIC()
 
 /* Dispatch: event_call */
 #undef side_event_call

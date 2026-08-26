@@ -12,7 +12,6 @@
 
 #include <side/abi/type-value.h>
 #include <side/abi/attribute.h>
-#include <side/abi/visitor.h>
 
 /*
  * SIDE ABI for type description.
@@ -112,7 +111,6 @@ enum side_type_label {
 	SIDE_TYPE_OPTIONAL,
 	SIDE_TYPE_ARRAY,
 	SIDE_TYPE_VLA,
-	SIDE_TYPE_VLA_VISITOR,
 
 	/* Stack-copy enumeration types */
 	SIDE_TYPE_ENUM,
@@ -148,9 +146,7 @@ enum side_type_label {
 
 	/* Dynamic compound types */
 	SIDE_TYPE_DYNAMIC_STRUCT,
-	SIDE_TYPE_DYNAMIC_STRUCT_VISITOR,
 	SIDE_TYPE_DYNAMIC_VLA,
-	SIDE_TYPE_DYNAMIC_VLA_VISITOR,
 
 	_NR_SIDE_TYPE_LABEL,	/* Last entry. */
 };
@@ -248,14 +244,6 @@ struct side_type_vla {
 	side_array_t(const struct side_attr) attributes;
 } SIDE_PACKED;
 side_check_size(struct side_type_vla, 52);
-
-struct side_type_vla_visitor {
-	side_ptr_t(const struct side_type) elem_type;
-	side_ptr_t(const struct side_type) length_type;
-	side_func_ptr_t(side_visitor_func) visitor;
-	side_array_t(const struct side_attr) attributes;
-} SIDE_PACKED;
-side_check_size(struct side_type_vla_visitor, 68);
 
 struct side_type_enum {
 	side_ptr_t(const struct side_enum_mappings) mappings;
@@ -365,7 +353,6 @@ struct side_type {
 		/* Stack-copy compound types */
 		side_ptr_t(const struct side_type_array) side_array;
 		side_ptr_t(const struct side_type_vla) side_vla;
-		side_ptr_t(const struct side_type_vla_visitor) side_vla_visitor;
 		side_ptr_t(const struct side_type_struct) side_struct;
 		side_ptr_t(const struct side_type_variant) side_variant;
 		side_ptr_t(const struct side_type_optional) side_optional;

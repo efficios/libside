@@ -375,21 +375,12 @@
 #define side_arg_dynamic_define_vec _side_arg_dynamic_define_vec
 #define side_arg_dynamic_vla(...) _side_arg_dynamic_vla(__VA_ARGS__)
 
-#define side_arg_dynamic_define_vla_visitor(_identifier, _dynamic_vla_visitor, _ctx, _attr...)	\
-	_side_arg_dynamic_define_vla_visitor(_identifier, SIDE_PARAM(_dynamic_vla_visitor), _ctx, \
-					SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))
-
-#define side_arg_dynamic_vla_visitor(...) _side_arg_dynamic_vla_visitor(__VA_ARGS__)
-
 #define side_arg_dynamic_define_struct(_identifier, _struct_fields, _attr...) \
 	_side_arg_dynamic_define_struct(_identifier, SIDE_PARAM(_struct_fields), \
 					SIDE_DEFAULT_ATTR(_, ##_attr, side_dynamic_attr_list()))
 
 #define side_arg_dynamic_struct(...) _side_arg_dynamic_struct(__VA_ARGS__)
 
-
-#define side_arg_dynamic_define_struct_visitor _side_arg_dynamic_define_struct_visitor
-#define side_arg_dynamic_struct_visitor(...) _side_arg_dynamic_struct_visitor(__VA_ARGS__)
 
 /* Element. */
 #define side_elem _side_elem
@@ -543,28 +534,6 @@
 #define side_arg_struct _side_arg_struct
 #define side_define_struct _side_define_struct
 #define side_arg_define_struct _side_arg_define_vec
-
-/* Visitor. */
-#define side_visit_dynamic_arg(_what, _expr...) _what(_expr)
-#define side_visit_dynamic_field(_what, _name, _expr...) _side_arg_dynamic_field(_name, _what(_expr))
-
-#define side_define_static_vla_visitor(_identifier, _elem_type, _length_type, _func, _type, _attr...) \
-	static enum side_visitor_status _side_vla_visitor_func_##_identifier(const struct side_tracer_visitor_ctx *_side_tracer_ctx, \
-					     void *_side_ctx)		\
-	{								\
-		return _func(_side_tracer_ctx, (_type *)_side_ctx);	\
-	}								\
-	static const struct side_type_vla_visitor _identifier =		\
-		_side_type_vla_visitor_define(SIDE_PARAM(_elem_type), SIDE_PARAM(_length_type), \
-					      _side_vla_visitor_func_##_identifier, \
-					      SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()));
-
-#define side_arg_define_vla_visitor _side_arg_define_vla_visitor
-
-#define side_type_vla_visitor(...) _side_type_vla_visitor(__VA_ARGS__)
-
-#define side_field_vla_visitor _side_field_vla_visitor
-#define side_arg_vla_visitor(...) _side_arg_vla_visitor(__VA_ARGS__)
 
 
 /* Event. */
