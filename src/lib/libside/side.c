@@ -492,6 +492,17 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv, key);
 }
 
+/*
+ * The tracer callbacks are invoked from the event grace period domain
+ * read-side, both for events emitted by the application threads and
+ * for events emitted from the statedump callbacks run by the agent
+ * thread.
+ */
+void side_tracer_callback_synchronize(void)
+{
+	side_rcu_wait_grace_period(&event_rcu_gp);
+}
+
 struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events)
 {
 	struct side_events_register_handle *events_handle = NULL;

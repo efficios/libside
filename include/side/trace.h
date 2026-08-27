@@ -122,6 +122,22 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 		side_tracer_callback_variadic_func call_variadic,
 		void *priv, uint64_t key);
 
+/*
+ * Wait for a grace period of the domain within which the tracer
+ * callbacks are invoked. Upon return, all tracer callbacks which had
+ * begun before the call have completed.
+ *
+ * Tracers use this to reclaim memory which their callbacks can
+ * observe, in cases where the memory is not unpublished by a callback
+ * unregistration (which waits for a grace period on its own).
+ * Tracers which have their own grace period domain, used for instance
+ * by other instrumentation mechanisms, need to wait for both.
+ *
+ * Must not be invoked from a tracer callback: it would wait for the
+ * completion of the callback performing the call.
+ */
+void side_tracer_callback_synchronize(void);
+
 enum side_tracer_notification {
 	SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
 	SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
