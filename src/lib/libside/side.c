@@ -4,6 +4,7 @@
  */
 
 #include <side/trace.h>
+#include <phased-atfork/phased-atfork.h>
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
@@ -962,17 +963,44 @@ end:
 }
 
 /*
- * Use of pthread_atfork depends on glibc 2.24 to eliminate hangs when
- * waiting for the agent thread if the agent thread calls malloc. This
- * is corrected by GNU libc
+ * Fork handling is coordinated through libphased-atfork, which
+ * guarantees that every participant's quiesce callback runs before
+ * any participant acquires locks, and which dispatches lock
+ * acquisition in cross-library lock-ordering levels. libside
+ * registers three participants:
+ *
+ * - instrumentation-outer (level 0): quiesce pauses the statedump
+ *   agent thread, which may need to finish in-flight statedump
+ *   tracing through tracer callbacks — possible because no
+ *   trace-path lock is held at that stage. acquire takes the
+ *   side_notification_lock, gating event/tracer registration and
+ *   notification delivery across fork(). The child callback repairs
+ *   all state which can reference parent-only threads before any
+ *   higher-level participant's child callback may call back into
+ *   the side API.
+ * - instrumentation-leaf (level 2): owns the side leaf locks across
+ *   fork(), acquired after tracer control locks per lock ordering.
+ * - service-restart (level 3): recreates the agent thread once
+ *   every tracer has reinitialized its child-side state.
+ *
+ * Use of pthread_atfork (by libphased-atfork) depends on glibc 2.24
+ * to eliminate hangs when waiting for the agent thread if the agent
+ * thread calls malloc. This is corrected by GNU libc
  * commit 8a727af925be63aa6ea0f5f90e16751fd541626b.
  * Ref. https://bugzilla.redhat.com/show_bug.cgi?id=906468
  */
 static
-void side_before_fork(void)
+void side_fork_quiesce(void *priv __attribute__((unused)))
 {
 	int attempt = 0;
 
+	/*
+	 * Held across fork(): excludes agent thread creation/join
+	 * (statedump provider registration/unregistration) for the
+	 * whole fork sequence. The agent thread itself never takes
+	 * this lock. Released by the parent callback; reinitialized
+	 * by the child callback.
+	 */
 	pthread_mutex_lock(&side_agent_thread_lock);
 	if (!statedump_agent_thread.ref)
 		return;
@@ -993,8 +1021,15 @@ void side_before_fork(void)
 }
 
 static
-void side_after_fork_parent(void)
+void side_fork_acquire_notification(void *priv __attribute__((unused)))
 {
+	pthread_mutex_lock(&side_notification_lock);
+}
+
+static
+void side_fork_parent_outer(void *priv __attribute__((unused)))
+{
+	pthread_mutex_unlock(&side_notification_lock);
 	if (statedump_agent_thread.ref)
 		(void)__atomic_and_fetch(&statedump_agent_thread.state,
 			~(AGENT_THREAD_STATE_PAUSE | AGENT_THREAD_STATE_PAUSE_ACK),
@@ -1003,25 +1038,81 @@ void side_after_fork_parent(void)
 }
 
 /*
- * The agent thread does not exist in the child process after a fork.
- * Re-initialize its data structures and create a new agent thread.
+ * Child-side repair, running single-threaded before any tracer's
+ * child callback may call back into the side API: reinitialize every
+ * piece of state which can reference parent-only threads. Locks held
+ * across fork() by the fork sequence, or by parent-only threads
+ * (e.g. the statedump grace period wait in
+ * side_statedump_request_notification_unregister runs under no side
+ * lock), are reinitialized rather than unlocked. RCU reader counts
+ * inherited from parent-only readers are reset: this relies on the
+ * documented contract that fork() is never issued from within a side
+ * read-side critical section nor from a tracer callback.
  */
 static
-void side_after_fork_child(void)
+void side_fork_child_outer(void *priv __attribute__((unused)))
 {
+	side_rcu_gp_after_fork_child(&event_rcu_gp);
+	side_rcu_gp_after_fork_child(&statedump_rcu_gp);
+	side_notification_lock = (pthread_mutex_t) PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+	side_event_lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+	side_statedump_lock = (pthread_mutex_t) PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+	side_key_lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+	side_init_lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+	side_agent_thread_lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
 	if (statedump_agent_thread.ref) {
-		int ret;
-
-		statedump_agent_thread_fini();
-		statedump_agent_thread_init();
-		ret = pthread_create(&statedump_agent_thread.id, NULL,
-				statedump_agent_func, NULL);
-		if (ret) {
-			abort();
-		}
+		statedump_agent_thread.worker_cond = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+		statedump_agent_thread.waiter_cond = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+		statedump_agent_thread.state = AGENT_THREAD_STATE_BLOCKED;
 	}
-	pthread_mutex_unlock(&side_agent_thread_lock);
 }
+
+static
+void side_fork_acquire_leaves(void *priv __attribute__((unused)))
+{
+	pthread_mutex_lock(&side_event_lock);
+	pthread_mutex_lock(&side_statedump_lock);
+	pthread_mutex_lock(&side_key_lock);
+}
+
+static
+void side_fork_parent_leaves(void *priv __attribute__((unused)))
+{
+	pthread_mutex_unlock(&side_key_lock);
+	pthread_mutex_unlock(&side_statedump_lock);
+	pthread_mutex_unlock(&side_event_lock);
+}
+
+/*
+ * The agent thread does not exist in the child process after fork().
+ * Recreate it after every tracer's child callback completed its
+ * reinitialization.
+ */
+static
+void side_fork_child_restart_agent(void *priv __attribute__((unused)))
+{
+	if (!statedump_agent_thread.ref)
+		return;
+	if (pthread_create(&statedump_agent_thread.id, NULL,
+			statedump_agent_func, NULL))
+		abort();
+}
+
+static const struct phased_atfork_ops side_fork_outer_ops = {
+	.quiesce = side_fork_quiesce,
+	.acquire = side_fork_acquire_notification,
+	.parent = side_fork_parent_outer,
+	.child = side_fork_child_outer,
+};
+
+static const struct phased_atfork_ops side_fork_leaves_ops = {
+	.acquire = side_fork_acquire_leaves,
+	.parent = side_fork_parent_leaves,
+};
+
+static const struct phased_atfork_ops side_fork_restart_ops = {
+	.child = side_fork_child_restart_agent,
+};
 
 void side_init(void)
 {
@@ -1031,7 +1122,13 @@ void side_init(void)
 	if (!initialized) {
 		side_rcu_gp_init(&event_rcu_gp);
 		side_rcu_gp_init(&statedump_rcu_gp);
-		if (pthread_atfork(side_before_fork, side_after_fork_parent, side_after_fork_child))
+		/* Participant handles are kept for the process lifetime. */
+		if (!phased_atfork_register(&side_fork_outer_ops, NULL,
+				PHASED_ATFORK_LEVEL_INSTRUMENTATION_OUTER)
+			|| !phased_atfork_register(&side_fork_leaves_ops, NULL,
+				PHASED_ATFORK_LEVEL_INSTRUMENTATION_LEAF)
+			|| !phased_atfork_register(&side_fork_restart_ops, NULL,
+				PHASED_ATFORK_LEVEL_SERVICE_RESTART))
 			abort();
 		__atomic_store_n(&initialized, true, __ATOMIC_RELEASE);
 	}

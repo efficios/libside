@@ -178,5 +178,6 @@ end:
 void side_rcu_wait_grace_period(struct side_rcu_gp_state *gp_state) __attribute__((visibility("hidden")));
 void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp) __attribute__((visibility("hidden")));
 void side_rcu_gp_exit(struct side_rcu_gp_state *rcu_gp) __attribute__((visibility("hidden")));
+void side_rcu_gp_after_fork_child(struct side_rcu_gp_state *rcu_gp) __attribute__((visibility("hidden")));
 
 #endif /* _SIDE_RCU_H */

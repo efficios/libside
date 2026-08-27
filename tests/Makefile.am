@@ -19,6 +19,7 @@ CONSOLE_TRACER_FLAGS = -Wl,--no-as-needed
 noinst_PROGRAMS = \
 	regression/side-rcu-test \
 	unit/phased-atfork \
+	unit/phased-atfork-side \
 	unit/test \
 	unit/test-cxx \
 	unit/test-no-sc \
@@ -36,6 +37,12 @@ unit_phased_atfork_SOURCES = unit/phased-atfork.c
 unit_phased_atfork_LDADD = \
 	$(top_builddir)/src/lib/libphased-atfork/libphased-atfork.la \
 	$(top_builddir)/tests/utils/libtap.la
+
+unit_phased_atfork_side_SOURCES = unit/phased-atfork-side.c
+unit_phased_atfork_side_LDADD = \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/tests/utils/libtap.la \
+	$(RSEQ_LIBS)
 
 unit_test_SOURCES = unit/test.c
 unit_test_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
@@ -86,4 +93,5 @@ unit_statedump_LDADD = \
 	$(RSEQ_LIBS)
 
 TESTS =	static-checker/run-tests \
-	unit/phased-atfork
+	unit/phased-atfork \
+	unit/phased-atfork-side

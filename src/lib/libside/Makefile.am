@@ -14,4 +14,5 @@ libside_la_SOURCES = \
 libside_la_LDFLAGS = -no-undefined -version-info $(SIDE_LIBRARY_VERSION)
 libside_la_LIBADD = \
 	$(top_builddir)/src/lib/librcu/librcu.la \
+	$(top_builddir)/src/lib/libphased-atfork/libphased-atfork.la \
 	$(RSEQ_LIBS)

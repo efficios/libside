@@ -317,3 +317,27 @@ void side_rcu_gp_exit(struct side_rcu_gp_state *rcu_gp)
 	pthread_mutex_destroy(&rcu_gp->gp_lock);
 	free(rcu_gp->percpu_state);
 }
+
+/*
+ * Reinitialize the grace period state in the child process after
+ * fork(). Reader threads which existed in the parent do not exist in
+ * the child, so per-CPU reader counts inherited from readers within
+ * their read-side critical section at fork() would leave
+ * begin != end forever, hanging every child-side grace period. The
+ * gp_lock and futex may also be inherited in an unusable state (dead
+ * owner or dead waiters, e.g. a parent thread within
+ * side_rcu_wait_grace_period at fork()).
+ *
+ * Callers must guarantee that the thread calling fork() is not
+ * within a read-side critical section nor waiting for a grace
+ * period, and that the child is single-threaded when this function
+ * is invoked.
+ */
+void side_rcu_gp_after_fork_child(struct side_rcu_gp_state *rcu_gp)
+{
+	memset(rcu_gp->percpu_state, 0,
+		rcu_gp->nr_cpus * sizeof(struct side_rcu_cpu_gp_state));
+	rcu_gp->period = 0;
+	rcu_gp->futex = 0;
+	pthread_mutex_init(&rcu_gp->gp_lock, NULL);
+}
