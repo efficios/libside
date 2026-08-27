@@ -83,29 +83,36 @@ void side_rcu_read_begin(struct side_rcu_gp_state *gp_state, struct side_rcu_rea
 	unsigned int period;
 	int cpu;
 
-	cpu = rseq_cpu_start();
 	period = __atomic_load_n(&gp_state->period, __ATOMIC_RELAXED);
-	cpu_gp_state = &gp_state->percpu_state[cpu];
-	read_state->percpu_count = begin_cpu_count = &cpu_gp_state->count[period];
-	read_state->cpu = cpu;
-	if (side_likely(side_rcu_rseq_membarrier_available &&
-			!rseq_load_add_store__ptr(RSEQ_MO_RELAXED, RSEQ_PERCPU_CPU_ID,
+	/*
+	 * The rseq fast path requires a successfully initialized
+	 * librseq (see side_rcu_gp_init): rseq_cpu_start()
+	 * dereferences the libc rseq area, whose offset is only
+	 * resolved by rseq_init().
+	 */
+	if (side_likely(side_rcu_rseq_membarrier_available)) {
+		cpu = rseq_cpu_start();
+		cpu_gp_state = &gp_state->percpu_state[cpu];
+		read_state->percpu_count = begin_cpu_count = &cpu_gp_state->count[period];
+		read_state->cpu = cpu;
+		if (side_likely(!rseq_load_add_store__ptr(RSEQ_MO_RELAXED, RSEQ_PERCPU_CPU_ID,
 				   (intptr_t *)&begin_cpu_count->rseq_begin, 1, cpu))) {
-		/*
-		 * This compiler barrier (A) is paired with membarrier() at (C),
-		 * (D), (E). It effectively upgrades this compiler barrier to a
-		 * SEQ_CST fence with respect to the paired barriers.
-		 *
-		 * This barrier (A) ensures that the contents of the read-side
-		 * critical section does not leak before the "begin" counter
-		 * increment. It pairs with memory barriers (D) and (E).
-		 *
-		 * This barrier (A) also ensures that the "begin" increment is
-		 * before the "end" increment. It pairs with memory barrier (C).
-		 * It is redundant with barrier (B) for that purpose.
-		 */
-		rseq_barrier();
-		return;
+			/*
+			 * This compiler barrier (A) is paired with membarrier() at (C),
+			 * (D), (E). It effectively upgrades this compiler barrier to a
+			 * SEQ_CST fence with respect to the paired barriers.
+			 *
+			 * This barrier (A) ensures that the contents of the read-side
+			 * critical section does not leak before the "begin" counter
+			 * increment. It pairs with memory barriers (D) and (E).
+			 *
+			 * This barrier (A) also ensures that the "begin" increment is
+			 * before the "end" increment. It pairs with memory barrier (C).
+			 * It is redundant with barrier (B) for that purpose.
+			 */
+			rseq_barrier();
+			return;
+		}
 	}
 	/* Fallback to atomic increment and SEQ_CST. */
 	cpu = sched_getcpu();

@@ -298,7 +298,14 @@ void side_rcu_gp_init(struct side_rcu_gp_state *rcu_gp)
 		abort();
 	if (!membarrier(MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, 0, 0))
 		has_membarrier = true;
-	if (rseq_available(RSEQ_AVAILABLE_QUERY_LIBC))
+	/*
+	 * librseq requires an explicit once-per-process
+	 * initialization, which resolves the libc rseq
+	 * offset/size/flags used by its fast-path helpers. Without a
+	 * successful rseq_init(), rseq_cpu_start() dereferences an
+	 * unset offset sentinel.
+	 */
+	if (rseq_init() == RSEQ_INIT_OK)
 		has_rseq = true;
 	if (has_membarrier && has_rseq)
 		side_rcu_rseq_membarrier_available = 1;
