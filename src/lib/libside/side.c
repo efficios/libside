@@ -408,8 +408,9 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 			ret = SIDE_ERROR_NOMEM;
 			goto unlock;
 		}
-		memcpy(new_cb, old_cb, pos_idx);
-		memcpy(&new_cb[pos_idx], &old_cb[pos_idx + 1], old_nr_cb - pos_idx - 1);
+		memcpy(new_cb, old_cb, pos_idx * sizeof(struct side_callback));
+		memcpy(&new_cb[pos_idx], &old_cb[pos_idx + 1],
+		       (old_nr_cb - pos_idx - 1) * sizeof(struct side_callback));
 	}
 	/* High order bits are already zeroed. */
 	side_rcu_assign_pointer(es0->callbacks, new_cb);
