@@ -107,6 +107,7 @@ static struct side_rcu_gp_state event_rcu_gp, statedump_rcu_gp;
  * Lazy initialization for early use within library constructors.
  */
 static bool initialized;
+
 /*
  * Do not register/unregister any more events after destructor.
  */
@@ -118,6 +119,7 @@ static bool finalized;
 static pthread_mutex_t side_event_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 static pthread_mutex_t side_statedump_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 static pthread_mutex_t side_key_lock = PTHREAD_MUTEX_INITIALIZER;
+
 /*
  * The side_agent_thread_lock protects the life-time of the agent
  * thread: reference counting, creation, join. It is not taken by
@@ -126,6 +128,9 @@ static pthread_mutex_t side_key_lock = PTHREAD_MUTEX_INITIALIZER;
  * The side_statedump_lock nests inside the side_agent_thread_lock.
  */
 static pthread_mutex_t side_agent_thread_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* Lock protecting concurrent side inititialization. */
+static pthread_mutex_t side_init_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* Dynamic tracer key allocation. */
 static uint64_t side_key_next = SIDE_KEY_RESERVED_RANGE_END;
@@ -179,7 +184,7 @@ void _side_call(const struct side_event_state *event_state, const struct side_ar
 
 	if (side_unlikely(finalized))
 		return;
-	if (side_unlikely(!initialized))
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	if (side_unlikely(event_state->version != 0))
 		abort();
@@ -230,7 +235,7 @@ void _side_call_variadic(const struct side_event_state *event_state,
 
 	if (side_unlikely(finalized))
 		return;
-	if (side_unlikely(!initialized))
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	if (side_unlikely(event_state->version != 0))
 		abort();
@@ -303,7 +308,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		return SIDE_ERROR_INVAL;
 	if (finalized)
 		return SIDE_ERROR_EXITING;
-	if (!initialized)
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	pthread_mutex_lock(&side_event_lock);
 	event_state = side_ptr_get(desc->state);
@@ -383,7 +388,7 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 		return SIDE_ERROR_INVAL;
 	if (finalized)
 		return SIDE_ERROR_EXITING;
-	if (!initialized)
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	pthread_mutex_lock(&side_event_lock);
 	event_state = side_ptr_get(desc->state);
@@ -450,7 +455,7 @@ struct side_events_register_handle *side_events_register(struct side_event_descr
 
 	if (finalized)
 		return NULL;
-	if (!initialized)
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	events_handle = (struct side_events_register_handle *)
 			calloc(1, sizeof(struct side_events_register_handle));
@@ -513,7 +518,7 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 		return;
 	if (finalized)
 		return;
-	if (!initialized)
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	pthread_mutex_lock(&side_event_lock);
 	side_list_remove_node(&events_handle->node);
@@ -545,7 +550,7 @@ struct side_tracer_handle *side_tracer_event_notification_register(
 
 	if (finalized)
 		return NULL;
-	if (!initialized)
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	tracer_handle = (struct side_tracer_handle *)
 				calloc(1, sizeof(struct side_tracer_handle));
@@ -569,7 +574,7 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *tracer
 
 	if (finalized)
 		return;
-	if (!initialized)
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	pthread_mutex_lock(&side_event_lock);
 	side_list_for_each_entry(events_handle, &side_events_list, node) {
@@ -766,7 +771,7 @@ struct side_statedump_request_handle *
 
 	if (finalized)
 		return NULL;
-	if (!initialized)
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	handle = (struct side_statedump_request_handle *)
 				calloc(1, sizeof(struct side_statedump_request_handle));
@@ -812,7 +817,7 @@ void side_statedump_request_notification_unregister(struct side_statedump_reques
 
 	if (finalized)
 		return;
-	if (!initialized)
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 
 	if (handle->mode == SIDE_STATEDUMP_MODE_AGENT_THREAD)
@@ -973,13 +978,17 @@ void side_after_fork_child(void)
 
 void side_init(void)
 {
-	if (initialized)
+	if (side_unlikely(__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		return;
-	side_rcu_gp_init(&event_rcu_gp);
-	side_rcu_gp_init(&statedump_rcu_gp);
-	if (pthread_atfork(side_before_fork, side_after_fork_parent, side_after_fork_child))
-		abort();
-	initialized = true;
+	pthread_mutex_lock(&side_init_lock);
+	if (!initialized) {
+		side_rcu_gp_init(&event_rcu_gp);
+		side_rcu_gp_init(&statedump_rcu_gp);
+		if (pthread_atfork(side_before_fork, side_after_fork_parent, side_after_fork_child))
+			abort();
+		__atomic_store_n(&initialized, true, __ATOMIC_RELEASE);
+	}
+	pthread_mutex_unlock(&side_init_lock);
 }
 
 /*
