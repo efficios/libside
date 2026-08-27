@@ -18,6 +18,12 @@ m4_define([side_lib_version_revision], [0])
 m4_define([side_lib_version_age], [0])
 m4_define([side_lib_version], side_lib_version_current[:]side_lib_version_revision[:]side_lib_version_age)
 
+# Library version information of "libphased-atfork"
+m4_define([phased_atfork_lib_version_current], [0])
+m4_define([phased_atfork_lib_version_revision], [0])
+m4_define([phased_atfork_lib_version_age], [0])
+m4_define([phased_atfork_lib_version], phased_atfork_lib_version_current[:]phased_atfork_lib_version_revision[:]phased_atfork_lib_version_age)
+
 
 ##                     ##
 ## Autoconf base setup ##
@@ -188,6 +194,7 @@ AE_FEATURE([Werror], [Treat compiler warnings as errors.])
 
 # Library versions for libtool
 AC_SUBST([SIDE_LIBRARY_VERSION], [side_lib_version])
+AC_SUBST([PHASED_ATFORK_LIBRARY_VERSION], [phased_atfork_lib_version])
 
 # The order in which the include folders are searched is important.
 # The top_builddir should always be searched first in the event that a build
@@ -213,6 +220,7 @@ AC_CONFIG_FILES([
 	src/bin/Makefile
 	src/bin/readside/Makefile
 	src/lib/Makefile
+	src/lib/libphased-atfork/Makefile
 	src/lib/librcu/Makefile
 	src/lib/libside/Makefile
 	src/lib/libside-console-tracer/Makefile
@@ -220,6 +228,7 @@ AC_CONFIG_FILES([
 	src/lib/libsmp/Makefile
 	src/lib/pkgconfig/libside.pc
 	src/lib/pkgconfig/libside-console-tracer.pc
+	src/lib/pkgconfig/libphased-atfork.pc
 	src/lib/pkgconfig/Makefile
 	tests/Makefile
 	tests/static-checker/Makefile

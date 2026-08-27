@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2022 EfficiOS Inc.
 
 nobase_include_HEADERS = \
+	phased-atfork/phased-atfork.h \
 	side/abi/attribute.h \
 	side/abi/event-description.h \
 	side/abi/type-argument.h \

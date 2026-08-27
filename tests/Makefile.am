@@ -18,6 +18,7 @@ CONSOLE_TRACER_FLAGS = -Wl,--no-as-needed
 
 noinst_PROGRAMS = \
 	regression/side-rcu-test \
+	unit/phased-atfork \
 	unit/test \
 	unit/test-cxx \
 	unit/test-no-sc \
@@ -30,6 +31,11 @@ regression_side_rcu_test_LDADD = \
 	$(top_builddir)/src/lib/librcu/librcu.la \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
+
+unit_phased_atfork_SOURCES = unit/phased-atfork.c
+unit_phased_atfork_LDADD = \
+	$(top_builddir)/src/lib/libphased-atfork/libphased-atfork.la \
+	$(top_builddir)/tests/utils/libtap.la
 
 unit_test_SOURCES = unit/test.c
 unit_test_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
@@ -79,5 +85,5 @@ unit_statedump_LDADD = \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
-# Currently no tap tests to run
-TESTS =	static-checker/run-tests
+TESTS =	static-checker/run-tests \
+	unit/phased-atfork
