@@ -114,9 +114,52 @@ static bool initialized;
 static bool finalized;
 
 /*
- * Recursive mutex to allow tracer callbacks to use the side API.
+ * Lock ordering (outermost to innermost):
+ *
+ *   [ dynamic loader lock (registration from library ctors/dtors) ]
+ *     side_notification_lock
+ *       [ tracer control locks (e.g. lttng-ust ust_mutex), taken by
+ *         tracer notification callbacks ]
+ *         side_event_lock
+ *         side_statedump_lock
+ *         side_key_lock
+ *
+ * side_notification_lock is held while invoking tracer notification
+ * callbacks. Callbacks may take their tracer control lock and call
+ * back into the side API; the APIs usable from that context
+ * (side_tracer_callback_register/unregister,
+ * side_tracer_statedump_request, side_tracer_request_key) only take
+ * leaf locks.
+ *
+ * Constraints:
+ * - side_notification_lock must never be acquired while holding a
+ *   tracer control lock: side_events_register/unregister and
+ *   side_tracer_event_notification_register/unregister must not be
+ *   called from tracer control context.
+ * - Notification callbacks must never take the dynamic loader lock
+ *   (no dlopen/dlclose/dladdr), since the loader lock may be held on
+ *   entry.
+ * - side_agent_thread_lock (see below) can wait on agent-thread
+ *   progress: statedump provider register/unregister must not be
+ *   called while holding side_notification_lock or a tracer control
+ *   lock.
+ * - The side_statedump_lock nests inside the side_agent_thread_lock.
  */
-static pthread_mutex_t side_event_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+
+/*
+ * The side_notification_lock is a recursive mutex, which allows tracer
+ * notification callbacks to use the side API. It protects the
+ * side_events_list and the side_tracer_list.
+ */
+static pthread_mutex_t side_notification_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+
+/*
+ * The side_event_lock protects the per-event callback arrays and
+ * enabled state. Plain (non-recursive) leaf mutex: nests inside
+ * side_notification_lock and inside tracer control locks. Concurrent
+ * fast-path readers of the callback arrays are protected by RCU.
+ */
+static pthread_mutex_t side_event_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t side_statedump_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 static pthread_mutex_t side_key_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -464,13 +507,13 @@ struct side_events_register_handle *side_events_register(struct side_event_descr
 	events_handle->events = events;
 	events_handle->nr_events = nr_events;
 
-	pthread_mutex_lock(&side_event_lock);
+	pthread_mutex_lock(&side_notification_lock);
 	side_list_insert_node_tail(&side_events_list, &events_handle->node);
 	side_list_for_each_entry(tracer_handle, &side_tracer_list, node) {
 		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
 			events, nr_events, tracer_handle->priv);
 	}
-	pthread_mutex_unlock(&side_event_lock);
+	pthread_mutex_unlock(&side_notification_lock);
 	//TODO: User event integration: call event batch register ioctl
 	return events_handle;
 }
@@ -478,17 +521,19 @@ struct side_events_register_handle *side_events_register(struct side_event_descr
 static
 void side_event_remove_callbacks(struct side_event_description *desc)
 {
-	struct side_event_state *event_state = side_ptr_get(desc->state);
+	struct side_event_state *event_state;
 	struct side_event_state_0 *es0;
 	struct side_callback *old_cb;
 	uint32_t nr_cb;
 
+	pthread_mutex_lock(&side_event_lock);
+	event_state = side_ptr_get(desc->state);
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, struct side_event_state_0, parent);
 	nr_cb = es0->nr_callbacks;
 	if (!nr_cb)
-		return;
+		goto unlock;
 	old_cb = (struct side_callback *) es0->callbacks;
 	(void) __atomic_add_fetch(&es0->enabled, -1, __ATOMIC_RELAXED);
 	/*
@@ -503,6 +548,8 @@ void side_event_remove_callbacks(struct side_event_description *desc)
 	 * unreachable.
 	 */
 	free(old_cb);
+unlock:
+	pthread_mutex_unlock(&side_event_lock);
 }
 
 /*
@@ -520,7 +567,7 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 		return;
 	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
-	pthread_mutex_lock(&side_event_lock);
+	pthread_mutex_lock(&side_notification_lock);
 	side_list_remove_node(&events_handle->node);
 	side_list_for_each_entry(tracer_handle, &side_tracer_list, node) {
 		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
@@ -535,7 +582,7 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 			continue;
 		side_event_remove_callbacks(event);
 	}
-	pthread_mutex_unlock(&side_event_lock);
+	pthread_mutex_unlock(&side_notification_lock);
 	//TODO: User event integration: call event batch unregister ioctl
 	free(events_handle);
 }
@@ -556,7 +603,7 @@ struct side_tracer_handle *side_tracer_event_notification_register(
 				calloc(1, sizeof(struct side_tracer_handle));
 	if (!tracer_handle)
 		return NULL;
-	pthread_mutex_lock(&side_event_lock);
+	pthread_mutex_lock(&side_notification_lock);
 	tracer_handle->cb = cb;
 	tracer_handle->priv = priv;
 	side_list_insert_node_tail(&side_tracer_list, &tracer_handle->node);
@@ -564,7 +611,7 @@ struct side_tracer_handle *side_tracer_event_notification_register(
 		cb(SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,
 			events_handle->events, events_handle->nr_events, priv);
 	}
-	pthread_mutex_unlock(&side_event_lock);
+	pthread_mutex_unlock(&side_notification_lock);
 	return tracer_handle;
 }
 
@@ -576,14 +623,14 @@ void side_tracer_event_notification_unregister(struct side_tracer_handle *tracer
 		return;
 	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
-	pthread_mutex_lock(&side_event_lock);
+	pthread_mutex_lock(&side_notification_lock);
 	side_list_for_each_entry(events_handle, &side_events_list, node) {
 		tracer_handle->cb(SIDE_TRACER_NOTIFICATION_REMOVE_EVENTS,
 			events_handle->events, events_handle->nr_events,
 			tracer_handle->priv);
 	}
 	side_list_remove_node(&tracer_handle->node);
-	pthread_mutex_unlock(&side_event_lock);
+	pthread_mutex_unlock(&side_notification_lock);
 	free(tracer_handle);
 }
 
