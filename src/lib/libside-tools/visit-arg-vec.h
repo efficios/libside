@@ -47,6 +47,14 @@ struct side_type_visitor {
 	void (*after_array_type_func)(const struct side_type_array *side_array, const struct side_arg_vec *side_arg_vec, void *priv);
 	void (*before_vla_type_func)(const struct side_type_vla *side_vla, const struct side_arg_vec *side_arg_vec, void *priv);
 	void (*after_vla_type_func)(const struct side_type_vla *side_vla, const struct side_arg_vec *side_arg_vec, void *priv);
+	/*
+	 * The selected option is visited between those two callbacks:
+	 * they give access to the selector, which a tracer needs when
+	 * its trace format describes a variant by the value of its
+	 * selector.
+	 */
+	void (*before_variant_type_func)(const struct side_type_variant *side_type_variant, const struct side_arg_variant *side_arg_variant, void *priv);
+	void (*after_variant_type_func)(const struct side_type_variant *side_type_variant, const struct side_arg_variant *side_arg_variant, void *priv);
 
 	/* Stack-copy enumeration types. */
 	void (*enum_type_func)(const struct side_type *type_desc, const struct side_arg *item, void *priv);

@@ -335,7 +335,11 @@ void type_visitor_variant(const struct side_type_visitor *type_visitor, const st
 	side_check_value_u64(v);
 	side_for_each_element_in_array(option, &side_type_variant->options) {
 		if (v.s[SIDE_INTEGER128_SPLIT_LOW] >= option->range_begin && v.s[SIDE_INTEGER128_SPLIT_LOW] <= option->range_end) {
+			if (type_visitor->before_variant_type_func)
+				type_visitor->before_variant_type_func(side_type_variant, side_arg_variant, priv);
 			side_visit_type(type_visitor, ctx, &option->side_type, &side_arg_variant->option, priv);
+			if (type_visitor->after_variant_type_func)
+				type_visitor->after_variant_type_func(side_type_variant, side_arg_variant, priv);
 			return;
 		}
 	}
