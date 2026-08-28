@@ -4,6 +4,8 @@
 noinst_LTLIBRARIES = libside-tools.la
 
 libside_tools_la_SOURCES = \
+	json-writer.c \
+	json-writer.h \
 	visit-arg-vec.c \
 	visit-arg-vec.h \
 	visit-description.c \

@@ -66,6 +66,28 @@ Or use `pkg-config(1)`:
 	$(pkg-config --cflags --libs libside)			\
 	$(pkg-config --cflags --libs libside-console-tracer)
 
+### Output format
+
+The `SIDE_CONSOLE_TRACER_FORMAT` environment variable selects the output
+format:
+
+  * `pretty` (default): a description of the events for a reader.
+  * `json`: one JSON object per line, which suits a pipe into a tool such as
+    `jq(1)`.
+
 ### Example output
 
+Pretty:
+
     provider: myprovider, event: myevent, fields: { abc: { value: 42 } def: { value: -500 } }
+
+JSON:
+
+    {"provider": "myprovider","event": "myevent","fields": {"abc": 42,"def": -500}}
+
+A value is emitted as the JSON value it is: an integer as a number, a string as
+a string, a structure as an object, an array as an array. An object describing
+the value is only used where there is more to say than the value itself, such
+as the labels of an enumeration or the selector of a variant:
+
+    {"provider": "myprovider","event": "myevent","fields": {"color": {"value": 2,"labels": ["green"]},"choice": {"selector": 15,"value": "chosen"}}}

@@ -8,6 +8,7 @@
 #include <side/abi/event-description.h>
 #include <side/abi/type-description.h>
 
+#include "libside-tools/json-writer.h"
 #include "libside-tools/visit-description.h"
 
 struct visitor_context {
@@ -51,42 +52,7 @@ static inline void copy_visitor_with_resolver(const struct visitor *in,
 extern void side_type_attributes(const struct side_type *type, void *ctx,
 				const struct side_attr **attrs, u32 *nr_attrs);
 
-/**
- * Translate loglevel enumeration to string.
- */
-extern const char *side_loglevel_to_string(enum side_loglevel loglevel);
 
-/**
- * Translate type label enumeration to string.
- */
-extern const char *side_type_to_string(enum side_type_label label);
-
-/**
- * Translate gather access mode enumeration to string.
- */
-static inline const char *side_access_mode_to_string(enum side_type_gather_access_mode am)
-{
-	switch (am) {
-	case SIDE_TYPE_GATHER_ACCESS_DIRECT:
-		return "direct";
-	case SIDE_TYPE_GATHER_ACCESS_POINTER:
-		return "pointer";
-	default:
-		return "<UNKNOWN>";
-	}
-}
-
-/**
- * Translate type label byte order enumeration to string.
- */
-static inline const char *side_byte_order_to_string(enum side_type_label_byte_order bo)
-{
-	switch (bo) {
-	case SIDE_TYPE_BYTE_ORDER_LE: return "little";
-	case SIDE_TYPE_BYTE_ORDER_BE: return "big";
-	default: return "<UNKNOWN>";
-	}
-}
 
 /* Available visitors. */
 extern struct visitor json_visitor;

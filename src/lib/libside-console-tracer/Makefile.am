@@ -7,6 +7,9 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib
 lib_LTLIBRARIES = libside-console-tracer.la
 
 libside_console_tracer_la_SOURCES = \
+	common.h \
+	json.c \
+	json.h \
 	tracer.c
 
 libside_console_tracer_la_LIBADD = \

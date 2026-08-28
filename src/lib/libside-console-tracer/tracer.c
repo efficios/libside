@@ -16,9 +16,24 @@
 #include "libside-tools/visit-description.h"
 #include "libside-tools/visit-arg-vec.h"
 
+#include "common.h"
+#include "json.h"
+
 
 /* TODO: optionally print caller address. */
 static bool print_caller = false;
+
+/*
+ * Output format, selected by the SIDE_CONSOLE_TRACER_FORMAT
+ * environment variable: "pretty", the default, describes the events
+ * for a reader, "json" emits one JSON object per line.
+ */
+enum tracer_format {
+	TRACER_FORMAT_PRETTY,
+	TRACER_FORMAT_JSON,
+};
+
+static enum tracer_format tracer_format = TRACER_FORMAT_PRETTY;
 
 #define MAX_NESTING	32
 
@@ -27,11 +42,6 @@ enum tracer_display_base {
 	TRACER_DISPLAY_BASE_8,
 	TRACER_DISPLAY_BASE_10,
 	TRACER_DISPLAY_BASE_16,
-};
-
-union int_value {
-	uint64_t u[NR_SIDE_INTEGER128_SPLIT];
-	int64_t s[NR_SIDE_INTEGER128_SPLIT];
 };
 
 struct print_ctx {
@@ -45,7 +55,6 @@ static uint64_t tracer_key;
 
 static struct side_description_visitor_callbacks description_visitor_callbacks;
 
-static
 void tracer_convert_string_to_utf8(const void *p, uint8_t unit_size, enum side_type_label_byte_order byte_order,
 		size_t *strlen_with_null,
 		char **output_str)
@@ -405,7 +414,6 @@ void print_attributes(const char *prefix_str, const char *separator,
 	printf(" ]");
 }
 
-static
 union int_value tracer_load_integer_value(const struct side_type_integer *type_integer,
 		const union side_integer_value *value,
 		uint16_t offset_bits, uint16_t *_len_bits)
@@ -1712,6 +1720,10 @@ void tracer_call(const struct side_event_description *desc,
 {
 	struct print_ctx ctx = {};
 
+	if (tracer_format == TRACER_FORMAT_JSON) {
+		type_visitor_event(&json_type_visitor, desc, side_arg_vec, NULL, caller_addr, &ctx);
+		return;
+	}
 	type_visitor_event(&type_visitor, desc, side_arg_vec, NULL, caller_addr, &ctx);
 }
 
@@ -1724,6 +1736,11 @@ void tracer_call_variadic(const struct side_event_description *desc,
 {
 	struct print_ctx ctx = {};
 
+	if (tracer_format == TRACER_FORMAT_JSON) {
+		type_visitor_event(&json_type_visitor, desc, side_arg_vec, var_struct,
+			caller_addr, &ctx);
+		return;
+	}
 	type_visitor_event(&type_visitor, desc, side_arg_vec, var_struct, caller_addr, &ctx);
 }
 
@@ -2433,9 +2450,13 @@ void tracer_event_notification(enum side_tracer_notification notif,
 	uint32_t i;
 	int ret;
 
-	printf("----------------------------------------------------------\n");
-	printf("Tracer notified of events %s\n",
-		notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS ? "inserted" : "removed");
+	if (tracer_format == TRACER_FORMAT_JSON) {
+		json_print_event_notification(notif, events, nr_events);
+	} else {
+		printf("----------------------------------------------------------\n");
+		printf("Tracer notified of events %s\n",
+			notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS ? "inserted" : "removed");
+	}
 	for (i = 0; i < nr_events; i++) {
 		struct side_event_description *event = events[i];
 
@@ -2447,8 +2468,9 @@ void tracer_event_notification(enum side_tracer_notification notif,
 				event->version, SIDE_EVENT_DESCRIPTION_ABI_VERSION);
 				return;
 		}
-		printf("provider: %s, event: %s\n",
-			side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
+		if (tracer_format != TRACER_FORMAT_JSON)
+			printf("provider: %s, event: %s\n",
+				side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
 		if (event->struct_size != side_offsetofend(struct side_event_description, side_event_description_orig_abi_last)) {
 			printf("Warning: Event %s.%s description contains fields unknown to the tracer\n",
 				side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
@@ -2464,7 +2486,8 @@ void tracer_event_notification(enum side_tracer_notification notif,
 					side_ptr_get(event->provider_name), side_ptr_get(event->event_name),
 					event->nr_side_attr_type - _NR_SIDE_ATTR_TYPE);
 			}
-			print_event_description(event);
+			if (tracer_format != TRACER_FORMAT_JSON)
+				print_event_description(event);
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
 				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL, tracer_key);
 				if (ret)
@@ -2486,7 +2509,8 @@ void tracer_event_notification(enum side_tracer_notification notif,
 			}
 		}
 	}
-	printf("----------------------------------------------------------\n");
+	if (tracer_format != TRACER_FORMAT_JSON)
+		printf("----------------------------------------------------------\n");
 }
 
 static __attribute__((constructor))
@@ -2494,6 +2518,18 @@ void tracer_init(void);
 static
 void tracer_init(void)
 {
+	const char *format = getenv("SIDE_CONSOLE_TRACER_FORMAT");
+
+	if (format) {
+		if (!strcmp(format, "json")) {
+			tracer_format = TRACER_FORMAT_JSON;
+		} else if (!strcmp(format, "pretty")) {
+			tracer_format = TRACER_FORMAT_PRETTY;
+		} else {
+			fprintf(stderr, "side: unknown SIDE_CONSOLE_TRACER_FORMAT `%s`, expecting `pretty` or `json`\n",
+				format);
+		}
+	}
 	if (side_tracer_request_key(&tracer_key))
 		abort();
 	tracer_handle = side_tracer_event_notification_register(tracer_event_notification, NULL);
