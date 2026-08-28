@@ -2089,6 +2089,24 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #define SIDE_SC_CHECK_side_type_struct(_identifier) ,SIDE_SC_TYPE(user_define_struct__##_identifier)
 #define SIDE_SC_EMIT_side_type_struct _side_type_struct
 
+/*
+ * Dispatch: type_enum. The argument of an enumeration is the argument
+ * of its container, so the check is the check of the container. An
+ * enumeration type is used as the element of an array or of a VLA,
+ * which means its own element is expanded from within the expansion
+ * of side_elem: use the sub-level element macros.
+ */
+#undef side_type_enum
+#define SIDE_SC_CHECK_side_type_enum(_mappings, _elem) SIDE_SC_CHECK_SUB_##_elem
+#define SIDE_SC_EMIT_side_type_enum(_mappings, _elem)			\
+	_side_type_enum(_mappings, SIDE_SC_EMIT_SUB_##_elem)
+
+/* Dispatch: type_enum_bitmap */
+#undef side_type_enum_bitmap
+#define SIDE_SC_CHECK_side_type_enum_bitmap(_mappings, _elem) SIDE_SC_CHECK_SUB_##_elem
+#define SIDE_SC_EMIT_side_type_enum_bitmap(_mappings, _elem)		\
+	_side_type_enum_bitmap(_mappings, SIDE_SC_EMIT_SUB_##_elem)
+
 /* Dispatch: type_vla */
 #undef side_type_vla
 #define SIDE_SC_CHECK_side_type_vla(_identifier) ,SIDE_SC_TYPE(user_define_vla__##_identifier)

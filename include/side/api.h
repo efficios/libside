@@ -389,6 +389,10 @@
 #define side_define_enum_bitmap _side_define_enum_bitmap
 #define side_field_enum _side_field_enum
 #define side_field_enum_bitmap _side_field_enum_bitmap
+#define side_type_enum(_mappings, _elem_type)				\
+	_side_type_enum(_mappings, _elem_type)
+#define side_type_enum_bitmap(_mappings, _elem_type)			\
+	_side_type_enum_bitmap(_mappings, _elem_type)
 
 /* Types. */
 #define side_type_null(...) _side_type_null(__VA_ARGS__)
