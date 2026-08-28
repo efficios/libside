@@ -123,6 +123,41 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 		void *priv, uint64_t key);
 
 /*
+ * Deferred registration and unregistration of tracer callbacks.
+ *
+ * The register/unregister APIs above wait for a grace period before
+ * returning, which is expensive when a tracer registers or unregisters
+ * callbacks for many events in a batch (e.g. when a session is created
+ * or destroyed). The _defer variants take the effect of their
+ * non-deferred counterpart, but hand over the memory they replace to
+ * the side library rather than waiting.
+ *
+ * The protocol is:
+ *
+ *   for each event:
+ *           side_tracer_callback_{,variadic_}{register,unregister}_defer()
+ *   side_tracer_callback_synchronize()
+ *   side_tracer_callback_reclaim()
+ *
+ * The batch takes effect as each deferred call returns, exactly like
+ * the non-deferred APIs: only the memory reclaim is postponed. A batch
+ * can therefore mix deferred registrations and unregistrations, and can
+ * span many events, with a single grace period for the whole batch.
+ */
+int side_tracer_callback_register_defer(struct side_event_description *desc,
+		side_tracer_callback_func call,
+		void *priv, uint64_t key);
+int side_tracer_callback_variadic_register_defer(struct side_event_description *desc,
+		side_tracer_callback_variadic_func call_variadic,
+		void *priv, uint64_t key);
+int side_tracer_callback_unregister_defer(struct side_event_description *desc,
+		side_tracer_callback_func call,
+		void *priv, uint64_t key);
+int side_tracer_callback_variadic_unregister_defer(struct side_event_description *desc,
+		side_tracer_callback_variadic_func call_variadic,
+		void *priv, uint64_t key);
+
+/*
  * Wait for a grace period of the domain within which the tracer
  * callbacks are invoked. Upon return, all tracer callbacks which had
  * begun before the call have completed.
@@ -133,10 +168,25 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
  * Tracers which have their own grace period domain, used for instance
  * by other instrumentation mechanisms, need to wait for both.
  *
+ * This also readies for reclaim the memory left over by the deferred
+ * register/unregister APIs which have returned before the call.
+ *
  * Must not be invoked from a tracer callback: it would wait for the
  * completion of the callback performing the call.
  */
 void side_tracer_callback_synchronize(void);
+
+/*
+ * Free the memory left over by the deferred register/unregister APIs
+ * which is ready for reclaim.
+ *
+ * The caller is responsible for issuing a
+ * side_tracer_callback_synchronize() after the deferred calls of a
+ * batch and before reclaiming it. Memory deferred after the last
+ * synchronize stays pending, and is reclaimed by a later
+ * synchronize/reclaim pair.
+ */
+void side_tracer_callback_reclaim(void);
 
 enum side_tracer_notification {
 	SIDE_TRACER_NOTIFICATION_INSERT_EVENTS,

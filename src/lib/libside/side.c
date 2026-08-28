@@ -196,6 +196,85 @@ static DEFINE_SIDE_LIST_HEAD(side_statedump_list);
  */
 const char side_empty_callback[sizeof(struct side_callback)];
 
+/*
+ * Arrays of callbacks which a deferred registration or unregistration
+ * has replaced, and which are waiting to be freed.
+ *
+ * An array is queued on the pending list, and moved to the ready list
+ * by side_tracer_callback_synchronize(), which then waits for a grace
+ * period: everything on the ready list was therefore unpublished
+ * before that grace period started, and no reader can hold it anymore.
+ * An array queued while the grace period runs stays on the pending
+ * list, and waits for the next one.
+ *
+ * Both lists are protected by side_event_lock.
+ */
+struct side_callback_reclaim_node {
+	struct side_list_node node;
+	struct side_callback *callbacks;
+};
+
+static DEFINE_SIDE_LIST_HEAD(side_callback_pending);
+static DEFINE_SIDE_LIST_HEAD(side_callback_ready);
+
+/*
+ * Queue an array of callbacks for reclamation. Called with
+ * side_event_lock held. Returns -1 if the array cannot be queued, in
+ * which case the caller reclaims it itself.
+ */
+static
+int side_callback_queue_reclaim(struct side_callback *callbacks)
+{
+	struct side_callback_reclaim_node *reclaim_node;
+
+	/* The empty callback is not allocated. */
+	if (!callbacks || callbacks == (struct side_callback *) &side_empty_callback)
+		return 0;
+	reclaim_node = (struct side_callback_reclaim_node *) calloc(1, sizeof(*reclaim_node));
+	if (!reclaim_node)
+		return -1;
+	reclaim_node->callbacks = callbacks;
+	side_list_insert_node_tail(&side_callback_pending, &reclaim_node->node);
+	return 0;
+}
+
+/*
+ * Free the queued arrays of callbacks of a list which has been removed
+ * from the pending and ready lists.
+ */
+static
+void side_callback_reclaim_list(struct side_list_head *list)
+{
+	struct side_callback_reclaim_node *reclaim_node, *tmp;
+
+	side_list_for_each_entry_safe(reclaim_node, tmp, list, node) {
+		free(reclaim_node->callbacks);
+		free(reclaim_node);
+	}
+	side_list_head_init(list);
+}
+
+/*
+ * Reclaim an array of callbacks which has been replaced: queue it if
+ * the caller defers, wait for a grace period and free it otherwise.
+ * Called with side_event_lock held.
+ */
+static
+void side_callback_put(struct side_callback *callbacks, bool defer)
+{
+	if (defer && !side_callback_queue_reclaim(callbacks))
+		return;
+	/*
+	 * Wait for the grace period even when there is nothing to
+	 * free: the non-deferred APIs return only once the callback
+	 * change they perform is observed by all readers.
+	 */
+	side_rcu_wait_grace_period(&event_rcu_gp);
+	if (!callbacks || callbacks == (struct side_callback *) &side_empty_callback)
+		return;
+	free(callbacks);
+}
+
 side_static_event(side_statedump_begin, "side", "statedump_begin",
 	SIDE_LOGLEVEL_INFO, side_field_list(side_field_string("name")));
 side_static_event(side_statedump_end, "side", "statedump_end",
@@ -340,7 +419,7 @@ const struct side_callback *side_tracer_callback_lookup(
 
 static
 int _side_tracer_callback_register(struct side_event_description *desc,
-		void *call, void *priv, uint64_t key)
+		void *call, void *priv, uint64_t key, bool defer)
 {
 	struct side_event_state *event_state;
 	struct side_callback *old_cb, *new_cb;
@@ -387,9 +466,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	new_cb[old_nr_cb].key = key;
 	/* High order bits are already zeroed. */
 	side_rcu_assign_pointer(es0->callbacks, new_cb);
-	side_rcu_wait_grace_period(&event_rcu_gp);
-	if (old_nr_cb)
-		free(old_cb);
+	side_callback_put(old_cb, defer);
 	es0->nr_callbacks++;
 	/* Increment concurrently with kernel setting the top bits. */
 	if (!old_nr_cb)
@@ -405,7 +482,7 @@ int side_tracer_callback_register(struct side_event_description *desc,
 {
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, (void *) call, priv, key);
+	return _side_tracer_callback_register(desc, (void *) call, priv, key, false);
 }
 
 int side_tracer_callback_variadic_register(struct side_event_description *desc,
@@ -414,11 +491,29 @@ int side_tracer_callback_variadic_register(struct side_event_description *desc,
 {
 	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, (void *) call_variadic, priv, key);
+	return _side_tracer_callback_register(desc, (void *) call_variadic, priv, key, false);
+}
+
+int side_tracer_callback_register_defer(struct side_event_description *desc,
+		side_tracer_callback_func call,
+		void *priv, uint64_t key)
+{
+	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
+		return SIDE_ERROR_INVAL;
+	return _side_tracer_callback_register(desc, (void *) call, priv, key, true);
+}
+
+int side_tracer_callback_variadic_register_defer(struct side_event_description *desc,
+		side_tracer_callback_variadic_func call_variadic,
+		void *priv, uint64_t key)
+{
+	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
+		return SIDE_ERROR_INVAL;
+	return _side_tracer_callback_register(desc, (void *) call_variadic, priv, key, true);
 }
 
 static int _side_tracer_callback_unregister(struct side_event_description *desc,
-		void *call, void *priv, uint64_t key)
+		void *call, void *priv, uint64_t key, bool defer)
 {
 	struct side_event_state *event_state;
 	struct side_callback *old_cb, *new_cb;
@@ -463,8 +558,7 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 	}
 	/* High order bits are already zeroed. */
 	side_rcu_assign_pointer(es0->callbacks, new_cb);
-	side_rcu_wait_grace_period(&event_rcu_gp);
-	free(old_cb);
+	side_callback_put(old_cb, defer);
 	es0->nr_callbacks--;
 	/* Decrement concurrently with kernel setting the top bits. */
 	if (old_nr_cb == 1)
@@ -480,7 +574,7 @@ int side_tracer_callback_unregister(struct side_event_description *desc,
 {
 	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, (void *) call, priv, key);
+	return _side_tracer_callback_unregister(desc, (void *) call, priv, key, false);
 }
 
 int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
@@ -489,7 +583,25 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
 {
 	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv, key);
+	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv, key, false);
+}
+
+int side_tracer_callback_unregister_defer(struct side_event_description *desc,
+		side_tracer_callback_func call,
+		void *priv, uint64_t key)
+{
+	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
+		return SIDE_ERROR_INVAL;
+	return _side_tracer_callback_unregister(desc, (void *) call, priv, key, true);
+}
+
+int side_tracer_callback_variadic_unregister_defer(struct side_event_description *desc,
+		side_tracer_callback_variadic_func call_variadic,
+		void *priv, uint64_t key)
+{
+	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
+		return SIDE_ERROR_INVAL;
+	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv, key, true);
 }
 
 /*
@@ -497,10 +609,40 @@ int side_tracer_callback_variadic_unregister(struct side_event_description *desc
  * read-side, both for events emitted by the application threads and
  * for events emitted from the statedump callbacks run by the agent
  * thread.
+ *
+ * Move the callback arrays queued by the deferred registration and
+ * unregistration to the ready list before waiting for the grace period:
+ * they are then reclaimable by side_tracer_callback_reclaim().
  */
 void side_tracer_callback_synchronize(void)
 {
+	pthread_mutex_lock(&side_event_lock);
+	side_list_splice(&side_callback_pending, &side_callback_ready);
+	side_list_head_init(&side_callback_pending);
+	pthread_mutex_unlock(&side_event_lock);
+
 	side_rcu_wait_grace_period(&event_rcu_gp);
+}
+
+/*
+ * Free the callback arrays which have been unpublished before the last
+ * side_tracer_callback_synchronize().
+ *
+ * The caller is responsible for issuing a
+ * side_tracer_callback_synchronize() between the deferred
+ * registration/unregistration and this reclaim.
+ */
+void side_tracer_callback_reclaim(void)
+{
+	DEFINE_SIDE_LIST_HEAD(reclaim_list);
+
+	pthread_mutex_lock(&side_event_lock);
+	side_list_splice(&side_callback_ready, &reclaim_list);
+	side_list_head_init(&side_callback_ready);
+	pthread_mutex_unlock(&side_event_lock);
+
+	/* Free outside of the event lock. */
+	side_callback_reclaim_list(&reclaim_list);
 }
 
 struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events)
@@ -1159,6 +1301,14 @@ void side_exit(void)
 		return;
 	side_list_for_each_entry_safe(handle, tmp, &side_events_list, node)
 		side_events_unregister(handle);
+	/*
+	 * Reclaim whatever the deferred register/unregister APIs have
+	 * left behind, whether a grace period has been waited for or
+	 * not: no concurrent side API use is expected at that point.
+	 */
+	side_list_splice(&side_callback_pending, &side_callback_ready);
+	side_list_head_init(&side_callback_pending);
+	side_callback_reclaim_list(&side_callback_ready);
 	side_rcu_gp_exit(&event_rcu_gp);
 	side_rcu_gp_exit(&statedump_rcu_gp);
 	finalized = true;
