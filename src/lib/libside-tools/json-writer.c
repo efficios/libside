@@ -124,6 +124,20 @@ void side_json_string(struct side_json_writer *writer, const char *str)
 	fputc('"', writer->out);
 }
 
+void side_json_item_name(struct side_json_writer *writer, const char *name)
+{
+	side_json_next(writer);
+	side_json_string(writer, name);
+	fputs(": ", writer->out);
+}
+
+void side_json_item_string(struct side_json_writer *writer, const char *name,
+		const char *value)
+{
+	side_json_item_name(writer, name);
+	side_json_string(writer, value);
+}
+
 const char *side_json_attr_value(struct side_json_writer *writer,
 		const struct side_attr_value *value)
 {
@@ -171,15 +185,11 @@ const char *side_json_attr_value(struct side_json_writer *writer,
 		return buffer;
 #endif
 	case SIDE_ATTR_TYPE_STRING:
-	{
-		const char *str = side_json_resolve(writer, side_ptr_get(value->u.string_value.p));
-
-		/* Only UTF-8 attribute values are described as strings. */
-		if (value->u.string_value.unit_size != 1 || !str)
-			return "\"<UNKNOWN>\"";
-		snprintf(buffer, sizeof(buffer), "\"%s\"", str);
-		return buffer;
-	}
+		/*
+		 * The value of a string attribute has to be escaped,
+		 * which the caller does with side_json_attr_value_is_string.
+		 */
+		return NULL;
 	default:
 		return "\"<UNKNOWN>\"";
 	}
@@ -198,9 +208,21 @@ void side_json_attributes(struct side_json_writer *writer,
 	side_json_push(writer);
 	for (i = 0; i < nr_attr; i++) {
 		const char *key = side_json_resolve(writer, side_ptr_get(attr[i].key.p));
+		const struct side_attr_value *value = &attr[i].value;
+		const char *json_value = side_json_attr_value(writer, value);
 
-		side_json_item(writer, "\"%s\": %s", key ? key : "",
-			side_json_attr_value(writer, &attr[i].value));
+		side_json_item_name(writer, key);
+		if (json_value) {
+			side_json_raw(writer, "%s", json_value);
+			continue;
+		}
+		/* A string value: escape it. */
+		if (value->u.string_value.unit_size != 1) {
+			side_json_string(writer, "<UNKNOWN>");
+			continue;
+		}
+		side_json_string(writer,
+			side_json_resolve(writer, side_ptr_get(value->u.string_value.p)));
 	}
 	side_json_pop(writer, '}');
 }

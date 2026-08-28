@@ -73,8 +73,21 @@ void side_json_pop(struct side_json_writer *writer, char closing);
 void side_json_string(struct side_json_writer *writer, const char *str);
 
 /*
- * The value of an attribute as JSON. Returns a string valid until the
- * next call from the same thread.
+ * Emit an item whose name and value are strings, both escaped. The
+ * name of an item and the value of a string come from the description
+ * of an event, which is written by the instrumented application: they
+ * cannot be emitted as-is.
+ */
+void side_json_item_string(struct side_json_writer *writer, const char *name,
+		const char *value);
+
+/* Emit the name of an item, escaped, and the colon which follows it. */
+void side_json_item_name(struct side_json_writer *writer, const char *name);
+
+/*
+ * The value of an attribute as JSON, valid until the next call from
+ * the same thread. Returns NULL for a string value, which the caller
+ * emits with side_json_string so that it is escaped.
  */
 const char *side_json_attr_value(struct side_json_writer *writer,
 		const struct side_attr_value *value);

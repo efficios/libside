@@ -10,170 +10,41 @@
 #include "visitors/common.h"
 
 struct json_context {
-	bool first_element;
+	struct side_json_writer writer;
 };
 
-static void nest_indent(const struct visitor_context *ctx)
+/*
+ * The writer of this context. The resolution of the pointers of a
+ * description is that of the reader: the descriptions are read from a
+ * file, and are mapped elsewhere.
+ */
+static struct side_json_writer *writer_of(const struct visitor_context *ctx)
 {
 	struct json_context *jctx = ctx->context;
 
-	if (jctx->first_element) {
-		putchar('\n');
-		jctx->first_element = false;
-	} else {
-		putchar(',');
-		putchar('\n');
-	}
-
-	for (size_t k = 0; k < ctx->nesting; ++k) {
-		putchar('\t');
-	}
+	jctx->writer.resolve = ctx->resolve;
+	jctx->writer.resolve_priv = (void *) ctx;
+	return &jctx->writer;
 }
 
-#define printf_nest(ctx, fmt, ...)		\
-	do {					\
-		nest_indent(ctx);		\
-		printf(fmt, ##__VA_ARGS__);	\
-	} while(0)
+#define printf_nest(ctx, fmt, ...)					\
+	side_json_item(writer_of(ctx), fmt, ##__VA_ARGS__)
 
 static inline void push_nest(struct visitor_context *ctx)
 {
-	struct json_context *jctx = ctx->context;
-
-	ctx->nesting++;
-
-	jctx->first_element = true;
+	side_json_push(writer_of(ctx));
 }
 
 static inline void pop_nest(struct visitor_context *ctx)
 {
-	struct json_context *jctx = ctx->context;
-
-	ctx->nesting--;
-
-	jctx->first_element = false;
-
-	putchar('\n');
-	for (size_t k = 0; k < ctx->nesting; ++k) {
-		putchar('\t');
-	}
-	putchar('}');
-}
-
-static const char *side_attr_value_to_string(const struct side_attr_value *value,
-					void *ctx)
-{
-	_Thread_local static char buffer[4096];
-
-	switch (side_enum_get(value->type)) {
-	case SIDE_ATTR_TYPE_NULL:
-		return "null";
-	case SIDE_ATTR_TYPE_BOOL:
-		if (value->u.bool_value) {
-			return "true";
-		}
-		return "false";
-	case  SIDE_ATTR_TYPE_U8:
-		snprintf(buffer, sizeof(buffer), "%" PRIu8,
-			value->u.integer_value.side_u8);
-		return buffer;
-	case  SIDE_ATTR_TYPE_U16:
-		snprintf(buffer, sizeof(buffer), "%" PRIu16,
-			value->u.integer_value.side_u16);
-		return buffer;
-	case  SIDE_ATTR_TYPE_U32:
-		snprintf(buffer, sizeof(buffer), "%" PRIu32,
-			value->u.integer_value.side_u32);
-		return buffer;
-	case  SIDE_ATTR_TYPE_U64:
-		snprintf(buffer, sizeof(buffer), "%" PRIu64,
-			value->u.integer_value.side_u64);
-		return buffer;
-	case  SIDE_ATTR_TYPE_U128:
-		snprintf(buffer, sizeof(buffer), "%" PRIu64 "%" PRIu64,
-			value->u.integer_value.side_u128_split[SIDE_INTEGER128_SPLIT_HIGH],
-			value->u.integer_value.side_u128_split[SIDE_INTEGER128_SPLIT_LOW]);
-		return buffer;
-	case  SIDE_ATTR_TYPE_S8:
-		snprintf(buffer, sizeof(buffer), "%" PRId8,
-			value->u.integer_value.side_s8);
-		return buffer;
-	case  SIDE_ATTR_TYPE_S16:
-		snprintf(buffer, sizeof(buffer), "%" PRId16,
-			value->u.integer_value.side_s16);
-		return buffer;
-	case  SIDE_ATTR_TYPE_S32:
-		snprintf(buffer, sizeof(buffer), "%" PRId32,
-			value->u.integer_value.side_s32);
-		return buffer;
-	case  SIDE_ATTR_TYPE_S64:
-		snprintf(buffer, sizeof(buffer), "%" PRId64,
-			value->u.integer_value.side_s64);
-		return buffer;
-	case  SIDE_ATTR_TYPE_S128:
-		snprintf(buffer, sizeof(buffer), "%" PRId64 "%" PRId64,
-			value->u.integer_value.side_s128_split[SIDE_INTEGER128_SPLIT_HIGH],
-			value->u.integer_value.side_s128_split[SIDE_INTEGER128_SPLIT_LOW]);
-		return buffer;
-#if __HAVE_FLOAT16
-	case SIDE_ATTR_TYPE_FLOAT_BINARY16:
-		snprintf(buffer, sizeof(buffer), "%g",
-			cast(double, value->u.float_value.side_float_binary16));
-		return buffer;
-#endif
-#if __HAVE_FLOAT32
-	case SIDE_ATTR_TYPE_FLOAT_BINARY32:
-		snprintf(buffer, sizeof(buffer), "%g",
-			cast(double, value->u.float_value.side_float_binary32));
-		return buffer;
-#endif
-#if __HAVE_FLOAT64
-	case SIDE_ATTR_TYPE_FLOAT_BINARY64:
-		snprintf(buffer, sizeof(buffer), "%g",
-			cast(double, value->u.float_value.side_float_binary64));
-		return buffer;
-#endif
-#if __HAVE_FLOAT128
-	case SIDE_ATTR_TYPE_FLOAT_BINARY128:
-		snprintf(buffer, sizeof(buffer), "%Lg",
-			cast(long double, value->u.float_value.side_float_binary128));
-		return buffer;
-#endif
-	case SIDE_ATTR_TYPE_STRING:
-		snprintf(buffer, sizeof(buffer), "\"%s\"",
-			cast(const char *, visit_side_pointer(ctx, value->u.string_value.p)));
-		return buffer;
-	default:
-		return "\"<UKNOWN>\"";
-	}
-}
-
-static void print_attribute(const struct side_attr *attribute,
-			void *ctx)
-{
-	const char *key;
-	const char *value;
-
-	key = visit_side_pointer(ctx, attribute->key.p);
-	value = side_attr_value_to_string(&attribute->value, ctx);
-
-	printf_nest(ctx, "\"%s\": %s", key, value);
+	side_json_pop(writer_of(ctx), '}');
 }
 
 static void print_attributes(const struct side_attr *attr,
 			size_t nr_attr,
 			void *ctx)
 {
-	if (nr_attr && attr) {
-		printf_nest(ctx, "\"attributes\": {");
-		push_nest(ctx); {
-			for (size_t k = 0; k < nr_attr; ++k) {
-				print_attribute(&attr[k], ctx);
-			}
-		} pop_nest(ctx);
-	} else {
-		printf_nest(ctx, "\"attributes\": {}");
-	}
+	side_json_attributes(writer_of(ctx), attr, nr_attr);
 }
 
 static void print_type_attributes(const struct side_type *type, void *ctx)
@@ -193,8 +64,10 @@ static void begin_event(const struct side_event_description *desc, void *ctx)
 	push_nest(ctx);
 	printf_nest(ctx, "\"version\": %" PRIu32, desc->version);
 	printf_nest(ctx, "\"state-version\": %" PRId64, state_version ? cast(s64, *state_version) : -1);
-	printf_nest(ctx, "\"provider\": \"%s\"", cast(char *, visit_side_pointer(ctx, desc->provider_name)));
-	printf_nest(ctx, "\"event\": \"%s\"", cast(char *, visit_side_pointer(ctx, desc->event_name)));
+	side_json_item_string(writer_of(ctx), "provider",
+		cast(char *, visit_side_pointer(ctx, desc->provider_name)));
+	side_json_item_string(writer_of(ctx), "event",
+		cast(char *, visit_side_pointer(ctx, desc->event_name)));
 	printf_nest(ctx, "\"loglevel\": \"%s\"", side_loglevel_to_string(side_enum_get(desc->loglevel)));
 	print_attributes(desc->attributes.length ? visit_side_pointer(ctx, desc->attributes.elements) : NULL,
 			desc->attributes.length,
@@ -213,7 +86,8 @@ static void begin_field(const struct side_event_field *field, void *ctx)
 	const char *field_name = visit_side_pointer(ctx, field->field_name);
 	const struct side_type *side_type = &field->side_type;
 
-	printf_nest(ctx, "\"%s\": {", field_name);
+	side_json_item_name(writer_of(ctx), field_name);
+	side_json_raw(writer_of(ctx), "{");
 	push_nest(ctx);
 	printf_nest(ctx, "\"type\": \"%s\"", side_type_to_string(side_enum_get(side_type->type)));
 	print_type_attributes(side_type, ctx);
@@ -497,10 +371,9 @@ static void print_enum_mapping(const struct side_enum_mapping *map, void *ctx)
 	}
 
 	/* FIXME: Decode raw string. */
-	printf_nest(ctx, "\"%s\": [%" PRId64 ", %" PRId64 "]",
-		cast(char *, visit_side_pointer(ctx, map->label.p)),
-		map->range_begin,
-		map->range_end);
+	side_json_item_name(writer_of(ctx), cast(char *, visit_side_pointer(ctx, map->label.p)));
+	side_json_raw(writer_of(ctx), "[%" PRId64 ", %" PRId64 "]",
+		map->range_begin, map->range_end);
 }
 
 static void print_enum_bitmap_mapping(const struct side_enum_bitmap_mapping *map, void *ctx)
@@ -510,10 +383,9 @@ static void print_enum_bitmap_mapping(const struct side_enum_bitmap_mapping *map
 	}
 
 	/* FIXME: Decode raw string. */
-	printf_nest(ctx, "\"%s\": [%" PRId64 ", %" PRId64 "]",
-		cast(char *, visit_side_pointer(ctx, map->label.p)),
-		map->range_begin,
-		map->range_end);
+	side_json_item_name(writer_of(ctx), cast(char *, visit_side_pointer(ctx, map->label.p)));
+	side_json_raw(writer_of(ctx), "[%" PRId64 ", %" PRId64 "]",
+		map->range_begin, map->range_end);
 }
 
 static void print_enum_mappings(const struct side_enum_mappings *mappings,
@@ -585,26 +457,20 @@ static void end_gather_enum(const struct side_type_gather_enum *type, void *ctx)
 
 static void begin_json(struct visitor_context *ctx)
 {
-	struct json_context *jctx;
+	struct side_json_writer *writer = writer_of(ctx);
 
-	jctx = ctx->context;
-
-	ctx->nesting = 1;
-	jctx->first_element = true;
-
+	side_json_writer_init(writer, stdout, false);
+	/* The descriptions are the elements of an array. */
+	writer->nesting = 1;
 	printf("[");
-
 }
 
 static void end_json(struct visitor_context *ctx)
 {
-	struct json_context *jctx;
+	struct side_json_writer *writer = writer_of(ctx);
 
-	jctx = ctx->context;
-
-	ctx->nesting = 0;
-	jctx->first_element = false;
-
+	writer->nesting = 0;
+	writer->first_element = false;
 	printf("\n]\n");
 }
 
