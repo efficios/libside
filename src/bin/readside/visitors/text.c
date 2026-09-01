@@ -167,7 +167,7 @@ static void begin_event(const struct side_event_description *desc, void *ctx)
 	printf_nest(ctx, "provider: %s", cast(char *, visit_side_rel_pointer(ctx, desc->provider_name)));
 	printf_nest(ctx, "name: %s", cast(char *, visit_side_rel_pointer(ctx, desc->event_name)));
 	printf_nest(ctx, "loglevel: %s", side_loglevel_to_string(side_enum_get(desc->loglevel)));
-	print_attributes(desc->attributes.length ? visit_side_pointer(ctx, desc->attributes.elements) : NULL,
+	print_attributes(desc->attributes.length ? visit_side_rel_array_elements(ctx, desc->attributes) : NULL,
 			desc->attributes.length,
 			ctx);
 }

@@ -32,6 +32,35 @@
 /* Attributes. */
 #define SIDE_DEFAULT_ATTR SIDE_PARAM_SELECT_ARG1
 
+/*
+ * The same attribute list as SIDE_DEFAULT_ATTR(), but as the bare list
+ * of its elements rather than as an array.
+ *
+ * The site defining an event needs the elements, because it gives them
+ * an array of its own so that the assembler can fold a distance to
+ * them. Every other site wants the array and keeps using
+ * SIDE_DEFAULT_ATTR().
+ *
+ * Which of the two a list yields is decided by pasting a prefix onto
+ * the name heading it, the way the static checker dispatches. The list
+ * reaches the defining site wrapped in one SIDE_DEFAULT_ATTR() per
+ * macro which supplied a default on the way down, which is up to three
+ * in C++ under the static checker, and a macro cannot expand within its
+ * own expansion. So the prefix has to change at every rung rather than
+ * this being one macro which recurses.
+ */
+#define SIDE_DEFAULT_ATTR_ELEMS(_arg0, _arg1, ...)		SIDE_ATTR_ELEMS_0_##_arg1
+#define SIDE_ATTR_ELEMS_0_SIDE_DEFAULT_ATTR(_arg0, _arg1, ...)	SIDE_ATTR_ELEMS_1_##_arg1
+#define SIDE_ATTR_ELEMS_1_SIDE_DEFAULT_ATTR(_arg0, _arg1, ...)	SIDE_ATTR_ELEMS_2_##_arg1
+#define SIDE_ATTR_ELEMS_2_SIDE_DEFAULT_ATTR(_arg0, _arg1, ...)	SIDE_ATTR_ELEMS_3_##_arg1
+#define SIDE_ATTR_ELEMS_3_SIDE_DEFAULT_ATTR(_arg0, _arg1, ...)	SIDE_ATTR_ELEMS_4_##_arg1
+
+#define SIDE_ATTR_ELEMS_0_side_attr_list	_side_attr_list_elems
+#define SIDE_ATTR_ELEMS_1_side_attr_list	_side_attr_list_elems
+#define SIDE_ATTR_ELEMS_2_side_attr_list	_side_attr_list_elems
+#define SIDE_ATTR_ELEMS_3_side_attr_list	_side_attr_list_elems
+#define SIDE_ATTR_ELEMS_4_side_attr_list	_side_attr_list_elems
+
 #define side_attr(_name, ...) _side_attr(_name, SIDE_PARAM(__VA_ARGS__))
 #define side_attr_list _side_attr_list
 #define side_dynamic_attr_list _side_dynamic_attr_list

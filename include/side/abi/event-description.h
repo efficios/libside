@@ -73,7 +73,8 @@ struct side_event_description {
 	 * side_ptr_rel_t.
 	 */
 	side_array_rel_t(struct side_event_field) fields;
-	side_array_t(const struct side_attr) attributes;
+	/* Likewise for the attributes of the event itself. */
+	side_array_rel_t(struct side_attr) attributes;
 	uint64_t flags;	/* Bitwise OR of enum side_event_flags */
 	uint16_t nr_side_type_label;
 	uint16_t nr_side_attr_type;

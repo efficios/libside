@@ -44,6 +44,9 @@ struct visitor {
  */
 #define visit_side_rel_pointer(ctx, ptr)	side_ptr_rel_get(ptr)
 
+/* The elements of an array reached by a distance, for the same reason. */
+#define visit_side_rel_array_elements(ctx, array)	side_array_rel_elements(&(array))
+
 /*
  * It is the reader that defines how to resolve pointer by the visitor.  This
  * require making a copy of the visitor structure and setting the resolve

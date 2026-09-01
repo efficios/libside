@@ -41,6 +41,14 @@
 #define _side_attr_list(...)						\
 	SIDE_LITERAL_ARRAY(const struct side_attr, __VA_ARGS__)
 
+/*
+ * The same attributes as the bare list of their elements, for the site
+ * which turns them into an array of its own so that a distance to them
+ * can be taken. See SIDE_DEFAULT_ATTR_ELEMS().
+ */
+#define _side_attr_list_elems(...)					\
+	{ __VA_ARGS__ }
+
 #define _side_dynamic_attr_list(...)					\
 	SIDE_DYNAMIC_LITERAL_ARRAY(const struct side_attr, __VA_ARGS__)
 
@@ -1468,6 +1476,13 @@ enum {
 	SIDE_PTR_REL_DEFINE(_identifier##__fields_off, _identifier,	\
 		struct side_event_description, fields.elements,		\
 		_identifier##__fields)					\
+	/* The attributes of the event, named for the same reason. */	\
+	_linkage struct side_attr __attribute__((section("side_event_description"), used)) \
+		_identifier##__attributes[] SIDE_ASM_LABEL(_identifier##__attributes) = \
+			SIDE_DEFAULT_ATTR_ELEMS(_, ##_attr, side_attr_list()); \
+	SIDE_PTR_REL_DEFINE(_identifier##__attributes_off, _identifier,	\
+		struct side_event_description, attributes.elements,	\
+		_identifier##__attributes)				\
 	_forward_decl_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
 		side_event_state__##_identifier;				\
 	_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
@@ -1492,7 +1507,10 @@ enum {
 			.elements = SIDE_PTR_REL_INIT(_identifier##__fields_off), \
 			.length = SIDE_ARRAY_SIZE(_identifier##__fields), \
 		},							\
-		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+		.attributes = {						\
+			.elements = SIDE_PTR_REL_INIT(_identifier##__attributes_off), \
+			.length = SIDE_ARRAY_SIZE(_identifier##__attributes), \
+		},							\
 		.flags = (_flags),					\
 		.nr_side_type_label = _NR_SIDE_TYPE_LABEL,		\
 		.nr_side_attr_type = _NR_SIDE_ATTR_TYPE,		\

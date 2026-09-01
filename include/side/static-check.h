@@ -806,6 +806,26 @@ SIDE_SC_DEFINE_TYPE(variadic);
 #define SIDE_SC_EMIT_SUB_SUB_side_attr_list SIDE_SC_EMIT_side_attr_list
 #define SIDE_SC_EMIT_SUB_SUB_SUB_side_attr_list SIDE_SC_EMIT_side_attr_list
 
+/*
+ * The same list as the bare list of its elements. See
+ * SIDE_DEFAULT_ATTR_ELEMS(): the rungs of the ladder are shared with
+ * the build without the checker, and only what a list yields at the end
+ * of one differs, because here the elements still have to be mapped.
+ */
+#undef SIDE_ATTR_ELEMS_0_side_attr_list
+#undef SIDE_ATTR_ELEMS_1_side_attr_list
+#undef SIDE_ATTR_ELEMS_2_side_attr_list
+#undef SIDE_ATTR_ELEMS_3_side_attr_list
+#undef SIDE_ATTR_ELEMS_4_side_attr_list
+
+#define SIDE_ATTR_ELEMS_0_side_attr_list(_attr...)			\
+	_side_attr_list_elems(SIDE_SC_MAP_LIST_SUB_SUB_SUB(SIDE_SC_EMIT_THIS_SUB_SUB_SUB, _attr))
+
+#define SIDE_ATTR_ELEMS_1_side_attr_list SIDE_ATTR_ELEMS_0_side_attr_list
+#define SIDE_ATTR_ELEMS_2_side_attr_list SIDE_ATTR_ELEMS_0_side_attr_list
+#define SIDE_ATTR_ELEMS_3_side_attr_list SIDE_ATTR_ELEMS_0_side_attr_list
+#define SIDE_ATTR_ELEMS_4_side_attr_list SIDE_ATTR_ELEMS_0_side_attr_list
+
 #undef side_dynamic_attr_list
 #define SIDE_SC_EMIT_side_dynamic_attr_list(_attr...)				\
 	_side_dynamic_attr_list(SIDE_SC_MAP_LIST_SUB_SUB_SUB(SIDE_SC_EMIT_THIS_SUB_SUB_SUB, _attr))

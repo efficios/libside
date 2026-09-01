@@ -742,7 +742,7 @@ void json_print_event_notification(enum side_tracer_notification notif,
 		side_json_string(writer, side_ptr_rel_get(desc->event_name));
 		side_json_item(writer, "\"loglevel\": ");
 		side_json_string(writer, side_loglevel_to_string(side_enum_get(desc->loglevel)));
-		side_json_attributes(writer, side_array_elements(&desc->attributes),
+		side_json_attributes(writer, side_array_rel_elements(&desc->attributes),
 			side_array_length(&desc->attributes));
 		side_json_pop(writer, '}');
 	}
