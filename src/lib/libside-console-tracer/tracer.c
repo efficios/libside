@@ -2444,25 +2444,36 @@ void print_event_description(const struct side_event_description *desc)
 
 static
 void tracer_event_notification(enum side_tracer_notification notif,
-		struct side_event_description **events, uint32_t nr_events,
+		struct side_event_state **states, uint32_t nr_events,
 		void *priv __attribute__((unused)))
 {
 	uint32_t i;
 	int ret;
 
 	if (tracer_format == TRACER_FORMAT_JSON) {
-		json_print_event_notification(notif, events, nr_events);
+		json_print_event_notification(notif, states, nr_events);
 	} else {
 		printf("----------------------------------------------------------\n");
 		printf("Tracer notified of events %s\n",
 			notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS ? "inserted" : "removed");
 	}
 	for (i = 0; i < nr_events; i++) {
-		struct side_event_description *event = events[i];
+		struct side_event_state *state = states[i];
+		struct side_event_description *event;
 
 		/* Skip NULL pointers */
-		if (!event)
+		if (!state)
 			continue;
+		/*
+		 * A notification hands over the state; the description
+		 * hangs off it, which is the only edge between the two.
+		 */
+		event = side_event_state_description(state);
+		if (!event) {
+			printf("Error: event state ABI version (%u) does not match the version supported by the tracer (%u)\n",
+				state->version, SIDE_EVENT_STATE_ABI_VERSION);
+			return;
+		}
 		if (event->version != SIDE_EVENT_DESCRIPTION_ABI_VERSION) {
 			printf("Error: event description ABI version (%u) does not match the version supported by the tracer (%u)\n",
 				event->version, SIDE_EVENT_DESCRIPTION_ABI_VERSION);
@@ -2489,21 +2500,21 @@ void tracer_event_notification(enum side_tracer_notification notif,
 			if (tracer_format != TRACER_FORMAT_JSON)
 				print_event_description(event);
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
-				ret = side_tracer_callback_variadic_register(event, tracer_call_variadic, NULL, tracer_key);
+				ret = side_tracer_callback_variadic_register(state, tracer_call_variadic, NULL, tracer_key);
 				if (ret)
 					abort();
 			} else {
-				ret = side_tracer_callback_register(event, tracer_call, NULL, tracer_key);
+				ret = side_tracer_callback_register(state, tracer_call, NULL, tracer_key);
 				if (ret)
 					abort();
 			}
 		} else {
 			if (event->flags & SIDE_EVENT_FLAG_VARIADIC) {
-				ret = side_tracer_callback_variadic_unregister(event, tracer_call_variadic, NULL, tracer_key);
+				ret = side_tracer_callback_variadic_unregister(state, tracer_call_variadic, NULL, tracer_key);
 				if (ret)
 					abort();
 			} else {
-				ret = side_tracer_callback_unregister(event, tracer_call, NULL, tracer_key);
+				ret = side_tracer_callback_unregister(state, tracer_call, NULL, tracer_key);
 				if (ret)
 					abort();
 			}

@@ -31,27 +31,31 @@
 side_static_event(my_provider_event, "test_phased_atfork", "myevent",
 	SIDE_LOGLEVEL_DEBUG, side_field_list(side_field_s32("val")));
 
-static struct side_event_description *my_event_desc;
+static struct side_event_state *my_event_state;
 
 static
 void tracer_notif_cb(enum side_tracer_notification notif,
-		struct side_event_description **events, uint32_t nr_events,
+		struct side_event_state **states, uint32_t nr_events,
 		void *priv __attribute__((unused)))
 {
 	uint32_t i;
 
 	for (i = 0; i < nr_events; i++) {
-		struct side_event_description *event = events[i];
+		struct side_event_state *state = states[i];
+		struct side_event_description *event;
 
+		if (!state)
+			continue;
+		event = side_event_state_description(state);
 		if (!event)
 			continue;
 		if (strcmp(side_ptr_rel_get(event->provider_name), "test_phased_atfork") != 0
 				|| strcmp(side_ptr_rel_get(event->event_name), "myevent") != 0)
 			continue;
 		if (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS)
-			my_event_desc = event;
+			my_event_state = state;
 		else
-			my_event_desc = NULL;
+			my_event_state = NULL;
 	}
 }
 
@@ -100,7 +104,7 @@ int main(void)
 	tracer_handle = side_tracer_event_notification_register(tracer_notif_cb, NULL);
 	if (!tracer_handle)
 		abort();
-	ok(my_event_desc != NULL, "static event known to tracer");
+	ok(my_event_state != NULL, "static event known to tracer");
 
 	/* Spawns the statedump agent thread. */
 	statedump_handle = side_statedump_request_notification_register(
@@ -109,7 +113,7 @@ int main(void)
 	if (!statedump_handle)
 		abort();
 
-	if (side_tracer_callback_register(my_event_desc, blocking_tracer_call,
+	if (side_tracer_callback_register(my_event_state, blocking_tracer_call,
 			NULL, key) != SIDE_ERROR_OK)
 		abort();
 	if (pthread_create(&reader_thread, NULL, reader_thread_fn, NULL))
@@ -128,7 +132,7 @@ int main(void)
 		 * fork() time: the grace periods below hang unless the
 		 * child-side repair reset the RCU reader state.
 		 */
-		if (side_tracer_callback_unregister(my_event_desc,
+		if (side_tracer_callback_unregister(my_event_state,
 				blocking_tracer_call, NULL, key) != SIDE_ERROR_OK)
 			_exit(10);
 		/* Disabled event: fast path must be usable. */
@@ -153,7 +157,7 @@ int main(void)
 		abort();
 	if (pthread_join(reader_thread, NULL))
 		abort();
-	ok(side_tracer_callback_unregister(my_event_desc, blocking_tracer_call,
+	ok(side_tracer_callback_unregister(my_event_state, blocking_tracer_call,
 			NULL, key) == SIDE_ERROR_OK,
 		"parent tracer callback unregister after fork");
 	side_statedump_request_notification_unregister(statedump_handle);

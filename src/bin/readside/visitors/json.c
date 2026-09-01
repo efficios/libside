@@ -58,12 +58,11 @@ static void print_type_attributes(const struct side_type *type, void *ctx)
 
 static void begin_event(const struct side_event_description *desc, void *ctx)
 {
-	const u32 *state_version = (const u32 *)visit_side_pointer(ctx, desc->state);
-
 	printf_nest(ctx, "{");
 	push_nest(ctx);
 	printf_nest(ctx, "\"version\": %" PRIu32, desc->version);
-	printf_nest(ctx, "\"state-version\": %" PRId64, state_version ? cast(s64, *state_version) : -1);
+	printf_nest(ctx, "\"state-version\": %" PRId64,
+		cast(s64, cast(struct visitor_context *, ctx)->state_version));
 	side_json_item_string(writer_of(ctx), "provider",
 		cast(char *, visit_side_rel_pointer(ctx, desc->provider_name)));
 	side_json_item_string(writer_of(ctx), "event",

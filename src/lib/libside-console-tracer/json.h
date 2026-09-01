@@ -21,6 +21,6 @@ extern const struct side_type_visitor json_type_visitor;
  * line.
  */
 void json_print_event_notification(enum side_tracer_notification notif,
-		struct side_event_description **events, uint32_t nr_events);
+		struct side_event_state **states, uint32_t nr_events);
 
 #endif /* SIDE_CONSOLE_TRACER_JSON_H */

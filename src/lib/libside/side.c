@@ -48,14 +48,14 @@
 
 struct side_events_register_handle {
 	struct side_list_node node;
-	struct side_event_description **events;
+	struct side_event_state **events;
 	uint32_t nr_events;
 };
 
 struct side_tracer_handle {
 	struct side_list_node node;
 	void (*cb)(enum side_tracer_notification notif,
-		struct side_event_description **events, uint32_t nr_events, void *priv);
+		struct side_event_state **events, uint32_t nr_events, void *priv);
 	void *priv;
 };
 
@@ -398,12 +398,24 @@ void side_statedump_call_variadic(const struct side_event_state *event_state,
 	_side_call_variadic(event_state, side_arg_vec, var_struct, *(const uint64_t *) statedump_request_key);
 }
 
+/*
+ * Whether the event a state belongs to takes a variadic argument list.
+ * A tracer hands over the state, and the description hangs off it: see
+ * side_event_state_description().
+ */
+static
+bool side_event_state_is_variadic(const struct side_event_state *state)
+{
+	const struct side_event_description *desc = side_event_state_description(state);
+
+	return desc && (desc->flags & SIDE_EVENT_FLAG_VARIADIC);
+}
+
 static
 const struct side_callback *side_tracer_callback_lookup(
-		const struct side_event_description *desc,
+		const struct side_event_state *event_state,
 		void *call, void *priv, uint64_t key)
 {
-	struct side_event_state *event_state = side_ptr_get(desc->state);
 	const struct side_event_state_0 *es0;
 	const struct side_callback *cb;
 
@@ -418,10 +430,9 @@ const struct side_callback *side_tracer_callback_lookup(
 }
 
 static
-int _side_tracer_callback_register(struct side_event_description *desc,
+int _side_tracer_callback_register(struct side_event_state *event_state,
 		void *call, void *priv, uint64_t key, bool defer)
 {
-	struct side_event_state *event_state;
 	struct side_callback *old_cb, *new_cb;
 	struct side_event_state_0 *es0;
 	int ret = SIDE_ERROR_OK;
@@ -434,7 +445,6 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	pthread_mutex_lock(&side_event_lock);
-	event_state = side_ptr_get(desc->state);
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, struct side_event_state_0, parent);
@@ -444,7 +454,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		goto unlock;
 	}
 	/* Reject duplicate (call, priv) tuples. */
-	if (side_tracer_callback_lookup(desc, call, priv, key)) {
+	if (side_tracer_callback_lookup(event_state, call, priv, key)) {
 		ret = SIDE_ERROR_EXIST;
 		goto unlock;
 	}
@@ -456,7 +466,7 @@ int _side_tracer_callback_register(struct side_event_description *desc,
 		goto unlock;
 	}
 	memcpy(new_cb, old_cb, old_nr_cb * sizeof(struct side_callback));
-	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
+	if (es0->desc->flags & SIDE_EVENT_FLAG_VARIADIC)
 		new_cb[old_nr_cb].u.call_variadic =
 			(side_tracer_callback_variadic_func) call;
 	else
@@ -476,46 +486,45 @@ unlock:
 	return ret;
 }
 
-int side_tracer_callback_register(struct side_event_description *desc,
+int side_tracer_callback_register(struct side_event_state *state,
 		side_tracer_callback_func call,
 		void *priv, uint64_t key)
 {
-	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
+	if (side_event_state_is_variadic(state))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, (void *) call, priv, key, false);
+	return _side_tracer_callback_register(state, (void *) call, priv, key, false);
 }
 
-int side_tracer_callback_variadic_register(struct side_event_description *desc,
+int side_tracer_callback_variadic_register(struct side_event_state *state,
 		side_tracer_callback_variadic_func call_variadic,
 		void *priv, uint64_t key)
 {
-	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
+	if (!side_event_state_is_variadic(state))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, (void *) call_variadic, priv, key, false);
+	return _side_tracer_callback_register(state, (void *) call_variadic, priv, key, false);
 }
 
-int side_tracer_callback_register_defer(struct side_event_description *desc,
+int side_tracer_callback_register_defer(struct side_event_state *state,
 		side_tracer_callback_func call,
 		void *priv, uint64_t key)
 {
-	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
+	if (side_event_state_is_variadic(state))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, (void *) call, priv, key, true);
+	return _side_tracer_callback_register(state, (void *) call, priv, key, true);
 }
 
-int side_tracer_callback_variadic_register_defer(struct side_event_description *desc,
+int side_tracer_callback_variadic_register_defer(struct side_event_state *state,
 		side_tracer_callback_variadic_func call_variadic,
 		void *priv, uint64_t key)
 {
-	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
+	if (!side_event_state_is_variadic(state))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_register(desc, (void *) call_variadic, priv, key, true);
+	return _side_tracer_callback_register(state, (void *) call_variadic, priv, key, true);
 }
 
-static int _side_tracer_callback_unregister(struct side_event_description *desc,
+static int _side_tracer_callback_unregister(struct side_event_state *event_state,
 		void *call, void *priv, uint64_t key, bool defer)
 {
-	struct side_event_state *event_state;
 	struct side_callback *old_cb, *new_cb;
 	const struct side_callback *cb_pos;
 	struct side_event_state_0 *es0;
@@ -530,11 +539,10 @@ static int _side_tracer_callback_unregister(struct side_event_description *desc,
 	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
 		side_init();
 	pthread_mutex_lock(&side_event_lock);
-	event_state = side_ptr_get(desc->state);
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, struct side_event_state_0, parent);
-	cb_pos = side_tracer_callback_lookup(desc, call, priv, key);
+	cb_pos = side_tracer_callback_lookup(event_state, call, priv, key);
 	if (!cb_pos) {
 		ret = SIDE_ERROR_NOENT;
 		goto unlock;
@@ -568,40 +576,40 @@ unlock:
 	return ret;
 }
 
-int side_tracer_callback_unregister(struct side_event_description *desc,
+int side_tracer_callback_unregister(struct side_event_state *state,
 		side_tracer_callback_func call,
 		void *priv, uint64_t key)
 {
-	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
+	if (side_event_state_is_variadic(state))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, (void *) call, priv, key, false);
+	return _side_tracer_callback_unregister(state, (void *) call, priv, key, false);
 }
 
-int side_tracer_callback_variadic_unregister(struct side_event_description *desc,
+int side_tracer_callback_variadic_unregister(struct side_event_state *state,
 		side_tracer_callback_variadic_func call_variadic,
 		void *priv, uint64_t key)
 {
-	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
+	if (!side_event_state_is_variadic(state))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv, key, false);
+	return _side_tracer_callback_unregister(state, (void *) call_variadic, priv, key, false);
 }
 
-int side_tracer_callback_unregister_defer(struct side_event_description *desc,
+int side_tracer_callback_unregister_defer(struct side_event_state *state,
 		side_tracer_callback_func call,
 		void *priv, uint64_t key)
 {
-	if (desc->flags & SIDE_EVENT_FLAG_VARIADIC)
+	if (side_event_state_is_variadic(state))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, (void *) call, priv, key, true);
+	return _side_tracer_callback_unregister(state, (void *) call, priv, key, true);
 }
 
-int side_tracer_callback_variadic_unregister_defer(struct side_event_description *desc,
+int side_tracer_callback_variadic_unregister_defer(struct side_event_state *state,
 		side_tracer_callback_variadic_func call_variadic,
 		void *priv, uint64_t key)
 {
-	if (!(desc->flags & SIDE_EVENT_FLAG_VARIADIC))
+	if (!side_event_state_is_variadic(state))
 		return SIDE_ERROR_INVAL;
-	return _side_tracer_callback_unregister(desc, (void *) call_variadic, priv, key, true);
+	return _side_tracer_callback_unregister(state, (void *) call_variadic, priv, key, true);
 }
 
 /*
@@ -645,7 +653,7 @@ void side_tracer_callback_reclaim(void)
 	side_callback_reclaim_list(&reclaim_list);
 }
 
-struct side_events_register_handle *side_events_register(struct side_event_description **events, uint32_t nr_events)
+struct side_events_register_handle *side_events_register(struct side_event_state **events, uint32_t nr_events)
 {
 	struct side_events_register_handle *events_handle = NULL;
 	struct side_tracer_handle *tracer_handle;
@@ -673,15 +681,13 @@ struct side_events_register_handle *side_events_register(struct side_event_descr
 }
 
 static
-void side_event_remove_callbacks(struct side_event_description *desc)
+void side_event_remove_callbacks(struct side_event_state *event_state)
 {
-	struct side_event_state *event_state;
 	struct side_event_state_0 *es0;
 	struct side_callback *old_cb;
 	uint32_t nr_cb;
 
 	pthread_mutex_lock(&side_event_lock);
-	event_state = side_ptr_get(desc->state);
 	if (side_unlikely(event_state->version != 0))
 		abort();
 	es0 = side_container_of(event_state, struct side_event_state_0, parent);
@@ -729,7 +735,7 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 			tracer_handle->priv);
 	}
 	for (i = 0; i < events_handle->nr_events; i++) {
-		struct side_event_description *event = events_handle->events[i];
+		struct side_event_state *event = events_handle->events[i];
 
 		/* Skip NULL pointers */
 		if (!event)
@@ -743,7 +749,7 @@ void side_events_unregister(struct side_events_register_handle *events_handle)
 
 struct side_tracer_handle *side_tracer_event_notification_register(
 		void (*cb)(enum side_tracer_notification notif,
-			struct side_event_description **events, uint32_t nr_events, void *priv),
+			struct side_event_state **events, uint32_t nr_events, void *priv),
 		void *priv)
 {
 	struct side_tracer_handle *tracer_handle;

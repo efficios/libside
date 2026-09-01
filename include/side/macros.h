@@ -1454,28 +1454,31 @@ namespace libside {
  * placed, which happens in the linker, and ELF has no relocation which
  * says "the distance between these two symbols" for it to compute. So a
  * pointer whose target lives in another section, or in another shared
- * object, stays a side_ptr_t and keeps costing a relocation. In a side
- * description that is:
+ * object, stays a side_ptr_t and keeps costing a relocation.
  *
- *   - the state of an event, which is in the side_event_state section
- *     because a tracer writes to it when it enables the event. Moving
- *     it into the description to make the distance foldable would dirty
+ * A description therefore holds no address at all. What crosses a
+ * boundary is arranged to be held by something else:
+ *
+ *   - the state of an event is in the side_event_state section because
+ *     a tracer writes to it when it enables the event. Rather than a
+ *     pointer to it in the description, the edge runs from the state to
+ *     the description, and the entry in side_event_state_ptr by which
+ *     libside finds an event is the state. Both of those are in
+ *     sections written at load time anyway, so the two relocations per
+ *     event land where they cost nothing extra. Moving the state into
+ *     the description to make a distance foldable would instead dirty
  *     the pages of every description in the process the first time an
  *     event is enabled, which is the cost this whole scheme exists to
  *     avoid;
  *
- *   - the entry in side_event_description_ptr which points at a
- *     description, and the pointer from a state back to its
- *     description, both crossing the same boundary in the other
- *     direction;
- *
- *   - the callbacks of a state, which point into libside itself.
+ *   - the callbacks of a state point into libside itself, and the state
+ *     is not a description.
  *
  * What is left to gain is what a description points at within itself:
  * the names, the fields, the attributes, and everything the fields
- * reach. Those grow with the description while the ones above are a
- * fixed handful per event, so the proportion improves as descriptions
- * get larger.
+ * reach. A page of descriptions stays clean and shared only if every
+ * one of them is a distance; one address on a page is as costly as
+ * sixty.
  */
 /*
  * The distance is a fixed width, for the same reason side_ptr_t is a
@@ -1545,6 +1548,33 @@ namespace libside {
 /* The same, for a member of a structure. */
 #define SIDE_PTR_REL_DEFINE(_sym, _obj, _type, _member, _target)		\
 	SIDE_PTR_REL_DEFINE_AT(_sym, _obj, offsetof(_type, _member), _target)
+
+/*
+ * Keep two objects in one link time optimization unit.
+ *
+ * The assembler folds a distance within the unit it is assembling, and
+ * link time optimization splits a program into several, placing an
+ * object in the unit which refers to it. An object which refers to one
+ * end of a distance can therefore carry that end off into a unit of
+ * its own, and the assembly which measures from it is then left naming
+ * something undefined:
+ *
+ *   Error: invalid operands (side_event_description and *UND* sections)
+ *       for `-' when setting `side_ev0__provider_name_off'
+ *
+ * That is what the state of an event does to its description: it names
+ * the description, and nothing else does, since a description holds no
+ * address of its own. Naming both of them from one function, as
+ * operands it does not use, is a reference to each which keeps them
+ * together. Being used is not enough on its own, and neither is an asm
+ * label; the reference is what the partitioner reads.
+ */
+#define SIDE_LTO_KEEP_TOGETHER(_sym, _a, _b)				\
+	__attribute__((used))						\
+	static void SIDE_CAT(_sym, _keep_together)(void)		\
+	{								\
+		__asm__ ("" :: "X" (&(_a)), "X" (&(_b)));		\
+	}
 
 /* Initialize a side_ptr_rel_t from a symbol SIDE_PTR_REL_DEFINE* named. */
 #if (__SIZEOF_POINTER__ < 8)

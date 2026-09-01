@@ -5,6 +5,7 @@ nobase_include_HEADERS = \
 	phased-atfork/phased-atfork.h \
 	side/abi/attribute.h \
 	side/abi/event-description.h \
+	side/abi/event-state.h \
 	side/abi/type-argument.h \
 	side/abi/type-description.h \
 	side/abi/type-value.h \

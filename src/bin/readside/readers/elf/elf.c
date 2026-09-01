@@ -81,7 +81,7 @@ void for_each_side_event_in_elf(const struct elf *elf,
 	struct visitor visitor;
 
 	if (!ptrs) {
-		warning("In ELF file %s, could not find side_event_description_ptr section.",
+		warning("In ELF file %s, could not find side_event_state_ptr section.",
 			elf->path);
 		return;
 	}
@@ -102,13 +102,27 @@ void for_each_side_event_in_elf(const struct elf *elf,
 	}
 
 	for (size_t k = 0; k < length; ++k) {
+		const struct side_event_state *state;
 		const struct side_event_description *desc;
 		struct side_description_visitor desc_visitor = {
 			.callbacks = &visitor.description,
 			.priv = &context,
 		};
 
-		desc = resolve_elf_pointer(ptrs[k], &context);
+		/*
+		 * The section holds one state per event, and a
+		 * description hangs off its state: that edge is the only
+		 * one between the two, because a description holds no
+		 * address of its own. See side_ptr_rel_t.
+		 */
+		state = resolve_elf_pointer(ptrs[k], &context);
+		if (!state)
+			continue;
+		desc = resolve_elf_pointer(side_event_state_description(state),
+					&context);
+		if (!desc)
+			continue;
+		context.state_version = state->version;
 
 		visit_event_description(&desc_visitor, desc);
 	}

@@ -159,11 +159,10 @@ static void print_type_attributes(const struct side_type *type, void *ctx)
 
 static void begin_event(const struct side_event_description *desc, void *ctx)
 {
-	const u32 *state_version = (const u32 *)visit_side_pointer(ctx, desc->state);
-
 	push_nest(ctx);
 	printf_nest(ctx, "version: %" PRIu32, desc->version);
-	printf_nest(ctx, "state-version: %" PRIu64, state_version ? cast(s64, *state_version) : -1);
+	printf_nest(ctx, "state-version: %" PRIu64,
+		cast(s64, cast(struct visitor_context *, ctx)->state_version));
 	printf_nest(ctx, "provider: %s", cast(char *, visit_side_rel_pointer(ctx, desc->provider_name)));
 	printf_nest(ctx, "name: %s", cast(char *, visit_side_rel_pointer(ctx, desc->event_name)));
 	printf_nest(ctx, "loglevel: %s", side_loglevel_to_string(side_enum_get(desc->loglevel)));

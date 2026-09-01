@@ -167,13 +167,13 @@ void FUNCN(readside_elf)(const char *path,
 		return;
 	}
 
-	side_section_ptr = FUNCN(find_header_section)(&elf, "side_event_description_ptr");
+	side_section_ptr = FUNCN(find_header_section)(&elf, "side_event_state_ptr");
 
 	if (side_section_ptr) {
 		printf("%s:\n", path);
 		for_each_side_event_in_elf(&elf,
 					elf_seek(&elf, side_section_ptr->sh_offset),
-					side_section_ptr->sh_size / sizeof(struct side_event_description *),
+					side_section_ptr->sh_size / sizeof(struct side_event_state *),
 					visitor);
 		printf("\n");
 	}

@@ -56,7 +56,7 @@ static void my_constructor(void)
 	__attribute((constructor));
 static void my_constructor(void)
 {
-	side_event_description_ptr_init();
+	side_event_state_ptr_init();
 	statedump_request_handle = side_statedump_request_notification_register("mystatedump",
 			statedump_cb, SIDE_STATEDUMP_MODE_AGENT_THREAD);
 	if (!statedump_request_handle)
@@ -68,7 +68,7 @@ static void my_destructor(void)
 static void my_destructor(void)
 {
 	side_statedump_request_notification_unregister(statedump_request_handle);
-	side_event_description_ptr_exit();
+	side_event_state_ptr_exit();
 }
 
 int main()

@@ -715,7 +715,7 @@ const struct side_type_visitor json_type_visitor = {
  * description of their types is what readside emits.
  */
 void json_print_event_notification(enum side_tracer_notification notif,
-		struct side_event_description **events, uint32_t nr_events)
+		struct side_event_state **states, uint32_t nr_events)
 {
 	struct side_json_writer *writer = &json_writer;
 	uint32_t i;
@@ -729,8 +729,11 @@ void json_print_event_notification(enum side_tracer_notification notif,
 	side_json_item(writer, "\"events\": [");
 	side_json_push(writer);
 	for (i = 0; i < nr_events; i++) {
-		const struct side_event_description *desc = events[i];
+		const struct side_event_description *desc;
 
+		if (!states[i])
+			continue;
+		desc = side_event_state_description(states[i]);
 		if (!desc)
 			continue;
 		side_json_next(writer);

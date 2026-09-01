@@ -56,15 +56,16 @@ struct side_event_description {
 	uint32_t version;	/* Event description ABI version. */
 
 	/*
-	 * Stays an address where the two below are distances: the state
-	 * is in a section of its own, because a tracer writes to it
-	 * when it enables the event, and a distance can only be folded
-	 * by the assembler within one section. Putting the state in this
-	 * one to make it foldable would dirty the pages of every
-	 * description in the process as soon as an event is enabled.
+	 * Everything a description points at is a distance, so that no
+	 * relocation is written into the section it lives in and its
+	 * pages stay clean and shared between processes. That is why
+	 * there is no pointer to the state here: the state is in a
+	 * section of its own, because a tracer writes to it when it
+	 * enables the event, and a distance cannot cross a section. The
+	 * edge runs the other way instead, from the state to the
+	 * description, which is the direction the runtime wants anyway.
 	 * See side_ptr_rel_t.
 	 */
-	side_ptr_t(struct side_event_state) state;
 	side_ptr_rel_t(const char) provider_name;
 	side_ptr_rel_t(const char) event_name;
 	/*

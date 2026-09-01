@@ -1556,7 +1556,14 @@ enum {
 #define _side_define_event(_forward_decl_linkage, _linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
-	_forward_decl_linkage struct side_event_description __attribute__((section("side_event_description"))) \
+	/*								\
+	 * Used, like everything else a distance is measured between:	\
+	 * every distance in a description is measured from the		\
+	 * description, and a name the compiler believes unreferenced	\
+	 * is not there for the assembler to subtract from. See		\
+	 * side_ptr_rel_t.						\
+	 */								\
+	_forward_decl_linkage struct side_event_description __attribute__((section("side_event_description"), used)) \
 		_identifier SIDE_ASM_LABEL(_identifier);			\
 	/*								\
 	 * The names live in the section the description is in, and are	\
@@ -1601,6 +1608,13 @@ enum {
 		_identifier##__attributes)				\
 	_forward_decl_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
 		side_event_state__##_identifier;				\
+	/*								\
+	 * The state is the only thing which names the description, so \
+	 * it is the only thing which can take it away from the		\
+	 * assembly measuring distances from it.			\
+	 */								\
+	SIDE_LTO_KEEP_TOGETHER(_identifier, _identifier,		\
+		side_event_state__##_identifier)			\
 	_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
 		side_event_state__##_identifier = {			\
 		.parent = {						\
@@ -1611,12 +1625,11 @@ enum {
 		.callbacks = (const struct side_callback *) &side_empty_callback[0], \
 		.desc = &(_identifier),					\
 	};								\
-	_linkage struct side_event_description __attribute__((section("side_event_description"))) \
+	_linkage struct side_event_description __attribute__((section("side_event_description"), used)) \
 		_identifier = {						\
 		.side_begin_abi_tag_0 = {},				\
 		.struct_size = offsetof(struct side_event_description, end), \
 		.version = SIDE_EVENT_DESCRIPTION_ABI_VERSION,		\
-		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier.parent)), \
 		.provider_name = SIDE_PTR_REL_INIT(_identifier##__provider_name_off), \
 		.event_name = SIDE_PTR_REL_INIT(_identifier##__event_name_off), \
 		.fields = {						\
@@ -1634,8 +1647,15 @@ enum {
 		.side_end_abi_tag_0 = {},				\
 		.end = {}						\
 	};								\
-	static const struct side_event_description __attribute__((section("side_event_description_ptr"), used)) \
-	*side_event_ptr__##_identifier = &(_identifier);		\
+	/*							\
+	 * One pointer per event, by which libside finds it. It is the \
+	 * state, not the description: the state is what a tracer	\
+	 * writes to, and it carries the description, so this one	\
+	 * relocation reaches both. The description holds no address of \
+	 * its own that way.					\
+	 */								\
+	static struct side_event_state __attribute__((section("side_event_state_ptr"), used)) \
+	*side_event_ptr__##_identifier = &(side_event_state__##_identifier.parent); \
 	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
 
 /*

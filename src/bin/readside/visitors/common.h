@@ -9,6 +9,8 @@
 #include <side/abi/type-description.h>
 
 #include "libside-tools/json-writer.h"
+#include <side/abi/event-state.h>
+
 #include "libside-tools/visit-description.h"
 
 struct visitor_context {
@@ -16,6 +18,14 @@ struct visitor_context {
 	void *resolve_priv;
 	u64 nesting;
 	void *context;
+	/*
+	 * The ABI version of the state of the event being visited. It
+	 * comes from the state rather than from the description, which
+	 * holds no pointer to it: see side_ptr_rel_t. The reader walks
+	 * the states and reaches each description through one, so it
+	 * has the version in hand and leaves it here for the visitors.
+	 */
+	u32 state_version;
 };
 
 struct visitor {
