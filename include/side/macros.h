@@ -522,6 +522,38 @@ namespace libside {
  * The section is not garbage collected as long as something reaches it:
  * the constructor which registers events refers to it through
  * __start_/__stop_ symbols, which is a reference for --gc-sections.
+ *
+ * What this cannot express
+ * ------------------------
+ *
+ * The requirement that both ends share a section is not a detail of the
+ * implementation to be worked around later: it is what the assembler
+ * can do. A distance between two sections is not known until they are
+ * placed, which happens in the linker, and ELF has no relocation which
+ * says "the distance between these two symbols" for it to compute. So a
+ * pointer whose target lives in another section, or in another shared
+ * object, stays a side_ptr_t and keeps costing a relocation. In a side
+ * description that is:
+ *
+ *   - the state of an event, which is in the side_event_state section
+ *     because a tracer writes to it when it enables the event. Moving
+ *     it into the description to make the distance foldable would dirty
+ *     the pages of every description in the process the first time an
+ *     event is enabled, which is the cost this whole scheme exists to
+ *     avoid;
+ *
+ *   - the entry in side_event_description_ptr which points at a
+ *     description, and the pointer from a state back to its
+ *     description, both crossing the same boundary in the other
+ *     direction;
+ *
+ *   - the callbacks of a state, which point into libside itself.
+ *
+ * What is left to gain is what a description points at within itself:
+ * the names, the fields, the attributes, and everything the fields
+ * reach. Those grow with the description while the ones above are a
+ * fixed handful per event, so the proportion improves as descriptions
+ * get larger.
  */
 /*
  * The distance is a fixed width, for the same reason side_ptr_t is a
