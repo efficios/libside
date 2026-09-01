@@ -65,6 +65,9 @@ dkms.conf
 /tests/regression/side-rcu-test
 /tests/unit/demo
 /tests/unit/rel-ptr
+/tests/unit/phased-atfork
+/tests/unit/phased-atfork-side
+/src/lib/pkgconfig/libphased-atfork.pc
 /tests/unit/test
 /tests/unit/test-cxx
 /tests/unit/statedump
