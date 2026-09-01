@@ -177,6 +177,28 @@ namespace libside {
 #endif
 
 /*
+ * The same as SIDE_LITERAL_ARRAY(), but taking the elements already
+ * braced. Used where a list macro now yields the bare initializer, so
+ * that the sites which still want an anonymous compound literal can
+ * rebuild one. Variadic because braces do not group the arguments of a
+ * macro the way parentheses do: a braced list arrives as one argument
+ * per element.
+ */
+#if defined(__cplusplus) && (defined(SIDE_ALLOCATE_COMPOUND_LITERAL_ON_HEAP) || (defined(__GNUC__) && (__GNUC__ == 13)))
+#  define SIDE_LITERAL_ARRAY_OF(_type, ...)				\
+	{								\
+		SIDE_PTR_INIT((new (_type[]) __VA_ARGS__)),		\
+		libside::initializer_list_size<_type>(__VA_ARGS__),	\
+	}
+#else
+#  define SIDE_LITERAL_ARRAY_OF(_type, ...)				\
+	{								\
+		SIDE_PTR_INIT(((_type[]) __VA_ARGS__)),			\
+		SIDE_ARRAY_SIZE(((_type[]) __VA_ARGS__)),		\
+	}
+#endif
+
+/*
  * Dynamic compound literals in C are the same as the static ones.  For C++, the
  * values are copied from a std::initializer_list onto a buffer allocated on the
  * stack.
@@ -214,6 +236,17 @@ namespace libside {
  * 	.bytes = SIDE_LITERAL_ARRAY(uint8_t, 16, 32, 64);
  * };
  */
+/*
+ * An array reached by a distance rather than an address. See
+ * side_ptr_rel_t: the elements must be in the same section as the
+ * structure holding this, and neither may be const.
+ */
+#define side_array_rel_t(_type)						\
+	struct {							\
+		side_ptr_rel_t(_type) elements;				\
+		uint32_t length;					\
+	} SIDE_PACKED
+
 #define side_array_t(_type)                                             \
 	struct {							\
 		side_ptr_t(_type) elements;				\
@@ -229,6 +262,10 @@ namespace libside {
  * | 16
  */
 #define side_array_elements(_array) side_ptr_get((_array)->elements)
+
+/* The same, for an array reached by a distance. */
+#define side_array_rel_elements(_array) side_ptr_rel_get((_array)->elements)
+#define side_array_rel_at(_array, _k) (&side_array_rel_elements(_array)[_k])
 
 /*
  * Return a pointer to the element at index `_k' in `_array'.
@@ -574,7 +611,8 @@ namespace libside {
  * side_ptr_get(), so that it reads the same at every use.
  */
 #define side_ptr_rel_get(_field)					\
-	((void *) ((char *) &(_field).off + (intptr_t) (_field).off))
+	((__typeof__((_field)._type_marker[0]))				\
+		((char *) &(_field).off + (intptr_t) (_field).off))
 
 /*
  * C++ mangles the name of an object in an anonymous namespace, which is

@@ -1229,7 +1229,7 @@ void type_visitor_event(const struct side_type_visitor *type_visitor,
 		if (type_visitor->before_static_fields_func)
 			type_visitor->before_static_fields_func(side_arg_vec, priv);
 		for (i = 0; i < side_sav_len; i++)
-			side_visit_field(type_visitor, &ctx, side_array_at(&desc->fields, i), &sav[i], priv);
+			side_visit_field(type_visitor, &ctx, side_array_rel_at(&desc->fields, i), &sav[i], priv);
 		if (type_visitor->after_static_fields_func)
 			type_visitor->after_static_fields_func(side_arg_vec, priv);
 	}

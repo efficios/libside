@@ -30,6 +30,16 @@ void *do_visit_side_pointer(const struct side_description_visitor *visitor, void
 		.length = (array)->length,							\
 	}
 
+/*
+ * The same for an array reached by a distance, which needs no resolver:
+ * the distance is internal to the description. See side_ptr_rel_t.
+ */
+#define visit_side_rel_array(visitor, array)							\
+	{											\
+		.elements = SIDE_PTR_INIT(side_array_rel_elements(array)),			\
+		.length = (array)->length,							\
+	}
+
 static
 void side_visit_type(const struct side_description_visitor *visitor, const struct side_type *type_desc);
 
@@ -502,7 +512,7 @@ void side_visit_type(const struct side_description_visitor *visitor, const struc
 void visit_event_description(const struct side_description_visitor *visitor,
 			const struct side_event_description *event_desc)
 {
-	side_array_t(const struct side_event_field) fields = visit_side_array(visitor, &event_desc->fields);
+	side_array_t(const struct side_event_field) fields = visit_side_rel_array(visitor, &event_desc->fields);
 	uint32_t i, len = side_array_length(&fields);
 
 	if (visitor->callbacks->before_event_func)

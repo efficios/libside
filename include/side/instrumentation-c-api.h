@@ -609,7 +609,7 @@
 	}
 
 #define _side_define_struct(_identifier, _fields, _attr...) \
-	const struct side_type_struct _identifier = _side_type_struct_define(SIDE_PARAM(_fields), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+	const struct side_type_struct _identifier = _side_type_struct_define(SIDE_LITERAL_ARRAY_OF(const struct side_event_field, _fields), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 
 #define _side_type_variant(_variant) \
 	{ \
@@ -1001,8 +1001,13 @@ enum {
 #define _side_length(...) \
 	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
 
+/*
+ * The bare initializer list of the fields. The site defining the event
+ * or the structure they belong to is what turns it into an array, since
+ * only it has a name to give one.
+ */
 #define _side_field_list(...) \
-	SIDE_LITERAL_ARRAY(const struct side_event_field, __VA_ARGS__)
+	{ __VA_ARGS__ }
 
 #define _side_option_list(...) \
 	SIDE_LITERAL_ARRAY(const struct side_variant_option, __VA_ARGS__)
@@ -1457,6 +1462,12 @@ enum {
 	SIDE_PTR_REL_DEFINE(_identifier##__event_name_off, _identifier,	\
 		struct side_event_description, event_name,		\
 		_identifier##__event_name)				\
+	/* The fields, named so a distance to them can be taken. */	\
+	_linkage struct side_event_field __attribute__((section("side_event_description"), used)) \
+		_identifier##__fields[] SIDE_ASM_LABEL(_identifier##__fields) = _fields; \
+	SIDE_PTR_REL_DEFINE(_identifier##__fields_off, _identifier,	\
+		struct side_event_description, fields.elements,		\
+		_identifier##__fields)					\
 	_forward_decl_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
 		side_event_state__##_identifier;				\
 	_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
@@ -1477,7 +1488,10 @@ enum {
 		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier.parent)), \
 		.provider_name = SIDE_PTR_REL_INIT(_identifier##__provider_name_off), \
 		.event_name = SIDE_PTR_REL_INIT(_identifier##__event_name_off), \
-		.fields = _fields,				\
+		.fields = {						\
+			.elements = SIDE_PTR_REL_INIT(_identifier##__fields_off), \
+			.length = SIDE_ARRAY_SIZE(_identifier##__fields), \
+		},							\
 		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 		.flags = (_flags),					\
 		.nr_side_type_label = _NR_SIDE_TYPE_LABEL,		\

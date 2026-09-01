@@ -67,7 +67,12 @@ struct side_event_description {
 	side_ptr_t(struct side_event_state) state;
 	side_ptr_rel_t(const char) provider_name;
 	side_ptr_rel_t(const char) event_name;
-	side_array_t(const struct side_event_field) fields;
+	/*
+	 * The fields are in the section this description is in, so the
+	 * distance to them is one the assembler folds. See
+	 * side_ptr_rel_t.
+	 */
+	side_array_rel_t(struct side_event_field) fields;
 	side_array_t(const struct side_attr) attributes;
 	uint64_t flags;	/* Bitwise OR of enum side_event_flags */
 	uint16_t nr_side_type_label;
