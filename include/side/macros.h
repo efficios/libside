@@ -606,6 +606,8 @@ namespace libside {
 #define side_ptr_rel_t(_type)						\
 	union {								\
 		int64_t off;						\
+		/* The same distance, one pointer-sized word at a time. */ \
+		intptr_t v[8 / __SIZEOF_POINTER__];			\
 		/* Unused: carries the pointee type for readers. */	\
 		_type *_type_marker[0];					\
 	}
@@ -639,11 +641,16 @@ namespace libside {
  */
 #define SIDE_PTR_REL_DEFINE_AT(_sym, _obj, _off, _target)		\
 	extern char _sym[] SIDE_ASM_LABEL(_sym);			\
+	extern char SIDE_CAT(_sym, _hi)[]				\
+		SIDE_ASM_LABEL(SIDE_CAT(_sym, _hi));			\
 	__attribute__((used))						\
 	static void SIDE_CAT(_sym, _emit_offset)(void)			\
 	{								\
 		__asm__ (".set " SIDE_STR(_sym) ", " SIDE_STR(_target)	\
-			" - (" SIDE_STR(_obj) " + %c0)"			\
+			" - (" SIDE_STR(_obj) " + %c0)\n"		\
+			".set " SIDE_STR(SIDE_CAT(_sym, _hi)) ", ("	\
+			SIDE_STR(_target) " - (" SIDE_STR(_obj)		\
+			" + %c0)) >> 32"				\
 			:: "i" (_off), "X" (&(_obj)), "X" (&(_target)));	\
 	}
 
@@ -652,7 +659,34 @@ namespace libside {
 	SIDE_PTR_REL_DEFINE_AT(_sym, _obj, offsetof(_type, _member), _target)
 
 /* Initialize a side_ptr_rel_t from a symbol SIDE_PTR_REL_DEFINE* named. */
-#define SIDE_PTR_REL_INIT(_sym)		{ .off = (int64_t) (intptr_t) (_sym) }
+#if (__SIZEOF_POINTER__ < 8)
+/*
+ * Where a pointer is narrower than a distance, casting the address of
+ * the symbol to the width of a distance is a widening conversion, which
+ * is not an address constant and so cannot initialize an object of
+ * static storage duration. Take instead the two halves the assembler
+ * named separately, each of them a cast a pointer fits.
+ */
+# if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
+#  define SIDE_PTR_REL_INIT(_sym)					\
+	{								\
+		.v = {							\
+			(intptr_t) (_sym),				\
+			(intptr_t) (SIDE_CAT(_sym, _hi)),		\
+		},							\
+	}
+# else
+#  define SIDE_PTR_REL_INIT(_sym)					\
+	{								\
+		.v = {							\
+			(intptr_t) (SIDE_CAT(_sym, _hi)),		\
+			(intptr_t) (_sym),				\
+		},							\
+	}
+# endif
+#else
+# define SIDE_PTR_REL_INIT(_sym)	{ .off = (int64_t) (intptr_t) (_sym) }
+#endif
 
 /*
  * In C++, it is not possible to declare types in expressions within a sizeof.
@@ -664,12 +698,19 @@ namespace side {
 		side_static_assert(sizeof(side_ptr_t_int) == 16,
 				"Unexpected size for side_ptr_t",
 				unexpected_size_side_ptr_t);
+		using side_ptr_rel_t_int = side_ptr_rel_t(int);
+		side_static_assert(sizeof(side_ptr_rel_t_int) == 8,
+				"Unexpected size for side_ptr_rel_t",
+				unexpected_size_side_ptr_rel_t);
 	};
 };
 #else
 side_static_assert(sizeof(side_ptr_t(int)) == 16,
 	"Unexpected size for side_ptr_t",
 	unexpected_size_side_ptr_t);
+side_static_assert(sizeof(side_ptr_rel_t(int)) == 8,
+	"Unexpected size for side_ptr_rel_t",
+	unexpected_size_side_ptr_rel_t);
 #endif
 
 /*
