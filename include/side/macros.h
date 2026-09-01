@@ -606,8 +606,15 @@ namespace libside {
 #define side_ptr_rel_t(_type)						\
 	union {								\
 		int64_t off;						\
-		/* The same distance, one pointer-sized word at a time. */ \
-		intptr_t v[8 / __SIZEOF_POINTER__];			\
+		/*							\
+		 * The same distance, one pointer-sized word at a	\
+		 * time. Not named v, as the words of a side_ptr_t	\
+		 * are: side_ptr_get() would then compile on a		\
+		 * distance and read it as an address, and the point	\
+		 * of changing the type of a member is that the		\
+		 * compiler finds every reader of it.			\
+		 */							\
+		intptr_t rel_v[8 / __SIZEOF_POINTER__];			\
 		/* Unused: carries the pointee type for readers. */	\
 		_type *_type_marker[0];					\
 	}
@@ -670,7 +677,7 @@ namespace libside {
 # if (SIDE_BYTE_ORDER == SIDE_LITTLE_ENDIAN)
 #  define SIDE_PTR_REL_INIT(_sym)					\
 	{								\
-		.v = {							\
+		.rel_v = {					\
 			(intptr_t) (_sym),				\
 			(intptr_t) (SIDE_CAT(_sym, _hi)),		\
 		},							\
@@ -678,7 +685,7 @@ namespace libside {
 # else
 #  define SIDE_PTR_REL_INIT(_sym)					\
 	{								\
-		.v = {							\
+		.rel_v = {					\
 			(intptr_t) (SIDE_CAT(_sym, _hi)),		\
 			(intptr_t) (_sym),				\
 		},							\
