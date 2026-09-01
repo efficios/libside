@@ -173,10 +173,27 @@ namespace libside {
 #else
 #  define SIDE_COMPOUND_LITERAL(type, ...)   (type[]) { __VA_ARGS__ }
 
+/*
+ * An array of no element still has an address, and storing an address
+ * costs a relocation whether the array behind it holds a thousand
+ * elements or none. A description pays that for every type which was
+ * given no attribute, which is most of them: on a program carrying a
+ * thousand events of one to eight fields, four thousand five hundred
+ * relocations which all write the same address of the same empty array.
+ *
+ * Yield a null pointer for that case instead. The length is zero either
+ * way, and nothing reads the elements of an array of none.
+ *
+ * The compiler folds the condition, so nothing is left referring to the
+ * empty literal and none is emitted. The literal is written three times
+ * here, as it was before: twice within a sizeof, which does not
+ * evaluate it, and once as the pointer itself.
+ */
 #  define SIDE_LITERAL_ARRAY(_type, ...)				\
 	{								\
-		SIDE_PTR_INIT(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)),  \
-		SIDE_ARRAY_SIZE(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)), \
+		SIDE_PTR_INIT(sizeof(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)) ? \
+			SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__) : NULL), \
+		sizeof(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)) / sizeof(_type), \
 	}
 #endif
 
@@ -246,6 +263,9 @@ namespace libside {
  * struct bytevector my_bytevector = {
  * 	.bytes = SIDE_LITERAL_ARRAY(uint8_t, 16, 32, 64);
  * };
+ *
+ * An array of no element may have no elements pointer either: a reader
+ * has to look at the length before the pointer. See SIDE_LITERAL_ARRAY().
  */
 /*
  * An array reached by a distance rather than an address. See
@@ -265,7 +285,8 @@ namespace libside {
 	} SIDE_PACKED
 
 /*
- * Return a pointer to the first element in `_array'.
+ * Return a pointer to the first element in `_array'. Null where the
+ * array has no element, so look at the length first.
  *
  * Example:
  *
