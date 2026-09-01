@@ -266,9 +266,10 @@
  * in turn, and a macro cannot expand within its own expansion, so the
  * declaring walk goes down a ladder of rungs rather than recursing: a
  * type at _L0 declares what it holds at _L1. A type nested more deeply
- * than the last rung says so as an undefined
- * SIDE_TYPE_DECLARE_L4_<kind>; name it with side_define_type() and
- * refer to it, which costs a rung nothing.
+ * than the last rung says so as SIDE_TYPE_NESTED_TOO_DEEPLY; give it a
+ * name of its own with side_static_define_struct(), _array(), _vla(),
+ * _optional() or _variant() and refer to that, which starts the ladder
+ * over.
  *
  * The kinds, and what follows each of them in the tuple:
  *
@@ -533,6 +534,19 @@
 #define SIDE_TYPE_DECLARE_L1_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_GSTRUCT
 #define SIDE_TYPE_DECLARE_L2_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_GSTRUCT
 #define SIDE_TYPE_DECLARE_L3_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_GSTRUCT
+
+/*
+ * The last rung. A type nested deeper than this has nowhere left to put
+ * what it holds; give it a name of its own and refer to that.
+ */
+#define SIDE_TYPE_DECLARE_TOO_DEEP(_obj, _off, _pfx, ...)		\
+	side_static_assert(0, "side: type nested too deeply; give it a name of its own", \
+			SIDE_TYPE_NESTED_TOO_DEEPLY);
+
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_ENUM	SIDE_TYPE_DECLARE_TOO_DEEP
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_GARRAY	SIDE_TYPE_DECLARE_TOO_DEEP
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_GVLA	SIDE_TYPE_DECLARE_TOO_DEEP
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_OPTLIT	SIDE_TYPE_DECLARE_TOO_DEEP
 
 /* An enumeration, which holds the type of what it maps. */
 #define SIDE_TYPE_DECLARE_L0_SIDE_TK_ENUM(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
