@@ -18,6 +18,10 @@
  * rel-ptr-tu2.c takes part as a second translation unit: the symbols
  * naming the distances are local to the unit which defines them, and
  * two units defining events must not collide.
+ *
+ * side_ptr_sel_t is checked here too: what a description and a dynamic
+ * argument both write holds a distance in the one and an address in the
+ * other, and one accessor reads both.
  */
 
 #include <side/macros.h>
@@ -32,11 +36,13 @@
 #define TEST_DESC __attribute__((section("side_test_desc"), aligned(8), used))
 
 TEST_DESC static char tu1_provider[] = "provider_one";
+TEST_DESC static char tu1_a0_key[] = "static_key";
 TEST_DESC static char tu1_f0_name[] = "first_field";
 TEST_DESC static char tu1_f1_name[] = "second_field";
 
 extern struct test_field tu1_fields[2];
 extern struct test_event tu1_event;
+extern struct test_attr tu1_attrs[1];
 
 SIDE_PTR_REL_DEFINE(tu1_off_provider, tu1_event, struct test_event, provider,
 	tu1_provider)
@@ -44,16 +50,31 @@ SIDE_PTR_REL_DEFINE(tu1_off_fields, tu1_event, struct test_event, fields,
 	tu1_fields)
 SIDE_PTR_REL_DEFINE_AT(tu1_off_f0, tu1_fields, TEST_FIELD_NAME_AT(0), tu1_f0_name)
 SIDE_PTR_REL_DEFINE_AT(tu1_off_f1, tu1_fields, TEST_FIELD_NAME_AT(1), tu1_f1_name)
+SIDE_PTR_REL_DEFINE_AT(tu1_off_a0, tu1_attrs, TEST_ATTR_KEY_AT(0), tu1_a0_key)
+SIDE_PTR_REL_DEFINE(tu1_off_attrs, tu1_event, struct test_event,
+	attrs.elements, tu1_attrs)
 
 TEST_DESC struct test_field tu1_fields[2] = {
 	{ .name = SIDE_PTR_REL_INIT(tu1_off_f0), .type = 10 },
 	{ .name = SIDE_PTR_REL_INIT(tu1_off_f1), .type = 20 },
 };
 
+/* What a description writes: a distance, selector set. */
+TEST_DESC struct test_attr tu1_attrs[1] = {
+	{ .key = SIDE_PTR_SEL_REL_INIT(tu1_off_a0), .value = 7 },
+};
+
 TEST_DESC struct test_event tu1_event = {
 	.provider = SIDE_PTR_REL_INIT(tu1_off_provider),
 	.fields = SIDE_PTR_REL_INIT(tu1_off_fields),
+	.attrs = SIDE_LITERAL_ARRAY_SEL_REL_OF_NAMED(tu1_off_attrs, tu1_attrs),
 	.nr_fields = 2,
+};
+
+/* What a dynamic argument writes: an address, selector clear. */
+static const char dynamic_key[] = "dynamic_key";
+static const struct test_attr dynamic_attrs[1] = {
+	{ .key = SIDE_PTR_SEL_INIT(dynamic_key), .value = 9 },
 };
 
 /*
@@ -88,7 +109,7 @@ static void check_event(const struct test_event *ev, const char *provider,
 
 int main(void)
 {
-	plan_tests(16);
+	plan_tests(24);
 
 	check_event(&tu1_event, "provider_one", "first_field", "second_field",
 		"same translation unit");
@@ -106,6 +127,27 @@ int main(void)
 
 	ok(side_ptr_rel_get(tu1_event.provider) != side_ptr_rel_get(tu2_event()->provider),
 		"the two translation units resolve to their own data");
+
+	/*
+	 * A pointer which says which of the two it holds. The one the
+	 * description wrote is a distance, the one a dynamic argument
+	 * wrote is an address, and one accessor reads both.
+	 */
+	ok(tu1_attrs[0].key.is_offset, "a description writes a distance");
+	ok(strcmp(side_ptr_sel_get(tu1_attrs[0].key), "static_key") == 0,
+		"a distance resolves to \"static_key\"");
+	check_is_offset("attribute to key", (intptr_t) tu1_attrs[0].key.u.off,
+		side_ptr_sel_get(tu1_attrs[0].key));
+
+	ok(!dynamic_attrs[0].key.is_offset, "a dynamic argument writes an address");
+	ok(strcmp(side_ptr_sel_get(dynamic_attrs[0].key), "dynamic_key") == 0,
+		"an address resolves to \"dynamic_key\"");
+	ok(side_ptr_sel_get(dynamic_attrs[0].key) == dynamic_key,
+		"an address is stored as it is");
+
+	ok(side_array_length(&tu1_event.attrs) == 1 &&
+			side_array_sel_at(&tu1_event.attrs, 0)->value == 7,
+		"an array of them is reached by a distance too");
 
 	/* The distance is relative to the field, so a copy does not carry. */
 	ok((char *) side_ptr_rel_get(tu1_fields[1].name) ==

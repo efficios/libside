@@ -170,6 +170,12 @@ namespace libside {
 		SIDE_PTR_INIT(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)),  \
 		libside::initializer_list_size<_type>({ __VA_ARGS__ }),	\
 	}
+
+#  define SIDE_LITERAL_ARRAY_SEL(_type, ...)				\
+	{								\
+		SIDE_PTR_SEL_INIT(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)), \
+		libside::initializer_list_size<_type>({ __VA_ARGS__ }),	\
+	}
 #else
 #  define SIDE_COMPOUND_LITERAL(type, ...)   (type[]) { __VA_ARGS__ }
 
@@ -192,6 +198,14 @@ namespace libside {
 #  define SIDE_LITERAL_ARRAY(_type, ...)				\
 	{								\
 		SIDE_PTR_INIT(sizeof(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)) ? \
+			SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__) : NULL), \
+		sizeof(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)) / sizeof(_type), \
+	}
+
+/* The same, for an array whose elements may be reached either way. */
+#  define SIDE_LITERAL_ARRAY_SEL(_type, ...)				\
+	{								\
+		SIDE_PTR_SEL_INIT(sizeof(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)) ? \
 			SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__) : NULL), \
 		sizeof(SIDE_COMPOUND_LITERAL(_type, ##__VA_ARGS__)) / sizeof(_type), \
 	}
@@ -237,6 +251,16 @@ namespace libside {
 	}
 
 /*
+ * The same again, for an array which says which of the two it holds.
+ * See side_array_sel_t.
+ */
+#define SIDE_LITERAL_ARRAY_SEL_REL_OF_NAMED(_off, _array)		\
+	{								\
+		SIDE_PTR_SEL_REL_INIT(_off),				\
+		SIDE_ARRAY_SIZE(_array),				\
+	}
+
+/*
  * Dynamic compound literals in C are the same as the static ones.  For C++, the
  * values are copied from a std::initializer_list onto a buffer allocated on the
  * stack.
@@ -255,8 +279,14 @@ namespace libside {
 		SIDE_PTR_INIT(libside::stack_copy<std::remove_const<_type>::type>((std::remove_const<_type>::type *)__builtin_alloca(sizeof(_type) * libside::initializer_list_size<_type>({__VA_ARGS__})), { __VA_ARGS__ })), \
 		libside::initializer_list_size<_type>({__VA_ARGS__}),		\
 	}
+#  define SIDE_DYNAMIC_LITERAL_ARRAY_SEL(_type, ...)			\
+	{								\
+		SIDE_PTR_SEL_INIT(libside::stack_copy<std::remove_const<_type>::type>((std::remove_const<_type>::type *)__builtin_alloca(sizeof(_type) * libside::initializer_list_size<_type>({__VA_ARGS__})), { __VA_ARGS__ })), \
+		libside::initializer_list_size<_type>({__VA_ARGS__}),		\
+	}
 #else
 #  define SIDE_DYNAMIC_LITERAL_ARRAY SIDE_LITERAL_ARRAY
+#  define SIDE_DYNAMIC_LITERAL_ARRAY_SEL SIDE_LITERAL_ARRAY_SEL
 #endif
 
 /*
@@ -295,6 +325,17 @@ namespace libside {
 	} SIDE_PACKED
 
 /*
+ * An array whose elements are reached either by a distance or by an
+ * address. See side_ptr_sel_t: this is for what a description and a
+ * dynamic argument both write.
+ */
+#define side_array_sel_t(_type)						\
+	struct {							\
+		side_ptr_sel_t(_type) elements;				\
+		uint32_t length;					\
+	} SIDE_PACKED
+
+/*
  * Return a pointer to the first element in `_array'. Null where the
  * array has no element, so look at the length first.
  *
@@ -308,6 +349,10 @@ namespace libside {
 /* The same, for an array reached by a distance. */
 #define side_array_rel_elements(_array) side_ptr_rel_get((_array)->elements)
 #define side_array_rel_at(_array, _k) (&side_array_rel_elements(_array)[_k])
+
+/* The same, for one reached by either. */
+#define side_array_sel_elements(_array) side_ptr_sel_get((_array)->elements)
+#define side_array_sel_at(_array, _k) (&side_array_sel_elements(_array)[_k])
 
 /*
  * Return a pointer to the element at index `_k' in `_array'.
@@ -359,6 +404,14 @@ namespace libside {
 #define side_for_each_element_in_rel_array(_it, _array)                  \
     for ((_it) = side_array_rel_elements(_array);                       \
          ((_it) - side_array_rel_elements(_array)) < side_array_length(_array); \
+         (_it)++)
+
+/*
+ * The same, for one reached by either.
+ */
+#define side_for_each_element_in_sel_array(_it, _array)                  \
+    for ((_it) = side_array_sel_elements(_array);                       \
+         ((_it) - side_array_sel_elements(_array)) < side_array_length(_array); \
          (_it)++)
 
 /*
@@ -1623,6 +1676,64 @@ namespace libside {
 #else
 # define SIDE_PTR_REL_INIT(_sym)	{ .off = (int64_t) (intptr_t) (_sym) }
 #endif
+
+/*
+ * A pointer which is either a distance or an address, with a selector
+ * beside it saying which.
+ *
+ * Some of what a description holds is shared with the dynamic type
+ * system: the strings of an attribute, and the array of attributes
+ * itself, belong to `struct side_attr', which a static description
+ * writes once at build time and a dynamic argument builds on the stack
+ * at the call site. The first wants a distance, so that a description
+ * costs no relocation; the second cannot have one, because the address
+ * it stores is not known until it runs, and nothing can take the
+ * address of the field it is initializing.
+ *
+ * So the two forms live in one type and say which they are. The
+ * selector is a byte of its own rather than a bit of the value, because
+ * a value with a bit stolen from it cannot be written statically at
+ * all: (uintptr_t) &x | 1 and (uintptr_t) &x << 1 are not address
+ * constants, and gcc and clang both refuse them. A byte costs one byte
+ * and a branch where the pointer is read, which is where an attribute
+ * or a label is printed, never in a fast path.
+ *
+ * Zero is an address, which is what a writer which knows nothing of the
+ * selector leaves behind.
+ */
+#define side_ptr_sel_t(_type)						\
+	struct {							\
+		union {							\
+			/* An address, as a side_ptr_t holds one. */	\
+			_type *v[16 / __SIZEOF_POINTER__];		\
+			/* A distance, as a side_ptr_rel_t holds one. */ \
+			int64_t off;					\
+			intptr_t rel_v[8 / __SIZEOF_POINTER__];		\
+		} u;							\
+		uint8_t is_offset;					\
+	} SIDE_PACKED
+
+/* What a side_ptr_sel_t points at, whichever of the two it holds. */
+#define side_ptr_sel_get(_field)					\
+	((__typeof__((_field).u.v[0]))					\
+		((_field).is_offset ?					\
+			(void *) ((char *) &(_field).u.off		\
+				+ (intptr_t) (_field).u.off) :		\
+			(void *) (_field).u.v[SIDE_U128_PTR_IDX(0)]))
+
+/* An address, which is what a dynamic argument has to store. */
+#define SIDE_PTR_SEL_INIT(...)						\
+	{								\
+		.u = SIDE_PTR_INIT(__VA_ARGS__),			\
+		.is_offset = 0,						\
+	}
+
+/* A distance, which is what a description stores. */
+#define SIDE_PTR_SEL_REL_INIT(_sym)					\
+	{								\
+		.u = SIDE_PTR_REL_INIT(_sym),				\
+		.is_offset = 1,						\
+	}
 
 /*
  * In C++, it is not possible to declare types in expressions within a sizeof.
