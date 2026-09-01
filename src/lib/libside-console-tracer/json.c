@@ -174,7 +174,7 @@ void json_before_field(const struct side_event_field *item_desc, void *priv)
 	struct side_json_writer *writer = writer_of(priv);
 
 	side_json_next(writer);
-	side_json_string(writer, side_ptr_get(item_desc->field_name));
+	side_json_string(writer, side_ptr_rel_get(item_desc->field_name));
 	side_json_raw(writer, ": ");
 }
 

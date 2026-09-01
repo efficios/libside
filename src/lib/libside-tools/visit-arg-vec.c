@@ -265,7 +265,7 @@ void side_visit_field(const struct side_type_visitor *type_visitor, const struct
 {
 	struct visit_context new_ctx = {
 		.type = CONTEXT_FIELD,
-		.field_name = side_ptr_get(item_desc->field_name),
+		.field_name = side_ptr_rel_get(item_desc->field_name),
 		.parent = ctx,
 	};
 	if (type_visitor->before_field_func)

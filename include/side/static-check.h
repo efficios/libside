@@ -149,6 +149,7 @@
  * The tunable can be used around the following forms:
  *
  *	- side_define_struct()
+ *	- side_static_define_struct()
  *	- side_export_event()
  *	- side_export_event_variadic()
  *	- side_hidden_event()
@@ -161,7 +162,7 @@
  *	// The following duplicated fields won't be caught by
  *	// the static checker.
  *	#define SIDE_STATIC_CHECK_DISABLE_DUPLICATED_FIELDS
- *	static side_define_struct(my_struct,
+ *	side_static_define_struct(my_struct,
  *		side_field_list(
  *			side_field_u32("x"),
  *			side_field_s64("x"),
@@ -2669,6 +2670,13 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #undef side_define_struct
 #define side_define_struct(_identifier, _fields, _attr...)		\
 	_side_define_struct(_identifier, SIDE_SC_EMIT_##_fields,	\
+			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
+	SIDE_SC_DEFINE_STRUCT(_identifier, SIDE_SC_CHECK_##_fields)
+
+#undef side_static_define_struct
+#define side_static_define_struct(_identifier, _fields, _attr...)	\
+	_side_static_define_struct(_identifier, SIDE_SC_EMIT_##_fields,	\
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
 	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
 	SIDE_SC_DEFINE_STRUCT(_identifier, SIDE_SC_CHECK_##_fields)

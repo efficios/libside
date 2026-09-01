@@ -388,9 +388,14 @@ struct side_type_optional {
 };
 
 struct side_event_field {
-	side_ptr_t(const char) field_name;
+	/*
+	 * The name is in the section the array holding this field is
+	 * in, so the distance to it is one the assembler folds. See
+	 * side_ptr_rel_t.
+	 */
+	side_ptr_rel_t(const char) field_name;
 	struct side_type side_type;
 } SIDE_PACKED;
-side_check_size(struct side_event_field, 16 + sizeof(struct side_type));
+side_check_size(struct side_event_field, 8 + sizeof(struct side_type));
 
 #endif /* SIDE_ABI_TYPE_DESCRIPTION_H */

@@ -181,7 +181,7 @@ static void end_event(const struct side_event_description *desc, void *ctx)
 
 static void begin_field(const struct side_event_field *field, void *ctx)
 {
-	const char *field_name = visit_side_pointer(ctx, field->field_name);
+	const char *field_name = visit_side_rel_pointer(ctx, field->field_name);
 	const struct side_type *side_type = &field->side_type;
 
 	printf_nest(ctx, "%s:", field_name);

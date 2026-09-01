@@ -1087,7 +1087,7 @@ void tracer_before_print_field(const struct side_event_field *item_desc, void *p
 
 	if (get_nested_item_nr(ctx) != 0)
 		printf(",");
-	printf(" %s: { ", side_ptr_get(item_desc->field_name));
+	printf(" %s: { ", side_ptr_rel_get(item_desc->field_name));
 }
 
 static
@@ -1787,7 +1787,7 @@ void before_print_description_field(const struct side_event_field *item_desc, vo
 
 	if (get_nested_item_nr(ctx) != 0)
 		printf(",");
-	printf(" %s: { ", side_ptr_get(item_desc->field_name));
+	printf(" %s: { ", side_ptr_rel_get(item_desc->field_name));
 }
 
 static

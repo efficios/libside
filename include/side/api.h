@@ -566,6 +566,7 @@
 #define side_field_struct _side_field_struct
 #define side_arg_struct _side_arg_struct
 #define side_define_struct _side_define_struct
+#define side_static_define_struct _side_static_define_struct
 #define side_arg_define_struct _side_arg_define_vec
 
 

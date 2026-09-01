@@ -228,11 +228,77 @@
 		}, \
 	}
 
-#define _side_field(_name, _type) \
-	{ \
-		.field_name = SIDE_PTR_INIT(_name), \
-		.side_type = _type, \
+/*
+ * A field, as the pair of what it is called and what it is, rather than
+ * as an initializer.
+ *
+ * The name has to become an object of its own for the distance to it to
+ * be one the assembler folds, and only the site defining the event or
+ * the structure the field belongs to can declare one. So the field
+ * hands both halves over and that site puts them back together, through
+ * SIDE_FIELD_DECLARE() and SIDE_FIELD_INIT().
+ */
+#define _side_field(_name, _type)	(_name, _type)
+
+/* Where the name of field _idx of _ctx lives, and the distance to it. */
+#define SIDE_FIELD_NAME_SYM(_ctx, _idx)	SIDE_CAT3(_ctx, __field_name_, _idx)
+#define SIDE_FIELD_NAME_OFF(_ctx, _idx)	SIDE_CAT3(_ctx, __field_name_off_, _idx)
+
+/*
+ * Hoist the name of one field into the section its array is in, and
+ * name the distance from the member which holds it to where it now is.
+ * Neither end is const, and both are in one section, which is what lets
+ * the assembler fold the distance. See side_ptr_rel_t.
+ *
+ * An element which is not parenthesized is the nothing an empty list,
+ * or the trailing comma the DSL allows, leaves behind; there is no
+ * field there to declare.
+ */
+#define SIDE_FIELD_DECLARE(_ctx, _idx, _field)				\
+	SIDE_CAT2(SIDE_FIELD_DECLARE_, SIDE_IS_PAREN(_field))(_ctx, _idx, _field)
+
+#define SIDE_FIELD_DECLARE_0(_ctx, _idx, _field)
+
+#define SIDE_FIELD_DECLARE_1(_ctx, _idx, _field)			\
+	SIDE_FIELD_DECLARE_2(SIDE_FIELD_NAME_SYM(_ctx, _idx),		\
+		SIDE_FIELD_NAME_OFF(_ctx, _idx),			\
+		SIDE_CAT3(_ctx, __fields, ), SIDE_IDX_NUM(_idx),		\
+		SIDE_UNPACK _field)
+#define SIDE_FIELD_DECLARE_2(_sym, _off, _fields, _k, ...)		\
+	SIDE_FIELD_DECLARE_3(_sym, _off, _fields, _k, __VA_ARGS__)
+#define SIDE_FIELD_DECLARE_3(_sym, _off, _fields, _k, _name, _type...)	\
+	static char __attribute__((section("side_event_description"), used)) \
+		_sym[] SIDE_ASM_LABEL(_sym) = _name;			\
+	SIDE_PTR_REL_DEFINE_AT(_off, _fields,				\
+		(_k) * sizeof(struct side_event_field)			\
+			+ offsetof(struct side_event_field, field_name), \
+		_sym)
+
+/* The array element, reaching its name by that distance. */
+#define SIDE_FIELD_INIT(_ctx, _idx, _field)				\
+	SIDE_CAT2(SIDE_FIELD_INIT_, SIDE_IS_PAREN(_field))(_ctx, _idx, _field)
+
+#define SIDE_FIELD_INIT_0(_ctx, _idx, _field)
+
+#define SIDE_FIELD_INIT_1(_ctx, _idx, _field)				\
+	SIDE_FIELD_INIT_2(SIDE_FIELD_NAME_OFF(_ctx, _idx), SIDE_UNPACK _field)
+#define SIDE_FIELD_INIT_2(_off, ...)	SIDE_FIELD_INIT_3(_off, __VA_ARGS__)
+#define SIDE_FIELD_INIT_3(_off, _name, _type...)			\
+	{								\
+		.field_name = SIDE_PTR_REL_INIT(_off),			\
+		.side_type = _type,					\
 	}
+
+/*
+ * The fields of _ctx: the names hoisted out of them, then the array
+ * itself. The array is declared before the names because the distance
+ * to each of them is measured from a byte of it.
+ */
+#define SIDE_FIELDS_DECLARE(_ctx, _fields)				\
+	SIDE_MAP_IDX_P(SIDE_FIELD_DECLARE, _ctx, SIDE_UNPACK _fields)
+
+#define SIDE_FIELDS_INIT(_ctx, _fields)					\
+	{ SIDE_MAP_LIST_IDX_P(SIDE_FIELD_INIT, _ctx, SIDE_UNPACK _fields) }
 
 #define _side_option_range(_range_begin, _range_end, _type) \
 	{ \
@@ -616,8 +682,49 @@
 		.attributes = _attr,				\
 	}
 
-#define _side_define_struct(_identifier, _fields, _attr...) \
-	const struct side_type_struct _identifier = _side_type_struct_define(SIDE_LITERAL_ARRAY_OF(const struct side_event_field, _fields), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+/*
+ * The fields of a structure live in the section a description is in,
+ * and are not const, for the same reason an event's do: the assembler
+ * folds a distance to the name of a field only within one section, and
+ * only between objects it may place there. The structure itself stays
+ * where it was and is still reached by an address, which is what it has
+ * to be, being in another section.
+ *
+ * That makes a structure definition several declarations rather than
+ * one, so it can no longer be written `static side_define_struct(...)':
+ * a storage class in front of it would land on the first of them. The
+ * linkage is part of the name instead, the way it is for an event.
+ */
+#define __side_define_struct(_forward_decl_linkage, _linkage, _identifier, _fields, _attr...) \
+	SIDE_PUSH_DIAGNOSTIC()						\
+	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	_forward_decl_linkage struct side_event_field __attribute__((section("side_event_description"))) \
+		_identifier##__fields[] SIDE_ASM_LABEL(_identifier##__fields); \
+	SIDE_FIELDS_DECLARE(_identifier, _fields)			\
+	_linkage struct side_event_field __attribute__((section("side_event_description"), used)) \
+		_identifier##__fields[] SIDE_ASM_LABEL(_identifier##__fields) = \
+			SIDE_FIELDS_INIT(_identifier, _fields);		\
+	_linkage const struct side_type_struct _identifier =		\
+		_side_type_struct_define(SIDE_PARAM(SIDE_LITERAL_ARRAY_OF_NAMED(_identifier##__fields)), \
+			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
+
+/*
+ * In C++, a static cannot be forward declared; an anonymous namespace
+ * gives the same reach, as it does for an event.
+ */
+#ifdef __cplusplus
+#  define _side_static_define_struct(_identifier, _fields, _attr...)	\
+	namespace {							\
+		__side_define_struct(extern, , _identifier, SIDE_PARAM(_fields), ##_attr); \
+	}
+#else
+#  define _side_static_define_struct(_identifier, _fields, _attr...)	\
+	__side_define_struct(static, static, _identifier, SIDE_PARAM(_fields), ##_attr)
+#endif
+
+#define _side_define_struct(_identifier, _fields, _attr...)		\
+	__side_define_struct(extern, , _identifier, SIDE_PARAM(_fields), ##_attr)
 
 #define _side_type_variant(_variant) \
 	{ \
@@ -1010,12 +1117,13 @@ enum {
 	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
 
 /*
- * The bare initializer list of the fields. The site defining the event
- * or the structure they belong to is what turns it into an array, since
- * only it has a name to give one.
+ * The fields, as a list the site defining the event or the structure
+ * they belong to can walk. It is parenthesized rather than braced
+ * because that site walks it twice, and only parentheses keep the
+ * elements together as one macro argument on the way there.
  */
 #define _side_field_list(...) \
-	{ __VA_ARGS__ }
+	( __VA_ARGS__ )
 
 #define _side_option_list(...) \
 	SIDE_LITERAL_ARRAY(const struct side_variant_option, __VA_ARGS__)
@@ -1470,9 +1578,17 @@ enum {
 	SIDE_PTR_REL_DEFINE(_identifier##__event_name_off, _identifier,	\
 		struct side_event_description, event_name,		\
 		_identifier##__event_name)				\
-	/* The fields, named so a distance to them can be taken. */	\
+	/*							\
+	 * The fields, named so a distance to them can be taken, and	\
+	 * declared before their names because the distance to each	\
+	 * name is measured from a byte of this array.			\
+	 */								\
+	_forward_decl_linkage struct side_event_field __attribute__((section("side_event_description"))) \
+		_identifier##__fields[] SIDE_ASM_LABEL(_identifier##__fields); \
+	SIDE_FIELDS_DECLARE(_identifier, _fields)			\
 	_linkage struct side_event_field __attribute__((section("side_event_description"), used)) \
-		_identifier##__fields[] SIDE_ASM_LABEL(_identifier##__fields) = _fields; \
+		_identifier##__fields[] SIDE_ASM_LABEL(_identifier##__fields) = \
+			SIDE_FIELDS_INIT(_identifier, _fields);		\
 	SIDE_PTR_REL_DEFINE(_identifier##__fields_off, _identifier,	\
 		struct side_event_description, fields.elements,		\
 		_identifier##__fields)					\

@@ -69,7 +69,7 @@ void test_event_export(void)
 	side_event(my_provider_event_export, side_arg_list(side_arg_u32(2)));
 }
 
-static side_define_struct(mystructdef,
+side_static_define_struct(mystructdef,
 	side_field_list(
 		side_field_u32("x"),
 		side_field_s64("y"),
@@ -1157,7 +1157,7 @@ struct test {
 	uint64_t test;
 };
 
-static side_define_struct(mystructgatherdef,
+side_static_define_struct(mystructgatherdef,
 	side_field_list(
 		side_field_gather_unsigned_integer("a", offsetof(struct test, a),
 			side_struct_field_sizeof(struct test, a), 0, 0,
@@ -1258,7 +1258,7 @@ struct testnest0 {
 	struct testnest1 *nest;
 };
 
-static side_define_struct(mystructgathernest2,
+side_static_define_struct(mystructgathernest2,
 	side_field_list(
 		side_field_gather_unsigned_integer("c", offsetof(struct testnest2, c),
 			side_struct_field_sizeof(struct testnest2, c), 0, 0,
@@ -1266,7 +1266,7 @@ static side_define_struct(mystructgathernest2,
 	)
 );
 
-static side_define_struct(mystructgathernest1,
+side_static_define_struct(mystructgathernest1,
 	side_field_list(
 		side_field_gather_unsigned_integer("b", offsetof(struct testnest1, b),
 			side_struct_field_sizeof(struct testnest1, b), 0, 0,
@@ -1277,7 +1277,7 @@ static side_define_struct(mystructgathernest1,
 	)
 );
 
-static side_define_struct(mystructgathernest0,
+side_static_define_struct(mystructgathernest0,
 	side_field_list(
 		side_field_gather_unsigned_integer("a", offsetof(struct testnest0, a),
 			side_struct_field_sizeof(struct testnest0, a), 0, 0,
@@ -1334,7 +1334,7 @@ struct testfloat {
 #endif
 };
 
-static side_define_struct(mystructgatherfloat,
+side_static_define_struct(mystructgatherfloat,
 	side_field_list(
 #if __HAVE_FLOAT16
 		side_field_gather_float("f16", offsetof(struct testfloat, f16), side_struct_field_sizeof(struct testfloat, f16),
@@ -1398,7 +1398,7 @@ struct testarray {
 	uint32_t *ptr;
 };
 
-static side_define_struct(mystructgatherarray,
+side_static_define_struct(mystructgatherarray,
 	side_field_list(
 		side_field_gather_array("array",
 			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint32_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
@@ -1451,7 +1451,7 @@ struct testgatherstructnest0 {
 	int a;
 };
 
-static side_define_struct(mystructgatherstructnest1,
+side_static_define_struct(mystructgatherstructnest1,
 	side_field_list(
 		side_field_gather_signed_integer("b", offsetof(struct testgatherstructnest1, b),
 			side_struct_field_sizeof(struct testgatherstructnest1, b), 0, 0,
@@ -1467,7 +1467,7 @@ static side_define_struct(mystructgatherstructnest1,
 	)
 );
 
-static side_define_struct(mystructgatherstructnest0,
+side_static_define_struct(mystructgatherstructnest0,
 	side_field_list(
 		side_field_gather_signed_integer("a", offsetof(struct testgatherstructnest0, a),
 			side_struct_field_sizeof(struct testgatherstructnest0, a), 0, 0,
@@ -1535,7 +1535,7 @@ struct testgathervla {
 	uint32_t *p;
 };
 
-static side_define_struct(mystructgathervla,
+side_static_define_struct(mystructgathervla,
 	side_field_list(
 		side_field_gather_signed_integer("a", offsetof(struct testgathervla, a),
 			side_struct_field_sizeof(struct testgathervla, a), 0, 0,
@@ -1589,7 +1589,7 @@ struct testgathervlaflex {
 	uint64_t array[];
 };
 
-static side_define_struct(mystructgathervlaflex,
+side_static_define_struct(mystructgathervlaflex,
 	side_field_list(
 		side_field_gather_vla("vlaflex",
 			side_elem(side_type_gather_unsigned_integer(0, sizeof(uint64_t), 0, 0, SIDE_TYPE_GATHER_ACCESS_DIRECT)),
@@ -2080,13 +2080,13 @@ void test_optional(void)
 	}
 }
 
-static side_define_struct(my_struct_inner,
+side_static_define_struct(my_struct_inner,
 	side_field_list(
 		side_field_u32("x"),
 	)
 );
 
-static side_define_struct(my_struct_outter,
+side_static_define_struct(my_struct_outter,
 	side_field_list(
 		side_field_struct("inner", my_struct_inner),
 	)
@@ -2107,7 +2107,7 @@ static void test_nested_struct(void)
 	}
 }
 
-static side_define_struct(my_struct_for_vla,
+side_static_define_struct(my_struct_for_vla,
 	side_field_list(
 		side_field_u32("x"),
 	)
