@@ -64,6 +64,7 @@ dkms.conf
 /src/lib/pkgconfig/libside.pc
 /tests/regression/side-rcu-test
 /tests/unit/demo
+/tests/unit/rel-ptr
 /tests/unit/test
 /tests/unit/test-cxx
 /tests/unit/statedump

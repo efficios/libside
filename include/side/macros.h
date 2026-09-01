@@ -479,6 +479,87 @@ namespace libside {
 #define side_func_ptr_t(_type)	side_raw_ptr_t(_type)
 
 /*
+ * Self-relative pointers.
+ *
+ * A side_ptr_t holds an address, which in a position independent
+ * executable or a shared object has to be written by the loader: each
+ * one costs a relocation, and the page it lives on becomes a private
+ * dirty copy in every process. A description made of pointers pays that
+ * for every edge of its graph.
+ *
+ * A side_ptr_rel_t holds the distance from itself to what it points at
+ * instead. The assembler computes that distance, so there is nothing
+ * for the loader to write: the description costs no relocation, and its
+ * pages stay clean and shared between processes.
+ *
+ * C cannot express this: the difference of two addresses is not a
+ * constant expression, so it cannot initialize a static object.
+ * SIDE_PTR_REL_DEFINE_AT() works around it by naming the distance as an
+ * absolute assembler symbol, whose *address* is a constant expression
+ * and so can. The byte offset of the member within the object it
+ * belongs to reaches the assembler as an operand, which is why nothing
+ * here is hard-coded or specific to a pointer size.
+ *
+ * Three things are required of every object which takes part, and each
+ * of them is a compile error or silently wrong data when missing:
+ *
+ *   - The referring object and its target must be in the same section.
+ *     The assembler folds a distance within a section, and refuses one
+ *     which crosses sections.
+ *
+ *   - They must not be const. A named section holding both const and
+ *     non-const objects is a section type conflict, and a compiler
+ *     which sorts them by whether they need relocation splits the
+ *     section in two, which puts them back on either side of a section
+ *     boundary. Nothing writes to those objects; only the page
+ *     protection is given up, not the declared type.
+ *
+ *   - They must be __attribute__((used)). Under link time optimization
+ *     the compiler emits top level assembly separately from the data,
+ *     and a symbol it believes unreferenced is not there to subtract
+ *     from.
+ *
+ * The section is not garbage collected as long as something reaches it:
+ * the constructor which registers events refers to it through
+ * __start_/__stop_ symbols, which is a reference for --gc-sections.
+ */
+#define side_ptr_rel_t(_type)						\
+	union {								\
+		intptr_t off;						\
+		/* Unused: carries the pointee type for readers. */	\
+		_type *_type_marker[0];					\
+	}
+
+/*
+ * The address a side_ptr_rel_t points at. Takes the field alone, like
+ * side_ptr_get(), so that it reads the same at every use.
+ */
+#define side_ptr_rel_get(_field)					\
+	((void *) ((char *) &(_field).off + (_field).off))
+
+/*
+ * Define _sym as the distance from byte _off of _obj to _target.
+ *
+ * _off is any integer constant expression: offsetof() for a member of a
+ * structure, or its position within an array for an element of one.
+ */
+#define SIDE_PTR_REL_DEFINE_AT(_sym, _obj, _off, _target)		\
+	extern char _sym[];						\
+	__attribute__((used))						\
+	static void SIDE_CAT(_sym, _emit_offset)(void)			\
+	{								\
+		__asm__ (".set " SIDE_STR(_sym) ", " SIDE_STR(_target)	\
+			" - (" SIDE_STR(_obj) " + %c0)" :: "i" (_off));	\
+	}
+
+/* The same, for a member of a structure. */
+#define SIDE_PTR_REL_DEFINE(_sym, _obj, _type, _member, _target)		\
+	SIDE_PTR_REL_DEFINE_AT(_sym, _obj, offsetof(_type, _member), _target)
+
+/* Initialize a side_ptr_rel_t from a symbol SIDE_PTR_REL_DEFINE* named. */
+#define SIDE_PTR_REL_INIT(_sym)		{ .off = (intptr_t) (_sym) }
+
+/*
  * In C++, it is not possible to declare types in expressions within a sizeof.
  */
 #ifdef __cplusplus
