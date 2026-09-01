@@ -164,8 +164,8 @@ static void begin_event(const struct side_event_description *desc, void *ctx)
 	push_nest(ctx);
 	printf_nest(ctx, "version: %" PRIu32, desc->version);
 	printf_nest(ctx, "state-version: %" PRIu64, state_version ? cast(s64, *state_version) : -1);
-	printf_nest(ctx, "provider: %s", cast(char *, visit_side_pointer(ctx, desc->provider_name)));
-	printf_nest(ctx, "name: %s", cast(char *, visit_side_pointer(ctx, desc->event_name)));
+	printf_nest(ctx, "provider: %s", cast(char *, visit_side_rel_pointer(ctx, desc->provider_name)));
+	printf_nest(ctx, "name: %s", cast(char *, visit_side_rel_pointer(ctx, desc->event_name)));
 	printf_nest(ctx, "loglevel: %s", side_loglevel_to_string(side_enum_get(desc->loglevel)));
 	print_attributes(desc->attributes.length ? visit_side_pointer(ctx, desc->attributes.elements) : NULL,
 			desc->attributes.length,

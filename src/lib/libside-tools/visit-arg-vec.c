@@ -1214,8 +1214,8 @@ void type_visitor_event(const struct side_type_visitor *type_visitor,
 	const struct visit_context ctx = {
 		.type = CONTEXT_NAMESPACE,
 		.namespace = {
-			.provider_name = side_ptr_get(desc->provider_name),
-			.event_name = side_ptr_get(desc->event_name),
+			.provider_name = side_ptr_rel_get(desc->provider_name),
+			.event_name = side_ptr_rel_get(desc->event_name),
 		},
 	};
 

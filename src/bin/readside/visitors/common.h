@@ -33,6 +33,18 @@ struct visitor {
 	visit_pointer(ctx, side_ptr_get(ptr))
 
 /*
+ * A self-relative pointer needs no resolver: the distance it holds is
+ * measured from the field which holds it, so it resolves within
+ * whatever mapping the description was read into rather than against
+ * the address space it was written in.
+ *
+ * FIXME: this assumes the description is read as one contiguous blob,
+ * laid out as the producer wrote it. That holds for a description read
+ * from a section; it does not for one reassembled piece by piece.
+ */
+#define visit_side_rel_pointer(ctx, ptr)	side_ptr_rel_get(ptr)
+
+/*
  * It is the reader that defines how to resolve pointer by the visitor.  This
  * require making a copy of the visitor structure and setting the resolve
  * pointer function in it.

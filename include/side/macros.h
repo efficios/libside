@@ -523,9 +523,16 @@ namespace libside {
  * the constructor which registers events refers to it through
  * __start_/__stop_ symbols, which is a reference for --gc-sections.
  */
+/*
+ * The distance is a fixed width, for the same reason side_ptr_t is a
+ * fixed 16 bytes: a description written by a 32-bit application is read
+ * by a 64-bit tracer and the reverse, so what they exchange cannot be
+ * the size of a pointer on whoever wrote it. It is signed because a
+ * target may sit either side of the field pointing at it.
+ */
 #define side_ptr_rel_t(_type)						\
 	union {								\
-		intptr_t off;						\
+		int64_t off;						\
 		/* Unused: carries the pointee type for readers. */	\
 		_type *_type_marker[0];					\
 	}
@@ -535,7 +542,20 @@ namespace libside {
  * side_ptr_get(), so that it reads the same at every use.
  */
 #define side_ptr_rel_get(_field)					\
-	((void *) ((char *) &(_field).off + (_field).off))
+	((void *) ((char *) &(_field).off + (intptr_t) (_field).off))
+
+/*
+ * C++ mangles the name of an object in an anonymous namespace, which is
+ * where a side event description lives, so the assembler cannot be
+ * given the name the source uses. An asm label pins the symbol name
+ * instead. The object keeps internal linkage, so two translation units
+ * defining the same event still do not collide.
+ */
+#ifdef __cplusplus
+# define SIDE_ASM_LABEL(_name)	__asm__(SIDE_STR(_name))
+#else
+# define SIDE_ASM_LABEL(_name)
+#endif
 
 /*
  * Define _sym as the distance from byte _off of _obj to _target.
@@ -544,7 +564,7 @@ namespace libside {
  * structure, or its position within an array for an element of one.
  */
 #define SIDE_PTR_REL_DEFINE_AT(_sym, _obj, _off, _target)		\
-	extern char _sym[];						\
+	extern char _sym[] SIDE_ASM_LABEL(_sym);			\
 	__attribute__((used))						\
 	static void SIDE_CAT(_sym, _emit_offset)(void)			\
 	{								\
@@ -557,7 +577,7 @@ namespace libside {
 	SIDE_PTR_REL_DEFINE_AT(_sym, _obj, offsetof(_type, _member), _target)
 
 /* Initialize a side_ptr_rel_t from a symbol SIDE_PTR_REL_DEFINE* named. */
-#define SIDE_PTR_REL_INIT(_sym)		{ .off = (intptr_t) (_sym) }
+#define SIDE_PTR_REL_INIT(_sym)		{ .off = (int64_t) (intptr_t) (_sym) }
 
 /*
  * In C++, it is not possible to declare types in expressions within a sizeof.

@@ -92,9 +92,9 @@ int main(void)
 
 	check_event(&tu1_event, "provider_one", "first_field", "second_field",
 		"same translation unit");
-	check_is_offset("event to provider", tu1_event.provider.off,
+	check_is_offset("event to provider", (intptr_t) tu1_event.provider.off,
 		side_ptr_rel_get(tu1_event.provider));
-	check_is_offset("field to name", tu1_fields[0].name.off,
+	check_is_offset("field to name", (intptr_t) tu1_fields[0].name.off,
 		side_ptr_rel_get(tu1_fields[0].name));
 
 	/*
@@ -109,7 +109,7 @@ int main(void)
 
 	/* The distance is relative to the field, so a copy does not carry. */
 	ok((char *) side_ptr_rel_get(tu1_fields[1].name) ==
-			(char *) &tu1_fields[1].name.off + tu1_fields[1].name.off,
+			(char *) &tu1_fields[1].name.off + (intptr_t) tu1_fields[1].name.off,
 		"a distance is measured from the field which holds it");
 
 	return exit_status();

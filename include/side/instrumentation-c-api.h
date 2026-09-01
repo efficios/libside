@@ -1436,7 +1436,27 @@ enum {
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
 	_forward_decl_linkage struct side_event_description __attribute__((section("side_event_description"))) \
-		_identifier;							\
+		_identifier SIDE_ASM_LABEL(_identifier);			\
+	/*								\
+	 * The names live in the section the description is in, and are	\
+	 * not const, because the distances to them are folded by the	\
+	 * assembler and it only folds within one section. See		\
+	 * side_ptr_rel_t.						\
+	 */								\
+	_forward_decl_linkage char __attribute__((section("side_event_description"), used)) \
+		_identifier##__provider_name[] SIDE_ASM_LABEL(_identifier##__provider_name); \
+	_forward_decl_linkage char __attribute__((section("side_event_description"), used)) \
+		_identifier##__event_name[] SIDE_ASM_LABEL(_identifier##__event_name); \
+	_linkage char __attribute__((section("side_event_description"), used)) \
+		_identifier##__provider_name[] = _provider;		\
+	_linkage char __attribute__((section("side_event_description"), used)) \
+		_identifier##__event_name[] = _event;			\
+	SIDE_PTR_REL_DEFINE(_identifier##__provider_name_off, _identifier, \
+		struct side_event_description, provider_name,		\
+		_identifier##__provider_name)				\
+	SIDE_PTR_REL_DEFINE(_identifier##__event_name_off, _identifier,	\
+		struct side_event_description, event_name,		\
+		_identifier##__event_name)				\
 	_forward_decl_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
 		side_event_state__##_identifier;				\
 	_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
@@ -1455,8 +1475,8 @@ enum {
 		.struct_size = offsetof(struct side_event_description, end), \
 		.version = SIDE_EVENT_DESCRIPTION_ABI_VERSION,		\
 		.state = SIDE_PTR_INIT(&(side_event_state__##_identifier.parent)), \
-		.provider_name = SIDE_PTR_INIT(_provider),		\
-		.event_name = SIDE_PTR_INIT(_event),			\
+		.provider_name = SIDE_PTR_REL_INIT(_identifier##__provider_name_off), \
+		.event_name = SIDE_PTR_REL_INIT(_identifier##__event_name_off), \
 		.fields = _fields,				\
 		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
 		.flags = (_flags),					\

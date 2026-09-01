@@ -1021,8 +1021,8 @@ void tracer_before_print_event(const struct side_event_description *desc,
 	if (print_caller)
 		printf("caller: [%p], ", caller_addr);
 	printf("provider: %s, event: %s",
-		side_ptr_get(desc->provider_name),
-		side_ptr_get(desc->event_name));
+		side_ptr_rel_get(desc->provider_name),
+		side_ptr_rel_get(desc->event_name));
 	print_attributes(", attr", ":", side_array_elements(&desc->attributes), side_array_length(&desc->attributes));
 }
 
@@ -1747,7 +1747,7 @@ void tracer_call_variadic(const struct side_event_description *desc,
 static
 void before_print_description_event(const struct side_event_description *desc, void *priv __attribute__((unused)))
 {
-	printf("event description: provider: %s, event: %s", side_ptr_get(desc->provider_name), side_ptr_get(desc->event_name));
+	printf("event description: provider: %s, event: %s", side_ptr_rel_get(desc->provider_name), side_ptr_rel_get(desc->event_name));
 	print_attributes(", attr", ":", side_array_elements(&desc->attributes), side_array_length(&desc->attributes));
 }
 
@@ -2470,20 +2470,20 @@ void tracer_event_notification(enum side_tracer_notification notif,
 		}
 		if (tracer_format != TRACER_FORMAT_JSON)
 			printf("provider: %s, event: %s\n",
-				side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
+				side_ptr_rel_get(event->provider_name), side_ptr_rel_get(event->event_name));
 		if (event->struct_size != side_offsetofend(struct side_event_description, side_event_description_orig_abi_last)) {
 			printf("Warning: Event %s.%s description contains fields unknown to the tracer\n",
-				side_ptr_get(event->provider_name), side_ptr_get(event->event_name));
+				side_ptr_rel_get(event->provider_name), side_ptr_rel_get(event->event_name));
 		}
 		if (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS) {
 			if (event->nr_side_type_label > _NR_SIDE_TYPE_LABEL) {
 				printf("Warning: event %s:%s may contain unknown field types (%u unknown types)\n",
-					side_ptr_get(event->provider_name), side_ptr_get(event->event_name),
+					side_ptr_rel_get(event->provider_name), side_ptr_rel_get(event->event_name),
 					event->nr_side_type_label - _NR_SIDE_TYPE_LABEL);
 			}
 			if (event->nr_side_attr_type > _NR_SIDE_ATTR_TYPE) {
 				printf("Warning: event %s:%s may contain unknown attribute types (%u unknown types)\n",
-					side_ptr_get(event->provider_name), side_ptr_get(event->event_name),
+					side_ptr_rel_get(event->provider_name), side_ptr_rel_get(event->event_name),
 					event->nr_side_attr_type - _NR_SIDE_ATTR_TYPE);
 			}
 			if (tracer_format != TRACER_FORMAT_JSON)

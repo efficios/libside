@@ -45,8 +45,8 @@ void tracer_notif_cb(enum side_tracer_notification notif,
 
 		if (!event)
 			continue;
-		if (strcmp(side_ptr_get(event->provider_name), "test_phased_atfork") != 0
-				|| strcmp(side_ptr_get(event->event_name), "myevent") != 0)
+		if (strcmp(side_ptr_rel_get(event->provider_name), "test_phased_atfork") != 0
+				|| strcmp(side_ptr_rel_get(event->event_name), "myevent") != 0)
 			continue;
 		if (notif == SIDE_TRACER_NOTIFICATION_INSERT_EVENTS)
 			my_event_desc = event;

@@ -56,8 +56,8 @@ struct side_event_description {
 	uint32_t version;	/* Event description ABI version. */
 
 	side_ptr_t(struct side_event_state) state;
-	side_ptr_t(const char) provider_name;
-	side_ptr_t(const char) event_name;
+	side_ptr_rel_t(const char) provider_name;
+	side_ptr_rel_t(const char) event_name;
 	side_array_t(const struct side_event_field) fields;
 	side_array_t(const struct side_attr) attributes;
 	uint64_t flags;	/* Bitwise OR of enum side_event_flags */
