@@ -92,7 +92,7 @@ void test_struct(void)
 	}
 }
 
-static side_define_array(my_array_u32_3,
+side_static_define_array(my_array_u32_3,
 	side_elem(side_type_u32()),
 	3
 );
@@ -113,7 +113,7 @@ void test_array(void)
 	}
 }
 
-static side_define_vla(my_vla_u32,
+side_static_define_vla(my_vla_u32,
 	side_elem(side_type_u32()),
 	side_elem(side_type_u32())
 );
@@ -841,12 +841,12 @@ static side_define_enum_bitmap(myenum_bitmap,
 	)
 );
 
-static side_define_array(my_array_u32_5_for_bitmap,
+side_static_define_array(my_array_u32_5_for_bitmap,
 	side_elem(side_type_u32()),
 	5
 );
 
-static side_define_vla(my_vla_u32_for_bitmap,
+side_static_define_vla(my_vla_u32_for_bitmap,
 	side_elem(side_type_u32()),
 	side_elem(side_type_u32())
 );
@@ -913,7 +913,7 @@ void test_enum_bitmap(void)
 	}
 }
 
-static side_define_array(my_array_byte,
+side_static_define_array(my_array_byte,
 	side_elem(side_type_byte()),
 	3
 );
@@ -1898,7 +1898,7 @@ void test_string_utf(void)
 	);
 }
 
-static side_define_variant(myvariantdef,
+side_static_define_variant(myvariantdef,
 	side_type_u32(),
 	side_option_list(
 		side_option_range(1, 3, side_type_u16()),
@@ -2054,7 +2054,7 @@ void test_c_native_types(void)
 #undef X
 }
 
-static side_define_optional(my_optional, side_elem(side_type_string()));
+side_static_define_optional(my_optional, side_elem(side_type_string()));
 
 side_static_event(my_provider_event_optional, "myprovider", "myeventoptional", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
@@ -2113,7 +2113,7 @@ side_static_define_struct(my_struct_for_vla,
 	)
 );
 
-static side_define_vla(my_vla_of_struct,
+side_static_define_vla(my_vla_of_struct,
 	side_elem(side_type_struct(my_struct_for_vla)),
 	side_elem(side_type_u32())
 );

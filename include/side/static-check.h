@@ -2566,6 +2566,12 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
 	SIDE_SC_DEFINE_VARIANT(_identifier, SIDE_SC_CHECK_##_selector)
 
+#undef side_static_define_variant
+#define side_static_define_variant(_identifier, _selector, _options, _attr...) \
+	_side_static_define_variant(_identifier, SIDE_SC_EMIT_##_selector, SIDE_SC_EMIT_##_options, \
+			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_SC_DEFINE_VARIANT(_identifier, SIDE_SC_CHECK_##_selector)
+
 #define SIDE_SC_DEFINE_VARIANT(_identifier, _selector)			\
 	SIDE_SC_BEGIN_DIAGNOSTIC();					\
 	typedef void (*SIDE_SC_TYPE(user_define_variant__##_identifier))(SIDE_SC_TYPE(variant) SIDE_SC_TAKE_2(_selector)); \
@@ -2586,6 +2592,12 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #undef side_define_array
 #define side_define_array(_identifier, _elem, _length, _attr...)	\
 	_side_define_array(_identifier, SIDE_SC_EMIT_##_elem,		\
+			_length, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_SC_DEFINE_ARRAY(_identifier, SIDE_SC_CHECK_array_##_elem, _length)
+
+#undef side_static_define_array
+#define side_static_define_array(_identifier, _elem, _length, _attr...)	\
+	_side_static_define_array(_identifier, SIDE_SC_EMIT_##_elem,	\
 			_length, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
 	SIDE_SC_DEFINE_ARRAY(_identifier, SIDE_SC_CHECK_array_##_elem, _length)
 
@@ -2619,6 +2631,11 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 	_side_define_optional(_identifier, SIDE_SC_EMIT_##_elem_type);	\
 	SIDE_SC_DEFINE_OPTIONAL(_identifier, SIDE_SC_CHECK_##_elem_type)
 
+#undef side_static_define_optional
+#define side_static_define_optional(_identifier, _elem_type)		\
+	_side_static_define_optional(_identifier, SIDE_SC_EMIT_##_elem_type); \
+	SIDE_SC_DEFINE_OPTIONAL(_identifier, SIDE_SC_CHECK_##_elem_type)
+
 #define SIDE_SC_DEFINE_OPTIONAL(_identifier, _type)			\
 	SIDE_SC_BEGIN_DIAGNOSTIC();					\
 	typedef void (*SIDE_SC_TYPE(user_define_optional__##_identifier))(SIDE_SC_TYPE(optional) _type); \
@@ -2638,6 +2655,13 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #undef side_define_vla
 #define side_define_vla(_identifier, _elem_type, _length_type, _attr...) \
 	_side_define_vla(_identifier,					\
+			SIDE_SC_EMIT_##_elem_type, SIDE_SC_EMIT_##_length_type, \
+			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_SC_DEFINE_VLA(_identifier, SIDE_SC_CHECK_vla_##_elem_type)
+
+#undef side_static_define_vla
+#define side_static_define_vla(_identifier, _elem_type, _length_type, _attr...) \
+	_side_static_define_vla(_identifier,				\
 			SIDE_SC_EMIT_##_elem_type, SIDE_SC_EMIT_##_length_type, \
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
 	SIDE_SC_DEFINE_VLA(_identifier, SIDE_SC_CHECK_vla_##_elem_type)

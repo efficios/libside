@@ -528,8 +528,9 @@
 
 /* Variant. */
 #define side_define_variant _side_define_variant
+#define side_static_define_variant _side_static_define_variant
 #define side_arg_define_variant _side_arg_define_variant
-#define side_type_variant(_identifier) _identifier
+#define side_type_variant(_identifier) _side_type_variant(_identifier)
 #define side_field_variant _side_field_variant
 #define	side_arg_variant(...) _side_arg_variant(__VA_ARGS__)
 #define side_option_list _side_option_list
@@ -538,7 +539,8 @@
 
 /* Optional */
 #define side_define_optional _side_define_optional
-#define side_type_optional(_identifier) &_identifier
+#define side_static_define_optional _side_static_define_optional
+#define side_type_optional(_identifier) _side_type_optional(_identifier)
 #define side_field_optional _side_field_optional
 #define side_field_optional_literal _side_field_optional_literal
 #define side_arg_optional(_identifier) _side_arg_optional(_identifier)
@@ -550,12 +552,14 @@
 /* Array. */
 #define side_arg_define_array _side_arg_define_vec
 #define side_define_array _side_define_array
+#define side_static_define_array _side_static_define_array
 #define side_type_array(_array) _side_type_array(_array)
 #define side_field_array _side_field_array
 #define side_arg_array _side_arg_array
 
 /* VLA. */
 #define side_define_vla _side_define_vla
+#define side_static_define_vla _side_static_define_vla
 #define side_arg_define_vla _side_arg_define_vec
 #define side_type_vla(_vla) _side_type_vla(_vla)
 #define side_field_vla _side_field_vla

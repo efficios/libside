@@ -152,81 +152,361 @@
 /* Stack-copy field and type definitions */
 
 #define _side_type_null(_attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_NULL), \
-		.u = { \
-			.side_null = { \
-				.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(SIDE_TYPE_NULL), \
+			.u = { \
+				.side_null = { \
+					.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+				}, \
 			}, \
-		}, \
-	}
+		})
 
 #define _side_type_bool(_attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_BOOL), \
-		.u = { \
-			.side_bool = { \
-				.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
-				.bool_size = sizeof(uint8_t), \
-				.len_bits = 0, \
-				.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(SIDE_TYPE_BOOL), \
+			.u = { \
+				.side_bool = { \
+					.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+					.bool_size = sizeof(uint8_t), \
+					.len_bits = 0, \
+					.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
+				}, \
 			}, \
-		}, \
-	}
+		})
 
 #define _side_type_byte(_attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_BYTE), \
-		.u = { \
-			.side_byte = { \
-				.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(SIDE_TYPE_BYTE), \
+			.u = { \
+				.side_byte = { \
+					.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+				}, \
 			}, \
-		}, \
-	}
+		})
 
 #define __side_type_string(_type, _byte_order, _unit_size, _attr) \
-	{ \
-		.type = SIDE_ENUM_INIT(_type), \
-		.u = { \
-			.side_string = { \
-				.attributes = _attr, \
-				.unit_size = _unit_size, \
-				.byte_order = SIDE_ENUM_INIT(_byte_order), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(_type), \
+			.u = { \
+				.side_string = { \
+					.attributes = _attr, \
+					.unit_size = _unit_size, \
+					.byte_order = SIDE_ENUM_INIT(_byte_order), \
+				}, \
 			}, \
-		}, \
-	}
+		})
 
 #define _side_type_dynamic() \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC), \
-		.u = { }				   \
-	}
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(SIDE_TYPE_DYNAMIC), \
+			.u = { }				   \
+		})
 
 #define _side_type_integer(_type, _signedness, _byte_order, _integer_size, _len_bits, _attr) \
-	{ \
-		.type = SIDE_ENUM_INIT(_type), \
-		.u = { \
-			.side_integer = { \
-				.attributes = _attr, \
-				.integer_size = _integer_size, \
-				.len_bits = _len_bits, \
-				.signedness = _signedness, \
-				.byte_order = SIDE_ENUM_INIT(_byte_order), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(_type), \
+			.u = { \
+				.side_integer = { \
+					.attributes = _attr, \
+					.integer_size = _integer_size, \
+					.len_bits = _len_bits, \
+					.signedness = _signedness, \
+					.byte_order = SIDE_ENUM_INIT(_byte_order), \
+				}, \
 			}, \
-		}, \
-	}
+		})
 
 #define __side_type_float(_type, _byte_order, _float_size, _attr) \
-	{ \
-		.type = SIDE_ENUM_INIT(_type), \
-		.u = { \
-			.side_float = { \
-				.attributes = _attr, \
-				.float_size = _float_size, \
-				.byte_order = SIDE_ENUM_INIT(_byte_order), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(_type), \
+			.u = { \
+				.side_float = { \
+					.attributes = _attr, \
+					.float_size = _float_size, \
+					.byte_order = SIDE_ENUM_INIT(_byte_order), \
+				}, \
 			}, \
-		}, \
+		})
+
+/*
+ * A type, as what it is rather than as an initializer.
+ *
+ * A type which points at another one needs that other one to be a named
+ * object in the section a description lives in, so that the distance to
+ * it is one the assembler folds. Only the site storing a type knows
+ * where that type is going -- at which byte of which object -- and so
+ * where what it points at has to be measured from. A type therefore
+ * hands over what it is, and that site puts it together, the way a
+ * field hands over its name and its type rather than an initializer.
+ *
+ * A type is a parenthesized (kind, ...): parenthesized, so that it is
+ * one macro argument however many commas its initializer holds. The
+ * site storing it puts it together with
+ *
+ *   SIDE_TYPE_DECLARE_L0(_obj, _off, _pfx, _type)
+ *      what _type needs beside it, given that the struct side_type it
+ *      builds lands at byte _off of the object _obj, and that what it
+ *      puts in the section may be named _pfx-something;
+ *
+ *   SIDE_TYPE_INIT(_pfx, _type)
+ *      the initializer of that struct side_type, reaching it.
+ *
+ * The two walks have to name the same objects, so _pfx is built from
+ * the position of what is being walked and never from __COUNTER__, for
+ * the reason SIDE_MAP_IDX() gives.
+ *
+ * A type which puts another one in the section has to declare that one
+ * in turn, and a macro cannot expand within its own expansion, so the
+ * declaring walk goes down a ladder of rungs rather than recursing: a
+ * type at _L0 declares what it holds at _L1. A type nested more deeply
+ * than the last rung says so as an undefined
+ * SIDE_TYPE_DECLARE_L4_<kind>; name it with side_define_type() and
+ * refer to it, which costs a rung nothing.
+ *
+ * The kinds, and what follows each of them in the tuple:
+ *
+ *   SIDE_TK_LEAF	the initializer; the type holds no other
+ *   SIDE_TK_PTR	label, member, target (an object with a name)
+ *   SIDE_TK_ENUM	label, member, mappings, element type
+ *   SIDE_TK_GSTRUCT	target, offset, size, access mode
+ *   SIDE_TK_GARRAY	element type, length, offset, access mode, attributes
+ *   SIDE_TK_GVLA	element type, offset, access mode, length type, attributes
+ *   SIDE_TK_OPTLIT	element type, attributes (an optional with no name)
+ *
+ * The kind is pasted onto the name of the macro which takes it and is
+ * never expanded, which is what keeps a macro of the same name
+ * elsewhere in the program from being substituted for it.
+ */
+
+/* The initializer of a type, reaching what it holds. */
+#define SIDE_TYPE_INIT(_pfx, _type)					\
+	SIDE_TYPE_INIT_1(_pfx, SIDE_UNPACK _type)
+#define SIDE_TYPE_INIT_1(_pfx, ...)	SIDE_TYPE_INIT_2(_pfx, __VA_ARGS__)
+#define SIDE_TYPE_INIT_2(_pfx, _kind, ...)				\
+	SIDE_TYPE_INIT_ ## _kind(_pfx, __VA_ARGS__)
+
+#define SIDE_TYPE_INIT_SIDE_TK_LEAF(_pfx, ...)		__VA_ARGS__
+
+#define SIDE_TYPE_INIT_SIDE_TK_PTR(_pfx, _label, _member, _target)	\
+	{								\
+		.type = SIDE_ENUM_INIT(_label),				\
+		.u = {							\
+			._member = SIDE_PTR_INIT(&(_target)),		\
+		},							\
 	}
+
+#define SIDE_TYPE_INIT_SIDE_TK_ENUM(_pfx, _label, _member, _mappings, _elem) \
+	{								\
+		.type = SIDE_ENUM_INIT(_label),				\
+		.u = {							\
+			._member = {					\
+				.mappings = SIDE_PTR_INIT(_mappings),	\
+				.elem_type = SIDE_PTR_INIT(&SIDE_TYPE_ELEM_SYM(_pfx)), \
+			},						\
+		},							\
+	}
+
+#define SIDE_TYPE_INIT_SIDE_TK_GSTRUCT(_pfx, _target, _offset, _size, _access_mode) \
+	{								\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRUCT),	\
+		.u = {							\
+			.side_gather = {				\
+				.u = {					\
+					.side_struct = {		\
+						.type = SIDE_PTR_INIT(&(_target)), \
+						.offset = _offset,	\
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
+						.size = _size,		\
+					},				\
+				},					\
+			},						\
+		},							\
+	}
+
+#define SIDE_TYPE_INIT_SIDE_TK_GARRAY(_pfx, _elem, _length, _offset, _access_mode, _attr...) \
+	{								\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_ARRAY),		\
+		.u = {							\
+			.side_gather = {				\
+				.u = {					\
+					.side_array = {			\
+						.offset = _offset,	\
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
+						.type = {		\
+							.elem_type = SIDE_PTR_INIT(&SIDE_TYPE_ELEM_SYM(_pfx)), \
+							.length = _length, \
+							.attributes = _attr, \
+						},			\
+					},				\
+				},					\
+			},						\
+		},							\
+	}
+
+#define SIDE_TYPE_INIT_SIDE_TK_GVLA(_pfx, _elem, _offset, _access_mode, _length, _attr...) \
+	{								\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_VLA),		\
+		.u = {							\
+			.side_gather = {				\
+				.u = {					\
+					.side_vla = {			\
+						.offset = _offset,	\
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
+						.type = {		\
+							.elem_type = SIDE_PTR_INIT(&SIDE_TYPE_ELEM_SYM(_pfx)), \
+							.length_type = SIDE_PTR_INIT(&SIDE_TYPE_LEN_SYM(_pfx)), \
+							.attributes = _attr, \
+						},			\
+					},				\
+				},					\
+			},						\
+		},							\
+	}
+
+#define SIDE_TYPE_INIT_SIDE_TK_OPTLIT(_pfx, _elem, _attr...)		\
+	{								\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_OPTIONAL),		\
+		.u = {							\
+			.side_optional = SIDE_PTR_INIT(&SIDE_TYPE_OPT_SYM(_pfx)), \
+		},							\
+	}
+
+/* What a type puts in the section, and under which name. */
+#define SIDE_TYPE_ELEM_SYM(_pfx)	SIDE_CAT3(_pfx, __elem, )
+#define SIDE_TYPE_LEN_SYM(_pfx)		SIDE_CAT3(_pfx, __len, )
+#define SIDE_TYPE_OPT_SYM(_pfx)		SIDE_CAT3(_pfx, __opt, )
+
+/*
+ * One type in an object of its own, in the section a description is in
+ * and not const, which is what lets the assembler fold a distance to
+ * it. See side_ptr_rel_t.
+ */
+#define SIDE_TYPE_OBJECT(_name, _init...)				\
+	static struct side_type __attribute__((section("side_event_description"), used)) \
+		_name SIDE_ASM_LABEL(_name) = _init;
+
+/* The same, for the optional a field carries rather than names. */
+#define SIDE_TYPE_OPTIONAL_OBJECT(_name, _elem, _attr...)		\
+	static struct side_type_optional __attribute__((section("side_event_description"), used)) \
+		_name SIDE_ASM_LABEL(_name) = {				\
+			.elem_type = SIDE_PTR_INIT(&(_elem)),		\
+			.attributes = _attr,				\
+		};
+
+/*
+ * Put a type in an object of its own and declare what it holds, one
+ * rung further down the ladder.
+ */
+#define SIDE_TYPE_HOIST_L0(_name, _type)				\
+	SIDE_TYPE_DECLARE_L0(_name, 0, _name, _type)			\
+	SIDE_TYPE_OBJECT(_name, SIDE_TYPE_INIT(_name, _type))
+#define SIDE_TYPE_HOIST_L1(_name, _type)				\
+	SIDE_TYPE_DECLARE_L1(_name, 0, _name, _type)			\
+	SIDE_TYPE_OBJECT(_name, SIDE_TYPE_INIT(_name, _type))
+#define SIDE_TYPE_HOIST_L2(_name, _type)				\
+	SIDE_TYPE_DECLARE_L2(_name, 0, _name, _type)			\
+	SIDE_TYPE_OBJECT(_name, SIDE_TYPE_INIT(_name, _type))
+#define SIDE_TYPE_HOIST_L3(_name, _type)				\
+	SIDE_TYPE_DECLARE_L3(_name, 0, _name, _type)			\
+	SIDE_TYPE_OBJECT(_name, SIDE_TYPE_INIT(_name, _type))
+
+/* What a type needs beside it, dispatched on its kind, rung by rung. */
+#define SIDE_TYPE_DECLARE_L0(_obj, _off, _pfx, _type)			\
+	SIDE_TYPE_DECLARE_L0_1(_obj, _off, _pfx, SIDE_UNPACK _type)
+#define SIDE_TYPE_DECLARE_L0_1(_obj, _off, _pfx, ...)			\
+	SIDE_TYPE_DECLARE_L0_2(_obj, _off, _pfx, __VA_ARGS__)
+#define SIDE_TYPE_DECLARE_L0_2(_obj, _off, _pfx, _kind, ...)		\
+	SIDE_TYPE_DECLARE_L0_ ## _kind(_obj, _off, _pfx, __VA_ARGS__)
+
+#define SIDE_TYPE_DECLARE_L1(_obj, _off, _pfx, _type)			\
+	SIDE_TYPE_DECLARE_L1_1(_obj, _off, _pfx, SIDE_UNPACK _type)
+#define SIDE_TYPE_DECLARE_L1_1(_obj, _off, _pfx, ...)			\
+	SIDE_TYPE_DECLARE_L1_2(_obj, _off, _pfx, __VA_ARGS__)
+#define SIDE_TYPE_DECLARE_L1_2(_obj, _off, _pfx, _kind, ...)		\
+	SIDE_TYPE_DECLARE_L1_ ## _kind(_obj, _off, _pfx, __VA_ARGS__)
+
+#define SIDE_TYPE_DECLARE_L2(_obj, _off, _pfx, _type)			\
+	SIDE_TYPE_DECLARE_L2_1(_obj, _off, _pfx, SIDE_UNPACK _type)
+#define SIDE_TYPE_DECLARE_L2_1(_obj, _off, _pfx, ...)			\
+	SIDE_TYPE_DECLARE_L2_2(_obj, _off, _pfx, __VA_ARGS__)
+#define SIDE_TYPE_DECLARE_L2_2(_obj, _off, _pfx, _kind, ...)		\
+	SIDE_TYPE_DECLARE_L2_ ## _kind(_obj, _off, _pfx, __VA_ARGS__)
+
+#define SIDE_TYPE_DECLARE_L3(_obj, _off, _pfx, _type)			\
+	SIDE_TYPE_DECLARE_L3_1(_obj, _off, _pfx, SIDE_UNPACK _type)
+#define SIDE_TYPE_DECLARE_L3_1(_obj, _off, _pfx, ...)			\
+	SIDE_TYPE_DECLARE_L3_2(_obj, _off, _pfx, __VA_ARGS__)
+#define SIDE_TYPE_DECLARE_L3_2(_obj, _off, _pfx, _kind, ...)		\
+	SIDE_TYPE_DECLARE_L3_ ## _kind(_obj, _off, _pfx, __VA_ARGS__)
+
+/* A type which holds no other needs nothing beside it, at any rung. */
+#define SIDE_TYPE_DECLARE_NOTHING(...)
+
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_LEAF	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_LEAF	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_LEAF	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_LEAF	SIDE_TYPE_DECLARE_NOTHING
+
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_PTR	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_PTR	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_PTR	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_PTR	SIDE_TYPE_DECLARE_NOTHING
+
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_NOTHING
+
+/* An enumeration, which holds the type of what it maps. */
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_ENUM(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
+	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_ENUM(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
+	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_ENUM(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
+	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)
+
+/* A gather array, which holds the type of its elements. */
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_GARRAY(_obj, _off, _pfx, _elem, ...) \
+	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_GARRAY(_obj, _off, _pfx, _elem, ...) \
+	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_GARRAY(_obj, _off, _pfx, _elem, ...) \
+	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)
+
+/* A gather vla, which holds the type of its elements and of its length. */
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_GVLA(_obj, _off, _pfx, _elem, _offset, _access_mode, _length, ...) \
+	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_HOIST_L1(SIDE_TYPE_LEN_SYM(_pfx), _length)
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_GVLA(_obj, _off, _pfx, _elem, _offset, _access_mode, _length, ...) \
+	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_HOIST_L2(SIDE_TYPE_LEN_SYM(_pfx), _length)
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_GVLA(_obj, _off, _pfx, _elem, _offset, _access_mode, _length, ...) \
+	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_HOIST_L3(SIDE_TYPE_LEN_SYM(_pfx), _length)
+
+/*
+ * An optional a field carries rather than names: the optional itself
+ * goes in the section too, since nothing else gives it a name.
+ */
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_OPTLIT(_obj, _off, _pfx, _elem, _attr...) \
+	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_OPTIONAL_OBJECT(SIDE_TYPE_OPT_SYM(_pfx),		\
+		SIDE_TYPE_ELEM_SYM(_pfx), _attr)
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_OPTLIT(_obj, _off, _pfx, _elem, _attr...) \
+	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_OPTIONAL_OBJECT(SIDE_TYPE_OPT_SYM(_pfx),		\
+		SIDE_TYPE_ELEM_SYM(_pfx), _attr)
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_OPTLIT(_obj, _off, _pfx, _elem, _attr...) \
+	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_OPTIONAL_OBJECT(SIDE_TYPE_OPT_SYM(_pfx),		\
+		SIDE_TYPE_ELEM_SYM(_pfx), _attr)
 
 /*
  * A field, as the pair of what it is called and what it is, rather than
@@ -243,6 +523,9 @@
 /* Where the name of field _idx of _ctx lives, and the distance to it. */
 #define SIDE_FIELD_NAME_SYM(_ctx, _idx)	SIDE_CAT3(_ctx, __field_name_, _idx)
 #define SIDE_FIELD_NAME_OFF(_ctx, _idx)	SIDE_CAT3(_ctx, __field_name_off_, _idx)
+
+/* Under which name the type of that field puts what it holds. */
+#define SIDE_FIELD_TYPE_SYM(_ctx, _idx)	SIDE_CAT3(_ctx, __field_type_, _idx)
 
 /*
  * Hoist the name of one field into the section its array is in, and
@@ -262,17 +545,22 @@
 #define SIDE_FIELD_DECLARE_1(_ctx, _idx, _field)			\
 	SIDE_FIELD_DECLARE_2(SIDE_FIELD_NAME_SYM(_ctx, _idx),		\
 		SIDE_FIELD_NAME_OFF(_ctx, _idx),			\
+		SIDE_FIELD_TYPE_SYM(_ctx, _idx),			\
 		SIDE_CAT3(_ctx, __fields, ), SIDE_IDX_NUM(_idx),		\
 		SIDE_UNPACK _field)
-#define SIDE_FIELD_DECLARE_2(_sym, _off, _fields, _k, ...)		\
-	SIDE_FIELD_DECLARE_3(_sym, _off, _fields, _k, __VA_ARGS__)
-#define SIDE_FIELD_DECLARE_3(_sym, _off, _fields, _k, _name, _type...)	\
+#define SIDE_FIELD_DECLARE_2(_sym, _off, _tsym, _fields, _k, ...)	\
+	SIDE_FIELD_DECLARE_3(_sym, _off, _tsym, _fields, _k, __VA_ARGS__)
+#define SIDE_FIELD_DECLARE_3(_sym, _off, _tsym, _fields, _k, _name, _type) \
 	static char __attribute__((section("side_event_description"), used)) \
 		_sym[] SIDE_ASM_LABEL(_sym) = _name;			\
 	SIDE_PTR_REL_DEFINE_AT(_off, _fields,				\
 		(_k) * sizeof(struct side_event_field)			\
 			+ offsetof(struct side_event_field, field_name), \
-		_sym)
+		_sym)							\
+	SIDE_TYPE_DECLARE_L0(_fields,					\
+		(_k) * sizeof(struct side_event_field)			\
+			+ offsetof(struct side_event_field, side_type),	\
+		_tsym, _type)
 
 /* The array element, reaching its name by that distance. */
 #define SIDE_FIELD_INIT(_ctx, _idx, _field)				\
@@ -281,12 +569,14 @@
 #define SIDE_FIELD_INIT_0(_ctx, _idx, _field)
 
 #define SIDE_FIELD_INIT_1(_ctx, _idx, _field)				\
-	SIDE_FIELD_INIT_2(SIDE_FIELD_NAME_OFF(_ctx, _idx), SIDE_UNPACK _field)
-#define SIDE_FIELD_INIT_2(_off, ...)	SIDE_FIELD_INIT_3(_off, __VA_ARGS__)
-#define SIDE_FIELD_INIT_3(_off, _name, _type...)			\
+	SIDE_FIELD_INIT_2(SIDE_FIELD_NAME_OFF(_ctx, _idx),		\
+		SIDE_FIELD_TYPE_SYM(_ctx, _idx), SIDE_UNPACK _field)
+#define SIDE_FIELD_INIT_2(_off, _tsym, ...)				\
+	SIDE_FIELD_INIT_3(_off, _tsym, __VA_ARGS__)
+#define SIDE_FIELD_INIT_3(_off, _tsym, _name, _type)			\
 	{								\
 		.field_name = SIDE_PTR_REL_INIT(_off),			\
-		.side_type = _type,					\
+		.side_type = SIDE_TYPE_INIT(_tsym, _type),		\
 	}
 
 /*
@@ -300,15 +590,69 @@
 #define SIDE_FIELDS_INIT(_ctx, _fields)					\
 	{ SIDE_MAP_LIST_IDX_P(SIDE_FIELD_INIT, _ctx, SIDE_UNPACK _fields) }
 
-#define _side_option_range(_range_begin, _range_end, _type) \
-	{ \
-		.range_begin = _range_begin, \
-		.range_end = _range_end, \
-		.side_type = _type, \
+/*
+ * An option of a variant, as the range it covers and what it is, rather
+ * than as an initializer: the type it holds goes where the site
+ * defining the variant puts it, as a field's does.
+ */
+#define _side_option_range(_range_begin, _range_end, _type)		\
+	(_range_begin, _range_end, _type)
+
+#define _side_option(_value, _type)					\
+	_side_option_range(_value, _value, _type)
+
+/* Under which name the type of option _idx of _ctx puts what it holds. */
+#define SIDE_OPTION_TYPE_SYM(_ctx, _idx)	SIDE_CAT3(_ctx, __option_type_, _idx)
+
+/*
+ * The type of one option, put at the byte of the array where the option
+ * holding it lands. An element which is not parenthesized is the
+ * nothing a list with no element, or the trailing comma the DSL allows,
+ * leaves behind.
+ */
+#define SIDE_OPTION_DECLARE(_ctx, _idx, _option)				\
+	SIDE_CAT2(SIDE_OPTION_DECLARE_, SIDE_IS_PAREN(_option))(_ctx, _idx, _option)
+
+#define SIDE_OPTION_DECLARE_0(_ctx, _idx, _option)
+
+#define SIDE_OPTION_DECLARE_1(_ctx, _idx, _option)			\
+	SIDE_OPTION_DECLARE_2(SIDE_OPTION_TYPE_SYM(_ctx, _idx),		\
+		SIDE_CAT3(_ctx, __options, ), SIDE_IDX_NUM(_idx),	\
+		SIDE_UNPACK _option)
+#define SIDE_OPTION_DECLARE_2(_tsym, _options, _k, ...)			\
+	SIDE_OPTION_DECLARE_3(_tsym, _options, _k, __VA_ARGS__)
+#define SIDE_OPTION_DECLARE_3(_tsym, _options, _k, _begin, _end, _type)	\
+	SIDE_TYPE_DECLARE_L0(_options,					\
+		(_k) * sizeof(struct side_variant_option)		\
+			+ offsetof(struct side_variant_option, side_type), \
+		_tsym, _type)
+
+/* The array element, reaching what its type holds. */
+#define SIDE_OPTION_INIT(_ctx, _idx, _option)				\
+	SIDE_CAT2(SIDE_OPTION_INIT_, SIDE_IS_PAREN(_option))(_ctx, _idx, _option)
+
+#define SIDE_OPTION_INIT_0(_ctx, _idx, _option)
+
+#define SIDE_OPTION_INIT_1(_ctx, _idx, _option)				\
+	SIDE_OPTION_INIT_2(SIDE_OPTION_TYPE_SYM(_ctx, _idx), SIDE_UNPACK _option)
+#define SIDE_OPTION_INIT_2(_tsym, ...)	SIDE_OPTION_INIT_3(_tsym, __VA_ARGS__)
+#define SIDE_OPTION_INIT_3(_tsym, _begin, _end, _type)			\
+	{								\
+		.range_begin = _begin,					\
+		.range_end = _end,					\
+		.side_type = SIDE_TYPE_INIT(_tsym, _type),		\
 	}
 
-#define _side_option(_value, _type) \
-	_side_option_range(_value, _value, SIDE_PARAM(_type))
+/*
+ * The options of _ctx: what their types hold, then the array itself,
+ * which is declared before them because the distance to each of them is
+ * measured from a byte of it.
+ */
+#define SIDE_OPTIONS_DECLARE(_ctx, _options)				\
+	SIDE_MAP_IDX_P(SIDE_OPTION_DECLARE, _ctx, SIDE_UNPACK _options)
+
+#define SIDE_OPTIONS_INIT(_ctx, _options)				\
+	{ SIDE_MAP_LIST_IDX_P(SIDE_OPTION_INIT, _ctx, SIDE_UNPACK _options) }
 
 /* Host endian */
 #define _side_type_u8(_attr...)				_side_type_integer(SIDE_TYPE_U8, false, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), 0, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
@@ -640,38 +984,17 @@
 #define _side_field_string32_be(_name, _attr...)		_side_field(_name, _side_type_string32_be(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define _side_type_enum(_mappings, _elem_type) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_ENUM), \
-		.u = { \
-			.side_enum = { \
-				.mappings = SIDE_PTR_INIT(_mappings), \
-				.elem_type = SIDE_PTR_INIT(_elem_type), \
-			}, \
-		}, \
-	}
+	(SIDE_TK_ENUM, SIDE_TYPE_ENUM, side_enum, _mappings, _elem_type)
 #define _side_field_enum(_name, _mappings, _elem_type) \
 	_side_field(_name, _side_type_enum(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define _side_type_enum_bitmap(_mappings, _elem_type) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_ENUM_BITMAP), \
-		.u = { \
-			.side_enum_bitmap = { \
-				.mappings = SIDE_PTR_INIT(_mappings), \
-				.elem_type = SIDE_PTR_INIT(_elem_type), \
-			}, \
-		}, \
-	}
+	(SIDE_TK_ENUM, SIDE_TYPE_ENUM_BITMAP, side_enum_bitmap, _mappings, _elem_type)
 #define _side_field_enum_bitmap(_name, _mappings, _elem_type) \
 	_side_field(_name, _side_type_enum_bitmap(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define _side_type_struct(_struct) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_STRUCT), \
-		.u = { \
-			.side_struct = SIDE_PTR_INIT(&_struct), \
-		}, \
-	}
+	(SIDE_TK_PTR, SIDE_TYPE_STRUCT, side_struct, _struct)
 
 #define _side_field_struct(_name, _struct) \
 	_side_field(_name, _side_type_struct(SIDE_PARAM(_struct)))
@@ -704,7 +1027,8 @@
 	_linkage struct side_event_field __attribute__((section("side_event_description"), used)) \
 		_identifier##__fields[] SIDE_ASM_LABEL(_identifier##__fields) = \
 			SIDE_FIELDS_INIT(_identifier, _fields);		\
-	_linkage const struct side_type_struct _identifier =		\
+	_linkage struct side_type_struct __attribute__((section("side_event_description"), used)) \
+		_identifier SIDE_ASM_LABEL(_identifier) =		\
 		_side_type_struct_define(SIDE_PARAM(SIDE_LITERAL_ARRAY_OF_NAMED(_identifier##__fields)), \
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
 	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
@@ -727,15 +1051,10 @@
 	__side_define_struct(extern, , _identifier, SIDE_PARAM(_fields), ##_attr)
 
 #define _side_type_variant(_variant) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_VARIANT), \
-		.u = { \
-			.side_variant = SIDE_PTR_INIT(_variant), \
-		}, \
-	}
+	(SIDE_TK_PTR, SIDE_TYPE_VARIANT, side_variant, _variant)
 
 #define _side_field_variant(_name, _variant) \
-	_side_field(_name, _side_type_variant(SIDE_PARAM(&_variant)))
+	_side_field(_name, _side_type_variant(_variant))
 
 #define _side_type_variant_define(_selector, _options, _attr)	     \
 	{							     \
@@ -744,9 +1063,51 @@
 		.attributes = _attr,			     \
 	}
 
+/*
+ * A variant, its options and the type each of them selects, in the
+ * section a description is in: what a field holding this variant points
+ * at has to be an object there for the distance to it to be one the
+ * assembler folds, and so has everything it reaches in turn. That makes
+ * the definition several declarations rather than one, so the linkage
+ * is part of the name, as it is for a structure.
+ */
+#define __side_define_variant(_forward_decl_linkage, _linkage, _identifier, _selector, _options, _attr...) \
+	SIDE_PUSH_DIAGNOSTIC()						\
+	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	_forward_decl_linkage struct side_variant_option __attribute__((section("side_event_description"))) \
+		_identifier##__options[] SIDE_ASM_LABEL(_identifier##__options); \
+	SIDE_OPTIONS_DECLARE(_identifier, _options)			\
+	_linkage struct side_variant_option __attribute__((section("side_event_description"), used)) \
+		_identifier##__options[] SIDE_ASM_LABEL(_identifier##__options) = \
+			SIDE_OPTIONS_INIT(_identifier, _options);	\
+	_forward_decl_linkage struct side_type_variant __attribute__((section("side_event_description"))) \
+		_identifier SIDE_ASM_LABEL(_identifier);		\
+	SIDE_TYPE_DECLARE_L0(_identifier,				\
+		offsetof(struct side_type_variant, selector),		\
+		SIDE_CAT3(_identifier, __selector, ), _selector)	\
+	_linkage struct side_type_variant __attribute__((section("side_event_description"), used)) \
+		_identifier SIDE_ASM_LABEL(_identifier) =		\
+		_side_type_variant_define(				\
+			SIDE_PARAM(SIDE_TYPE_INIT(SIDE_CAT3(_identifier, __selector, ), _selector)), \
+			SIDE_PARAM(SIDE_LITERAL_ARRAY_OF_NAMED(_identifier##__options)), \
+			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
+
+#ifdef __cplusplus
+#  define _side_static_define_variant(_identifier, _selector, _options, _attr...) \
+	namespace {							\
+		__side_define_variant(extern, , _identifier, SIDE_PARAM(_selector), \
+				SIDE_PARAM(_options), ##_attr);		\
+	}
+#else
+#  define _side_static_define_variant(_identifier, _selector, _options, _attr...) \
+	__side_define_variant(static, static, _identifier, SIDE_PARAM(_selector), \
+			SIDE_PARAM(_options), ##_attr)
+#endif
+
 #define _side_define_variant(_identifier, _selector, _options, _attr...) \
-	const struct side_type_variant _identifier = \
-		_side_type_variant_define(SIDE_PARAM(_selector), SIDE_PARAM(_options), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+	__side_define_variant(extern, , _identifier, SIDE_PARAM(_selector),	\
+			SIDE_PARAM(_options), ##_attr)
 
 enum {
 	SIDE_OPTIONAL_DISABLED = 0,
@@ -754,108 +1115,167 @@ enum {
 };
 
 #define _side_type_optional(_optional)					\
-	{								\
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_OPTIONAL),		\
-		.u = {							\
-			.side_optional = SIDE_PTR_INIT(_optional),	\
-		}							\
-	}
+	(SIDE_TK_PTR, SIDE_TYPE_OPTIONAL, side_optional, _optional)
 
 #define _side_type_optional_define(_elem_type, _attr...)		\
 	{								\
 		.elem_type = SIDE_PTR_INIT(_elem_type),			\
-		.attributes = _attr,				\
+		.attributes = _attr,					\
 	}
+
+/*
+ * An optional and the type it holds, in the section a description is
+ * in, for the reason a variant is. The linkage is part of the name for
+ * the same reason too.
+ */
+#define __side_define_optional(_linkage, _identifier, _elem_type, _attr...) \
+	SIDE_PUSH_DIAGNOSTIC()						\
+	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_TYPE_HOIST_L0(SIDE_TYPE_ELEM_SYM(_identifier), _elem_type)	\
+	_linkage struct side_type_optional __attribute__((section("side_event_description"), used)) \
+		_identifier SIDE_ASM_LABEL(_identifier) =		\
+		_side_type_optional_define(&SIDE_TYPE_ELEM_SYM(_identifier), \
+			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
+
+#ifdef __cplusplus
+#  define _side_static_define_optional(_identifier, _elem_type, _attr...) \
+	namespace {							\
+		__side_define_optional(, _identifier, _elem_type, ##_attr); \
+	}
+#else
+#  define _side_static_define_optional(_identifier, _elem_type, _attr...) \
+	__side_define_optional(static, _identifier, _elem_type, ##_attr)
+#endif
 
 #define _side_define_optional(_identifier, _elem_type, _attr...)	\
-	const struct side_type_optional _identifier = _side_type_optional_define(SIDE_PARAM(_elem_type), \
-										SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
+	__side_define_optional(, _identifier, _elem_type, ##_attr)
 
 #define _side_field_optional(_name, _identifier)		\
-	_side_field(_name, _side_type_optional(SIDE_PARAM(&(_identifier))))
+	_side_field(_name, _side_type_optional(_identifier))
 
 #define _side_field_optional_literal(_name, _elem_type, _attr...)		\
-	_side_field(_name, _side_type_optional(SIDE_COMPOUND_LITERAL(struct side_type_optional, _side_type_optional_define(SIDE_PARAM(_elem_type), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))))
+	_side_field(_name, (SIDE_TK_OPTLIT, _elem_type,			\
+			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define _side_type_array(_array)				\
-	{							\
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_ARRAY),	\
-		.u = {						\
-			.side_array = SIDE_PTR_INIT(&_array)	\
-		}						\
-	}
+	(SIDE_TK_PTR, SIDE_TYPE_ARRAY, side_array, _array)
 
 #define _side_field_array(_name, _array) \
 	_side_field(_name, _side_type_array(_array))
 
-#define _side_define_array(_identifier, _elem_type, _length, _attr...)	\
-	const struct side_type_array _identifier = {			\
-		.elem_type = SIDE_PTR_INIT(SIDE_PARAM(_elem_type)),	\
+/*
+ * An array and the type of its elements, in the section a description
+ * is in, for the reason a variant is. The linkage is part of the name
+ * for the same reason too.
+ */
+#define __side_define_array(_linkage, _identifier, _elem_type, _length, _attr...) \
+	SIDE_PUSH_DIAGNOSTIC()						\
+	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_TYPE_HOIST_L0(SIDE_TYPE_ELEM_SYM(_identifier), _elem_type)	\
+	_linkage struct side_type_array __attribute__((section("side_event_description"), used)) \
+		_identifier SIDE_ASM_LABEL(_identifier) = {		\
+		.elem_type = SIDE_PTR_INIT(&SIDE_TYPE_ELEM_SYM(_identifier)), \
 		.length = _length,					\
 		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+	};								\
+	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
+
+#ifdef __cplusplus
+#  define _side_static_define_array(_identifier, _elem_type, _length, _attr...) \
+	namespace {							\
+		__side_define_array(, _identifier, _elem_type, _length, ##_attr); \
 	}
+#else
+#  define _side_static_define_array(_identifier, _elem_type, _length, _attr...) \
+	__side_define_array(static, _identifier, _elem_type, _length, ##_attr)
+#endif
+
+#define _side_define_array(_identifier, _elem_type, _length, _attr...)	\
+	__side_define_array(, _identifier, _elem_type, _length, ##_attr)
 
 #define _side_type_vla(_vla)					\
-	{							\
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_VLA),		\
-		.u = {						\
-			.side_vla = SIDE_PTR_INIT(&_vla),	\
-		},						\
-	}
+	(SIDE_TK_PTR, SIDE_TYPE_VLA, side_vla, _vla)
 
 #define _side_field_vla(_name, _vla) \
 	_side_field(_name, _side_type_vla(_vla))
 
-#define _side_define_vla(_identifier, _elem_type, _length_type, _attr...) \
-	const struct side_type_vla _identifier = {			\
-		.elem_type = SIDE_PTR_INIT(SIDE_PARAM(_elem_type)),	\
-		.length_type = SIDE_PTR_INIT(SIDE_PARAM(_length_type)),	\
-		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()) \
+/*
+ * A vla, the type of its elements and the type of its length, in the
+ * section a description is in, for the reason a variant is. The linkage
+ * is part of the name for the same reason too.
+ */
+#define __side_define_vla(_linkage, _identifier, _elem_type, _length_type, _attr...) \
+	SIDE_PUSH_DIAGNOSTIC()						\
+	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_TYPE_HOIST_L0(SIDE_TYPE_ELEM_SYM(_identifier), _elem_type)	\
+	SIDE_TYPE_HOIST_L0(SIDE_TYPE_LEN_SYM(_identifier), _length_type) \
+	_linkage struct side_type_vla __attribute__((section("side_event_description"), used)) \
+		_identifier SIDE_ASM_LABEL(_identifier) = {		\
+		.elem_type = SIDE_PTR_INIT(&SIDE_TYPE_ELEM_SYM(_identifier)), \
+		.length_type = SIDE_PTR_INIT(&SIDE_TYPE_LEN_SYM(_identifier)), \
+		.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+	};								\
+	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
+
+#ifdef __cplusplus
+#  define _side_static_define_vla(_identifier, _elem_type, _length_type, _attr...) \
+	namespace {							\
+		__side_define_vla(, _identifier, _elem_type, _length_type, ##_attr); \
 	}
+#else
+#  define _side_static_define_vla(_identifier, _elem_type, _length_type, _attr...) \
+	__side_define_vla(static, _identifier, _elem_type, _length_type, ##_attr)
+#endif
+
+#define _side_define_vla(_identifier, _elem_type, _length_type, _attr...) \
+	__side_define_vla(, _identifier, _elem_type, _length_type, ##_attr)
 
 /* Gather field and type definitions */
 
 #define _side_type_gather_byte(_offset, _access_mode, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_BYTE), \
-		.u = { \
-			.side_gather = { \
-				.u = { \
-					.side_byte = { \
-						.offset = _offset, \
-						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.type = { \
-						.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_BYTE), \
+			.u = { \
+				.side_gather = { \
+					.u = { \
+						.side_byte = { \
+							.offset = _offset, \
+							.access_mode = SIDE_ENUM_INIT(_access_mode), \
+							.type = { \
+							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+							}, \
 						}, \
 					}, \
 				}, \
 			}, \
-		}, \
-	}
+		})
 #define _side_field_gather_byte(_name, _offset, _access_mode, _attr...) \
 	_side_field(_name, _side_type_gather_byte(_offset, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define __side_type_gather_bool(_byte_order, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_BOOL), \
-		.u = { \
-			.side_gather = { \
-				.u = { \
-					.side_bool = { \
-						.offset = _offset, \
-						.offset_bits = _offset_bits, \
-						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.type = { \
-							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
-							.bool_size = _bool_size, \
-							.len_bits = _len_bits, \
-							.byte_order = SIDE_ENUM_INIT(_byte_order), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_BOOL), \
+			.u = { \
+				.side_gather = { \
+					.u = { \
+						.side_bool = { \
+							.offset = _offset, \
+							.offset_bits = _offset_bits, \
+							.access_mode = SIDE_ENUM_INIT(_access_mode), \
+							.type = { \
+								.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+								.bool_size = _bool_size, \
+								.len_bits = _len_bits, \
+								.byte_order = SIDE_ENUM_INIT(_byte_order), \
+							}, \
 						}, \
 					}, \
 				}, \
 			}, \
-		}, \
-	}
+		})
 #define _side_type_gather_bool(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	__side_type_gather_bool(SIDE_TYPE_BYTE_ORDER_HOST, _offset, _bool_size, _offset_bits, _len_bits, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_type_gather_bool_le(_offset, _bool_size, _offset_bits, _len_bits, _access_mode, _attr...) \
@@ -872,27 +1292,28 @@ enum {
 
 #define _side_type_gather_integer(_type, _signedness, _byte_order, _offset, \
 		_integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(_type), \
-		.u = { \
-			.side_gather = { \
-				.u = { \
-					.side_integer = { \
-						.offset = _offset, \
-						.offset_bits = _offset_bits, \
-						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.type = { \
-							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
-							.integer_size = _integer_size, \
-							.len_bits = _len_bits, \
-							.signedness = _signedness, \
-							.byte_order = SIDE_ENUM_INIT(_byte_order), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(_type), \
+			.u = { \
+				.side_gather = { \
+					.u = { \
+						.side_integer = { \
+							.offset = _offset, \
+							.offset_bits = _offset_bits, \
+							.access_mode = SIDE_ENUM_INIT(_access_mode), \
+							.type = { \
+								.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+								.integer_size = _integer_size, \
+								.len_bits = _len_bits, \
+								.signedness = _signedness, \
+								.byte_order = SIDE_ENUM_INIT(_byte_order), \
+							}, \
 						}, \
 					}, \
 				}, \
 			}, \
-		}, \
-	}
+		})
 
 #define _side_type_gather_unsigned_integer(_integer_offset, _integer_size, _offset_bits, _len_bits, _access_mode, _attr...) \
 	_side_type_gather_integer(SIDE_TYPE_GATHER_INTEGER, false,  SIDE_TYPE_BYTE_ORDER_HOST, \
@@ -949,24 +1370,25 @@ enum {
 	_side_field(_name, _side_type_gather_pointer_be(_offset, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define __side_type_gather_float(_byte_order, _offset, _float_size, _access_mode, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_FLOAT), \
-		.u = { \
-			.side_gather = { \
-				.u = { \
-					.side_float = { \
-						.offset = _offset, \
-						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.type = { \
-							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
-							.float_size = _float_size, \
-							.byte_order = SIDE_ENUM_INIT(_byte_order), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_FLOAT), \
+			.u = { \
+				.side_gather = { \
+					.u = { \
+						.side_float = { \
+							.offset = _offset, \
+							.access_mode = SIDE_ENUM_INIT(_access_mode), \
+							.type = { \
+								.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+								.float_size = _float_size, \
+								.byte_order = SIDE_ENUM_INIT(_byte_order), \
+							}, \
 						}, \
 					}, \
 				}, \
 			}, \
-		}, \
-	}
+		})
 
 #define _side_type_gather_float(_offset, _float_size, _access_mode, _attr...) \
 	__side_type_gather_float(SIDE_TYPE_FLOAT_WORD_ORDER_HOST, _offset, _float_size, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
@@ -983,24 +1405,25 @@ enum {
 	_side_field(_name, _side_type_gather_float_be(_offset, _float_size, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define __side_type_gather_string(_offset, _byte_order, _unit_size, _access_mode, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRING), \
-		.u = { \
-			.side_gather = { \
-				.u = { \
-					.side_string = { \
-						.offset = _offset, \
-						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.type = { \
-							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
-							.unit_size = _unit_size, \
-							.byte_order = SIDE_ENUM_INIT(_byte_order), \
+	(SIDE_TK_LEAF, \
+		{ \
+			.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRING), \
+			.u = { \
+				.side_gather = { \
+					.u = { \
+						.side_string = { \
+							.offset = _offset, \
+							.access_mode = SIDE_ENUM_INIT(_access_mode), \
+							.type = { \
+								.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
+								.unit_size = _unit_size, \
+								.byte_order = SIDE_ENUM_INIT(_byte_order), \
+							}, \
 						}, \
 					}, \
 				}, \
 			}, \
-		}, \
-	}
+		})
 #define _side_type_gather_string(_offset, _access_mode, _attr...) \
 	__side_type_gather_string(_offset, SIDE_TYPE_BYTE_ORDER_HOST, sizeof(uint8_t), _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_field_gather_string(_name, _offset, _access_mode, _attr...) \
@@ -1035,86 +1458,36 @@ enum {
 	_side_field(_name, _side_type_gather_string32_be(_offset, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define _side_type_gather_enum(_mappings, _elem_type) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_ENUM), \
-		.u = { \
-			.side_enum = { \
-				.mappings = SIDE_PTR_INIT(&_mappings), \
-				.elem_type = SIDE_PTR_INIT(_elem_type), \
-			}, \
-		}, \
-	}
+	(SIDE_TK_ENUM, SIDE_TYPE_GATHER_ENUM, side_enum, &_mappings, _elem_type)
 #define _side_field_gather_enum(_name, _mappings, _elem_type) \
 	_side_field(_name, _side_type_gather_enum(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define _side_type_gather_struct(_struct_gather, _offset, _size, _access_mode) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRUCT), \
-		.u = { \
-			.side_gather = { \
-				.u = { \
-					.side_struct = { \
-						.type = SIDE_PTR_INIT(&_struct_gather), \
-						.offset = _offset, \
-						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.size = _size, \
-					}, \
-				}, \
-			}, \
-		}, \
-	}
+	(SIDE_TK_GSTRUCT, _struct_gather, _offset, _size, _access_mode)
 #define _side_field_gather_struct(_name, _struct_gather, _offset, _size, _access_mode) \
 	_side_field(_name, _side_type_gather_struct(SIDE_PARAM(_struct_gather), _offset, _size, _access_mode))
 
 #define _side_type_gather_array(_elem_type_gather, _length, _offset, _access_mode, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_ARRAY), \
-		.u = { \
-			.side_gather = { \
-				.u = { \
-					.side_array = { \
-						.offset = _offset, \
-						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.type = { \
-							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
-							.length = _length, \
-							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
-						}, \
-					}, \
-				}, \
-			}, \
-		}, \
-	}
+	(SIDE_TK_GARRAY, _elem_type_gather, _length, _offset, _access_mode, \
+		SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_field_gather_array(_name, _elem_type, _length, _offset, _access_mode, _attr...) \
 	_side_field(_name, _side_type_gather_array(SIDE_PARAM(_elem_type), _length, _offset, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define _side_type_gather_vla(_elem_type_gather, _offset, _access_mode, _length_type_gather, _attr...) \
-	{ \
-		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_VLA), \
-		.u = { \
-			.side_gather = { \
-				.u = { \
-					.side_vla = { \
-						.offset = _offset, \
-						.access_mode = SIDE_ENUM_INIT(_access_mode), \
-						.type = { \
-							.elem_type = SIDE_PTR_INIT(_elem_type_gather), \
-							.length_type = SIDE_PTR_INIT(_length_type_gather), \
-							.attributes = SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()), \
-						}, \
-					}, \
-				}, \
-			}, \
-		}, \
-	}
+	(SIDE_TK_GVLA, _elem_type_gather, _offset, _access_mode, _length_type_gather, \
+		SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))
 #define _side_field_gather_vla(_name, _elem_type_gather, _offset, _access_mode, _length_type_gather, _attr...) \
 	_side_field(_name, _side_type_gather_vla(SIDE_PARAM(_elem_type_gather), _offset, _access_mode, SIDE_PARAM(_length_type_gather), SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
-#define _side_elem(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
+/*
+ * The type of an element, and the type of a length. A type is already
+ * what it is rather than an initializer, so there is nothing left for
+ * these to do but hand it over; the site storing it is what puts it
+ * where it belongs. See SIDE_TYPE_DECLARE_L0().
+ */
+#define _side_elem(_type)	_type
 
-#define _side_length(...) \
-	SIDE_COMPOUND_LITERAL(const struct side_type, __VA_ARGS__)
+#define _side_length(_type)	_type
 
 /*
  * The fields, as a list the site defining the event or the structure
@@ -1125,8 +1498,14 @@ enum {
 #define _side_field_list(...) \
 	( __VA_ARGS__ )
 
+/*
+ * The options, as a list the site defining the variant can walk. It is
+ * parenthesized rather than braced for the reason a field list is: that
+ * site walks it twice, and only parentheses keep the elements together
+ * as one macro argument on the way there.
+ */
 #define _side_option_list(...) \
-	SIDE_LITERAL_ARRAY(const struct side_variant_option, __VA_ARGS__)
+	( __VA_ARGS__ )
 
 /* Stack-copy field arguments */
 
