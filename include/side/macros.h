@@ -551,10 +551,14 @@ namespace libside {
  *     boundary. Nothing writes to those objects; only the page
  *     protection is given up, not the declared type.
  *
- *   - They must be __attribute__((used)). Under link time optimization
- *     the compiler emits top level assembly separately from the data,
- *     and a symbol it believes unreferenced is not there to subtract
- *     from.
+ *   - They must be __attribute__((used)), and the assembly which
+ *     subtracts them has to refer to them. A symbol the compiler
+ *     believes unreferenced is not there to subtract from; and link
+ *     time optimization splits a program into several units to compile,
+ *     placing each object in the one which refers to it, so assembly
+ *     which names an object it does not refer to lands in a unit where
+ *     that name is undefined. The unused operands of the asm statement
+ *     are what refer to them.
  *
  * The section is not garbage collected as long as something reaches it:
  * the constructor which registers events refers to it through
@@ -639,7 +643,8 @@ namespace libside {
 	static void SIDE_CAT(_sym, _emit_offset)(void)			\
 	{								\
 		__asm__ (".set " SIDE_STR(_sym) ", " SIDE_STR(_target)	\
-			" - (" SIDE_STR(_obj) " + %c0)" :: "i" (_off));	\
+			" - (" SIDE_STR(_obj) " + %c0)"			\
+			:: "i" (_off), "X" (&(_obj)), "X" (&(_target)));	\
 	}
 
 /* The same, for a member of a structure. */
