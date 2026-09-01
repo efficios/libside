@@ -786,7 +786,7 @@ void test_variadic_float(void)
 	);
 }
 
-static side_define_enum(myenum,
+side_static_define_enum(myenum,
 	side_enum_mapping_list(
 		side_enum_mapping_range("one-ten", 1, 10),
 		side_enum_mapping_range("100-200", 100, 200),
@@ -827,7 +827,7 @@ void test_enum(void)
 }
 
 /* A bitmap enum maps bits to labels. */
-static side_define_enum_bitmap(myenum_bitmap,
+side_static_define_enum_bitmap(myenum_bitmap,
 	side_enum_bitmap_mapping_list(
 		side_enum_bitmap_mapping_value("0", 0),
 		side_enum_bitmap_mapping_range("1-2", 1, 2),
@@ -1731,7 +1731,7 @@ void test_gather_pointer(void)
 	}
 }
 
-static side_define_enum(myenumgather,
+side_static_define_enum(myenumgather,
 	side_enum_mapping_list(
 		side_enum_mapping_range("one-ten", 1, 10),
 		side_enum_mapping_range("100-200", 100, 200),

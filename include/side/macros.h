@@ -1311,6 +1311,226 @@ namespace libside {
 #define SIDE_MAP_LIST_IDX_P(_f, _ctx, ...)	SIDE_MAP_LIST_IDX(_f, _ctx, __VA_ARGS__)
 
 /*
+ * A second walk, for a list nested within one which is already being
+ * walked: the attributes of a type are walked from inside the walk over
+ * the fields which carry it, and a macro cannot expand within its own
+ * expansion. The names are all that differ; SIDE_MAP_NARG(),
+ * SIDE_CAT() and SIDE_IDX_NEXT() are shared, being finished with by the
+ * time the inner walk reaches them.
+ *
+ * An attribute list is short, so this one stops at
+ * SIDE_MAP_MAX_ELEMS2 rather than carrying the whole length of the
+ * outer one; a longer one says so as an undefined SIDE_MAP_IDX2_<n>.
+ */
+#define SIDE_MAP_MAX_ELEMS2	32
+
+#define SIDE_MAP_IDX2_0(_f, _ctx, _idx)
+#define SIDE_MAP_IDX2_1(_f, _ctx, _idx, _a1)			\
+	_f(_ctx, _idx, _a1)
+#define SIDE_MAP_IDX2_2(_f, _ctx, _idx, _a1, _a2)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_1(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2)
+#define SIDE_MAP_IDX2_3(_f, _ctx, _idx, _a1, _a2, _a3)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_2(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3)
+#define SIDE_MAP_IDX2_4(_f, _ctx, _idx, _a1, _a2, _a3, _a4)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_3(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4)
+#define SIDE_MAP_IDX2_5(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_4(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5)
+#define SIDE_MAP_IDX2_6(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_5(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6)
+#define SIDE_MAP_IDX2_7(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_6(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7)
+#define SIDE_MAP_IDX2_8(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_7(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8)
+#define SIDE_MAP_IDX2_9(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_8(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9)
+#define SIDE_MAP_IDX2_10(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_9(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10)
+#define SIDE_MAP_IDX2_11(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_10(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11)
+#define SIDE_MAP_IDX2_12(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_11(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12)
+#define SIDE_MAP_IDX2_13(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_12(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13)
+#define SIDE_MAP_IDX2_14(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_13(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14)
+#define SIDE_MAP_IDX2_15(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_14(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15)
+#define SIDE_MAP_IDX2_16(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_15(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16)
+#define SIDE_MAP_IDX2_17(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_16(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17)
+#define SIDE_MAP_IDX2_18(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_17(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18)
+#define SIDE_MAP_IDX2_19(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_18(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19)
+#define SIDE_MAP_IDX2_20(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_19(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20)
+#define SIDE_MAP_IDX2_21(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_20(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)
+#define SIDE_MAP_IDX2_22(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_21(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22)
+#define SIDE_MAP_IDX2_23(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_22(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23)
+#define SIDE_MAP_IDX2_24(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_23(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24)
+#define SIDE_MAP_IDX2_25(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_24(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25)
+#define SIDE_MAP_IDX2_26(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_25(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26)
+#define SIDE_MAP_IDX2_27(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_26(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27)
+#define SIDE_MAP_IDX2_28(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_27(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28)
+#define SIDE_MAP_IDX2_29(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_28(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29)
+#define SIDE_MAP_IDX2_30(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_29(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30)
+#define SIDE_MAP_IDX2_31(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30, _a31)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_30(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30, _a31)
+#define SIDE_MAP_IDX2_32(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30, _a31, _a32)			\
+	_f(_ctx, _idx, _a1)					\
+	SIDE_MAP_IDX2_31(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30, _a31, _a32)
+
+#define SIDE_MAP_LIST_IDX2_0(_f, _ctx, _idx)
+#define SIDE_MAP_LIST_IDX2_1(_f, _ctx, _idx, _a1)			\
+	_f(_ctx, _idx, _a1)
+#define SIDE_MAP_LIST_IDX2_2(_f, _ctx, _idx, _a1, _a2)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_1(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2)
+#define SIDE_MAP_LIST_IDX2_3(_f, _ctx, _idx, _a1, _a2, _a3)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_2(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3)
+#define SIDE_MAP_LIST_IDX2_4(_f, _ctx, _idx, _a1, _a2, _a3, _a4)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_3(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4)
+#define SIDE_MAP_LIST_IDX2_5(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_4(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5)
+#define SIDE_MAP_LIST_IDX2_6(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_5(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6)
+#define SIDE_MAP_LIST_IDX2_7(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_6(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7)
+#define SIDE_MAP_LIST_IDX2_8(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_7(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8)
+#define SIDE_MAP_LIST_IDX2_9(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_8(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9)
+#define SIDE_MAP_LIST_IDX2_10(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_9(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10)
+#define SIDE_MAP_LIST_IDX2_11(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_10(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11)
+#define SIDE_MAP_LIST_IDX2_12(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_11(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12)
+#define SIDE_MAP_LIST_IDX2_13(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_12(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13)
+#define SIDE_MAP_LIST_IDX2_14(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_13(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14)
+#define SIDE_MAP_LIST_IDX2_15(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_14(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15)
+#define SIDE_MAP_LIST_IDX2_16(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_15(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16)
+#define SIDE_MAP_LIST_IDX2_17(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_16(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17)
+#define SIDE_MAP_LIST_IDX2_18(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_17(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18)
+#define SIDE_MAP_LIST_IDX2_19(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_18(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19)
+#define SIDE_MAP_LIST_IDX2_20(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_19(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20)
+#define SIDE_MAP_LIST_IDX2_21(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_20(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21)
+#define SIDE_MAP_LIST_IDX2_22(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_21(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22)
+#define SIDE_MAP_LIST_IDX2_23(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_22(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23)
+#define SIDE_MAP_LIST_IDX2_24(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_23(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24)
+#define SIDE_MAP_LIST_IDX2_25(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_24(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25)
+#define SIDE_MAP_LIST_IDX2_26(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_25(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26)
+#define SIDE_MAP_LIST_IDX2_27(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_26(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27)
+#define SIDE_MAP_LIST_IDX2_28(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_27(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28)
+#define SIDE_MAP_LIST_IDX2_29(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_28(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29)
+#define SIDE_MAP_LIST_IDX2_30(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_29(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30)
+#define SIDE_MAP_LIST_IDX2_31(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30, _a31)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_30(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30, _a31)
+#define SIDE_MAP_LIST_IDX2_32(_f, _ctx, _idx, _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30, _a31, _a32)			\
+	_f(_ctx, _idx, _a1),					\
+	SIDE_MAP_LIST_IDX2_31(_f, _ctx, SIDE_IDX_NEXT(_idx), _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, _a10, _a11, _a12, _a13, _a14, _a15, _a16, _a17, _a18, _a19, _a20, _a21, _a22, _a23, _a24, _a25, _a26, _a27, _a28, _a29, _a30, _a31, _a32)
+
+#define SIDE_MAP_IDX2(_f, _ctx, ...)					\
+	SIDE_CAT(SIDE_MAP_IDX2_, SIDE_MAP_NARG(__VA_ARGS__))		\
+		(_f, _ctx, SIDE_IDX_FIRST, __VA_ARGS__)
+
+#define SIDE_MAP_LIST_IDX2(_f, _ctx, ...)				\
+	SIDE_CAT(SIDE_MAP_LIST_IDX2_, SIDE_MAP_NARG(__VA_ARGS__))	\
+		(_f, _ctx, SIDE_IDX_FIRST, __VA_ARGS__)
+
+#define SIDE_MAP_IDX2_P(_f, _ctx, ...)		SIDE_MAP_IDX2(_f, _ctx, __VA_ARGS__)
+#define SIDE_MAP_LIST_IDX2_P(_f, _ctx, ...)	SIDE_MAP_LIST_IDX2(_f, _ctx, __VA_ARGS__)
+
+
+/*
  * Compile time assertion.
  * - predicate: boolean expression to evaluate,
  * - msg: string to print to the user on failure when `static_assert()` is
