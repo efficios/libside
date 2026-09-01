@@ -57,19 +57,6 @@ struct visitor {
 /* The elements of an array reached by a distance, for the same reason. */
 #define visit_side_rel_array_elements(ctx, array)	side_array_rel_elements(&(array))
 
-/*
- * It is the reader that defines how to resolve pointer by the visitor.  This
- * require making a copy of the visitor structure and setting the resolve
- * pointer function in it.
- */
-static inline void copy_visitor_with_resolver(const struct visitor *in,
-					void *(*resolve)(void *, void *),
-					struct visitor *out)
-{
-	memcpy(out, in, sizeof(struct visitor));
-	out->description.resolve_pointer_func = resolve;
-}
-
 /**
  * Given TYPE in visitor CTX, fille ATTRS and NR_ATTRS with the attributes and
  * the number of attributes of TYPE.

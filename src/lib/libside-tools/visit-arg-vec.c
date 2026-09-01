@@ -280,7 +280,7 @@ void type_visitor_struct(const struct side_type_visitor *type_visitor, const str
 			const struct side_type *type_desc, const struct side_arg_vec *side_arg_vec, void *priv)
 {
 	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
-	const struct side_type_struct *side_struct = side_ptr_get(type_desc->u.side_struct);
+	const struct side_type_struct *side_struct = side_ptr_rel_get(type_desc->u.side_struct);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
 	if (side_array_length(&side_struct->fields) != side_sav_len) {
@@ -295,7 +295,7 @@ void type_visitor_struct(const struct side_type_visitor *type_visitor, const str
 			.type = CONTEXT_STRUCT,
 			.parent = ctx
 		};
-		side_visit_field(type_visitor, &new_ctx, side_array_at(&side_struct->fields, i), &sav[i], priv);
+		side_visit_field(type_visitor, &new_ctx, side_array_rel_at(&side_struct->fields, i), &sav[i], priv);
 	}
 	if (type_visitor->after_struct_type_func)
 		type_visitor->after_struct_type_func(side_struct, side_arg_vec, priv);
@@ -305,7 +305,7 @@ static
 void type_visitor_variant(const struct side_type_visitor *type_visitor, const struct visit_context *ctx,
 			const struct side_type *type_desc, const struct side_arg_variant *side_arg_variant, void *priv)
 {
-	const struct side_type_variant *side_type_variant = side_ptr_get(type_desc->u.side_variant);
+	const struct side_type_variant *side_type_variant = side_ptr_rel_get(type_desc->u.side_variant);
 	const struct side_type *selector_type = &side_type_variant->selector;
 	const struct side_variant_option *option;
 	union int_value v;
@@ -333,7 +333,7 @@ void type_visitor_variant(const struct side_type_visitor *type_visitor, const st
 	v = tracer_load_integer_value(&selector_type->u.side_integer,
 			&side_arg_variant->selector.u.side_static.integer_value, 0, NULL);
 	side_check_value_u64(v);
-	side_for_each_element_in_array(option, &side_type_variant->options) {
+	side_for_each_element_in_rel_array(option, &side_type_variant->options) {
 		if (v.s[SIDE_INTEGER128_SPLIT_LOW] >= option->range_begin && v.s[SIDE_INTEGER128_SPLIT_LOW] <= option->range_end) {
 			if (type_visitor->before_variant_type_func)
 				type_visitor->before_variant_type_func(side_type_variant, side_arg_variant, priv);
@@ -361,7 +361,7 @@ void type_visitor_optional(const struct side_type_visitor *type_visitor, const s
 	if (side_arg_optional->selector == SIDE_OPTIONAL_DISABLED)
 		return;
 
-	type = side_ptr_get(side_ptr_get(type_desc->u.side_optional)->elem_type);
+	type = side_ptr_rel_get(side_ptr_rel_get(type_desc->u.side_optional)->elem_type);
 	arg = &side_arg_optional->side_static;
 
 	side_visit_type(type_visitor, &new_ctx, type, arg, priv);
@@ -374,22 +374,22 @@ void type_visitor_array(const struct side_type_visitor *type_visitor, const stru
 	const struct side_arg *sav = side_ptr_get(side_arg_vec->sav);
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
-	if (side_ptr_get(type_desc->u.side_array)->length != side_sav_len) {
+	if (side_ptr_rel_get(type_desc->u.side_array)->length != side_sav_len) {
 		fprintf(stderr, "ERROR: length mismatch between description and arguments of array\n");
 		abort();
 	}
 	if (type_visitor->before_array_type_func)
-		type_visitor->before_array_type_func(side_ptr_get(type_desc->u.side_array), side_arg_vec, priv);
+		type_visitor->before_array_type_func(side_ptr_rel_get(type_desc->u.side_array), side_arg_vec, priv);
 	for (i = 0; i < side_sav_len; i++) {
 		struct visit_context new_ctx = {
 			.type = CONTEXT_ARRAY,
 			.array_index = i,
 			.parent = ctx
 		};
-		side_visit_elem(type_visitor, &new_ctx, side_ptr_get(side_ptr_get(type_desc->u.side_array)->elem_type), &sav[i], priv);
+		side_visit_elem(type_visitor, &new_ctx, side_ptr_rel_get(side_ptr_rel_get(type_desc->u.side_array)->elem_type), &sav[i], priv);
 	}
 	if (type_visitor->after_array_type_func)
-		type_visitor->after_array_type_func(side_ptr_get(type_desc->u.side_array), side_arg_vec, priv);
+		type_visitor->after_array_type_func(side_ptr_rel_get(type_desc->u.side_array), side_arg_vec, priv);
 }
 
 static
@@ -400,17 +400,17 @@ void type_visitor_vla(const struct side_type_visitor *type_visitor, const struct
 	uint32_t i, side_sav_len = side_arg_vec->len;
 
 	if (type_visitor->before_vla_type_func)
-		type_visitor->before_vla_type_func(side_ptr_get(type_desc->u.side_vla), side_arg_vec, priv);
+		type_visitor->before_vla_type_func(side_ptr_rel_get(type_desc->u.side_vla), side_arg_vec, priv);
 	for (i = 0; i < side_sav_len; i++) {
 		struct visit_context new_ctx = {
 			.type = CONTEXT_ARRAY,
 			.array_index = i,
 			.parent = ctx
 		};
-		side_visit_elem(type_visitor, &new_ctx, side_ptr_get(side_ptr_get(type_desc->u.side_vla)->elem_type), &sav[i], priv);
+		side_visit_elem(type_visitor, &new_ctx, side_ptr_rel_get(side_ptr_rel_get(type_desc->u.side_vla)->elem_type), &sav[i], priv);
 	}
 	if (type_visitor->after_vla_type_func)
-		type_visitor->after_vla_type_func(side_ptr_get(type_desc->u.side_vla), side_arg_vec, priv);
+		type_visitor->after_vla_type_func(side_ptr_rel_get(type_desc->u.side_vla), side_arg_vec, priv);
 }
 
 static
@@ -470,7 +470,7 @@ static
 uint32_t type_visitor_gather_struct(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, void *priv)
 {
 	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_struct.access_mode);
-	const struct side_type_struct *side_struct = side_ptr_get(type_gather->u.side_struct.type);
+	const struct side_type_struct *side_struct = side_ptr_rel_get(type_gather->u.side_struct.type);
 	const char *ptr = (const char *) _ptr;
 	uint32_t i;
 
@@ -478,7 +478,7 @@ uint32_t type_visitor_gather_struct(const struct side_type_visitor *type_visitor
 		type_visitor->before_gather_struct_type_func(side_struct, priv);
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_struct.offset);
 	for (i = 0; i < side_array_length(&side_struct->fields); i++)
-		visit_gather_field(type_visitor, side_array_at(&side_struct->fields, i), ptr, priv);
+		visit_gather_field(type_visitor, side_array_rel_at(&side_struct->fields, i), ptr, priv);
 	if (type_visitor->after_gather_struct_type_func)
 		type_visitor->after_gather_struct_type_func(side_struct, priv);
 	return tracer_gather_size(access_mode, type_gather->u.side_struct.size);
@@ -497,7 +497,7 @@ uint32_t type_visitor_gather_array(const struct side_type_visitor *type_visitor,
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_array.offset);
 	orig_ptr = ptr;
 	for (i = 0; i < side_array->length; i++) {
-		const struct side_type *elem_type = side_ptr_get(side_array->elem_type);
+		const struct side_type *elem_type = side_ptr_rel_get(side_array->elem_type);
 
 		switch (side_enum_get(elem_type->type)) {
 		case SIDE_TYPE_GATHER_VLA:
@@ -518,7 +518,7 @@ uint32_t type_visitor_gather_vla(const struct side_type_visitor *type_visitor, c
 {
 	enum side_type_gather_access_mode access_mode = side_enum_get(type_gather->u.side_vla.access_mode);
 	const struct side_type_vla *side_vla = &type_gather->u.side_vla.type;
-	const struct side_type *length_type = side_ptr_get(type_gather->u.side_vla.type.length_type);
+	const struct side_type *length_type = side_ptr_rel_get(type_gather->u.side_vla.type.length_type);
 	const char *ptr = (const char *) _ptr, *orig_ptr;
 	const char *length_ptr = (const char *) _length_ptr;
 	union int_value v = {};
@@ -544,7 +544,7 @@ uint32_t type_visitor_gather_vla(const struct side_type_visitor *type_visitor, c
 	ptr = tracer_gather_access(access_mode, ptr + type_gather->u.side_vla.offset);
 	orig_ptr = ptr;
 	for (i = 0; i < length; i++) {
-		const struct side_type *elem_type = side_ptr_get(side_vla->elem_type);
+		const struct side_type *elem_type = side_ptr_rel_get(side_vla->elem_type);
 
 		switch (side_enum_get(elem_type->type)) {
 		case SIDE_TYPE_GATHER_VLA:
@@ -742,7 +742,7 @@ uint32_t visit_gather_elem(const struct side_type_visitor *type_visitor, const s
 static
 uint32_t type_visitor_gather_enum(const struct side_type_visitor *type_visitor, const struct side_type_gather *type_gather, const void *_ptr, void *priv)
 {
-	const struct side_type *enum_elem_type = side_ptr_get(type_gather->u.side_enum.elem_type);
+	const struct side_type *enum_elem_type = side_ptr_rel_get(type_gather->u.side_enum.elem_type);
 	const struct side_type_gather_integer *side_integer = &enum_elem_type->u.side_gather.u.side_integer;
 	enum side_type_gather_access_mode access_mode = side_enum_get(side_integer->access_mode);
 	uint32_t integer_size_bytes = side_integer->type.integer_size;

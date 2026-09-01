@@ -158,27 +158,27 @@ void side_type_attributes(const struct side_type *type, void *ctx,
 		break;
 	case SIDE_TYPE_STRUCT:
 		side_type_struct_attributes(ctx,
-					visit_side_pointer(ctx, type->u.side_struct),
+					visit_side_rel_pointer(ctx, type->u.side_struct),
 					attr, nr_attr);
 		break;
 	case SIDE_TYPE_ARRAY:
 		side_type_array_attributes(ctx,
-					visit_side_pointer(ctx, type->u.side_array),
+					visit_side_rel_pointer(ctx, type->u.side_array),
 					attr, nr_attr);
 		break;
 	case SIDE_TYPE_VLA:
 		side_type_vla_attributes(ctx,
-					visit_side_pointer(ctx, type->u.side_vla),
+					visit_side_rel_pointer(ctx, type->u.side_vla),
 					attr, nr_attr);
 		break;
 	case SIDE_TYPE_VARIANT:
 		side_type_variant_attributes(ctx,
-					visit_side_pointer(ctx, type->u.side_variant),
+					visit_side_rel_pointer(ctx, type->u.side_variant),
 					attr, nr_attr);
 		break;
 	case SIDE_TYPE_OPTIONAL:
 		side_type_optional_attributes(ctx,
-					visit_side_pointer(ctx, type->u.side_optional),
+					visit_side_rel_pointer(ctx, type->u.side_optional),
 					attr, nr_attr);
 		break;
 	case SIDE_TYPE_ENUM:

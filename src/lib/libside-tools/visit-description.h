@@ -75,8 +75,6 @@ struct side_description_visitor_callbacks {
 
 	/* Dynamic types. */
 	void (*dynamic_type_func)(const struct side_type *type_desc, void *priv);
-
-	void *(*resolve_pointer_func)(void *pointer, void *priv);
 };
 
 struct side_description_visitor {

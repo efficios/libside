@@ -9,31 +9,14 @@
 
 #include "visit-description.h"
 
-static
-void *do_visit_side_pointer(const struct side_description_visitor *visitor, void *ptr)
-{
-	void *(*resolve_pointer)(void *pointer, void *priv) =
-		visitor->callbacks->resolve_pointer_func;
-
-	return resolve_pointer ? resolve_pointer(ptr, visitor->priv) : ptr;
-}
-
-#define visit_pointer(visitor, ptr)						\
-	((__typeof__(ptr))do_visit_side_pointer(visitor, (void*)(ptr)))
-
-#define visit_side_pointer(visitor, ptr)					\
-	visit_pointer(visitor, side_ptr_get(ptr))
-
-#define visit_side_array(visitor, array)							\
-	{											\
-		.elements = SIDE_PTR_INIT(visit_side_pointer(visitor, (array)->elements)),	\
-		.length = (array)->length,							\
-	}
-
 /*
- * The same for an array reached by a distance, which needs no resolver:
- * the distance is internal to the description. See side_ptr_rel_t.
+ * Every edge this walk follows is a distance, which needs no resolving:
+ * it is measured from the field holding it, so it resolves within
+ * whatever mapping the description was read into rather than against
+ * the address space it was written in. See side_ptr_rel_t.
  */
+#define visit_side_rel_pointer(visitor, ptr)	side_ptr_rel_get(ptr)
+
 #define visit_side_rel_array(visitor, array)							\
 	{											\
 		.elements = SIDE_PTR_INIT(side_array_rel_elements(array)),			\
@@ -85,7 +68,7 @@ void side_visit_option(const struct side_description_visitor *visitor, const str
 static
 void description_visitor_enum(const struct side_description_visitor *visitor, const struct side_type_enum *type)
 {
-	const struct side_type *elem_type = visit_side_pointer(visitor, type->elem_type);
+	const struct side_type *elem_type = visit_side_rel_pointer(visitor, type->elem_type);
 
 	if (visitor->callbacks->before_enum_type_func)
 		visitor->callbacks->before_enum_type_func(type, visitor->priv);
@@ -97,7 +80,7 @@ void description_visitor_enum(const struct side_description_visitor *visitor, co
 static
 void description_visitor_enum_bitmap(const struct side_description_visitor *visitor, const struct side_type_enum_bitmap *type)
 {
-	const struct side_type *elem_type = visit_side_pointer(visitor, type->elem_type);
+	const struct side_type *elem_type = visit_side_rel_pointer(visitor, type->elem_type);
 
 	if (visitor->callbacks->before_enum_bitmap_type_func)
 		visitor->callbacks->before_enum_bitmap_type_func(type, visitor->priv);
@@ -109,8 +92,8 @@ void description_visitor_enum_bitmap(const struct side_description_visitor *visi
 static
 void description_visitor_struct(const struct side_description_visitor *visitor, const struct side_type *type_desc)
 {
-	const struct side_type_struct *side_struct = visit_side_pointer(visitor, type_desc->u.side_struct);
-	side_array_t(const struct side_event_field) fields = visit_side_array(visitor, &side_struct->fields);
+	const struct side_type_struct *side_struct = visit_side_rel_pointer(visitor, type_desc->u.side_struct);
+	side_array_t(const struct side_event_field) fields = visit_side_rel_array(visitor, &side_struct->fields);
 	uint32_t i, len = side_array_length(&fields);
 
 	if (visitor->callbacks->before_struct_type_func)
@@ -124,9 +107,9 @@ void description_visitor_struct(const struct side_description_visitor *visitor, 
 static
 void description_visitor_variant(const struct side_description_visitor *visitor, const struct side_type *type_desc)
 {
-	const struct side_type_variant *side_type_variant = visit_side_pointer(visitor, type_desc->u.side_variant);
+	const struct side_type_variant *side_type_variant = visit_side_rel_pointer(visitor, type_desc->u.side_variant);
 	const struct side_type *selector_type = &side_type_variant->selector;
-	side_array_t(const struct side_variant_option) options = visit_side_array(visitor, &side_type_variant->options);
+	side_array_t(const struct side_variant_option) options = visit_side_rel_array(visitor, &side_type_variant->options);
 	uint32_t i, len = side_array_length(&options);
 
 	switch (side_enum_get(selector_type->type)) {
@@ -159,7 +142,7 @@ void description_visitor_variant(const struct side_description_visitor *visitor,
 static
 void description_visitor_optional(const struct side_description_visitor *visitor, const struct side_type_optional *optional)
 {
-	const struct side_type *type_desc = visit_side_pointer(visitor, optional->elem_type);
+	const struct side_type *type_desc = visit_side_rel_pointer(visitor, optional->elem_type);
 
 	if (visitor->callbacks->before_optional_type_func)
 		visitor->callbacks->before_optional_type_func(optional, visitor->priv);
@@ -172,23 +155,23 @@ static
 void description_visitor_array(const struct side_description_visitor *visitor, const struct side_type *type_desc)
 {
 	if (visitor->callbacks->before_array_type_func)
-		visitor->callbacks->before_array_type_func(visit_side_pointer(visitor, type_desc->u.side_array), visitor->priv);
-	side_visit_elem(visitor, visit_side_pointer(visitor, visit_side_pointer(visitor, type_desc->u.side_array)->elem_type));
+		visitor->callbacks->before_array_type_func(visit_side_rel_pointer(visitor, type_desc->u.side_array), visitor->priv);
+	side_visit_elem(visitor, visit_side_rel_pointer(visitor, visit_side_rel_pointer(visitor, type_desc->u.side_array)->elem_type));
 	if (visitor->callbacks->after_array_type_func)
-		visitor->callbacks->after_array_type_func(visit_side_pointer(visitor, type_desc->u.side_array), visitor->priv);
+		visitor->callbacks->after_array_type_func(visit_side_rel_pointer(visitor, type_desc->u.side_array), visitor->priv);
 }
 
 static
 void description_visitor_vla(const struct side_description_visitor *visitor, const struct side_type *type_desc)
 {
 	if (visitor->callbacks->before_vla_type_func)
-		visitor->callbacks->before_vla_type_func(visit_side_pointer(visitor, type_desc->u.side_vla), visitor->priv);
-	side_visit_elem(visitor, visit_side_pointer(visitor, visit_side_pointer(visitor, type_desc->u.side_vla)->length_type));
+		visitor->callbacks->before_vla_type_func(visit_side_rel_pointer(visitor, type_desc->u.side_vla), visitor->priv);
+	side_visit_elem(visitor, visit_side_rel_pointer(visitor, visit_side_rel_pointer(visitor, type_desc->u.side_vla)->length_type));
 	if (visitor->callbacks->after_length_vla_type_func)
-		visitor->callbacks->after_length_vla_type_func(visit_side_pointer(visitor, type_desc->u.side_vla), visitor->priv);
-	side_visit_elem(visitor, visit_side_pointer(visitor, visit_side_pointer(visitor, type_desc->u.side_vla)->elem_type));
+		visitor->callbacks->after_length_vla_type_func(visit_side_rel_pointer(visitor, type_desc->u.side_vla), visitor->priv);
+	side_visit_elem(visitor, visit_side_rel_pointer(visitor, visit_side_rel_pointer(visitor, type_desc->u.side_vla)->elem_type));
 	if (visitor->callbacks->after_element_vla_type_func)
-		visitor->callbacks->after_element_vla_type_func(visit_side_pointer(visitor, type_desc->u.side_vla), visitor->priv);
+		visitor->callbacks->after_element_vla_type_func(visit_side_rel_pointer(visitor, type_desc->u.side_vla), visitor->priv);
 }
 
 static
@@ -205,8 +188,8 @@ static
 void description_visitor_gather_struct(const struct side_description_visitor *visitor, const struct side_type_gather *type_gather)
 {
 	const struct side_type_gather_struct *side_gather_struct = &type_gather->u.side_struct;
-	const struct side_type_struct *side_struct = visit_side_pointer(visitor, side_gather_struct->type);
-	side_array_t(const struct side_event_field) fields = visit_side_array(visitor, &side_struct->fields);;
+	const struct side_type_struct *side_struct = visit_side_rel_pointer(visitor, side_gather_struct->type);
+	side_array_t(const struct side_event_field) fields = visit_side_rel_array(visitor, &side_struct->fields);
 	uint32_t i;
 
 	if (visitor->callbacks->before_gather_struct_type_func)
@@ -222,7 +205,7 @@ void description_visitor_gather_array(const struct side_description_visitor *vis
 {
 	const struct side_type_gather_array *side_gather_array = &type_gather->u.side_array;
 	const struct side_type_array *side_array = &side_gather_array->type;
-	const struct side_type *elem_type = visit_side_pointer(visitor, side_array->elem_type);
+	const struct side_type *elem_type = visit_side_rel_pointer(visitor, side_array->elem_type);
 
 	if (visitor->callbacks->before_gather_array_type_func)
 		visitor->callbacks->before_gather_array_type_func(side_gather_array, visitor->priv);
@@ -243,8 +226,8 @@ void description_visitor_gather_vla(const struct side_description_visitor *visit
 {
 	const struct side_type_gather_vla *side_gather_vla = &type_gather->u.side_vla;
 	const struct side_type_vla *side_vla = &side_gather_vla->type;
-	const struct side_type *length_type = visit_side_pointer(visitor, side_gather_vla->type.length_type);
-	const struct side_type *elem_type = visit_side_pointer(visitor, side_vla->elem_type);
+	const struct side_type *length_type = visit_side_rel_pointer(visitor, side_gather_vla->type.length_type);
+	const struct side_type *elem_type = visit_side_rel_pointer(visitor, side_vla->elem_type);
 
 	/* Access length */
 	switch (side_enum_get(length_type->type)) {
@@ -378,7 +361,7 @@ void visit_gather_elem(const struct side_description_visitor *visitor, const str
 static
 void description_visitor_gather_enum(const struct side_description_visitor *visitor, const struct side_type_gather *type_gather)
 {
-	const struct side_type *elem_type = visit_side_pointer(visitor, type_gather->u.side_enum.elem_type);
+	const struct side_type *elem_type = visit_side_rel_pointer(visitor, type_gather->u.side_enum.elem_type);
 
 	if (visitor->callbacks->before_gather_enum_type_func)
 		visitor->callbacks->before_gather_enum_type_func(&type_gather->u.side_enum, visitor->priv);
@@ -500,7 +483,7 @@ void side_visit_type(const struct side_description_visitor *visitor, const struc
 		break;
 
 	case SIDE_TYPE_OPTIONAL:
-		description_visitor_optional(visitor, visit_side_pointer(visitor, type_desc->u.side_optional));
+		description_visitor_optional(visitor, visit_side_rel_pointer(visitor, type_desc->u.side_optional));
 		break;
 
 	default:

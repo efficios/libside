@@ -364,7 +364,7 @@ static
 void json_print_enum(const struct side_type *type_desc, const struct side_arg *item, void *priv)
 {
 	const struct side_type_enum *side_enum = &type_desc->u.side_enum;
-	const struct side_type *elem_type = side_ptr_get(side_enum->elem_type);
+	const struct side_type *elem_type = side_ptr_rel_get(side_enum->elem_type);
 
 	json_print_enum_value(writer_of(priv), side_ptr_get(side_enum->mappings),
 		&elem_type->u.side_integer, &item->u.side_static.integer_value);
@@ -456,7 +456,7 @@ static
 void json_print_gather_enum(const struct side_type_gather_enum *type,
 		const union side_integer_value *value, void *priv)
 {
-	const struct side_type *elem_type = side_ptr_get(type->elem_type);
+	const struct side_type *elem_type = side_ptr_rel_get(type->elem_type);
 
 	json_print_enum_value(writer_of(priv), side_ptr_get(type->mappings),
 		&elem_type->u.side_gather.u.side_integer.type, value);

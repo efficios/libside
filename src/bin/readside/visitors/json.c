@@ -252,12 +252,12 @@ static void begin_gather_struct(const struct side_type_gather_struct *type, void
 		side_access_mode_to_string(side_enum_get(type->access_mode)));
 	printf_nest(ctx, "\"gather\": {");
 	push_nest(ctx);
-	begin_struct(visit_side_pointer(ctx, type->type), ctx);
+	begin_struct(visit_side_rel_pointer(ctx, type->type), ctx);
 }
 
 static void end_gather_struct(const struct side_type_gather_struct *type, void *ctx)
 {
-	end_struct(visit_side_pointer(ctx, type->type), ctx);
+	end_struct(visit_side_rel_pointer(ctx, type->type), ctx);
 	pop_nest(ctx);
 }
 

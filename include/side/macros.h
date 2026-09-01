@@ -227,6 +227,16 @@ namespace libside {
 	}
 
 /*
+ * The same, reached by the distance _off names rather than by an
+ * address. See side_array_rel_t.
+ */
+#define SIDE_LITERAL_ARRAY_REL_OF_NAMED(_off, _array)			\
+	{								\
+		SIDE_PTR_REL_INIT(_off),				\
+		SIDE_ARRAY_SIZE(_array),				\
+	}
+
+/*
  * Dynamic compound literals in C are the same as the static ones.  For C++, the
  * values are copied from a std::initializer_list onto a buffer allocated on the
  * stack.
@@ -341,6 +351,14 @@ namespace libside {
 #define side_for_each_element_in_array(_it, _array)                     \
     for ((_it) = side_array_elements(_array);                           \
          ((_it) - side_array_elements(_array)) < side_array_length(_array); \
+         (_it)++)
+
+/*
+ * The same, for an array reached by a distance.
+ */
+#define side_for_each_element_in_rel_array(_it, _array)                  \
+    for ((_it) = side_array_rel_elements(_array);                       \
+         ((_it) - side_array_rel_elements(_array)) < side_array_length(_array); \
          (_it)++)
 
 /*

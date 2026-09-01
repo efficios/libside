@@ -78,7 +78,7 @@ void for_each_side_event_in_elf(const struct elf *elf,
 				void **ptrs, size_t length,
 				const struct visitor *asked_visitor)
 {
-	struct visitor visitor;
+	const struct visitor *visitor = asked_visitor;
 
 	if (!ptrs) {
 		warning("In ELF file %s, could not find side_event_state_ptr section.",
@@ -86,26 +86,23 @@ void for_each_side_event_in_elf(const struct elf *elf,
 		return;
 	}
 
-	copy_visitor_with_resolver(asked_visitor, resolve_elf_pointer,
-				&visitor);
-
 	struct visitor_context context = {
 		.resolve      = resolve_elf_pointer,
 		.resolve_priv = cast(void *, elf),
 		.nesting      = 0,
-		.context      = visitor.make_context ? visitor.make_context() : NULL,
+		.context      = visitor->make_context ? visitor->make_context() : NULL,
 	};
 
 
-	if (visitor.begin) {
-		visitor.begin(&context);
+	if (visitor->begin) {
+		visitor->begin(&context);
 	}
 
 	for (size_t k = 0; k < length; ++k) {
 		const struct side_event_state *state;
 		const struct side_event_description *desc;
 		struct side_description_visitor desc_visitor = {
-			.callbacks = &visitor.description,
+			.callbacks = &visitor->description,
 			.priv = &context,
 		};
 
@@ -127,12 +124,12 @@ void for_each_side_event_in_elf(const struct elf *elf,
 		visit_event_description(&desc_visitor, desc);
 	}
 
-	if (visitor.end) {
-		visitor.end(&context);
+	if (visitor->end) {
+		visitor->end(&context);
 	}
 
-	if (visitor.drop_context) {
-		visitor.drop_context(context.context);
+	if (visitor->drop_context) {
+		visitor->drop_context(context.context);
 	}
 }
 

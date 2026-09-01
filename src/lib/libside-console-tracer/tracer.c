@@ -1253,7 +1253,7 @@ static
 void tracer_before_print_vla(const struct side_type_vla *side_vla,
 	const struct side_arg_vec *side_arg_vec, void *priv)
 {
-	switch (side_enum_get(side_ptr_get(side_vla->length_type)->type)) {
+	switch (side_enum_get(side_ptr_rel_get(side_vla->length_type)->type)) {
 	case SIDE_TYPE_U8:		/* Fall-through */
 	case SIDE_TYPE_U16:		/* Fall-through */
 	case SIDE_TYPE_U32:		/* Fall-through */
@@ -1283,7 +1283,7 @@ static void tracer_print_enum(const struct side_type *type_desc,
 	const struct side_arg *item, void *priv)
 {
 	const struct side_enum_mappings *mappings = side_ptr_get(type_desc->u.side_enum.mappings);
-	const struct side_type *elem_type = side_ptr_get(type_desc->u.side_enum.elem_type);
+	const struct side_type *elem_type = side_ptr_rel_get(type_desc->u.side_enum.elem_type);
 	union int_value v;
 
 	if (side_enum_get(elem_type->type) != side_enum_get(item->type)) {
@@ -1304,7 +1304,7 @@ static void tracer_print_enum_bitmap(const struct side_type *type_desc,
 	const struct side_arg *item, void *priv __attribute__((unused)))
 {
 	const struct side_enum_bitmap_mappings *side_enum_mappings = side_ptr_get(type_desc->u.side_enum_bitmap.mappings);
-	const struct side_type *enum_elem_type = side_ptr_get(type_desc->u.side_enum_bitmap.elem_type), *elem_type;
+	const struct side_type *enum_elem_type = side_ptr_rel_get(type_desc->u.side_enum_bitmap.elem_type), *elem_type;
 	uint32_t print_count = 0, stride_bit, nr_items;
 	const struct side_arg *array_item;
 	const struct side_enum_bitmap_mapping *mapping;
@@ -1326,12 +1326,12 @@ static void tracer_print_enum_bitmap(const struct side_type *type_desc,
 		nr_items = 1;
 		break;
 	case SIDE_TYPE_ARRAY:
-		elem_type = side_ptr_get(side_ptr_get(enum_elem_type->u.side_array)->elem_type);
+		elem_type = side_ptr_rel_get(side_ptr_rel_get(enum_elem_type->u.side_array)->elem_type);
 		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_array)->sav);
-		nr_items = side_ptr_get(enum_elem_type->u.side_array)->length;
+		nr_items = side_ptr_rel_get(enum_elem_type->u.side_array)->length;
 		break;
 	case SIDE_TYPE_VLA:
-		elem_type = side_ptr_get(side_ptr_get(enum_elem_type->u.side_vla)->elem_type);
+		elem_type = side_ptr_rel_get(side_ptr_rel_get(enum_elem_type->u.side_vla)->elem_type);
 		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_vla)->sav);
 		nr_items = side_ptr_get(item->u.side_static.side_vla)->len;
 		break;
@@ -1471,7 +1471,7 @@ static
 void tracer_before_print_gather_vla(const struct side_type_vla *side_vla,
 	uint32_t length __attribute__((unused)), void *priv)
 {
-	switch (side_enum_get(side_ptr_get(side_vla->length_type)->type)) {
+	switch (side_enum_get(side_ptr_rel_get(side_vla->length_type)->type)) {
 	case SIDE_TYPE_GATHER_INTEGER:
 		break;
 	default:
@@ -1495,7 +1495,7 @@ void tracer_print_gather_enum(const struct side_type_gather_enum *type,
 	void *priv __attribute__((unused)))
 {
 	const struct side_enum_mappings *mappings = side_ptr_get(type->mappings);
-	const struct side_type *enum_elem_type = side_ptr_get(type->elem_type);
+	const struct side_type *enum_elem_type = side_ptr_rel_get(type->elem_type);
 	const struct side_type_gather_integer *side_integer = &enum_elem_type->u.side_gather.u.side_integer;
 	union int_value v;
 
@@ -2089,7 +2089,7 @@ static
 void before_print_description_enum(const struct side_type_enum *type, void *priv)
 {
 	const struct side_enum_mappings *mappings = side_ptr_get(type->mappings);
-	const struct side_type *elem_type = side_ptr_get(type->elem_type);
+	const struct side_type *elem_type = side_ptr_rel_get(type->elem_type);
 
 	switch (side_enum_get(elem_type->type)) {
 	case SIDE_TYPE_U8:
@@ -2121,7 +2121,7 @@ void after_print_description_enum(const struct side_type_enum *type, void *priv)
 static
 void before_print_description_enum_bitmap(const struct side_type_enum_bitmap *type, void *priv __attribute__((unused)))
 {
-	const struct side_type *elem_type = side_ptr_get(type->elem_type);
+	const struct side_type *elem_type = side_ptr_rel_get(type->elem_type);
 	const struct side_enum_bitmap_mappings *mappings = side_ptr_get(type->mappings);
 	uint32_t print_count = 0;
 
@@ -2261,7 +2261,7 @@ void print_description_gather_string(const struct side_type_gather_string *type,
 static
 void before_print_description_gather_struct(const struct side_type_gather_struct *side_gather_struct, void *priv)
 {
-	const struct side_type_struct *side_struct = side_ptr_get(side_gather_struct->type);
+	const struct side_type_struct *side_struct = side_ptr_rel_get(side_gather_struct->type);
 	struct print_ctx *ctx = (struct print_ctx *) priv;
 
 	print_attributes("attr", ":", side_array_elements(&side_struct->attributes), side_array_length(&side_struct->attributes));
@@ -2341,7 +2341,7 @@ static
 void before_print_description_gather_enum(const struct side_type_gather_enum *type, void *priv)
 {
 	const struct side_enum_mappings *mappings = side_ptr_get(type->mappings);
-	const struct side_type *elem_type = side_ptr_get(type->elem_type);
+	const struct side_type *elem_type = side_ptr_rel_get(type->elem_type);
 
 	if (side_enum_get(elem_type->type) != SIDE_TYPE_GATHER_INTEGER) {
 		fprintf(stderr, "Unsupported enum element type.\n");
