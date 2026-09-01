@@ -1328,7 +1328,7 @@ static void tracer_print_enum_bitmap(const struct side_type *type_desc,
 	case SIDE_TYPE_ARRAY:
 		elem_type = side_ptr_get(side_ptr_get(enum_elem_type->u.side_array)->elem_type);
 		array_item = side_ptr_get(side_ptr_get(item->u.side_static.side_array)->sav);
-		nr_items = side_ptr_get(type_desc->u.side_array)->length;
+		nr_items = side_ptr_get(enum_elem_type->u.side_array)->length;
 		break;
 	case SIDE_TYPE_VLA:
 		elem_type = side_ptr_get(side_ptr_get(enum_elem_type->u.side_vla)->elem_type);
