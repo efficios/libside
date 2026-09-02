@@ -114,3 +114,4 @@ Makefile
 /autom4te.cache/
 /config
 /pre-inst-env
+tests/.Tpo

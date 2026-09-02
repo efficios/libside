@@ -797,12 +797,12 @@ side_static_define_enum(myenum,
 
 side_static_event(my_provider_event_enum, "myprovider", "myeventenum", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_enum("5", &myenum, side_elem(side_type_u32())),
-		side_field_enum("400", &myenum, side_elem(side_type_u64())),
-		side_field_enum("200", &myenum, side_elem(side_type_u8())),
-		side_field_enum("-100", &myenum, side_elem(side_type_s8())),
-		side_field_enum("6_be", &myenum, side_elem(side_type_u32_be())),
-		side_field_enum("6_le", &myenum, side_elem(side_type_u32_le())),
+		side_field_enum("5", myenum, side_elem(side_type_u32())),
+		side_field_enum("400", myenum, side_elem(side_type_u64())),
+		side_field_enum("200", myenum, side_elem(side_type_u8())),
+		side_field_enum("-100", myenum, side_elem(side_type_s8())),
+		side_field_enum("6_be", myenum, side_elem(side_type_u32_be())),
+		side_field_enum("6_le", myenum, side_elem(side_type_u32_le())),
 	)
 );
 
@@ -853,19 +853,19 @@ side_static_define_vla(my_vla_u32_for_bitmap,
 
 side_static_event(my_provider_event_enum_bitmap, "myprovider", "myeventenumbitmap", SIDE_LOGLEVEL_DEBUG,
 	side_field_list(
-		side_field_enum_bitmap("bit_0", &myenum_bitmap, side_elem(side_type_u32())),
-		side_field_enum_bitmap("bit_1", &myenum_bitmap, side_elem(side_type_u32())),
-		side_field_enum_bitmap("bit_2", &myenum_bitmap, side_elem(side_type_u8())),
-		side_field_enum_bitmap("bit_3", &myenum_bitmap, side_elem(side_type_u8())),
-		side_field_enum_bitmap("bit_30", &myenum_bitmap, side_elem(side_type_u32())),
-		side_field_enum_bitmap("bit_31", &myenum_bitmap, side_elem(side_type_u32())),
-		side_field_enum_bitmap("bit_63", &myenum_bitmap, side_elem(side_type_u64())),
-		side_field_enum_bitmap("bits_1+63", &myenum_bitmap, side_elem(side_type_u64())),
-		side_field_enum_bitmap("byte_bit_2", &myenum_bitmap, side_elem(side_type_byte())),
-		side_field_enum_bitmap("bit_159", &myenum_bitmap, side_elem(side_type_array(my_array_u32_5_for_bitmap))),
-		side_field_enum_bitmap("bit_159", &myenum_bitmap, side_elem(side_type_vla(my_vla_u32_for_bitmap))),
-		side_field_enum_bitmap("bit_2_be", &myenum_bitmap, side_elem(side_type_u32_be())),
-		side_field_enum_bitmap("bit_2_le", &myenum_bitmap, side_elem(side_type_u32_le())),
+		side_field_enum_bitmap("bit_0", myenum_bitmap, side_elem(side_type_u32())),
+		side_field_enum_bitmap("bit_1", myenum_bitmap, side_elem(side_type_u32())),
+		side_field_enum_bitmap("bit_2", myenum_bitmap, side_elem(side_type_u8())),
+		side_field_enum_bitmap("bit_3", myenum_bitmap, side_elem(side_type_u8())),
+		side_field_enum_bitmap("bit_30", myenum_bitmap, side_elem(side_type_u32())),
+		side_field_enum_bitmap("bit_31", myenum_bitmap, side_elem(side_type_u32())),
+		side_field_enum_bitmap("bit_63", myenum_bitmap, side_elem(side_type_u64())),
+		side_field_enum_bitmap("bits_1+63", myenum_bitmap, side_elem(side_type_u64())),
+		side_field_enum_bitmap("byte_bit_2", myenum_bitmap, side_elem(side_type_byte())),
+		side_field_enum_bitmap("bit_159", myenum_bitmap, side_elem(side_type_array(my_array_u32_5_for_bitmap))),
+		side_field_enum_bitmap("bit_159", myenum_bitmap, side_elem(side_type_vla(my_vla_u32_for_bitmap))),
+		side_field_enum_bitmap("bit_2_be", myenum_bitmap, side_elem(side_type_u32_be())),
+		side_field_enum_bitmap("bit_2_le", myenum_bitmap, side_elem(side_type_u32_le())),
 	)
 );
 

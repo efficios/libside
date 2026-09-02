@@ -96,16 +96,26 @@ side_check_size(union side_arg_static, 32);
 struct side_arg_dynamic_vla {
 	side_ptr_t(const struct side_arg) sav;
 	uint32_t len;
-	side_array_t(const struct side_attr) attributes;
+	/*
+	 * The same array a description holds, so it says which of the
+	 * two it is; a dynamic argument always writes an address. See
+	 * side_ptr_sel_t.
+	 */
+	side_array_sel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_arg_dynamic_vla, 40);
+side_check_size(struct side_arg_dynamic_vla, 41);
 
 struct side_arg_dynamic_struct {
 	side_ptr_t(const struct side_arg_dynamic_field) fields;
 	uint32_t len;
-	side_array_t(const struct side_attr) attributes;
+	/*
+	 * The same array a description holds, so it says which of the
+	 * two it is; a dynamic argument always writes an address. See
+	 * side_ptr_sel_t.
+	 */
+	side_array_sel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_arg_dynamic_struct, 40);
+side_check_size(struct side_arg_dynamic_struct, 41);
 
 union side_arg_dynamic {
 	/* Dynamic basic types */
@@ -135,9 +145,16 @@ union side_arg_dynamic {
 	side_ptr_t(const struct side_arg_dynamic_struct) side_dynamic_struct;
 	side_ptr_t(const struct side_arg_dynamic_vla) side_dynamic_vla;
 
-	side_padding(58);
+	/*
+	 * One byte more than it was: the type descriptors a dynamic
+	 * argument shares with a description carry the selector which
+	 * says whether their attributes are a distance or an address.
+	 * It comes out of the slack struct side_arg already had, so an
+	 * argument is still 64 bytes. See side_ptr_sel_t.
+	 */
+	side_padding(59);
 } SIDE_PACKED;
-side_check_size(union side_arg_dynamic, 58);
+side_check_size(union side_arg_dynamic, 59);
 
 struct side_arg {
 	side_enum_t(enum side_type_label, uint16_t) type;

@@ -48,6 +48,17 @@ void *side_json_resolve(struct side_json_writer *writer, const void *ptr);
 	((__typeof__(side_ptr_get(ptr))) side_json_resolve(writer, side_ptr_get(ptr)))
 
 /*
+ * A pointer which says which of the two it holds needs resolving only
+ * where it holds an address: a distance is measured from the field
+ * holding it, so it resolves within whatever mapping the description
+ * was read into. See side_ptr_sel_t.
+ */
+#define side_json_resolve_sel_ptr(writer, ptr)				\
+	((__typeof__(side_ptr_sel_get(ptr)))				\
+		((ptr).is_offset ? side_ptr_sel_get(ptr) :		\
+			side_json_resolve(writer, side_ptr_sel_get(ptr))))
+
+/*
  * Emit the separator and the indentation which precede an item: none
  * for the first item of an object or of an array, a comma for the
  * following ones.

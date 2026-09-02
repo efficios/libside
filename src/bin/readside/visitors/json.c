@@ -370,7 +370,7 @@ static void print_enum_mapping(const struct side_enum_mapping *map, void *ctx)
 	}
 
 	/* FIXME: Decode raw string. */
-	side_json_item_name(writer_of(ctx), cast(char *, visit_side_pointer(ctx, map->label.p)));
+	side_json_item_name(writer_of(ctx), cast(char *, visit_side_sel_pointer(ctx, map->label.p)));
 	side_json_raw(writer_of(ctx), "[%" PRId64 ", %" PRId64 "]",
 		map->range_begin, map->range_end);
 }
@@ -382,7 +382,7 @@ static void print_enum_bitmap_mapping(const struct side_enum_bitmap_mapping *map
 	}
 
 	/* FIXME: Decode raw string. */
-	side_json_item_name(writer_of(ctx), cast(char *, visit_side_pointer(ctx, map->label.p)));
+	side_json_item_name(writer_of(ctx), cast(char *, visit_side_sel_pointer(ctx, map->label.p)));
 	side_json_raw(writer_of(ctx), "[%" PRId64 ", %" PRId64 "]",
 		map->range_begin, map->range_end);
 }
@@ -395,7 +395,7 @@ static void print_enum_mappings(const struct side_enum_mappings *mappings,
 	}
 
 	const struct side_enum_mapping *maps =
-		visit_side_pointer(ctx, mappings->mappings.elements);
+		visit_side_rel_pointer(ctx, mappings->mappings.elements);
 
 	printf_nest(ctx, "\"mappings\": {");
 	push_nest(ctx);
@@ -409,7 +409,7 @@ static void print_enum_mappings(const struct side_enum_mappings *mappings,
 
 static void begin_enum(const struct side_type_enum *type, void *ctx)
 {
-	print_enum_mappings(visit_side_pointer(ctx, type->mappings), ctx);
+	print_enum_mappings(visit_side_rel_pointer(ctx, type->mappings), ctx);
 }
 
 static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ctx)
@@ -418,14 +418,14 @@ static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ct
 	push_nest(ctx);
 	{
 		const struct side_enum_bitmap_mappings *mappings =
-			visit_side_pointer(ctx, type->mappings);
+			visit_side_rel_pointer(ctx, type->mappings);
 
 		if (!mappings) {
 			goto out;
 		}
 
 		const struct side_enum_bitmap_mapping *maps =
-			visit_side_pointer(ctx, mappings->mappings.elements);
+			visit_side_rel_pointer(ctx, mappings->mappings.elements);
 
 		if (!maps) {
 			goto out;
@@ -442,7 +442,7 @@ out:
 
 static void begin_gather_enum(const struct side_type_gather_enum *type, void *ctx)
 {
-	print_enum_mappings(visit_side_pointer(ctx, type->mappings), ctx);
+	print_enum_mappings(visit_side_rel_pointer(ctx, type->mappings), ctx);
 	printf_nest(ctx, "\"gather\": {");
 	push_nest(ctx);
 }

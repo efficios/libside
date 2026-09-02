@@ -77,6 +77,6 @@ struct side_attr {
 	const struct side_type_raw_string key;
 	const struct side_attr_value value;
 } SIDE_PACKED;
-side_check_size(struct side_attr, 54);
+side_check_size(struct side_attr, 55);
 
 #endif /* SIDE_ABI_ATTRIBUTE_H */

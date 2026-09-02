@@ -121,7 +121,10 @@
 #define SIDE_ATTR_VALUE_DECLARE_SIDE_AK_BARE(_obj, _off, _pfx, ...)
 
 #define SIDE_ATTR_VALUE_DECLARE_SIDE_AK_STRING(_obj, _off, _pfx, _byte_order, _unit_size, _val) \
-	SIDE_ATTR_STRING_OBJECT(SIDE_ATTR_STR_SYM(_pfx), _val)
+	SIDE_ATTR_STRING_OBJECT(SIDE_ATTR_STR_SYM(_pfx), _val)		\
+	SIDE_PTR_REL_DEFINE_AT(SIDE_ATTR_STR_OFF(_pfx), _obj,		\
+		(_off) + offsetof(struct side_attr_value, u.string_value.p.u), \
+		SIDE_ATTR_STR_SYM(_pfx))
 
 #define SIDE_ATTR_VALUE_INIT(_pfx, _value)				\
 	SIDE_ATTR_VALUE_INIT_1(_pfx, SIDE_UNPACK _value)
@@ -137,7 +140,7 @@
 		.type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_STRING),		\
 		.u = {							\
 			.string_value = {				\
-				.p = SIDE_PTR_INIT(SIDE_ATTR_STR_SYM(_pfx)), \
+				.p = SIDE_PTR_SEL_REL_INIT(SIDE_ATTR_STR_OFF(_pfx)), \
 				.unit_size = _unit_size,		\
 				.byte_order = SIDE_ENUM_INIT(_byte_order), \
 			},						\
@@ -162,7 +165,7 @@
 		.type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_STRING),		\
 		.u = {							\
 			.string_value = {				\
-				.p = SIDE_PTR_INIT(_val),		\
+				.p = SIDE_PTR_SEL_INIT(_val),		\
 				.unit_size = _unit_size,		\
 				.byte_order = SIDE_ENUM_INIT(_byte_order), \
 			},						\
@@ -189,6 +192,9 @@
 	SIDE_ATTR_DECLARE_3(_ksym, _vpfx, _attrs, _k, __VA_ARGS__)
 #define SIDE_ATTR_DECLARE_3(_ksym, _vpfx, _attrs, _k, _key, _value)	\
 	SIDE_ATTR_STRING_OBJECT(_ksym, _key)				\
+	SIDE_PTR_REL_DEFINE_AT(SIDE_CAT3(_ksym, _off, ), _attrs,	\
+		(_k) * sizeof(struct side_attr)				\
+			+ offsetof(struct side_attr, key.p.u), _ksym)	\
 	SIDE_ATTR_VALUE_DECLARE(_attrs,					\
 		(_k) * sizeof(struct side_attr)				\
 			+ offsetof(struct side_attr, value),		\
@@ -207,7 +213,7 @@
 #define SIDE_ATTR_INIT_3(_ksym, _vpfx, _key, _value)			\
 	{								\
 		.key = {						\
-			.p = SIDE_PTR_INIT(_ksym),			\
+			.p = SIDE_PTR_SEL_REL_INIT(SIDE_CAT3(_ksym, _off, )), \
 			.unit_size = sizeof(uint8_t),			\
 			.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 		},							\
@@ -226,7 +232,7 @@
 #define SIDE_DYNAMIC_ATTR_INIT_3(_key, _value)				\
 	{								\
 		.key = {						\
-			.p = SIDE_PTR_INIT(_key),			\
+			.p = SIDE_PTR_SEL_INIT(_key),			\
 			.unit_size = sizeof(uint8_t),			\
 			.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 		},							\
@@ -234,24 +240,36 @@
 	}
 
 #define _side_dynamic_attr_list(...)					\
-	SIDE_DYNAMIC_LITERAL_ARRAY(const struct side_attr,		\
+	SIDE_DYNAMIC_LITERAL_ARRAY_SEL(const struct side_attr,		\
 		SIDE_MAP_LIST_IDX_P(SIDE_DYNAMIC_ATTR_INIT, _,		\
 			SIDE_UNPACK ( __VA_ARGS__ )))
 
 /*
  * The attributes of _ctx: the strings they hold, then the array itself,
  * which is named before them because the distance to each string is
- * measured from a byte of it.
+ * measured from a byte of it, and last the distance to the array, from
+ * byte _off of _obj where whatever holds it sits.
  */
-#define SIDE_ATTRS_DECLARE(_ctx, _attrs)				\
+#define SIDE_ATTRS_DECLARE(_obj, _off, _ctx, _attrs)			\
 	SIDE_ATTR_ARRAY_DECLARE(SIDE_ATTR_ARRAY_SYM(_ctx))		\
 	SIDE_MAP_IDX2_P(SIDE_ATTR_DECLARE, _ctx, SIDE_UNPACK _attrs)	\
 	SIDE_ATTR_ARRAY_OBJECT(SIDE_ATTR_ARRAY_SYM(_ctx),		\
-		{ SIDE_MAP_LIST_IDX2_P(SIDE_ATTR_INIT, _ctx, SIDE_UNPACK _attrs) })
+		{ SIDE_MAP_LIST_IDX2_P(SIDE_ATTR_INIT, _ctx, SIDE_UNPACK _attrs) }) \
+	SIDE_PTR_REL_DEFINE_AT(SIDE_ATTR_ARRAY_OFF(_ctx), _obj, _off,	\
+		SIDE_ATTR_ARRAY_SYM(_ctx))
 
-/* Where those attributes are, for whatever holds them. */
+/*
+ * Where those attributes are. A type which a dynamic argument also
+ * builds says which of the two it holds; everything else in a
+ * description holds a distance and nothing else. See side_ptr_sel_t.
+ */
 #define SIDE_ATTRS_REF(_ctx)						\
-	SIDE_LITERAL_ARRAY_OF_NAMED(SIDE_ATTR_ARRAY_SYM(_ctx))
+	SIDE_LITERAL_ARRAY_SEL_REL_OF_NAMED(SIDE_ATTR_ARRAY_OFF(_ctx),	\
+		SIDE_ATTR_ARRAY_SYM(_ctx))
+
+#define SIDE_ATTRS_REL_REF(_ctx)					\
+	SIDE_LITERAL_ARRAY_REL_OF_NAMED(SIDE_ATTR_ARRAY_OFF(_ctx),	\
+		SIDE_ATTR_ARRAY_SYM(_ctx))
 
 #define _side_attr_u8(_val)		(SIDE_AK_BARE, { .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U8), .u = { .integer_value = { .side_u8 = (_val) } } })
 #define _side_attr_u16(_val)		(SIDE_AK_BARE, { .type = SIDE_ENUM_INIT(SIDE_ATTR_TYPE_U16), .u = { .integer_value = { .side_u16 = (_val) } } })
@@ -290,6 +308,15 @@
 #define side_enum_mapping_list(...)		( __VA_ARGS__ )
 #define side_enum_bitmap_mapping_list(...)	( __VA_ARGS__ )
 
+/*
+ * Where the label of mapping _k of an array sits, in bytes. The two
+ * kinds of mapping differ in the range they cover and not in where the
+ * label is, so the array says which it is.
+ */
+#define SIDE_MAPPING_LABEL_AT(_mappings, _k)				\
+	((_k) * sizeof((_mappings)[0])					\
+		+ offsetof(__typeof__((_mappings)[0]), label.p.u))
+
 /* Where the mappings of _ctx live, and the label of each of them. */
 #define SIDE_MAPPING_ARRAY_SYM(_ctx)		SIDE_CAT3(_ctx, __mappings, )
 #define SIDE_MAPPING_ARRAY_OFF(_ctx)		SIDE_CAT3(_ctx, __mappings_off, )
@@ -324,10 +351,15 @@
 #define SIDE_MAPPING_DECLARE_0(_ctx, _idx, _mapping)
 
 #define SIDE_MAPPING_DECLARE_1(_ctx, _idx, _mapping)			\
-	SIDE_MAPPING_DECLARE_2(SIDE_MAPPING_LABEL_SYM(_ctx, _idx), SIDE_UNPACK _mapping)
-#define SIDE_MAPPING_DECLARE_2(_sym, ...)	SIDE_MAPPING_DECLARE_3(_sym, __VA_ARGS__)
-#define SIDE_MAPPING_DECLARE_3(_sym, _label, _begin, _end)		\
-	SIDE_ATTR_STRING_OBJECT(_sym, _label)
+	SIDE_MAPPING_DECLARE_2(SIDE_MAPPING_LABEL_SYM(_ctx, _idx),	\
+		SIDE_MAPPING_ARRAY_SYM(_ctx), SIDE_IDX_NUM(_idx),	\
+		SIDE_UNPACK _mapping)
+#define SIDE_MAPPING_DECLARE_2(_sym, _mappings, _k, ...)		\
+	SIDE_MAPPING_DECLARE_3(_sym, _mappings, _k, __VA_ARGS__)
+#define SIDE_MAPPING_DECLARE_3(_sym, _mappings, _k, _label, _begin, _end) \
+	SIDE_ATTR_STRING_OBJECT(_sym, _label)				\
+	SIDE_PTR_REL_DEFINE_AT(SIDE_CAT3(_sym, _off, ), _mappings,	\
+		SIDE_MAPPING_LABEL_AT(_mappings, _k), _sym)
 
 #define SIDE_MAPPING_INIT(_ctx, _idx, _mapping)				\
 	SIDE_CAT2(SIDE_MAPPING_INIT_, SIDE_IS_PAREN(_mapping))(_ctx, _idx, _mapping)
@@ -342,7 +374,7 @@
 		.range_begin = _begin,					\
 		.range_end = _end,					\
 		.label = {						\
-			.p = SIDE_PTR_INIT(_sym),			\
+			.p = SIDE_PTR_SEL_REL_INIT(SIDE_CAT3(_sym, _off, )), \
 			.unit_size = sizeof(uint8_t),			\
 			.byte_order = SIDE_ENUM_INIT(SIDE_TYPE_BYTE_ORDER_HOST), \
 		},							\
@@ -354,18 +386,26 @@
  * declarations rather than one, so the linkage is part of the name as
  * it is for a structure.
  */
-#define __side_define_enum(_type, _mappings_type, _linkage, _identifier, _mappings, _attr...) \
+#define __side_define_enum(_type, _mappings_type, _forward_decl_linkage, _linkage, _identifier, _mappings, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	_forward_decl_linkage _mappings_type __attribute__((section("side_event_description"))) \
+		_identifier SIDE_ASM_LABEL(_identifier);		\
 	SIDE_MAPPING_ARRAY_DECLARE(_type, SIDE_MAPPING_ARRAY_SYM(_identifier)) \
 	SIDE_MAP_IDX_P(SIDE_MAPPING_DECLARE, _identifier, SIDE_UNPACK _mappings) \
 	SIDE_MAPPING_ARRAY_OBJECT(_type, SIDE_MAPPING_ARRAY_SYM(_identifier), \
 		{ SIDE_MAP_LIST_IDX_P(SIDE_MAPPING_INIT, _identifier, SIDE_UNPACK _mappings) }) \
-	SIDE_ATTRS_DECLARE(_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
+	SIDE_PTR_REL_DEFINE_AT(SIDE_MAPPING_ARRAY_OFF(_identifier),	\
+		_identifier, offsetof(_mappings_type, mappings.elements), \
+		SIDE_MAPPING_ARRAY_SYM(_identifier))			\
+	SIDE_ATTRS_DECLARE(_identifier,					\
+		offsetof(_mappings_type, attributes.elements), _identifier, \
+		SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list()))	\
 	_linkage _mappings_type __attribute__((section("side_event_description"), used)) \
 		_identifier SIDE_ASM_LABEL(_identifier) = {		\
-		.mappings = SIDE_LITERAL_ARRAY_OF_NAMED(SIDE_MAPPING_ARRAY_SYM(_identifier)), \
-		.attributes = SIDE_ATTRS_REF(_identifier),		\
+		.mappings = SIDE_LITERAL_ARRAY_REL_OF_NAMED(SIDE_MAPPING_ARRAY_OFF(_identifier), \
+			SIDE_MAPPING_ARRAY_SYM(_identifier)),		\
+		.attributes = SIDE_ATTRS_REL_REF(_identifier),		\
 	};								\
 	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
 
@@ -373,34 +413,36 @@
 #  define _side_static_define_enum(_identifier, _mappings, _attr...)	\
 	namespace {							\
 		__side_define_enum(struct side_enum_mapping,		\
-			struct side_enum_mappings, , _identifier,	\
+			struct side_enum_mappings, extern, , _identifier, \
 			SIDE_PARAM(_mappings), ##_attr);		\
 	}
 #  define _side_static_define_enum_bitmap(_identifier, _mappings, _attr...) \
 	namespace {							\
 		__side_define_enum(struct side_enum_bitmap_mapping,	\
-			struct side_enum_bitmap_mappings, , _identifier, \
+			struct side_enum_bitmap_mappings, extern, ,	\
+			_identifier,					\
 			SIDE_PARAM(_mappings), ##_attr);		\
 	}
 #else
 #  define _side_static_define_enum(_identifier, _mappings, _attr...)	\
 	__side_define_enum(struct side_enum_mapping,			\
-		struct side_enum_mappings, static, _identifier,		\
+		struct side_enum_mappings, static, static, _identifier,	\
 		SIDE_PARAM(_mappings), ##_attr)
 #  define _side_static_define_enum_bitmap(_identifier, _mappings, _attr...) \
 	__side_define_enum(struct side_enum_bitmap_mapping,		\
-		struct side_enum_bitmap_mappings, static, _identifier,	\
+		struct side_enum_bitmap_mappings, static, static,	\
+		_identifier,						\
 		SIDE_PARAM(_mappings), ##_attr)
 #endif
 
 #define side_define_enum(_identifier, _mappings, _attr...)		\
 	__side_define_enum(struct side_enum_mapping,			\
-		struct side_enum_mappings, , _identifier,		\
+		struct side_enum_mappings, extern, , _identifier,	\
 		SIDE_PARAM(_mappings), ##_attr)
 
 #define _side_define_enum_bitmap(_identifier, _mappings, _attr...)	\
 	__side_define_enum(struct side_enum_bitmap_mapping,		\
-		struct side_enum_bitmap_mappings, , _identifier,	\
+		struct side_enum_bitmap_mappings, extern, , _identifier, \
 		SIDE_PARAM(_mappings), ##_attr)
 
 /* Stack-copy field and type definitions */
@@ -584,7 +626,7 @@
 		.type = SIDE_ENUM_INIT(_label),				\
 		.u = {							\
 			._member = {					\
-				.mappings = SIDE_PTR_INIT(_mappings),	\
+				.mappings = SIDE_PTR_REL_INIT(SIDE_TYPE_MAPPINGS_OFF(_pfx)), \
 				.elem_type = SIDE_PTR_REL_INIT(SIDE_TYPE_ELEM_OFF(_pfx)), \
 			},						\
 		},							\
@@ -619,7 +661,7 @@
 						.type = {		\
 							.elem_type = SIDE_PTR_REL_INIT(SIDE_TYPE_ELEM_OFF(_pfx)), \
 							.length = _length, \
-							.attributes = SIDE_ATTRS_REF(_pfx), \
+							.attributes = SIDE_ATTRS_REL_REF(_pfx), \
 						},			\
 					},				\
 				},					\
@@ -639,7 +681,7 @@
 						.type = {		\
 							.elem_type = SIDE_PTR_REL_INIT(SIDE_TYPE_ELEM_OFF(_pfx)), \
 							.length_type = SIDE_PTR_REL_INIT(SIDE_TYPE_LEN_OFF(_pfx)), \
-							.attributes = SIDE_ATTRS_REF(_pfx), \
+							.attributes = SIDE_ATTRS_REL_REF(_pfx), \
 						},			\
 					},				\
 				},					\
@@ -662,6 +704,7 @@
 
 /* Where the distance from a type to each of those lives. */
 #define SIDE_TYPE_PTR_OFF(_pfx)		SIDE_CAT3(_pfx, __ptr_off, )
+#define SIDE_TYPE_MAPPINGS_OFF(_pfx)	SIDE_CAT3(_pfx, __mappings_off, )
 #define SIDE_TYPE_ELEM_OFF(_pfx)	SIDE_CAT3(_pfx, __elem_off, )
 #define SIDE_TYPE_LEN_OFF(_pfx)		SIDE_CAT3(_pfx, __len_off, )
 
@@ -795,7 +838,9 @@
  * rung of the ladder changes: an attribute holds no type.
  */
 #define SIDE_TYPE_DECLARE_LEAF(_obj, _off, _pfx, _attrs, _path, _maker, ...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attrs)
+	SIDE_ATTRS_DECLARE(_obj,					\
+		(_off) + offsetof(struct side_type, u._path.attributes.elements), \
+		_pfx, _attrs)
 
 #define SIDE_TYPE_DECLARE_L0_SIDE_TK_LEAF	SIDE_TYPE_DECLARE_LEAF
 #define SIDE_TYPE_DECLARE_L1_SIDE_TK_LEAF	SIDE_TYPE_DECLARE_LEAF
@@ -840,31 +885,46 @@
 #define SIDE_TYPE_DECLARE_L0_SIDE_TK_ENUM(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
 	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
-		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))
+		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))		\
+	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_MAPPINGS_OFF(_pfx), _obj, _off,	\
+		_member.mappings, _mappings)
 #define SIDE_TYPE_DECLARE_L1_SIDE_TK_ENUM(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
 	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
-		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))
+		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))		\
+	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_MAPPINGS_OFF(_pfx), _obj, _off,	\
+		_member.mappings, _mappings)
 #define SIDE_TYPE_DECLARE_L2_SIDE_TK_ENUM(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
 	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
-		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))
+		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))		\
+	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_MAPPINGS_OFF(_pfx), _obj, _off,	\
+		_member.mappings, _mappings)
 
 /* A gather array, which holds the type of its elements. */
 #define SIDE_TYPE_DECLARE_L0_SIDE_TK_GARRAY(_obj, _off, _pfx, _elem, _length, _offset, _access_mode, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
+	SIDE_ATTRS_DECLARE(_obj,					\
+		(_off) + offsetof(struct side_type,			\
+			u.side_gather.u.side_array.type.attributes.elements),	\
+		_pfx, _attr)					\
 	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
 		side_gather.u.side_array.type.elem_type,		\
 		SIDE_TYPE_ELEM_SYM(_pfx))
 #define SIDE_TYPE_DECLARE_L1_SIDE_TK_GARRAY(_obj, _off, _pfx, _elem, _length, _offset, _access_mode, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
+	SIDE_ATTRS_DECLARE(_obj,					\
+		(_off) + offsetof(struct side_type,			\
+			u.side_gather.u.side_array.type.attributes.elements),	\
+		_pfx, _attr)					\
 	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
 		side_gather.u.side_array.type.elem_type,		\
 		SIDE_TYPE_ELEM_SYM(_pfx))
 #define SIDE_TYPE_DECLARE_L2_SIDE_TK_GARRAY(_obj, _off, _pfx, _elem, _length, _offset, _access_mode, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
+	SIDE_ATTRS_DECLARE(_obj,					\
+		(_off) + offsetof(struct side_type,			\
+			u.side_gather.u.side_array.type.attributes.elements),	\
+		_pfx, _attr)					\
 	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
 		side_gather.u.side_array.type.elem_type,		\
@@ -872,7 +932,10 @@
 
 /* A gather vla, which holds the type of its elements and of its length. */
 #define SIDE_TYPE_DECLARE_L0_SIDE_TK_GVLA(_obj, _off, _pfx, _elem, _offset, _access_mode, _length, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
+	SIDE_ATTRS_DECLARE(_obj,					\
+		(_off) + offsetof(struct side_type,			\
+			u.side_gather.u.side_vla.type.attributes.elements),	\
+		_pfx, _attr)					\
 	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_HOIST_L1(SIDE_TYPE_LEN_SYM(_pfx), _length)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
@@ -882,7 +945,10 @@
 		side_gather.u.side_vla.type.length_type,		\
 		SIDE_TYPE_LEN_SYM(_pfx))
 #define SIDE_TYPE_DECLARE_L1_SIDE_TK_GVLA(_obj, _off, _pfx, _elem, _offset, _access_mode, _length, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
+	SIDE_ATTRS_DECLARE(_obj,					\
+		(_off) + offsetof(struct side_type,			\
+			u.side_gather.u.side_vla.type.attributes.elements),	\
+		_pfx, _attr)					\
 	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_HOIST_L2(SIDE_TYPE_LEN_SYM(_pfx), _length)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
@@ -892,7 +958,10 @@
 		side_gather.u.side_vla.type.length_type,		\
 		SIDE_TYPE_LEN_SYM(_pfx))
 #define SIDE_TYPE_DECLARE_L2_SIDE_TK_GVLA(_obj, _off, _pfx, _elem, _offset, _access_mode, _length, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
+	SIDE_ATTRS_DECLARE(_obj,					\
+		(_off) + offsetof(struct side_type,			\
+			u.side_gather.u.side_vla.type.attributes.elements),	\
+		_pfx, _attr)					\
 	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_TYPE_HOIST_L3(SIDE_TYPE_LEN_SYM(_pfx), _length)		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
@@ -907,33 +976,39 @@
  * goes in the section too, since nothing else gives it a name.
  */
 #define SIDE_TYPE_DECLARE_L0_SIDE_TK_OPTLIT(_obj, _off, _pfx, _elem, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
 	SIDE_TYPE_OPTIONAL_OBJECT_DECLARE(SIDE_TYPE_OPT_SYM(_pfx))	\
+	SIDE_ATTRS_DECLARE(SIDE_TYPE_OPT_SYM(_pfx),			\
+		offsetof(struct side_type_optional, attributes.elements), \
+		_pfx, _attr)						\
 	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_PTR_REL_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), SIDE_TYPE_OPT_SYM(_pfx), \
 		struct side_type_optional, elem_type, SIDE_TYPE_ELEM_SYM(_pfx)) \
 	SIDE_TYPE_OPTIONAL_OBJECT(SIDE_TYPE_OPT_SYM(_pfx),		\
-		SIDE_TYPE_ELEM_OFF(_pfx), SIDE_ATTRS_REF(_pfx))			\
+		SIDE_TYPE_ELEM_OFF(_pfx), SIDE_ATTRS_REL_REF(_pfx))			\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_PTR_OFF(_pfx), _obj, _off,	\
 		side_optional, SIDE_TYPE_OPT_SYM(_pfx))
 #define SIDE_TYPE_DECLARE_L1_SIDE_TK_OPTLIT(_obj, _off, _pfx, _elem, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
 	SIDE_TYPE_OPTIONAL_OBJECT_DECLARE(SIDE_TYPE_OPT_SYM(_pfx))	\
+	SIDE_ATTRS_DECLARE(SIDE_TYPE_OPT_SYM(_pfx),			\
+		offsetof(struct side_type_optional, attributes.elements), \
+		_pfx, _attr)						\
 	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_PTR_REL_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), SIDE_TYPE_OPT_SYM(_pfx), \
 		struct side_type_optional, elem_type, SIDE_TYPE_ELEM_SYM(_pfx)) \
 	SIDE_TYPE_OPTIONAL_OBJECT(SIDE_TYPE_OPT_SYM(_pfx),		\
-		SIDE_TYPE_ELEM_OFF(_pfx), SIDE_ATTRS_REF(_pfx))			\
+		SIDE_TYPE_ELEM_OFF(_pfx), SIDE_ATTRS_REL_REF(_pfx))			\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_PTR_OFF(_pfx), _obj, _off,	\
 		side_optional, SIDE_TYPE_OPT_SYM(_pfx))
 #define SIDE_TYPE_DECLARE_L2_SIDE_TK_OPTLIT(_obj, _off, _pfx, _elem, _attr...) \
-	SIDE_ATTRS_DECLARE(_pfx, _attr)					\
 	SIDE_TYPE_OPTIONAL_OBJECT_DECLARE(SIDE_TYPE_OPT_SYM(_pfx))	\
+	SIDE_ATTRS_DECLARE(SIDE_TYPE_OPT_SYM(_pfx),			\
+		offsetof(struct side_type_optional, attributes.elements), \
+		_pfx, _attr)						\
 	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
 	SIDE_PTR_REL_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), SIDE_TYPE_OPT_SYM(_pfx), \
 		struct side_type_optional, elem_type, SIDE_TYPE_ELEM_SYM(_pfx)) \
 	SIDE_TYPE_OPTIONAL_OBJECT(SIDE_TYPE_OPT_SYM(_pfx),		\
-		SIDE_TYPE_ELEM_OFF(_pfx), SIDE_ATTRS_REF(_pfx))			\
+		SIDE_TYPE_ELEM_OFF(_pfx), SIDE_ATTRS_REL_REF(_pfx))			\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_PTR_OFF(_pfx), _obj, _off,	\
 		side_optional, SIDE_TYPE_OPT_SYM(_pfx))
 
@@ -1412,6 +1487,12 @@
 #define _side_field_string16_be(_name, _attr...)		_side_field(_name, _side_type_string16_be(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 #define _side_field_string32_be(_name, _attr...)		_side_field(_name, _side_type_string32_be(SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
+/*
+ * The mappings are named rather than pointed at: the distance to them
+ * is measured from the type holding it, which needs the name of the
+ * object rather than its address. side_field_gather_enum() already
+ * took it that way.
+ */
 #define _side_type_enum(_mappings, _elem_type) \
 	(SIDE_TK_ENUM, SIDE_TYPE_ENUM, side_enum, _mappings, _elem_type)
 #define _side_field_enum(_name, _mappings, _elem_type) \
@@ -1461,11 +1542,13 @@
 	SIDE_PTR_REL_DEFINE(_identifier##__fields_off, _identifier,	\
 		struct side_type_struct, fields.elements,		\
 		_identifier##__fields)					\
-	SIDE_ATTRS_DECLARE(_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
+	SIDE_ATTRS_DECLARE(_identifier,					\
+		offsetof(struct side_type_struct, attributes.elements),	\
+		_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
 	_linkage struct side_type_struct __attribute__((section("side_event_description"), used)) \
 		_identifier SIDE_ASM_LABEL(_identifier) =		\
 		_side_type_struct_define(SIDE_PARAM(SIDE_LITERAL_ARRAY_REL_OF_NAMED(_identifier##__fields_off, _identifier##__fields)), \
-			SIDE_ATTRS_REF(_identifier));			\
+			SIDE_ATTRS_REL_REF(_identifier));			\
 	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
 
 /*
@@ -1523,13 +1606,15 @@
 	SIDE_TYPE_DECLARE_L0(_identifier,				\
 		offsetof(struct side_type_variant, selector),		\
 		SIDE_CAT3(_identifier, __selector, ), _selector)	\
-	SIDE_ATTRS_DECLARE(_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
+	SIDE_ATTRS_DECLARE(_identifier,					\
+		offsetof(struct side_type_variant, attributes.elements),	\
+		_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
 	_linkage struct side_type_variant __attribute__((section("side_event_description"), used)) \
 		_identifier SIDE_ASM_LABEL(_identifier) =		\
 		_side_type_variant_define(				\
 			SIDE_PARAM(SIDE_TYPE_INIT(SIDE_CAT3(_identifier, __selector, ), _selector)), \
 			SIDE_PARAM(SIDE_LITERAL_ARRAY_REL_OF_NAMED(_identifier##__options_off, _identifier##__options)), \
-			SIDE_ATTRS_REF(_identifier));			\
+			SIDE_ATTRS_REL_REF(_identifier));			\
 	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
 
 #ifdef __cplusplus
@@ -1576,11 +1661,13 @@ enum {
 	SIDE_PTR_REL_DEFINE(SIDE_TYPE_ELEM_OFF(_identifier), _identifier, \
 		struct side_type_optional, elem_type,			\
 		SIDE_TYPE_ELEM_SYM(_identifier))			\
-	SIDE_ATTRS_DECLARE(_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
+	SIDE_ATTRS_DECLARE(_identifier,					\
+		offsetof(struct side_type_optional, attributes.elements),	\
+		_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
 	_linkage struct side_type_optional __attribute__((section("side_event_description"), used)) \
 		_identifier SIDE_ASM_LABEL(_identifier) =		\
 		_side_type_optional_define(SIDE_TYPE_ELEM_OFF(_identifier), \
-			SIDE_ATTRS_REF(_identifier));			\
+			SIDE_ATTRS_REL_REF(_identifier));			\
 	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
 
 #ifdef __cplusplus
@@ -1623,12 +1710,14 @@ enum {
 	SIDE_PTR_REL_DEFINE(SIDE_TYPE_ELEM_OFF(_identifier), _identifier, \
 		struct side_type_array, elem_type,			\
 		SIDE_TYPE_ELEM_SYM(_identifier))			\
-	SIDE_ATTRS_DECLARE(_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
+	SIDE_ATTRS_DECLARE(_identifier,					\
+		offsetof(struct side_type_array, attributes.elements),	\
+		_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
 	_linkage struct side_type_array __attribute__((section("side_event_description"), used)) \
 		_identifier SIDE_ASM_LABEL(_identifier) = {		\
 		.elem_type = SIDE_PTR_REL_INIT(SIDE_TYPE_ELEM_OFF(_identifier)), \
 		.length = _length,					\
-		.attributes = SIDE_ATTRS_REF(_identifier),		\
+		.attributes = SIDE_ATTRS_REL_REF(_identifier),		\
 	};								\
 	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
 
@@ -1669,12 +1758,14 @@ enum {
 	SIDE_PTR_REL_DEFINE(SIDE_TYPE_LEN_OFF(_identifier), _identifier, \
 		struct side_type_vla, length_type,			\
 		SIDE_TYPE_LEN_SYM(_identifier))				\
-	SIDE_ATTRS_DECLARE(_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
+	SIDE_ATTRS_DECLARE(_identifier,					\
+		offsetof(struct side_type_vla, attributes.elements),	\
+		_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
 	_linkage struct side_type_vla __attribute__((section("side_event_description"), used)) \
 		_identifier SIDE_ASM_LABEL(_identifier) = {		\
 		.elem_type = SIDE_PTR_REL_INIT(SIDE_TYPE_ELEM_OFF(_identifier)), \
 		.length_type = SIDE_PTR_REL_INIT(SIDE_TYPE_LEN_OFF(_identifier)), \
-		.attributes = SIDE_ATTRS_REF(_identifier),		\
+		.attributes = SIDE_ATTRS_REL_REF(_identifier),		\
 	};								\
 	SIDE_POP_DIAGNOSTIC() SIDE_EXPECT_SEMICOLON()
 
@@ -1927,7 +2018,7 @@ enum {
 	_side_field(_name, _side_type_gather_string32_be(_offset, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define _side_type_gather_enum(_mappings, _elem_type) \
-	(SIDE_TK_ENUM, SIDE_TYPE_GATHER_ENUM, side_enum, &_mappings, _elem_type)
+	(SIDE_TK_ENUM, SIDE_TYPE_GATHER_ENUM, side_enum, _mappings, _elem_type)
 #define _side_field_gather_enum(_name, _mappings, _elem_type) \
 	_side_field(_name, _side_type_gather_enum(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
@@ -2448,10 +2539,9 @@ enum {
 		struct side_event_description, fields.elements,		\
 		_identifier##__fields)					\
 	/* The attributes of the event, and the strings they hold. */	\
-	SIDE_ATTRS_DECLARE(_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
-	SIDE_PTR_REL_DEFINE(_identifier##__attributes_off, _identifier,	\
-		struct side_event_description, attributes.elements,	\
-		SIDE_ATTR_ARRAY_SYM(_identifier))			\
+	SIDE_ATTRS_DECLARE(_identifier,					\
+		offsetof(struct side_event_description, attributes.elements), \
+		_identifier, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())) \
 	_forward_decl_linkage struct side_event_state_0 __attribute__((section("side_event_state"))) \
 		side_event_state__##_identifier;				\
 	/*								\
@@ -2483,7 +2573,7 @@ enum {
 			.length = SIDE_ARRAY_SIZE(_identifier##__fields), \
 		},							\
 		.attributes = {						\
-			.elements = SIDE_PTR_REL_INIT(_identifier##__attributes_off), \
+			.elements = SIDE_PTR_REL_INIT(SIDE_ATTR_ARRAY_OFF(_identifier)), \
 			.length = SIDE_ARRAY_SIZE(SIDE_ATTR_ARRAY_SYM(_identifier)), \
 		},							\
 		.flags = (_flags),					\

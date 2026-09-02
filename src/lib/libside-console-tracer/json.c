@@ -86,14 +86,14 @@ void json_print_enum_value(struct side_json_writer *writer,
 		side_json_item(writer, "\"value\": %" PRIu64, v.u[SIDE_INTEGER128_SPLIT_LOW]);
 	side_json_item(writer, "\"labels\": [");
 	side_json_push(writer);
-	side_for_each_element_in_array(mapping, &mappings->mappings) {
+	side_for_each_element_in_rel_array(mapping, &mappings->mappings) {
 		if (mapping->range_end < mapping->range_begin)
 			continue;
 		if (v.s[SIDE_INTEGER128_SPLIT_LOW] < mapping->range_begin ||
 				v.s[SIDE_INTEGER128_SPLIT_LOW] > mapping->range_end)
 			continue;
 		side_json_next(writer);
-		json_print_string_value(writer, side_ptr_get(mapping->label.p),
+		json_print_string_value(writer, side_ptr_sel_get(mapping->label.p),
 			mapping->label.unit_size, side_enum_get(mapping->label.byte_order));
 		nr_labels++;
 	}
@@ -366,7 +366,7 @@ void json_print_enum(const struct side_type *type_desc, const struct side_arg *i
 	const struct side_type_enum *side_enum = &type_desc->u.side_enum;
 	const struct side_type *elem_type = side_ptr_rel_get(side_enum->elem_type);
 
-	json_print_enum_value(writer_of(priv), side_ptr_get(side_enum->mappings),
+	json_print_enum_value(writer_of(priv), side_ptr_rel_get(side_enum->mappings),
 		&elem_type->u.side_integer, &item->u.side_static.integer_value);
 }
 
@@ -458,7 +458,7 @@ void json_print_gather_enum(const struct side_type_gather_enum *type,
 {
 	const struct side_type *elem_type = side_ptr_rel_get(type->elem_type);
 
-	json_print_enum_value(writer_of(priv), side_ptr_get(type->mappings),
+	json_print_enum_value(writer_of(priv), side_ptr_rel_get(type->mappings),
 		&elem_type->u.side_gather.u.side_integer.type, value);
 }
 

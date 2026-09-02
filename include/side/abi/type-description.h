@@ -159,45 +159,75 @@ enum side_type_gather_access_mode {
 
 /* Type descriptions */
 struct side_type_null {
-	side_array_t(const struct side_attr) attributes;
+/*
+ * A description writes a distance here and a dynamic argument an
+ * address, since this type is what both of them build. See
+ * side_ptr_sel_t.
+ */
+	side_array_sel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_type_null, 20);
+side_check_size(struct side_type_null, 21);
 
 struct side_type_bool {
-	side_array_t(const struct side_attr) attributes;
+/*
+ * A description writes a distance here and a dynamic argument an
+ * address, since this type is what both of them build. See
+ * side_ptr_sel_t.
+ */
+	side_array_sel_t(const struct side_attr) attributes;
 	uint16_t bool_size;		/* bytes */
 	uint16_t len_bits;		/* bits. 0 for (bool_size * CHAR_BITS) */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
-side_check_size(struct side_type_bool, 25);
+side_check_size(struct side_type_bool, 26);
 
 struct side_type_byte {
-	side_array_t(const struct side_attr) attributes;
+/*
+ * A description writes a distance here and a dynamic argument an
+ * address, since this type is what both of them build. See
+ * side_ptr_sel_t.
+ */
+	side_array_sel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_type_byte, 20);
+side_check_size(struct side_type_byte, 21);
 
 struct side_type_string {
-	side_array_t(const struct side_attr) attributes;
+/*
+ * A description writes a distance here and a dynamic argument an
+ * address, since this type is what both of them build. See
+ * side_ptr_sel_t.
+ */
+	side_array_sel_t(const struct side_attr) attributes;
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
-side_check_size(struct side_type_string, 22);
+side_check_size(struct side_type_string, 23);
 
 struct side_type_integer {
-	side_array_t(const struct side_attr) attributes;
+/*
+ * A description writes a distance here and a dynamic argument an
+ * address, since this type is what both of them build. See
+ * side_ptr_sel_t.
+ */
+	side_array_sel_t(const struct side_attr) attributes;
 	uint16_t integer_size;		/* bytes */
 	uint16_t len_bits;		/* bits. 0 for (integer_size * CHAR_BITS) */
 	uint8_t signedness;		/* true/false */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
-side_check_size(struct side_type_integer, 26);
+side_check_size(struct side_type_integer, 27);
 
 struct side_type_float {
-	side_array_t(const struct side_attr) attributes;
+/*
+ * A description writes a distance here and a dynamic argument an
+ * address, since this type is what both of them build. See
+ * side_ptr_sel_t.
+ */
+	side_array_sel_t(const struct side_attr) attributes;
 	uint16_t float_size;		/* bytes */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
-side_check_size(struct side_type_float, 23);
+side_check_size(struct side_type_float, 24);
 
 struct side_enum_mapping {
 	int64_t range_begin;
@@ -207,10 +237,14 @@ struct side_enum_mapping {
 side_check_size(struct side_enum_mapping, 16 + sizeof(struct side_type_raw_string));
 
 struct side_enum_mappings {
-	side_array_t(const struct side_enum_mapping) mappings;
-	side_array_t(const struct side_attr) attributes;
+/*
+ * The attributes are in the section the description is in, so the
+ * distance to them is one the assembler folds. See side_ptr_rel_t.
+ */
+	side_array_rel_t(const struct side_enum_mapping) mappings;
+	side_array_rel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_enum_mappings, 40);
+side_check_size(struct side_enum_mappings, 24);
 
 struct side_enum_bitmap_mapping {
 	uint64_t range_begin;
@@ -220,10 +254,14 @@ struct side_enum_bitmap_mapping {
 side_check_size(struct side_enum_bitmap_mapping, 16 + sizeof(struct side_type_raw_string));
 
 struct side_enum_bitmap_mappings {
-	side_array_t(const struct side_enum_bitmap_mapping) mappings;
-	side_array_t(const struct side_attr) attributes;
+/*
+ * The attributes are in the section the description is in, so the
+ * distance to them is one the assembler folds. See side_ptr_rel_t.
+ */
+	side_array_rel_t(const struct side_enum_bitmap_mapping) mappings;
+	side_array_rel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_enum_bitmap_mappings, 40);
+side_check_size(struct side_enum_bitmap_mappings, 24);
 
 struct side_type_struct {
 /*
@@ -231,9 +269,9 @@ struct side_type_struct {
  * to it is one the assembler folds. See side_ptr_rel_t.
  */
 	side_array_rel_t(const struct side_event_field) fields;
-	side_array_t(const struct side_attr) attributes;
+	side_array_rel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_type_struct, 32);
+side_check_size(struct side_type_struct, 24);
 
 struct side_type_array {
 /*
@@ -242,9 +280,9 @@ struct side_type_array {
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
 	uint32_t length;
-	side_array_t(const struct side_attr) attributes;
+	side_array_rel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_type_array, 32);
+side_check_size(struct side_type_array, 24);
 
 struct side_type_vla {
 /*
@@ -253,29 +291,37 @@ struct side_type_vla {
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
 	side_ptr_rel_t(const struct side_type) length_type;
-	side_array_t(const struct side_attr) attributes;
+	side_array_rel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_type_vla, 36);
+side_check_size(struct side_type_vla, 28);
 
 struct side_type_enum {
-	side_ptr_t(const struct side_enum_mappings) mappings;
+/*
+ * The attributes are in the section the description is in, so the
+ * distance to them is one the assembler folds. See side_ptr_rel_t.
+ */
+	side_ptr_rel_t(const struct side_enum_mappings) mappings;
 /*
  * What a type holds is in the section the type is in, so the distance
  * to it is one the assembler folds. See side_ptr_rel_t.
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
 } SIDE_PACKED;
-side_check_size(struct side_type_enum, 24);
+side_check_size(struct side_type_enum, 16);
 
 struct side_type_enum_bitmap {
-	side_ptr_t(const struct side_enum_bitmap_mappings) mappings;
+/*
+ * The attributes are in the section the description is in, so the
+ * distance to them is one the assembler folds. See side_ptr_rel_t.
+ */
+	side_ptr_rel_t(const struct side_enum_bitmap_mappings) mappings;
 /*
  * What a type holds is in the section the type is in, so the distance
  * to it is one the assembler folds. See side_ptr_rel_t.
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
 } SIDE_PACKED;
-side_check_size(struct side_type_enum_bitmap, 24);
+side_check_size(struct side_type_enum_bitmap, 16);
 
 struct side_type_gather_bool {
 	uint64_t offset;	/* bytes */
@@ -315,14 +361,18 @@ struct side_type_gather_string {
 side_check_size(struct side_type_gather_string, 9 + sizeof(struct side_type_string));
 
 struct side_type_gather_enum {
-	side_ptr_t(const struct side_enum_mappings) mappings;
+/*
+ * The attributes are in the section the description is in, so the
+ * distance to them is one the assembler folds. See side_ptr_rel_t.
+ */
+	side_ptr_rel_t(const struct side_enum_mappings) mappings;
 /*
  * What a type holds is in the section the type is in, so the distance
  * to it is one the assembler folds. See side_ptr_rel_t.
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
 } SIDE_PACKED;
-side_check_size(struct side_type_gather_enum, 24);
+side_check_size(struct side_type_gather_enum, 16);
 
 struct side_type_gather_struct {
 	/*
@@ -420,9 +470,9 @@ struct side_type_variant {
  */
 	side_array_rel_t(const struct side_variant_option) options;
 	struct side_type selector;
-	side_array_t(const struct side_attr) attributes;
+	side_array_rel_t(const struct side_attr) attributes;
 } SIDE_PACKED;
-side_check_size(struct side_type_variant, 32 + sizeof(struct side_type));
+side_check_size(struct side_type_variant, 24 + sizeof(struct side_type));
 
 struct side_type_optional {
 /*
@@ -430,7 +480,7 @@ struct side_type_optional {
  * to it is one the assembler folds. See side_ptr_rel_t.
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
-	side_array_t(const struct side_attr) attributes;
+	side_array_rel_t(const struct side_attr) attributes;
 };
 
 struct side_event_field {

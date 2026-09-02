@@ -54,6 +54,15 @@ struct visitor {
  */
 #define visit_side_rel_pointer(ctx, ptr)	side_ptr_rel_get(ptr)
 
+/*
+ * A pointer which says which of the two it holds needs the resolver
+ * only where it holds an address, which is what a dynamic argument
+ * writes. See side_ptr_sel_t.
+ */
+#define visit_side_sel_pointer(ctx, ptr)				\
+	((ptr).is_offset ? side_ptr_sel_get(ptr) :			\
+		visit_pointer(ctx, side_ptr_sel_get(ptr)))
+
 /* The elements of an array reached by a distance, for the same reason. */
 #define visit_side_rel_array_elements(ctx, array)	side_array_rel_elements(&(array))
 

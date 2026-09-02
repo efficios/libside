@@ -207,7 +207,7 @@ void side_json_attributes(struct side_json_writer *writer,
 	side_json_item(writer, "\"attributes\": {");
 	side_json_push(writer);
 	for (i = 0; i < nr_attr; i++) {
-		const char *key = side_json_resolve(writer, side_ptr_get(attr[i].key.p));
+		const char *key = side_json_resolve_sel_ptr(writer, attr[i].key.p);
 		const struct side_attr_value *value = &attr[i].value;
 		const char *json_value = side_json_attr_value(writer, value);
 
@@ -222,7 +222,7 @@ void side_json_attributes(struct side_json_writer *writer,
 			continue;
 		}
 		side_json_string(writer,
-			side_json_resolve(writer, side_ptr_get(value->u.string_value.p)));
+			side_json_resolve_sel_ptr(writer, value->u.string_value.p));
 	}
 	side_json_pop(writer, '}');
 }

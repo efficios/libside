@@ -101,10 +101,15 @@ union side_float_value {
 side_check_size(union side_float_value, 32);
 
 struct side_type_raw_string {
-	side_ptr_t(const void) p;	/* pointer to string */
+	/*
+	 * A description writes the distance to the string and a dynamic
+	 * argument its address, since this type is what both of them
+	 * build. See side_ptr_sel_t.
+	 */
+	side_ptr_sel_t(const void) p;	/* string */
 	uint8_t unit_size;		/* 1, 2, or 4 bytes */
 	side_enum_t(enum side_type_label_byte_order, uint8_t) byte_order;
 } SIDE_PACKED;
-side_check_size(struct side_type_raw_string, 18);
+side_check_size(struct side_type_raw_string, 19);
 
 #endif /* SIDE_ABI_TYPE_VALUE_H */

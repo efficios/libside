@@ -9,7 +9,7 @@ static void side_type_struct_attributes(void *ctx, const struct side_type_struct
 {
 	if (type) {
 		*nr_attr = type->attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_rel_pointer(ctx, type->attributes.elements) : NULL;
 	} else {
 		*attr = NULL;
 		*nr_attr = 0;
@@ -21,7 +21,7 @@ static void side_type_array_attributes(void *ctx, const struct side_type_array *
 {
 	if (type) {
 		*nr_attr = type->attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_rel_pointer(ctx, type->attributes.elements) : NULL;
 	} else {
 		*attr = NULL;
 		*nr_attr = 0;
@@ -33,7 +33,7 @@ static void side_type_vla_attributes(void *ctx, const struct side_type_vla *type
 {
 	if (type) {
 		*nr_attr = type->attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_rel_pointer(ctx, type->attributes.elements) : NULL;
 	} else {
 		*attr = NULL;
 		*nr_attr = 0;
@@ -45,7 +45,7 @@ static void side_type_variant_attributes(void *ctx, const struct side_type_varia
 {
 	if (type) {
 		*nr_attr = type->attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_rel_pointer(ctx, type->attributes.elements) : NULL;
 	} else {
 		*attr = NULL;
 		*nr_attr = 0;
@@ -58,7 +58,7 @@ static void side_type_optional_attributes(void *ctx, const struct side_type_opti
 {
 	if (type) {
 		*nr_attr = type->attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_rel_pointer(ctx, type->attributes.elements) : NULL;
 	} else {
 		*attr = NULL;
 		*nr_attr = 0;
@@ -74,14 +74,14 @@ static void side_type_enum_attributes(void *ctx, const struct side_type_enum *ty
 		goto error;
 	}
 
-	mappings = visit_side_pointer(ctx, type->mappings);
+	mappings = visit_side_rel_pointer(ctx, type->mappings);
 
 	if (!mappings) {
 		goto error;
 	}
 
 	*nr_attr = mappings->attributes.length;
-	*attr = *nr_attr ? visit_side_pointer(ctx, mappings->attributes.elements) : NULL;
+	*attr = *nr_attr ? visit_side_rel_pointer(ctx, mappings->attributes.elements) : NULL;
 
 	return;
 error:
@@ -98,14 +98,14 @@ static void side_type_enum_bitmap_attributes(void *ctx, const struct side_type_e
 		goto error;
 	}
 
-	mappings = visit_side_pointer(ctx, type->mappings);
+	mappings = visit_side_rel_pointer(ctx, type->mappings);
 
 	if (!mappings) {
 		goto error;
 	}
 
 	*nr_attr = mappings->attributes.length;
-	*attr = *nr_attr ? visit_side_pointer(ctx, mappings->attributes.elements) : NULL;
+	*attr = *nr_attr ? visit_side_rel_pointer(ctx, mappings->attributes.elements) : NULL;
 
 	return;
 error:
@@ -119,15 +119,15 @@ void side_type_attributes(const struct side_type *type, void *ctx,
 	switch (side_enum_get(type->type)) {
 	case SIDE_TYPE_NULL:
 		*nr_attr = type->u.side_null.attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->u.side_null.attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_sel_pointer(ctx, type->u.side_null.attributes.elements) : NULL;
 		break;
 	case SIDE_TYPE_BOOL:
 		*nr_attr = type->u.side_bool.attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->u.side_bool.attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_sel_pointer(ctx, type->u.side_bool.attributes.elements) : NULL;
 		break;
 	case SIDE_TYPE_BYTE:
 		*nr_attr = type->u.side_byte.attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->u.side_byte.attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_sel_pointer(ctx, type->u.side_byte.attributes.elements) : NULL;
 		break;
 	case SIDE_TYPE_U8:	/* fall through */
 	case SIDE_TYPE_U16:	/* fall through */
@@ -141,20 +141,20 @@ void side_type_attributes(const struct side_type *type, void *ctx,
 	case SIDE_TYPE_S128:	/* fall through */
 	case SIDE_TYPE_POINTER:	/* fall through */
 		*nr_attr = type->u.side_integer.attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->u.side_integer.attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_sel_pointer(ctx, type->u.side_integer.attributes.elements) : NULL;
 		break;
 	case SIDE_TYPE_FLOAT_BINARY16:	/* fall through */
 	case SIDE_TYPE_FLOAT_BINARY32:	/* fall through */
 	case SIDE_TYPE_FLOAT_BINARY64:	/* fall through */
 	case SIDE_TYPE_FLOAT_BINARY128:	/* fall through */
 		*nr_attr = type->u.side_float.attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->u.side_float.attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_sel_pointer(ctx, type->u.side_float.attributes.elements) : NULL;
 		break;
 	case SIDE_TYPE_STRING_UTF8:	/* fall through */
 	case SIDE_TYPE_STRING_UTF16:	/* fall through */
 	case SIDE_TYPE_STRING_UTF32:	/* fall through */
 		*nr_attr = type->u.side_string.attributes.length;
-		*attr = *nr_attr ? visit_side_pointer(ctx, type->u.side_string.attributes.elements) : NULL;
+		*attr = *nr_attr ? visit_side_sel_pointer(ctx, type->u.side_string.attributes.elements) : NULL;
 		break;
 	case SIDE_TYPE_STRUCT:
 		side_type_struct_attributes(ctx,

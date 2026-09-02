@@ -114,7 +114,7 @@ static const char *side_attr_value_to_string(const struct side_attr_value *value
 #endif
 	case SIDE_ATTR_TYPE_STRING:
 		snprintf(buffer, sizeof(buffer), "\"%s\"",
-			cast(const char *, visit_side_pointer(ctx, value->u.string_value.p)));
+			cast(const char *, visit_side_sel_pointer(ctx, value->u.string_value.p)));
 		return buffer;
 	default:
 		return "\"<UKNOWN>\"";
@@ -127,7 +127,7 @@ static void print_attribute(const struct side_attr *attribute,
 	const char *key;
 	const char *value;
 
-	key = visit_side_pointer(ctx, attribute->key.p);
+	key = visit_side_sel_pointer(ctx, attribute->key.p);
 	value = side_attr_value_to_string(&attribute->value, ctx);
 
 	printf_nest(ctx, "%s: %s", key, value);
@@ -467,7 +467,7 @@ static void print_enum_mapping(const struct side_enum_mapping *map, void *ctx)
 	}
 	/* FIXME: Decode raw string. */
 	printf_nest(ctx, "%s: %" PRId64 "-%" PRId64,
-		(char*)visit_side_pointer(ctx, map->label.p),
+		(char*)visit_side_sel_pointer(ctx, map->label.p),
 		map->range_begin,
 		map->range_end);
 }
@@ -479,7 +479,7 @@ static void print_enum_bitmap_mapping(const struct side_enum_bitmap_mapping *map
 	}
 	/* FIXME: Decode raw string. */
 	printf_nest(ctx, "%s: %" PRId64 "-%" PRId64,
-		(char*)visit_side_pointer(ctx, map->label.p),
+		(char*)visit_side_sel_pointer(ctx, map->label.p),
 		map->range_begin,
 		map->range_end);
 }
@@ -492,7 +492,7 @@ static void print_enum_mappings(const struct side_enum_mappings *mappings,
 	}
 
 	const struct side_enum_mapping *maps =
-		visit_side_pointer(ctx, mappings->mappings.elements);
+		visit_side_rel_pointer(ctx, mappings->mappings.elements);
 
 	printf_nest(ctx, "mappings:");
 	push_nest(ctx);
@@ -506,7 +506,7 @@ static void print_enum_mappings(const struct side_enum_mappings *mappings,
 
 static void begin_enum(const struct side_type_enum *type, void *ctx)
 {
-	print_enum_mappings(visit_side_pointer(ctx, type->mappings), ctx);
+	print_enum_mappings(visit_side_rel_pointer(ctx, type->mappings), ctx);
 }
 
 static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ctx)
@@ -516,14 +516,14 @@ static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ct
 	{
 
 		const struct side_enum_bitmap_mappings *mappings =
-			visit_side_pointer(ctx, type->mappings);
+			visit_side_rel_pointer(ctx, type->mappings);
 
 		if (!mappings) {
 			goto out;
 		}
 
 		const struct side_enum_bitmap_mapping *maps =
-			visit_side_pointer(ctx, mappings->mappings.elements);
+			visit_side_rel_pointer(ctx, mappings->mappings.elements);
 
 		if (!maps) {
 			goto out;
@@ -540,7 +540,7 @@ out:
 
 static void begin_gather_enum(const struct side_type_gather_enum *type, void *ctx)
 {
-	print_enum_mappings(visit_side_pointer(ctx, type->mappings), ctx);
+	print_enum_mappings(visit_side_rel_pointer(ctx, type->mappings), ctx);
 	printf_nest(ctx, "gather:");
 	push_nest(ctx);
 }
