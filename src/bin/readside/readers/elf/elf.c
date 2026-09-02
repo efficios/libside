@@ -104,6 +104,7 @@ void for_each_side_event_in_elf(const struct elf *elf,
 		struct side_description_visitor desc_visitor = {
 			.callbacks = &visitor->description,
 			.priv = &context,
+			.resolve = resolve_elf_pointer,
 		};
 
 		/*

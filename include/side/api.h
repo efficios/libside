@@ -544,6 +544,27 @@
 #define side_arg_struct _side_arg_struct
 #define side_define_struct _side_define_struct
 #define side_static_define_struct _side_static_define_struct
+
+/*
+ * Refer to a named type defined in another translation unit, or in
+ * another shared object, where the assembler cannot fold a distance to
+ * it:
+ *
+ *   side_field_struct("there", side_extern(theirstruct))
+ */
+#define side_extern _side_extern
+
+/*
+ * Declare a named type which side_extern() refers to, in the
+ * translation unit which refers to it.
+ */
+#define side_declare_struct _side_declare_struct
+#define side_declare_array _side_declare_array
+#define side_declare_vla _side_declare_vla
+#define side_declare_variant _side_declare_variant
+#define side_declare_optional _side_declare_optional
+#define side_declare_enum _side_declare_enum
+#define side_declare_enum_bitmap _side_declare_enum_bitmap
 #define side_arg_define_struct _side_arg_define_vec
 
 

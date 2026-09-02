@@ -349,12 +349,12 @@ static void begin_gather_struct(const struct side_type_gather_struct *type, void
 		side_access_mode_to_string(side_enum_get(type->access_mode)));
 	printf_nest(ctx, "gather:");
 	push_nest(ctx);
-	begin_struct(visit_side_rel_pointer(ctx, type->type), ctx);
+	begin_struct(visit_side_sel_pointer(ctx, type->type), ctx);
 }
 
 static void end_gather_struct(const struct side_type_gather_struct *type, void *ctx)
 {
-	end_struct(visit_side_rel_pointer(ctx, type->type), ctx);
+	end_struct(visit_side_sel_pointer(ctx, type->type), ctx);
 	pop_nest(ctx);
 }
 
@@ -506,7 +506,7 @@ static void print_enum_mappings(const struct side_enum_mappings *mappings,
 
 static void begin_enum(const struct side_type_enum *type, void *ctx)
 {
-	print_enum_mappings(visit_side_rel_pointer(ctx, type->mappings), ctx);
+	print_enum_mappings(visit_side_sel_pointer(ctx, type->mappings), ctx);
 }
 
 static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ctx)
@@ -516,7 +516,7 @@ static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ct
 	{
 
 		const struct side_enum_bitmap_mappings *mappings =
-			visit_side_rel_pointer(ctx, type->mappings);
+			visit_side_sel_pointer(ctx, type->mappings);
 
 		if (!mappings) {
 			goto out;
@@ -540,7 +540,7 @@ out:
 
 static void begin_gather_enum(const struct side_type_gather_enum *type, void *ctx)
 {
-	print_enum_mappings(visit_side_rel_pointer(ctx, type->mappings), ctx);
+	print_enum_mappings(visit_side_sel_pointer(ctx, type->mappings), ctx);
 	printf_nest(ctx, "gather:");
 	push_nest(ctx);
 }

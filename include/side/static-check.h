@@ -675,6 +675,28 @@ template <typename T, typename U>
 #define SIDE_SC_TYPE(name) side_sc_type_##name
 
 /*
+ * The same, for the type named by a reference to a named type, which
+ * side_extern() may have put parentheses around. The parentheses are
+ * what says the type is defined in another translation unit; the type
+ * the checker works from is the same either way, and comes from
+ * side_declare_struct() and its siblings there.
+ */
+#define SIDE_SC_NAMED_TYPE(_prefix, _identifier)				\
+	SIDE_SC_NAMED_TYPE_SEL(SIDE_IS_PAREN(_identifier), _prefix, _identifier)
+#define SIDE_SC_NAMED_TYPE_SEL(_paren, ...)				\
+	SIDE_SC_NAMED_TYPE_SEL2(_paren, __VA_ARGS__)
+#define SIDE_SC_NAMED_TYPE_SEL2(_paren, ...)				\
+	SIDE_SC_NAMED_TYPE_P##_paren(__VA_ARGS__)
+#define SIDE_SC_NAMED_TYPE_P0(_prefix, _identifier)			\
+	SIDE_SC_NAMED_TYPE_PASTE(_prefix, _identifier)
+#define SIDE_SC_NAMED_TYPE_P1(_prefix, _identifier)			\
+	SIDE_SC_NAMED_TYPE_PASTE(_prefix, SIDE_UNPACK _identifier)
+#define SIDE_SC_NAMED_TYPE_PASTE(...)					\
+	SIDE_SC_NAMED_TYPE_PASTE2(__VA_ARGS__)
+#define SIDE_SC_NAMED_TYPE_PASTE2(_prefix, _identifier)			\
+	side_sc_type_##_prefix##_identifier
+
+/*
  * Define a new static checker type.  Diagnostics is set around the definition
  * in case the type is never used (-Wunused-local-typedefs).
  */
@@ -1748,7 +1770,7 @@ SIDE_SC_DEFINE_TYPE(gather_vla);
 SIDE_SC_DEFINE_TYPE(variant);
 
 #undef side_field_variant
-#define SIDE_SC_CHECK_side_field_variant(_name, _identifier) ,void (*)(SIDE_SC_TYPE(variant) SIDE_SC_TYPE(user_define_variant__##_identifier))
+#define SIDE_SC_CHECK_side_field_variant(_name, _identifier) ,void (*)(SIDE_SC_TYPE(variant) SIDE_SC_NAMED_TYPE(user_define_variant__, _identifier))
 #define SIDE_SC_NAME_OF_side_field_variant SIDE_SC_EXTRACT_FIELD_NAME
 #define SIDE_SC_EMIT_side_field_variant _side_field_variant
 
@@ -1760,7 +1782,7 @@ SIDE_SC_DEFINE_TYPE(variant);
 SIDE_SC_DEFINE_TYPE(optional);
 
 #undef side_field_optional
-#define SIDE_SC_CHECK_side_field_optional(_name, _identifier) ,SIDE_SC_TYPE(user_define_optional__##_identifier)
+#define SIDE_SC_CHECK_side_field_optional(_name, _identifier) ,SIDE_SC_NAMED_TYPE(user_define_optional__, _identifier)
 #define SIDE_SC_NAME_OF_side_field_optional SIDE_SC_EXTRACT_FIELD_NAME
 #define SIDE_SC_EMIT_side_field_optional(_name, _identifier) _side_field_optional(_name, _identifier)
 
@@ -1775,7 +1797,7 @@ SIDE_SC_DEFINE_TYPE(optional);
 
 /* Dispatch: array */
 #undef side_field_array
-#define SIDE_SC_CHECK_side_field_array(_name, _identifier) ,SIDE_SC_TYPE(user_define_array__##_identifier)
+#define SIDE_SC_CHECK_side_field_array(_name, _identifier) ,SIDE_SC_NAMED_TYPE(user_define_array__, _identifier)
 #define SIDE_SC_NAME_OF_side_field_array SIDE_SC_EXTRACT_FIELD_NAME
 #define SIDE_SC_EMIT_side_field_array _side_field_array
 
@@ -1785,7 +1807,7 @@ SIDE_SC_DEFINE_TYPE(optional);
 
 /* Dispatch: vla */
 #undef side_field_vla
-#define SIDE_SC_CHECK_side_field_vla(_name, _identifier) ,SIDE_SC_TYPE(user_define_vla__##_identifier)
+#define SIDE_SC_CHECK_side_field_vla(_name, _identifier) ,SIDE_SC_NAMED_TYPE(user_define_vla__, _identifier)
 #define SIDE_SC_NAME_OF_side_field_vla SIDE_SC_EXTRACT_FIELD_NAME
 #define SIDE_SC_EMIT_side_field_vla _side_field_vla
 
@@ -1795,7 +1817,7 @@ SIDE_SC_DEFINE_TYPE(optional);
 
 /* Dispatch: struct */
 #undef side_field_struct
-#define SIDE_SC_CHECK_side_field_struct(_name, _identifier) ,SIDE_SC_TYPE(user_define_struct__##_identifier)
+#define SIDE_SC_CHECK_side_field_struct(_name, _identifier) ,SIDE_SC_NAMED_TYPE(user_define_struct__, _identifier)
 #define SIDE_SC_NAME_OF_side_field_struct SIDE_SC_EXTRACT_FIELD_NAME
 #define SIDE_SC_EMIT_side_field_struct _side_field_struct
 ;;
@@ -2072,22 +2094,22 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 
 /* Dispatch: type_variant */
 #undef side_type_variant
-#define SIDE_SC_CHECK_side_type_variant(_identifier) ,SIDE_SC_TYPE(user_define_variant__##_identifier)
+#define SIDE_SC_CHECK_side_type_variant(_identifier) ,SIDE_SC_NAMED_TYPE(user_define_variant__, _identifier)
 #define SIDE_SC_EMIT_side_type_variant _side_type_variant
 
 /* Dispatch: type_optional */
 #undef side_type_optional
-#define SIDE_SC_CHECK_side_type_optional(_identifier) ,SIDE_SC_TYPE(user_define_optional__##_identifier)
+#define SIDE_SC_CHECK_side_type_optional(_identifier) ,SIDE_SC_NAMED_TYPE(user_define_optional__, _identifier)
 #define SIDE_SC_EMIT_side_type_optional(_identifier) &_identifier
 
 /* Dispatch: type_array */
 #undef side_type_array
-#define SIDE_SC_CHECK_side_type_array(_identifier) ,SIDE_SC_TYPE(user_define_array__##_identifier)
+#define SIDE_SC_CHECK_side_type_array(_identifier) ,SIDE_SC_NAMED_TYPE(user_define_array__, _identifier)
 #define SIDE_SC_EMIT_side_type_array _side_type_array
 
 /* Dispatch: type_struct */
 #undef side_type_struct
-#define SIDE_SC_CHECK_side_type_struct(_identifier) ,SIDE_SC_TYPE(user_define_struct__##_identifier)
+#define SIDE_SC_CHECK_side_type_struct(_identifier) ,SIDE_SC_NAMED_TYPE(user_define_struct__, _identifier)
 #define SIDE_SC_EMIT_side_type_struct _side_type_struct
 
 /*
@@ -2110,7 +2132,7 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 
 /* Dispatch: type_vla */
 #undef side_type_vla
-#define SIDE_SC_CHECK_side_type_vla(_identifier) ,SIDE_SC_TYPE(user_define_vla__##_identifier)
+#define SIDE_SC_CHECK_side_type_vla(_identifier) ,SIDE_SC_NAMED_TYPE(user_define_vla__, _identifier)
 #define SIDE_SC_EMIT_side_type_vla _side_type_vla
 
 /* Dispatch: type_dynamic */
@@ -2552,6 +2574,12 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
 	SIDE_SC_DEFINE_VARIANT(_identifier, SIDE_SC_CHECK_##_selector)
 
+/* Dispatch: declare_variant */
+#undef side_declare_variant
+#define side_declare_variant(_identifier, _selector)			\
+	_side_declare_variant(_identifier, _);				\
+	SIDE_SC_DEFINE_VARIANT(_identifier, SIDE_SC_CHECK_##_selector)
+
 #define SIDE_SC_DEFINE_VARIANT(_identifier, _selector)			\
 	SIDE_SC_BEGIN_DIAGNOSTIC();					\
 	typedef void (*SIDE_SC_TYPE(user_define_variant__##_identifier))(SIDE_SC_TYPE(variant) SIDE_SC_TAKE_2(_selector)); \
@@ -2579,6 +2607,12 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 #define side_static_define_array(_identifier, _elem, _length, _attr...)	\
 	_side_static_define_array(_identifier, SIDE_SC_EMIT_##_elem,	\
 			_length, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_SC_DEFINE_ARRAY(_identifier, SIDE_SC_CHECK_array_##_elem, _length)
+
+/* Dispatch: declare_array */
+#undef side_declare_array
+#define side_declare_array(_identifier, _elem, _length)			\
+	_side_declare_array(_identifier, _, _length);			\
 	SIDE_SC_DEFINE_ARRAY(_identifier, SIDE_SC_CHECK_array_##_elem, _length)
 
 #define SIDE_SC_DEFINE_ARRAY(_identifier, _type, _length)		\
@@ -2616,6 +2650,12 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 	_side_static_define_optional(_identifier, SIDE_SC_EMIT_##_elem_type); \
 	SIDE_SC_DEFINE_OPTIONAL(_identifier, SIDE_SC_CHECK_##_elem_type)
 
+/* Dispatch: declare_optional */
+#undef side_declare_optional
+#define side_declare_optional(_identifier, _elem_type)			\
+	_side_declare_optional(_identifier, _);				\
+	SIDE_SC_DEFINE_OPTIONAL(_identifier, SIDE_SC_CHECK_##_elem_type)
+
 #define SIDE_SC_DEFINE_OPTIONAL(_identifier, _type)			\
 	SIDE_SC_BEGIN_DIAGNOSTIC();					\
 	typedef void (*SIDE_SC_TYPE(user_define_optional__##_identifier))(SIDE_SC_TYPE(optional) _type); \
@@ -2644,6 +2684,12 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 	_side_static_define_vla(_identifier,				\
 			SIDE_SC_EMIT_##_elem_type, SIDE_SC_EMIT_##_length_type, \
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
+	SIDE_SC_DEFINE_VLA(_identifier, SIDE_SC_CHECK_vla_##_elem_type)
+
+/* Dispatch: declare_vla */
+#undef side_declare_vla
+#define side_declare_vla(_identifier, _elem_type)			\
+	_side_declare_vla(_identifier, _);				\
 	SIDE_SC_DEFINE_VLA(_identifier, SIDE_SC_CHECK_vla_##_elem_type)
 
 #define SIDE_SC_DEFINE_VLA(_identifier, _type)				\
@@ -2683,6 +2729,12 @@ SIDE_SC_DEFINE_TYPE(dynamic);
 	_side_static_define_struct(_identifier, SIDE_SC_EMIT_##_fields,	\
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())); \
 	SIDE_SC_CHECK_FIELDS_NAMES(_fields);				\
+	SIDE_SC_DEFINE_STRUCT(_identifier, SIDE_SC_CHECK_##_fields)
+
+/* Dispatch: declare_struct */
+#undef side_declare_struct
+#define side_declare_struct(_identifier, _fields)			\
+	_side_declare_struct(_identifier, _);				\
 	SIDE_SC_DEFINE_STRUCT(_identifier, SIDE_SC_CHECK_##_fields)
 
 #define SIDE_SC_DEFINE_STRUCT(_identifier, _fields)			\

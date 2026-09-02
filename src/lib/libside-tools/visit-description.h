@@ -80,6 +80,16 @@ struct side_description_visitor_callbacks {
 struct side_description_visitor {
 	const struct side_description_visitor_callbacks *callbacks;
 	void *priv;
+	/*
+	 * How to reach an address which a description holds, given priv.
+	 * A reference to a type defined in another translation unit is
+	 * an address rather than a distance, and is the only thing this
+	 * walk has to resolve; everything else it follows is measured
+	 * from the field holding it. Null where the description is read
+	 * in the process which wrote it, resolving being the identity
+	 * there. See side_ptr_sel_t.
+	 */
+	void *(*resolve)(void *ptr, void *priv);
 };
 
 void visit_event_description(const struct side_description_visitor *visitor,

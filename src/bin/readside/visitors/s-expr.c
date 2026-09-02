@@ -362,12 +362,12 @@ static void begin_gather_struct(const struct side_type_gather_struct *type, void
 	printf_nest(ctx, "(access-mode: '%s)",
 		side_access_mode_to_string(side_enum_get(type->access_mode)));
 	push_nest(ctx, "gather");
-	begin_struct(visit_side_rel_pointer(ctx, type->type), ctx);
+	begin_struct(visit_side_sel_pointer(ctx, type->type), ctx);
 }
 
 static void end_gather_struct(const struct side_type_gather_struct *type, void *ctx __attribute__((unused)))
 {
-	end_struct(visit_side_rel_pointer(ctx, type->type), ctx);
+	end_struct(visit_side_sel_pointer(ctx, type->type), ctx);
 	pop_nest(ctx);
 }
 
@@ -502,7 +502,7 @@ static void print_enum_mappings(const struct side_enum_mappings *mappings,
 
 static void begin_enum(const struct side_type_enum *type, void *ctx __attribute__((unused)))
 {
-	print_enum_mappings(visit_side_rel_pointer(ctx, type->mappings), ctx);
+	print_enum_mappings(visit_side_sel_pointer(ctx, type->mappings), ctx);
 }
 
 static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ctx __attribute__((unused)))
@@ -510,7 +510,7 @@ static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ct
 	push_nest(ctx, "mappings"); {
 
 		const struct side_enum_bitmap_mappings *mappings =
-			visit_side_rel_pointer(ctx, type->mappings);
+			visit_side_sel_pointer(ctx, type->mappings);
 
 		const struct side_enum_bitmap_mapping *maps =
 			visit_side_rel_pointer(ctx, mappings->mappings.elements);
@@ -525,7 +525,7 @@ static void begin_enum_bitmap(const struct side_type_enum_bitmap *type, void *ct
 
 static void begin_gather_enum(const struct side_type_gather_enum *type, void *ctx __attribute__((unused)))
 {
-	print_enum_mappings(visit_side_rel_pointer(ctx, type->mappings), ctx);
+	print_enum_mappings(visit_side_sel_pointer(ctx, type->mappings), ctx);
 	push_nest(ctx, "gather");
 }
 

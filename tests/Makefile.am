@@ -20,6 +20,7 @@ noinst_PROGRAMS = \
 	regression/side-rcu-test \
 	unit/phased-atfork \
 	unit/phased-atfork-side \
+	unit/extern-type \
 	unit/rel-ptr \
 	unit/test \
 	unit/test-cxx \
@@ -85,6 +86,12 @@ unit_demo_LDADD = \
 	$(top_builddir)/tests/utils/libtap.la \
 	$(RSEQ_LIBS)
 
+unit_extern_type_SOURCES = unit/extern-type.c unit/extern-type-tu2.c unit/extern-type.h
+unit_extern_type_LDADD = \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/tests/utils/libtap.la \
+	$(RSEQ_LIBS)
+
 unit_rel_ptr_SOURCES = unit/rel-ptr.c unit/rel-ptr-tu2.c unit/rel-ptr.h
 unit_rel_ptr_LDADD = \
 	$(top_builddir)/tests/utils/libtap.la
@@ -98,6 +105,7 @@ unit_statedump_LDADD = \
 	$(RSEQ_LIBS)
 
 TESTS =	static-checker/run-tests \
+	unit/extern-type \
 	unit/phased-atfork \
 	unit/phased-atfork-side \
 	unit/rel-ptr

@@ -586,6 +586,10 @@
  *   SIDE_TK_PTR	label, member, target (an object with a name)
  *   SIDE_TK_ENUM	label, member, mappings, element type
  *   SIDE_TK_GSTRUCT	target, offset, size, access mode
+ *
+ * The three which name an object have a counterpart, _PTR_EXT,
+ * _ENUM_EXT and _GSTRUCT_EXT, taking the same tuple, for an object
+ * defined in another translation unit. See side_extern().
  *   SIDE_TK_GARRAY	element type, length, offset, access mode, attributes
  *   SIDE_TK_GVLA	element type, offset, access mode, length type, attributes
  *   SIDE_TK_OPTLIT	element type, attributes (an optional with no name)
@@ -617,7 +621,48 @@
 	{								\
 		.type = SIDE_ENUM_INIT(_label),				\
 		.u = {							\
-			._member = SIDE_PTR_REL_INIT(SIDE_TYPE_PTR_OFF(_pfx)), \
+			._member = SIDE_PTR_SEL_REL_INIT(SIDE_TYPE_PTR_OFF(_pfx)), \
+		},							\
+	}
+
+/*
+ * The same three, for an object side_extern() says is defined in
+ * another translation unit: there is no distance the assembler can fold
+ * to it, so the reference holds its address. See side_ptr_sel_t.
+ */
+#define SIDE_TYPE_INIT_SIDE_TK_PTR_EXT(_pfx, _label, _member, _target)	\
+	{								\
+		.type = SIDE_ENUM_INIT(_label),				\
+		.u = {							\
+			._member = SIDE_PTR_SEL_INIT(&(_target)),	\
+		},							\
+	}
+
+#define SIDE_TYPE_INIT_SIDE_TK_ENUM_EXT(_pfx, _label, _member, _mappings, _elem) \
+	{								\
+		.type = SIDE_ENUM_INIT(_label),				\
+		.u = {							\
+			._member = {					\
+				.mappings = SIDE_PTR_SEL_INIT(&(_mappings)), \
+				.elem_type = SIDE_PTR_REL_INIT(SIDE_TYPE_ELEM_OFF(_pfx)), \
+			},						\
+		},							\
+	}
+
+#define SIDE_TYPE_INIT_SIDE_TK_GSTRUCT_EXT(_pfx, _target, _offset, _size, _access_mode) \
+	{								\
+		.type = SIDE_ENUM_INIT(SIDE_TYPE_GATHER_STRUCT),	\
+		.u = {							\
+			.side_gather = {				\
+				.u = {					\
+					.side_struct = {		\
+						.type = SIDE_PTR_SEL_INIT(&(_target)), \
+						.offset = _offset,	\
+						.access_mode = SIDE_ENUM_INIT(_access_mode), \
+						.size = _size,		\
+					},				\
+				},					\
+			},						\
 		},							\
 	}
 
@@ -626,7 +671,7 @@
 		.type = SIDE_ENUM_INIT(_label),				\
 		.u = {							\
 			._member = {					\
-				.mappings = SIDE_PTR_REL_INIT(SIDE_TYPE_MAPPINGS_OFF(_pfx)), \
+				.mappings = SIDE_PTR_SEL_REL_INIT(SIDE_TYPE_MAPPINGS_OFF(_pfx)), \
 				.elem_type = SIDE_PTR_REL_INIT(SIDE_TYPE_ELEM_OFF(_pfx)), \
 			},						\
 		},							\
@@ -639,7 +684,7 @@
 			.side_gather = {				\
 				.u = {					\
 					.side_struct = {		\
-						.type = SIDE_PTR_REL_INIT(SIDE_TYPE_PTR_OFF(_pfx)), \
+						.type = SIDE_PTR_SEL_REL_INIT(SIDE_TYPE_PTR_OFF(_pfx)), \
 						.offset = _offset,	\
 						.access_mode = SIDE_ENUM_INIT(_access_mode), \
 						.size = _size,		\
@@ -693,7 +738,7 @@
 	{								\
 		.type = SIDE_ENUM_INIT(SIDE_TYPE_OPTIONAL),		\
 		.u = {							\
-			.side_optional = SIDE_PTR_REL_INIT(SIDE_TYPE_PTR_OFF(_pfx)), \
+			.side_optional = SIDE_PTR_SEL_REL_INIT(SIDE_TYPE_PTR_OFF(_pfx)), \
 		},							\
 	}
 
@@ -859,6 +904,16 @@
 #define SIDE_TYPE_DECLARE_L2_SIDE_TK_PTR	SIDE_TYPE_DECLARE_PTR
 #define SIDE_TYPE_DECLARE_L3_SIDE_TK_PTR	SIDE_TYPE_DECLARE_PTR
 
+/*
+ * A type in another translation unit needs nothing beside it: its
+ * address is written where a distance would have been, and the object
+ * it names is declared by whoever wrote the extern declaration.
+ */
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_PTR_EXT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_PTR_EXT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_PTR_EXT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_PTR_EXT	SIDE_TYPE_DECLARE_NOTHING
+
 #define SIDE_TYPE_DECLARE_GSTRUCT(_obj, _off, _pfx, _target, _offset, _size, _access_mode) \
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_PTR_OFF(_pfx), _obj, _off,	\
 		side_gather.u.side_struct.type, _target)
@@ -867,6 +922,11 @@
 #define SIDE_TYPE_DECLARE_L1_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_GSTRUCT
 #define SIDE_TYPE_DECLARE_L2_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_GSTRUCT
 #define SIDE_TYPE_DECLARE_L3_SIDE_TK_GSTRUCT	SIDE_TYPE_DECLARE_GSTRUCT
+
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_GSTRUCT_EXT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_GSTRUCT_EXT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_GSTRUCT_EXT	SIDE_TYPE_DECLARE_NOTHING
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_GSTRUCT_EXT	SIDE_TYPE_DECLARE_NOTHING
 
 /*
  * The last rung. A type nested deeper than this has nowhere left to put
@@ -877,6 +937,7 @@
 			SIDE_TYPE_NESTED_TOO_DEEPLY);
 
 #define SIDE_TYPE_DECLARE_L3_SIDE_TK_ENUM	SIDE_TYPE_DECLARE_TOO_DEEP
+#define SIDE_TYPE_DECLARE_L3_SIDE_TK_ENUM_EXT	SIDE_TYPE_DECLARE_TOO_DEEP
 #define SIDE_TYPE_DECLARE_L3_SIDE_TK_GARRAY	SIDE_TYPE_DECLARE_TOO_DEEP
 #define SIDE_TYPE_DECLARE_L3_SIDE_TK_GVLA	SIDE_TYPE_DECLARE_TOO_DEEP
 #define SIDE_TYPE_DECLARE_L3_SIDE_TK_OPTLIT	SIDE_TYPE_DECLARE_TOO_DEEP
@@ -900,6 +961,23 @@
 		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))		\
 	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_MAPPINGS_OFF(_pfx), _obj, _off,	\
 		_member.mappings, _mappings)
+
+/*
+ * The same, where only the mappings are elsewhere: the type of what is
+ * mapped is written here either way.
+ */
+#define SIDE_TYPE_DECLARE_L0_SIDE_TK_ENUM_EXT(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
+	SIDE_TYPE_HOIST_L1(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
+		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))
+#define SIDE_TYPE_DECLARE_L1_SIDE_TK_ENUM_EXT(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
+	SIDE_TYPE_HOIST_L2(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
+		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))
+#define SIDE_TYPE_DECLARE_L2_SIDE_TK_ENUM_EXT(_obj, _off, _pfx, _label, _member, _mappings, _elem) \
+	SIDE_TYPE_HOIST_L3(SIDE_TYPE_ELEM_SYM(_pfx), _elem)		\
+	SIDE_TYPE_PTR_DEFINE(SIDE_TYPE_ELEM_OFF(_pfx), _obj, _off,	\
+		_member.elem_type, SIDE_TYPE_ELEM_SYM(_pfx))
 
 /* A gather array, which holds the type of its elements. */
 #define SIDE_TYPE_DECLARE_L0_SIDE_TK_GARRAY(_obj, _off, _pfx, _elem, _length, _offset, _access_mode, _attr...) \
@@ -1493,18 +1571,64 @@
  * object rather than its address. side_field_gather_enum() already
  * took it that way.
  */
+/*
+ * Say that a named type is defined in another translation unit, or in
+ * another shared object.
+ *
+ * A reference to a type which has a name of its own is the distance
+ * from the reference to it, which the assembler folds and which costs
+ * neither a relocation nor a dirty page. The assembler can only do that
+ * within the unit it is assembling, so a reference to a type defined
+ * outside it says so, and holds the address of the type instead. See
+ * side_ptr_sel_t.
+ *
+ * Either mistake says so rather than going unnoticed: naming a foreign
+ * type without this is the assembler refusing to subtract across units,
+ * and wrapping a local one costs one relocation and nothing else.
+ *
+ *   side_field_struct("here", mystruct),
+ *   side_field_struct("there", side_extern(theirstruct)),
+ */
+#define _side_extern(_identifier)	(_identifier)
+
+/*
+ * Which kind a reference to a named type is, and the identifier without
+ * the parentheses side_extern() puts around it. The kind is what both
+ * walks dispatch on, so choosing it here is all that is needed.
+ */
+#define SIDE_NAMED_PTR(_label, _member, _target)			\
+	SIDE_CAT(SIDE_NAMED_PTR_, SIDE_IS_PAREN(_target))(_label, _member, _target)
+#define SIDE_NAMED_PTR_0(_label, _member, _target)			\
+	(SIDE_TK_PTR, _label, _member, _target)
+#define SIDE_NAMED_PTR_1(_label, _member, _target)			\
+	(SIDE_TK_PTR_EXT, _label, _member, SIDE_UNPACK _target)
+
+#define SIDE_NAMED_ENUM(_label, _member, _mappings, _elem)		\
+	SIDE_CAT(SIDE_NAMED_ENUM_, SIDE_IS_PAREN(_mappings))(_label, _member, _mappings, _elem)
+#define SIDE_NAMED_ENUM_0(_label, _member, _mappings, _elem)		\
+	(SIDE_TK_ENUM, _label, _member, _mappings, _elem)
+#define SIDE_NAMED_ENUM_1(_label, _member, _mappings, _elem)		\
+	(SIDE_TK_ENUM_EXT, _label, _member, SIDE_UNPACK _mappings, _elem)
+
+#define SIDE_NAMED_GSTRUCT(_target, _offset, _size, _access_mode)	\
+	SIDE_CAT(SIDE_NAMED_GSTRUCT_, SIDE_IS_PAREN(_target))(_target, _offset, _size, _access_mode)
+#define SIDE_NAMED_GSTRUCT_0(_target, _offset, _size, _access_mode)	\
+	(SIDE_TK_GSTRUCT, _target, _offset, _size, _access_mode)
+#define SIDE_NAMED_GSTRUCT_1(_target, _offset, _size, _access_mode)	\
+	(SIDE_TK_GSTRUCT_EXT, SIDE_UNPACK _target, _offset, _size, _access_mode)
+
 #define _side_type_enum(_mappings, _elem_type) \
-	(SIDE_TK_ENUM, SIDE_TYPE_ENUM, side_enum, _mappings, _elem_type)
+	SIDE_NAMED_ENUM(SIDE_TYPE_ENUM, side_enum, _mappings, _elem_type)
 #define _side_field_enum(_name, _mappings, _elem_type) \
 	_side_field(_name, _side_type_enum(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define _side_type_enum_bitmap(_mappings, _elem_type) \
-	(SIDE_TK_ENUM, SIDE_TYPE_ENUM_BITMAP, side_enum_bitmap, _mappings, _elem_type)
+	SIDE_NAMED_ENUM(SIDE_TYPE_ENUM_BITMAP, side_enum_bitmap, _mappings, _elem_type)
 #define _side_field_enum_bitmap(_name, _mappings, _elem_type) \
 	_side_field(_name, _side_type_enum_bitmap(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define _side_type_struct(_struct) \
-	(SIDE_TK_PTR, SIDE_TYPE_STRUCT, side_struct, _struct)
+	SIDE_NAMED_PTR(SIDE_TYPE_STRUCT, side_struct, _struct)
 
 #define _side_field_struct(_name, _struct) \
 	_side_field(_name, _side_type_struct(SIDE_PARAM(_struct)))
@@ -1568,8 +1692,49 @@
 #define _side_define_struct(_identifier, _fields, _attr...)		\
 	__side_define_struct(extern, , _identifier, SIDE_PARAM(_fields), ##_attr)
 
+/*
+ * Declare a named type defined in another translation unit, so that a
+ * reference to it with side_extern() has an object to name.
+ *
+ * The shape is given again here, the way a C header gives the shape of
+ * a structure: it is what the static checker works from to go on
+ * checking the arguments of a field against the type the field names.
+ * Where the static checker is off, it is ignored.
+ */
+#define _side_declare_struct(_identifier, _fields)			\
+	extern struct side_type_struct _identifier SIDE_ASM_LABEL(_identifier); \
+	SIDE_EXPECT_SEMICOLON()
+
+#define _side_declare_array(_identifier, _elem_type, _length)		\
+	extern struct side_type_array _identifier SIDE_ASM_LABEL(_identifier); \
+	SIDE_EXPECT_SEMICOLON()
+
+#define _side_declare_vla(_identifier, _elem_type)			\
+	extern struct side_type_vla _identifier SIDE_ASM_LABEL(_identifier); \
+	SIDE_EXPECT_SEMICOLON()
+
+#define _side_declare_variant(_identifier, _selector)			\
+	extern struct side_type_variant _identifier SIDE_ASM_LABEL(_identifier); \
+	SIDE_EXPECT_SEMICOLON()
+
+#define _side_declare_optional(_identifier, _elem_type)			\
+	extern struct side_type_optional _identifier SIDE_ASM_LABEL(_identifier); \
+	SIDE_EXPECT_SEMICOLON()
+
+/*
+ * The mappings of an enumeration are not part of what the static
+ * checker verifies, so declaring one needs only the object.
+ */
+#define _side_declare_enum(_identifier)					\
+	extern struct side_enum_mappings _identifier SIDE_ASM_LABEL(_identifier); \
+	SIDE_EXPECT_SEMICOLON()
+
+#define _side_declare_enum_bitmap(_identifier)				\
+	extern struct side_enum_bitmap_mappings _identifier SIDE_ASM_LABEL(_identifier); \
+	SIDE_EXPECT_SEMICOLON()
+
 #define _side_type_variant(_variant) \
-	(SIDE_TK_PTR, SIDE_TYPE_VARIANT, side_variant, _variant)
+	SIDE_NAMED_PTR(SIDE_TYPE_VARIANT, side_variant, _variant)
 
 #define _side_field_variant(_name, _variant) \
 	_side_field(_name, _side_type_variant(_variant))
@@ -1639,7 +1804,7 @@ enum {
 };
 
 #define _side_type_optional(_optional)					\
-	(SIDE_TK_PTR, SIDE_TYPE_OPTIONAL, side_optional, _optional)
+	SIDE_NAMED_PTR(SIDE_TYPE_OPTIONAL, side_optional, _optional)
 
 #define _side_type_optional_define(_elem_off, _attr...)			\
 	{								\
@@ -1691,7 +1856,7 @@ enum {
 			SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define _side_type_array(_array)				\
-	(SIDE_TK_PTR, SIDE_TYPE_ARRAY, side_array, _array)
+	SIDE_NAMED_PTR(SIDE_TYPE_ARRAY, side_array, _array)
 
 #define _side_field_array(_name, _array) \
 	_side_field(_name, _side_type_array(_array))
@@ -1735,7 +1900,7 @@ enum {
 	__side_define_array(extern, , _identifier, _elem_type, _length, ##_attr)
 
 #define _side_type_vla(_vla)					\
-	(SIDE_TK_PTR, SIDE_TYPE_VLA, side_vla, _vla)
+	SIDE_NAMED_PTR(SIDE_TYPE_VLA, side_vla, _vla)
 
 #define _side_field_vla(_name, _vla) \
 	_side_field(_name, _side_type_vla(_vla))
@@ -2018,12 +2183,12 @@ enum {
 	_side_field(_name, _side_type_gather_string32_be(_offset, _access_mode, SIDE_DEFAULT_ATTR(_, ##_attr, side_attr_list())))
 
 #define _side_type_gather_enum(_mappings, _elem_type) \
-	(SIDE_TK_ENUM, SIDE_TYPE_GATHER_ENUM, side_enum, _mappings, _elem_type)
+	SIDE_NAMED_ENUM(SIDE_TYPE_GATHER_ENUM, side_enum, _mappings, _elem_type)
 #define _side_field_gather_enum(_name, _mappings, _elem_type) \
 	_side_field(_name, _side_type_gather_enum(SIDE_PARAM(_mappings), SIDE_PARAM(_elem_type)))
 
 #define _side_type_gather_struct(_struct_gather, _offset, _size, _access_mode) \
-	(SIDE_TK_GSTRUCT, _struct_gather, _offset, _size, _access_mode)
+	SIDE_NAMED_GSTRUCT(_struct_gather, _offset, _size, _access_mode)
 #define _side_field_gather_struct(_name, _struct_gather, _offset, _size, _access_mode) \
 	_side_field(_name, _side_type_gather_struct(SIDE_PARAM(_struct_gather), _offset, _size, _access_mode))
 

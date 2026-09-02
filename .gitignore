@@ -64,6 +64,7 @@ dkms.conf
 /src/lib/pkgconfig/libside.pc
 /tests/regression/side-rcu-test
 /tests/unit/demo
+/tests/unit/extern-type
 /tests/unit/rel-ptr
 /tests/unit/phased-atfork
 /tests/unit/phased-atfork-side

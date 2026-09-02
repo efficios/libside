@@ -297,31 +297,39 @@ side_check_size(struct side_type_vla, 28);
 
 struct side_type_enum {
 /*
- * The attributes are in the section the description is in, so the
- * distance to them is one the assembler folds. See side_ptr_rel_t.
+ * A type with a name of its own may be defined in another translation
+ * unit, or in another shared object, and the assembler folds a distance
+ * only within the unit it is assembling. So a reference to a named type
+ * says which of the two it holds: a distance where the type is defined
+ * alongside it, which costs nothing, and an address where it is not.
+ * See side_ptr_sel_t.
  */
-	side_ptr_rel_t(const struct side_enum_mappings) mappings;
+	side_ptr_sel_t(const struct side_enum_mappings) mappings;
 /*
  * What a type holds is in the section the type is in, so the distance
  * to it is one the assembler folds. See side_ptr_rel_t.
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
 } SIDE_PACKED;
-side_check_size(struct side_type_enum, 16);
+side_check_size(struct side_type_enum, 25);
 
 struct side_type_enum_bitmap {
 /*
- * The attributes are in the section the description is in, so the
- * distance to them is one the assembler folds. See side_ptr_rel_t.
+ * A type with a name of its own may be defined in another translation
+ * unit, or in another shared object, and the assembler folds a distance
+ * only within the unit it is assembling. So a reference to a named type
+ * says which of the two it holds: a distance where the type is defined
+ * alongside it, which costs nothing, and an address where it is not.
+ * See side_ptr_sel_t.
  */
-	side_ptr_rel_t(const struct side_enum_bitmap_mappings) mappings;
+	side_ptr_sel_t(const struct side_enum_bitmap_mappings) mappings;
 /*
  * What a type holds is in the section the type is in, so the distance
  * to it is one the assembler folds. See side_ptr_rel_t.
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
 } SIDE_PACKED;
-side_check_size(struct side_type_enum_bitmap, 16);
+side_check_size(struct side_type_enum_bitmap, 25);
 
 struct side_type_gather_bool {
 	uint64_t offset;	/* bytes */
@@ -362,30 +370,37 @@ side_check_size(struct side_type_gather_string, 9 + sizeof(struct side_type_stri
 
 struct side_type_gather_enum {
 /*
- * The attributes are in the section the description is in, so the
- * distance to them is one the assembler folds. See side_ptr_rel_t.
+ * A type with a name of its own may be defined in another translation
+ * unit, or in another shared object, and the assembler folds a distance
+ * only within the unit it is assembling. So a reference to a named type
+ * says which of the two it holds: a distance where the type is defined
+ * alongside it, which costs nothing, and an address where it is not.
+ * See side_ptr_sel_t.
  */
-	side_ptr_rel_t(const struct side_enum_mappings) mappings;
+	side_ptr_sel_t(const struct side_enum_mappings) mappings;
 /*
  * What a type holds is in the section the type is in, so the distance
  * to it is one the assembler folds. See side_ptr_rel_t.
  */
 	side_ptr_rel_t(const struct side_type) elem_type;
 } SIDE_PACKED;
-side_check_size(struct side_type_gather_enum, 16);
+side_check_size(struct side_type_gather_enum, 25);
 
 struct side_type_gather_struct {
-	/*
-	 * The structure is in the section the type holding this is in,
-	 * so the distance to it is one the assembler folds. See
-	 * side_ptr_rel_t.
-	 */
-	side_ptr_rel_t(const struct side_type_struct) type;
+/*
+ * A type with a name of its own may be defined in another translation
+ * unit, or in another shared object, and the assembler folds a distance
+ * only within the unit it is assembling. So a reference to a named type
+ * says which of the two it holds: a distance where the type is defined
+ * alongside it, which costs nothing, and an address where it is not.
+ * See side_ptr_sel_t.
+ */
+	side_ptr_sel_t(const struct side_type_struct) type;
 	uint64_t offset;	/* bytes */
 	side_enum_t(enum side_type_gather_access_mode, uint8_t) access_mode;
 	uint32_t size;		/* bytes */
 } SIDE_PACKED;
-side_check_size(struct side_type_gather_struct, 21);
+side_check_size(struct side_type_gather_struct, 30);
 
 struct side_type_gather_array {
 	uint64_t offset;	/* bytes */
@@ -430,15 +445,15 @@ struct side_type {
 		struct side_type_float side_float;
 
 		/*
-		 * Stack-copy compound types. Each of them is in the
-		 * section this type is in, so the distance to it is one
-		 * the assembler folds. See side_ptr_rel_t.
+		 * Stack-copy compound types, each of which has a name of
+		 * its own and so may live in another unit. See
+		 * side_ptr_sel_t.
 		 */
-		side_ptr_rel_t(const struct side_type_array) side_array;
-		side_ptr_rel_t(const struct side_type_vla) side_vla;
-		side_ptr_rel_t(const struct side_type_struct) side_struct;
-		side_ptr_rel_t(const struct side_type_variant) side_variant;
-		side_ptr_rel_t(const struct side_type_optional) side_optional;
+		side_ptr_sel_t(const struct side_type_array) side_array;
+		side_ptr_sel_t(const struct side_type_vla) side_vla;
+		side_ptr_sel_t(const struct side_type_struct) side_struct;
+		side_ptr_sel_t(const struct side_type_variant) side_variant;
+		side_ptr_sel_t(const struct side_type_optional) side_optional;
 
 		/* Stack-copy enumeration types */
 		struct side_type_enum side_enum;
