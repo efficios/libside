@@ -169,7 +169,13 @@ static bool mmap_file(const char *path, void **pmem, size_t *pmem_size)
 		goto out;
 	}
 
-	mem = mmap(NULL, mem_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	/*
+	 * Written to, which is why it is mapped writable: the relocations
+	 * a linker leaves for the loader are applied to this image before
+	 * anything is read out of it. The mapping is private, so the file
+	 * on disk is not touched.
+	 */
+	mem = mmap(NULL, mem_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 
 	if (MAP_FAILED == mem) {
 		error("Failed to map file %s (fd = %d, size = %zu): %m", path, fd, mem_size);

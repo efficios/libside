@@ -389,6 +389,7 @@
 #define __side_define_enum(_type, _mappings_type, _forward_decl_linkage, _linkage, _identifier, _mappings, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_GCC_DIAGNOSTIC(ignored "-Wredundant-decls")		\
 	_forward_decl_linkage _mappings_type __attribute__((section("side_event_description"))) \
 		_identifier SIDE_ASM_LABEL(_identifier);		\
 	SIDE_MAPPING_ARRAY_DECLARE(_type, SIDE_MAPPING_ARRAY_SYM(_identifier)) \
@@ -1655,6 +1656,7 @@
 #define __side_define_struct(_forward_decl_linkage, _linkage, _identifier, _fields, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_GCC_DIAGNOSTIC(ignored "-Wredundant-decls")		\
 	_forward_decl_linkage struct side_event_field __attribute__((section("side_event_description"))) \
 		_identifier##__fields[] SIDE_ASM_LABEL(_identifier##__fields); \
 	_forward_decl_linkage struct side_type_struct __attribute__((section("side_event_description"))) \
@@ -1757,6 +1759,7 @@
 #define __side_define_variant(_forward_decl_linkage, _linkage, _identifier, _selector, _options, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_GCC_DIAGNOSTIC(ignored "-Wredundant-decls")		\
 	_forward_decl_linkage struct side_variant_option __attribute__((section("side_event_description"))) \
 		_identifier##__options[] SIDE_ASM_LABEL(_identifier##__options); \
 	_forward_decl_linkage struct side_type_variant __attribute__((section("side_event_description"))) \
@@ -1820,6 +1823,7 @@ enum {
 #define __side_define_optional(_forward_decl_linkage, _linkage, _identifier, _elem_type, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_GCC_DIAGNOSTIC(ignored "-Wredundant-decls")		\
 	_forward_decl_linkage struct side_type_optional __attribute__((section("side_event_description"))) \
 		_identifier SIDE_ASM_LABEL(_identifier);		\
 	SIDE_TYPE_HOIST_L0(SIDE_TYPE_ELEM_SYM(_identifier), _elem_type)	\
@@ -1869,6 +1873,7 @@ enum {
 #define __side_define_array(_forward_decl_linkage, _linkage, _identifier, _elem_type, _length, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_GCC_DIAGNOSTIC(ignored "-Wredundant-decls")		\
 	_forward_decl_linkage struct side_type_array __attribute__((section("side_event_description"))) \
 		_identifier SIDE_ASM_LABEL(_identifier);		\
 	SIDE_TYPE_HOIST_L0(SIDE_TYPE_ELEM_SYM(_identifier), _elem_type)	\
@@ -1913,6 +1918,7 @@ enum {
 #define __side_define_vla(_forward_decl_linkage, _linkage, _identifier, _elem_type, _length_type, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_GCC_DIAGNOSTIC(ignored "-Wredundant-decls")		\
 	_forward_decl_linkage struct side_type_vla __attribute__((section("side_event_description"))) \
 		_identifier SIDE_ASM_LABEL(_identifier);		\
 	SIDE_TYPE_HOIST_L0(SIDE_TYPE_ELEM_SYM(_identifier), _elem_type)	\
@@ -2660,6 +2666,7 @@ enum {
 #define _side_define_event(_forward_decl_linkage, _linkage, _identifier, _provider, _event, _loglevel, _fields, _flags, _attr...) \
 	SIDE_PUSH_DIAGNOSTIC()						\
 	SIDE_DIAGNOSTIC(ignored "-Wsection")				\
+	SIDE_GCC_DIAGNOSTIC(ignored "-Wredundant-decls")		\
 	/*								\
 	 * Used, like everything else a distance is measured between:	\
 	 * every distance in a description is measured from the		\

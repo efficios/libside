@@ -13,6 +13,126 @@
 #define ElfN(type) CAT(CAT(CAT(Elf, ARCH_CLASS), _), type)
 #define FUNCN(name) CAT(name, ARCH_CLASS)
 
+#if ARCH_CLASS == 64
+# define ELFN_R_TYPE(info) ELF64_R_TYPE(info)
+#else
+# define ELFN_R_TYPE(info) ELF32_R_TYPE(info)
+#endif
+
+/*
+ * The relocation which says "the address of something in this same
+ * object", which is what a loader adds the load address to. Its number
+ * is per machine, and there is no portable name for it.
+ */
+static bool FUNCN(relative_relocation_type)(u16 machine, u64 *type)
+{
+	switch (machine) {
+#ifdef EM_X86_64
+	case EM_X86_64: *type = R_X86_64_RELATIVE; return true;
+#endif
+#ifdef EM_386
+	case EM_386: *type = R_386_RELATIVE; return true;
+#endif
+#ifdef EM_AARCH64
+	case EM_AARCH64: *type = R_AARCH64_RELATIVE; return true;
+#endif
+#ifdef EM_ARM
+	case EM_ARM: *type = R_ARM_RELATIVE; return true;
+#endif
+#ifdef EM_RISCV
+	case EM_RISCV: *type = R_RISCV_RELATIVE; return true;
+#endif
+#ifdef EM_PPC64
+	case EM_PPC64: *type = R_PPC64_RELATIVE; return true;
+#endif
+#ifdef EM_PPC
+	case EM_PPC: *type = R_PPC_RELATIVE; return true;
+#endif
+#ifdef EM_S390
+	case EM_S390: *type = R_390_RELATIVE; return true;
+#endif
+	default: return false;
+	}
+}
+
+/*
+ * Apply the relocations which say "the address of something in this
+ * same object", the way a loader would, so that what is read out of
+ * the image afterwards is what a running process would see.
+ *
+ * A description holds no address of its own, but the things which
+ * reach one do: the entry in side_event_state_ptr by which an event is
+ * found, and the description a state points at. Where those are stored
+ * is only a relocation until something applies it.
+ *
+ * Nothing here is a matter of taste. In a RELA relocation the addend
+ * is the value, and what the location already holds is nothing: GNU ld
+ * happens to write the value there as well, and LLD leaves it zero,
+ * and both are right. A reader which took the location at its word
+ * therefore read every event of a program linked by the one and none
+ * of a program linked by the other.
+ */
+static void FUNCN(apply_relative_relocations)(struct elf *elf, ElfN(Ehdr) *ehdr)
+{
+	ElfN(Shdr) *shdr = elf->shdr;
+	bool warned = false;
+	u64 relative;
+	u64 k;
+
+	if (!FUNCN(relative_relocation_type)(ehdr->e_machine, &relative)) {
+		relative = 0;
+	}
+
+	for (k = 0; k < elf->shnum; ++k) {
+		ElfN(Rela) *rela;
+		u64 count, i;
+
+		if (SHT_RELA != shdr[k].sh_type || 0 == shdr[k].sh_size) {
+			continue;
+		}
+		if (!relative) {
+			if (!warned) {
+				warning("In ELF file %s, machine %u is one whose "
+					"relative relocations this does not know, so "
+					"what they hold is read as it lies in the file.",
+					elf->path, (unsigned) ehdr->e_machine);
+				warned = true;
+			}
+			continue;
+		}
+
+		rela = elf_seek(elf, shdr[k].sh_offset);
+
+		if (!rela) {
+			continue;
+		}
+
+		count = shdr[k].sh_size / sizeof(*rela);
+
+		for (i = 0; i < count; ++i) {
+			ElfN(Addr) value;
+			ptrdiff_t bias;
+			void *at;
+
+			if (ELFN_R_TYPE(rela[i].r_info) != relative) {
+				continue;
+			}
+			if (!elf_pointer_bias(elf, cast(intptr_t, rela[i].r_offset), &bias)) {
+				continue;
+			}
+
+			at = elf_seek(elf, cast(size_t, rela[i].r_offset + bias));
+
+			if (!at) {
+				continue;
+			}
+
+			value = cast(ElfN(Addr), rela[i].r_addend);
+			memcpy(at, &value, sizeof(value));
+		}
+	}
+}
+
 static ElfN(Shdr) *FUNCN(find_header_section)(struct elf *elf,
 					const char *name)
 {
@@ -142,6 +262,9 @@ static bool FUNCN(open_elf)(struct elf *elf,
 	elf->sections_count = wr;
 
 	qsort(elf->sections, wr, sizeof(struct elf_section), cmp_elf_section);
+
+	/* Sections first: finding where an address lives needs them. */
+	FUNCN(apply_relative_relocations)(elf, ehdr);
 
 	return true;
 }

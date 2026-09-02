@@ -23,6 +23,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <tap.h>
@@ -56,6 +57,10 @@ const struct side_event_field *field_at(uint32_t i)
 {
 	const struct side_event_description *desc =
 		side_event_state_description(&side_event_state__my_event.parent);
+
+	/* Null where the state is of an ABI version this does not know. */
+	if (!desc)
+		abort();
 
 	return &side_array_rel_elements(&desc->fields)[i];
 }

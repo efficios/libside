@@ -42,10 +42,18 @@
 #  define SIDE_DIAGNOSTIC(x)			\
 	_Pragma(SIDE_STR(clang diagnostic x))
 
+/*
+ * A warning only gcc has. Naming one clang does not know is itself a
+ * warning there, so this says nothing to clang.
+ */
+#  define SIDE_GCC_DIAGNOSTIC(x)
+
 #elif defined(__GNUC__)
 
 #  define SIDE_DIAGNOSTIC(x)			\
 	_Pragma(SIDE_STR(GCC diagnostic x))
+
+#  define SIDE_GCC_DIAGNOSTIC(x)	SIDE_DIAGNOSTIC(x)
 
 #endif
 

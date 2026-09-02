@@ -3,6 +3,7 @@
  * Copyright 2022-2024 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,10 +102,28 @@ void description_visitor_enum_bitmap(const struct side_description_visitor *visi
 		visitor->callbacks->after_enum_bitmap_type_func(type, visitor->priv);
 }
 
+/*
+ * A type this walk was given no way to reach.
+ *
+ * A reference to a named type holds an address where the type is
+ * defined in another unit, and an address is only as good as whoever
+ * wrote it: a reader of a file sees what a linker put there, which is
+ * not what a constructor of the program would have written at run
+ * time. Say so and carry on, rather than walking into it.
+ */
 static
-void description_visitor_struct(const struct side_description_visitor *visitor, const struct side_type *type_desc)
+bool unreachable(const void *type, const char *what)
 {
-	const struct side_type_struct *side_struct = visit_side_sel_pointer(visitor, type_desc->u.side_struct);
+	if (type)
+		return false;
+	fprintf(stderr, "<UNREACHABLE %s>\n", what);
+	return true;
+}
+
+static
+void description_visitor_struct_reached(const struct side_description_visitor *visitor,
+					const struct side_type_struct *side_struct)
+{
 	side_array_t(const struct side_event_field) fields = visit_side_rel_array(visitor, &side_struct->fields);
 	uint32_t i, len = side_array_length(&fields);
 
@@ -117,9 +136,19 @@ void description_visitor_struct(const struct side_description_visitor *visitor, 
 }
 
 static
-void description_visitor_variant(const struct side_description_visitor *visitor, const struct side_type *type_desc)
+void description_visitor_struct(const struct side_description_visitor *visitor, const struct side_type *type_desc)
 {
-	const struct side_type_variant *side_type_variant = visit_side_sel_pointer(visitor, type_desc->u.side_variant);
+	const struct side_type_struct *side_struct = visit_side_sel_pointer(visitor, type_desc->u.side_struct);
+
+	if (unreachable(side_struct, "STRUCT"))
+		return;
+	description_visitor_struct_reached(visitor, side_struct);
+}
+
+static
+void description_visitor_variant_reached(const struct side_description_visitor *visitor,
+					const struct side_type_variant *side_type_variant)
+{
 	const struct side_type *selector_type = &side_type_variant->selector;
 	side_array_t(const struct side_variant_option) options = visit_side_rel_array(visitor, &side_type_variant->options);
 	uint32_t i, len = side_array_length(&options);
@@ -164,26 +193,44 @@ void description_visitor_optional(const struct side_description_visitor *visitor
 }
 
 static
+void description_visitor_variant(const struct side_description_visitor *visitor, const struct side_type *type_desc)
+{
+	const struct side_type_variant *side_type_variant = visit_side_sel_pointer(visitor, type_desc->u.side_variant);
+
+	if (unreachable(side_type_variant, "VARIANT"))
+		return;
+	description_visitor_variant_reached(visitor, side_type_variant);
+}
+
+static
 void description_visitor_array(const struct side_description_visitor *visitor, const struct side_type *type_desc)
 {
+	const struct side_type_array *side_array = visit_side_sel_pointer(visitor, type_desc->u.side_array);
+
+	if (unreachable(side_array, "ARRAY"))
+		return;
 	if (visitor->callbacks->before_array_type_func)
-		visitor->callbacks->before_array_type_func(visit_side_sel_pointer(visitor, type_desc->u.side_array), visitor->priv);
-	side_visit_elem(visitor, visit_side_rel_pointer(visitor, visit_side_sel_pointer(visitor, type_desc->u.side_array)->elem_type));
+		visitor->callbacks->before_array_type_func(side_array, visitor->priv);
+	side_visit_elem(visitor, visit_side_rel_pointer(visitor, side_array->elem_type));
 	if (visitor->callbacks->after_array_type_func)
-		visitor->callbacks->after_array_type_func(visit_side_sel_pointer(visitor, type_desc->u.side_array), visitor->priv);
+		visitor->callbacks->after_array_type_func(side_array, visitor->priv);
 }
 
 static
 void description_visitor_vla(const struct side_description_visitor *visitor, const struct side_type *type_desc)
 {
+	const struct side_type_vla *side_vla = visit_side_sel_pointer(visitor, type_desc->u.side_vla);
+
+	if (unreachable(side_vla, "VLA"))
+		return;
 	if (visitor->callbacks->before_vla_type_func)
-		visitor->callbacks->before_vla_type_func(visit_side_sel_pointer(visitor, type_desc->u.side_vla), visitor->priv);
-	side_visit_elem(visitor, visit_side_rel_pointer(visitor, visit_side_sel_pointer(visitor, type_desc->u.side_vla)->length_type));
+		visitor->callbacks->before_vla_type_func(side_vla, visitor->priv);
+	side_visit_elem(visitor, visit_side_rel_pointer(visitor, side_vla->length_type));
 	if (visitor->callbacks->after_length_vla_type_func)
-		visitor->callbacks->after_length_vla_type_func(visit_side_sel_pointer(visitor, type_desc->u.side_vla), visitor->priv);
-	side_visit_elem(visitor, visit_side_rel_pointer(visitor, visit_side_sel_pointer(visitor, type_desc->u.side_vla)->elem_type));
+		visitor->callbacks->after_length_vla_type_func(side_vla, visitor->priv);
+	side_visit_elem(visitor, visit_side_rel_pointer(visitor, side_vla->elem_type));
 	if (visitor->callbacks->after_element_vla_type_func)
-		visitor->callbacks->after_element_vla_type_func(visit_side_sel_pointer(visitor, type_desc->u.side_vla), visitor->priv);
+		visitor->callbacks->after_element_vla_type_func(side_vla, visitor->priv);
 }
 
 static
@@ -197,10 +244,10 @@ void visit_gather_field(const struct side_description_visitor *visitor, const st
 }
 
 static
-void description_visitor_gather_struct(const struct side_description_visitor *visitor, const struct side_type_gather *type_gather)
+void description_visitor_gather_struct_reached(const struct side_description_visitor *visitor,
+					const struct side_type_gather_struct *side_gather_struct,
+					const struct side_type_struct *side_struct)
 {
-	const struct side_type_gather_struct *side_gather_struct = &type_gather->u.side_struct;
-	const struct side_type_struct *side_struct = visit_side_sel_pointer(visitor, side_gather_struct->type);
 	side_array_t(const struct side_event_field) fields = visit_side_rel_array(visitor, &side_struct->fields);
 	uint32_t i;
 
@@ -210,6 +257,17 @@ void description_visitor_gather_struct(const struct side_description_visitor *vi
 		visit_gather_field(visitor, side_array_at(&fields, i));
 	if (visitor->callbacks->after_gather_struct_type_func)
 		visitor->callbacks->after_gather_struct_type_func(side_gather_struct, visitor->priv);
+}
+
+static
+void description_visitor_gather_struct(const struct side_description_visitor *visitor, const struct side_type_gather *type_gather)
+{
+	const struct side_type_gather_struct *side_gather_struct = &type_gather->u.side_struct;
+	const struct side_type_struct *side_struct = visit_side_sel_pointer(visitor, side_gather_struct->type);
+
+	if (unreachable(side_struct, "GATHER STRUCT"))
+		return;
+	description_visitor_gather_struct_reached(visitor, side_gather_struct, side_struct);
 }
 
 static
@@ -495,8 +553,15 @@ void side_visit_type(const struct side_description_visitor *visitor, const struc
 		break;
 
 	case SIDE_TYPE_OPTIONAL:
-		description_visitor_optional(visitor, visit_side_sel_pointer(visitor, type_desc->u.side_optional));
+	{
+		const struct side_type_optional *optional =
+			visit_side_sel_pointer(visitor, type_desc->u.side_optional);
+
+		if (unreachable(optional, "OPTIONAL"))
+			break;
+		description_visitor_optional(visitor, optional);
 		break;
+	}
 
 	default:
 		fprintf(stderr, "<UNKNOWN TYPE>\n");
