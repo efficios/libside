@@ -256,6 +256,32 @@ int side_tracer_statedump_request_cancel(uint64_t key);
 bool side_tracer_statedump_request_pending(uint64_t key);
 
 /*
+ * Ask to be told when a statedump has been taken, so that a tracer
+ * waiting for one need not poll for it.
+ *
+ * The callback is a hint and not a queue: it says a statedump finished,
+ * not that what a given tracer asked for is complete, because one
+ * request reaches every registered statedump callback and a statedump
+ * may be requested for every tracer at once. What answers the question
+ * is side_tracer_statedump_request_pending(); this says that its answer
+ * may have changed, and it may be called when nothing a tracer cares
+ * about did.
+ *
+ * The callback runs on the thread which took the statedump -- the agent
+ * thread, or an application thread running its pending requests -- with
+ * no side lock held. It must not register or unregister statedump
+ * request notifications or statedump completion callbacks, and must not
+ * take a lock which an application statedump callback may hold.
+ */
+struct side_statedump_completion_handle;
+struct side_statedump_completion_handle *
+	side_tracer_statedump_completion_register(
+		void (*cb)(uint64_t key, void *priv),
+		void *priv);
+void side_tracer_statedump_completion_unregister(
+		struct side_statedump_completion_handle *handle);
+
+/*
  * Explicit hooks to initialize/finalize the side instrumentation
  * library. Those are also library constructor/destructor.
  */

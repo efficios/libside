@@ -64,6 +64,12 @@ struct side_statedump_notification {
 	uint64_t key;
 };
 
+struct side_statedump_completion_handle {
+	struct side_list_node node;
+	void (*cb)(uint64_t key, void *priv);
+	void *priv;
+};
+
 struct side_statedump_request_handle {
 	struct side_list_node node;			/* Statedump request RCU list node. */
 	struct side_list_head notification_queue;	/* Queue of struct side_statedump_notification */
@@ -198,6 +204,14 @@ static DEFINE_SIDE_LIST_HEAD(side_tracer_list);
  * iterate over this list with a RCU read-side lock.
  */
 static DEFINE_SIDE_LIST_HEAD(side_statedump_list);
+/*
+ * Tracers wanting to be told when a statedump has been taken. Protected
+ * for reading by the statedump RCU domain, like side_statedump_list, so
+ * that the callbacks can be invoked without holding a lock: they are
+ * called from the thread which took the statedump, which is an
+ * application thread, and a tracer may want its own locks there.
+ */
+static DEFINE_SIDE_LIST_HEAD(side_statedump_completion_list);
 
 /*
  * The empty callback has a NULL function callback pointer, which stops
@@ -846,11 +860,44 @@ void side_statedump_run(struct side_statedump_request_handle *handle,
 		side_arg_list(side_arg_string(handle->name)));
 }
 
+/*
+ * Tell the tracers that a statedump has been taken.
+ *
+ * A hint, deliberately: it says a statedump finished, not that anything
+ * a given tracer was waiting for is now complete. One request reaches
+ * every registered statedump callback, so a tracer which asked for a
+ * statedump is only done when every one of them has taken it, and a
+ * statedump requested for every tracer -- which registering a callback
+ * queues -- concerns keys nobody named. What answers the question is
+ * side_tracer_statedump_request_pending(); this only says that the
+ * answer may have changed, so it is safe to call more often than a
+ * tracer cares about and it is not a queue whose entries must be
+ * matched up.
+ *
+ * Called with no lock held, from the thread which took the statedump:
+ * the agent thread, or whichever application thread ran its pending
+ * requests. The statedump locks are leaves below the tracer control
+ * locks, so a callback which takes a tracer lock is only legal from
+ * here because none of them is held.
+ */
+static
+void statedump_completion_notify(uint64_t key)
+{
+	struct side_statedump_completion_handle *handle;
+	struct side_rcu_read_state rcu_read_state;
+
+	side_rcu_read_begin(&statedump_rcu_gp, &rcu_read_state);
+	side_list_for_each_entry_rcu(handle, &side_statedump_completion_list, node)
+		handle->cb(key, handle->priv);
+	side_rcu_read_end(&statedump_rcu_gp, &rcu_read_state);
+}
+
 static
 void _side_statedump_run_pending_requests(struct side_statedump_request_handle *handle)
 {
 	struct side_statedump_notification *notif, *tmp;
 	DEFINE_SIDE_LIST_HEAD(tmp_head);
+	uint64_t key;
 
 	pthread_mutex_lock(&side_statedump_lock);
 	side_list_splice(&handle->notification_queue, &tmp_head);
@@ -874,10 +921,17 @@ void _side_statedump_run_pending_requests(struct side_statedump_request_handle *
 
 		side_statedump_run(handle, notif);
 
+		/*
+		 * Off the in-flight queue before the tracers are told,
+		 * so that one which asks whether its statedump is still
+		 * outstanding gets the answer this notifies it about.
+		 */
 		pthread_mutex_lock(&side_statedump_lock);
 		side_list_remove_node(&notif->node);
 		pthread_mutex_unlock(&side_statedump_lock);
+		key = notif->key;
 		free(notif);
+		statedump_completion_notify(key);
 	}
 
 	if (handle->mode == SIDE_STATEDUMP_MODE_AGENT_THREAD) {
@@ -1176,6 +1230,59 @@ bool side_tracer_statedump_request_pending(uint64_t key)
 	}
 	pthread_mutex_unlock(&side_statedump_lock);
 	return pending;
+}
+
+/*
+ * Ask to be told when a statedump has been taken, so that a tracer
+ * waiting for one need not poll for it. See statedump_completion_notify()
+ * for what the callback is and is not: a hint that the answer of
+ * side_tracer_statedump_request_pending() may have changed.
+ *
+ * The callback runs on the thread which took the statedump, holding no
+ * side lock, and must not register or unregister statedump callbacks
+ * nor take a lock which the statedump callbacks of the application may
+ * be holding.
+ */
+struct side_statedump_completion_handle *
+	side_tracer_statedump_completion_register(
+		void (*cb)(uint64_t key, void *priv),
+		void *priv)
+{
+	struct side_statedump_completion_handle *handle;
+
+	if (finalized)
+		return NULL;
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
+		side_init();
+	handle = (struct side_statedump_completion_handle *)
+				calloc(1, sizeof(struct side_statedump_completion_handle));
+	if (!handle)
+		return NULL;
+	handle->cb = cb;
+	handle->priv = priv;
+
+	pthread_mutex_lock(&side_statedump_lock);
+	side_list_insert_node_tail_rcu(&side_statedump_completion_list, &handle->node);
+	pthread_mutex_unlock(&side_statedump_lock);
+
+	return handle;
+}
+
+void side_tracer_statedump_completion_unregister(
+		struct side_statedump_completion_handle *handle)
+{
+	if (finalized)
+		return;
+	if (side_unlikely(!__atomic_load_n(&initialized, __ATOMIC_ACQUIRE)))
+		side_init();
+
+	pthread_mutex_lock(&side_statedump_lock);
+	side_list_remove_node_rcu(&handle->node);
+	pthread_mutex_unlock(&side_statedump_lock);
+
+	/* Wait for the notifications in flight to be done with it. */
+	side_rcu_wait_grace_period(&statedump_rcu_gp);
+	free(handle);
 }
 
 /*

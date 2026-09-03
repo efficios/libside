@@ -12,11 +12,16 @@
  * which wants to know whether the state it asked for has arrived needs
  * both halves checked here.
  *
- * What side_tracer_statedump_request_pending() answers is checked in
- * every state a request passes through. The case it exists for is the one in the middle: a request which has been taken
+ * side_tracer_statedump_request_pending() is the level. The case it
+ * exists for is the one in the middle: a request which has been taken
  * off the queue and whose callback has not returned is neither waiting
  * nor done, and reporting it as done would tell a tracer the state has
  * arrived while it is still being written.
+ *
+ * side_tracer_statedump_completion_register() is the edge, so that a
+ * tracer waiting for a statedump need not poll for it. It is a hint,
+ * and what it must guarantee is that the request already reads as taken
+ * by the time the callback runs -- otherwise being told is of no use.
  */
 
 #include <side/trace.h>
@@ -30,6 +35,7 @@ side_static_event(dumped_event, "myprovider", "dumped", SIDE_LOGLEVEL_INFO,
 	side_field_list(side_field_u32("id")));
 
 static struct side_statedump_request_handle *handle;
+static struct side_statedump_completion_handle *completion;
 static uint64_t key_a, key_b;
 
 /* Set by the statedump callback, read by the test. */
@@ -44,6 +50,12 @@ static bool pending_while_dumping, other_key_while_dumping;
  * the callback is the one which would release it.
  */
 static bool hold_in_callback;
+
+/* Set by the completion callback. */
+static int notifications;
+static bool pending_when_notified = true, notified_by_dumping_thread;
+static void *notified_priv;
+static pthread_t dumping_thread;
 
 /* Wait until the statedump callback has been entered. */
 static
@@ -68,6 +80,7 @@ void release_callback(void)
 static
 void statedump_cb(void *statedump_request_key)
 {
+	dumping_thread = pthread_self();
 	/*
 	 * The request being taken right now is neither queued nor
 	 * finished, and must read as outstanding all the same.
@@ -89,6 +102,16 @@ void statedump_cb(void *statedump_request_key)
 
 	side_statedump_event_call(dumped_event, statedump_request_key,
 		side_arg_list(side_arg_u32(42)));
+}
+
+static
+void completion_cb(uint64_t key, void *priv)
+{
+	notifications++;
+	notified_priv = priv;
+	notified_by_dumping_thread = pthread_equal(pthread_self(), dumping_thread);
+	if (key == key_a)
+		pending_when_notified = side_tracer_statedump_request_pending(key_a);
 }
 
 /*
@@ -162,6 +185,7 @@ void test_agent_thread(void)
 
 	in_callback = 0;
 	was_observed = 0;
+	notifications = 0;
 	hold_in_callback = true;
 	if (side_tracer_statedump_request(key_a) != SIDE_ERROR_OK)
 		abort();
@@ -175,18 +199,30 @@ void test_agent_thread(void)
 	hold_in_callback = false;
 	ok(!side_tracer_statedump_request_pending(key_a),
 		"and is not once the agent thread has taken it");
+	ok(notifications > 0, "taking a statedump notifies the tracer");
+	ok(notified_by_dumping_thread,
+		"the tracer is notified by the thread which took it");
+	ok(!pending_when_notified,
+		"a statedump already reads as taken when the tracer is told of it");
+	ok(notified_priv == (void *) 0x5105,
+		"the tracer is given the pointer it registered");
 }
 
 int main(void)
 {
-	plan_tests(13);
+	plan_tests(17);
 
 	if (side_tracer_request_key(&key_a) != SIDE_ERROR_OK ||
 	    side_tracer_request_key(&key_b) != SIDE_ERROR_OK)
+		abort();
+	completion = side_tracer_statedump_completion_register(completion_cb,
+			(void *) 0x5105);
+	if (!completion)
 		abort();
 
 	test_polling();
 	test_agent_thread();
 
+	side_tracer_statedump_completion_unregister(completion);
 	return exit_status();
 }

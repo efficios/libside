@@ -72,6 +72,7 @@ dkms.conf
 /tests/unit/test
 /tests/unit/test-cxx
 /tests/unit/statedump
+/tests/unit/statedump-request
 /tests/unit/test-sc
 /tests/unit/test-sc-cxx
 /tests/unit/test-no-sc
