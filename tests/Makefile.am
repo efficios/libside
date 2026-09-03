@@ -27,7 +27,8 @@ noinst_PROGRAMS = \
 	unit/test-no-sc \
 	unit/test-no-sc-cxx \
 	unit/demo \
-	unit/statedump
+	unit/statedump \
+	unit/statedump-request
 
 regression_side_rcu_test_SOURCES = regression/side-rcu-test.c
 regression_side_rcu_test_LDADD = \
@@ -96,6 +97,12 @@ unit_rel_ptr_SOURCES = unit/rel-ptr.c unit/rel-ptr-tu2.c unit/rel-ptr.h
 unit_rel_ptr_LDADD = \
 	$(top_builddir)/tests/utils/libtap.la
 
+unit_statedump_request_SOURCES = unit/statedump-request.c
+unit_statedump_request_LDADD = \
+	$(top_builddir)/src/lib/libside/libside.la \
+	$(top_builddir)/tests/utils/libtap.la \
+	$(RSEQ_LIBS)
+
 unit_statedump_SOURCES = unit/statedump.c
 unit_statedump_LDFLAGS = $(CONSOLE_TRACER_FLAGS)
 unit_statedump_LDADD = \
@@ -108,4 +115,5 @@ TESTS =	static-checker/run-tests \
 	unit/extern-type \
 	unit/phased-atfork \
 	unit/phased-atfork-side \
-	unit/rel-ptr
+	unit/rel-ptr \
+	unit/statedump-request

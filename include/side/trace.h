@@ -241,6 +241,19 @@ int side_tracer_statedump_request(uint64_t key);
  * Cancel a statedump request.
  */
 int side_tracer_statedump_request_cancel(uint64_t key);
+/*
+ * Returns true while a statedump requested with "key" still has to be
+ * taken: queued for an application which has not run its callback yet,
+ * or being taken right now.
+ *
+ * This is a question, not a wait: in polling mode an application takes
+ * its statedump whenever it next runs its pending requests, so a caller
+ * which wants to bound the wait owns that policy. False means nothing
+ * is outstanding, which is also the answer when the request was
+ * cancelled and when no application registered a statedump callback at
+ * all: it does not say that a statedump happened.
+ */
+bool side_tracer_statedump_request_pending(uint64_t key);
 
 /*
  * Explicit hooks to initialize/finalize the side instrumentation

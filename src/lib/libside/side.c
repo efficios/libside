@@ -67,6 +67,15 @@ struct side_statedump_notification {
 struct side_statedump_request_handle {
 	struct side_list_node node;			/* Statedump request RCU list node. */
 	struct side_list_head notification_queue;	/* Queue of struct side_statedump_notification */
+	/*
+	 * The requests being dumped right now, one at a time: taken off
+	 * the notification queue before the callback is invoked for it,
+	 * and removed once the callback has returned. A request is on
+	 * one of the two lists for its whole life, which is what lets
+	 * side_tracer_statedump_request_pending() answer without
+	 * reporting a dump under way as finished.
+	 */
+	struct side_list_head in_flight_queue;
 	void (*cb)(void *statedump_request_key);
 	char *name;
 	enum side_statedump_mode mode;
@@ -848,11 +857,28 @@ void _side_statedump_run_pending_requests(struct side_statedump_request_handle *
 	side_list_head_init(&handle->notification_queue);
 	pthread_mutex_unlock(&side_statedump_lock);
 
-	/* We are now sole owner of the tmp_head list. */
-	side_list_for_each_entry(notif, &tmp_head, node)
+	/*
+	 * We are now sole owner of the tmp_head list, which is what
+	 * makes it safe to walk it without the lock while the callbacks
+	 * run. Each request is nevertheless published on the handle's
+	 * in-flight queue for the time its callback takes, so that a
+	 * tracer asking whether its statedump is still outstanding is
+	 * not told it is done while it is being taken.
+	 */
+	side_list_for_each_entry_safe(notif, tmp, &tmp_head, node) {
+		side_list_remove_node(&notif->node);
+
+		pthread_mutex_lock(&side_statedump_lock);
+		side_list_insert_node_tail(&handle->in_flight_queue, &notif->node);
+		pthread_mutex_unlock(&side_statedump_lock);
+
 		side_statedump_run(handle, notif);
-	side_list_for_each_entry_safe(notif, tmp, &tmp_head, node)
+
+		pthread_mutex_lock(&side_statedump_lock);
+		side_list_remove_node(&notif->node);
+		pthread_mutex_unlock(&side_statedump_lock);
 		free(notif);
+	}
 
 	if (handle->mode == SIDE_STATEDUMP_MODE_AGENT_THREAD) {
 		pthread_mutex_lock(&side_statedump_lock);
@@ -991,6 +1017,7 @@ struct side_statedump_request_handle *
 	handle->name = name;
 	handle->mode = mode;
 	side_list_head_init(&handle->notification_queue);
+	side_list_head_init(&handle->in_flight_queue);
 
 	if (mode == SIDE_STATEDUMP_MODE_AGENT_THREAD)
 		pthread_mutex_lock(&side_agent_thread_lock);
@@ -1102,6 +1129,55 @@ int side_tracer_statedump_request_cancel(uint64_t key)
 	return SIDE_ERROR_OK;
 }
 
+/* Called with side_statedump_lock held. */
+static
+bool statedump_queue_has_key(struct side_list_head *queue, uint64_t key)
+{
+	struct side_statedump_notification *notif;
+
+	side_list_for_each_entry(notif, queue, node) {
+		/*
+		 * A statedump requested for every tracer will reach this
+		 * one too, so it is outstanding for this key as well.
+		 */
+		if (notif->key == SIDE_KEY_MATCH_ALL || notif->key == key)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * Whether a statedump requested for tracer callbacks identified with
+ * "key" has still to be taken: queued for an application which has not
+ * run its callback yet, or being taken right now.
+ *
+ * This is a question, not a wait. A statedump in polling mode is taken
+ * when the application next runs its pending requests, which it is free
+ * to do whenever it likes, so a caller which wants to bound the wait
+ * owns that policy. False is also the answer when nothing was ever
+ * requested for the key, when every application has taken its dump, and
+ * when the request was cancelled: what it reports is that nothing is
+ * outstanding, not that a dump happened.
+ */
+bool side_tracer_statedump_request_pending(uint64_t key)
+{
+	struct side_statedump_request_handle *handle;
+	bool pending = false;
+
+	if (key == SIDE_KEY_MATCH_ALL)
+		return false;
+	pthread_mutex_lock(&side_statedump_lock);
+	side_list_for_each_entry(handle, &side_statedump_list, node) {
+		if (statedump_queue_has_key(&handle->notification_queue, key) ||
+		    statedump_queue_has_key(&handle->in_flight_queue, key)) {
+			pending = true;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&side_statedump_lock);
+	return pending;
+}
+
 /*
  * Tracer keys are represented on 64-bit. Return SIDE_ERROR_NOMEM on
  * overflow (which should never happen in practice).
@@ -1211,6 +1287,8 @@ void side_fork_parent_outer(void *priv __attribute__((unused)))
 static
 void side_fork_child_outer(void *priv __attribute__((unused)))
 {
+	struct side_statedump_request_handle *handle;
+
 	side_rcu_gp_after_fork_child(&event_rcu_gp);
 	side_rcu_gp_after_fork_child(&statedump_rcu_gp);
 	side_notification_lock = (pthread_mutex_t) PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
@@ -1219,6 +1297,18 @@ void side_fork_child_outer(void *priv __attribute__((unused)))
 	side_key_lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
 	side_init_lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
 	side_agent_thread_lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+	/*
+	 * A statedump being taken in the parent has no thread to finish
+	 * it here, so queue it again: the child is a new process, and
+	 * the state a tracer asked for is its own. The agent thread is
+	 * paused between requests for the whole fork sequence, so this
+	 * only ever finds anything in polling mode, where another thread
+	 * of the parent may have been in the middle of one.
+	 */
+	side_list_for_each_entry(handle, &side_statedump_list, node) {
+		side_list_splice(&handle->in_flight_queue, &handle->notification_queue);
+		side_list_head_init(&handle->in_flight_queue);
+	}
 	if (statedump_agent_thread.ref) {
 		statedump_agent_thread.worker_cond = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
 		statedump_agent_thread.waiter_cond = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
